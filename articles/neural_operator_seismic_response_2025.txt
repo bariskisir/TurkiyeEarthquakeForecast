@@ -1,0 +1,1180 @@
+
+--- Sayfa 1 ---
+Constructing Balanced Datasets for Predicting Failure Modes in Structural
+Systems Under Seismic Hazards
+Jungho Kima, Taeyong Kimb,∗
+aDepartment of Civil and Environmental Engineering, University of California, Berkeley, United States
+bDepartment of Civil Systems Engineering, Ajou University, Suwon, Republic of Korea
+Abstract
+Accurate prediction of structural failure modes under seismic excitations is essential for seismic risk and re-
+silience assessment. Traditional simulation-based approaches often result in imbalanced datasets dominated
+by non-failure or frequently observed failure scenarios, limiting the effectiveness in machine learning-based
+prediction. To address this challenge, this study proposes a framework for constructing balanced datasets
+that include distinct failure modes. The framework consists of three key steps. First, critical ground motion
+features (GMFs) are identified to effectively represent ground motion time histories. Second, an adaptive
+algorithm is employed to estimate the probability densities of various failure domains in the space of critical
+GMFs and structural parameters. Third, samples generated from these probability densities are transformed
+into ground motion time histories by using a scaling factor optimization process. A balanced dataset is con-
+structed by performing nonlinear response history analyses on structural systems with parameters matching
+the generated samples, subjected to corresponding transformed ground motion time histories. Deep neural
+network models are trained on balanced and imbalanced datasets to highlight the importance of dataset
+balancing. To further evaluate the framework’s applicability, numerical investigations are conducted using
+two different structural models subjected to recorded and synthetic ground motions. The results demon-
+strate the framework’s robustness and effectiveness in addressing dataset imbalance and improving machine
+learning performance in seismic failure mode prediction.
+Keywords:
+Black swan event, Deep learning, Failure mode, Ground motion, Imbalanced data, Uncertainty
+1. Introduction
+The widespread adoption of data-driven methodologies marks a significant paradigm shift from traditional
+theory- and mechanics-based approaches to exploratory- and evidence-based strategies. This new paradigm
+leverages large-scale datasets, advanced computational tools, and machine learning techniques to uncover
+hidden patterns and generate predictive insights that were previously unattainable [1, 2].
+In the field
+of earthquake engineering, this shift has enabled proactive risk management by accelerating predictions
+of structural responses and damage states under seismic excitations [3–5], identifying vulnerabilities to
+prioritize mitigation strategies [6–8], and providing quantitative insights into seismic performance and risk
+[9–12]. Furthermore, it supports the optimal design of structural systems to ensure resilience against seismic
+hazards [13–15].
+The prompt prediction of failure modes in structural systems, in addition to their seismic responses,
+represents another critical application of data-driven methodologies [16–19]. This capability is crucial for
+determining optimal recovery strategies immediately following a seismic event. Despite their potential, such
+machine learning methods face a significant challenge, particularly in predicting “black swan” failure modes
+∗Corresponding author
+Email address: taeyongkim@ajou.ac.kr (Taeyong Kim)
+Preprint submitted to arXiv
+March 5, 2025
+arXiv:2503.01882v1  [cs.LG]  26 Feb 2025
+
+--- Sayfa 2 ---
+due to imbalanced data categories during model training.
+The “black swan” refers to an event that is
+highly improbable yet carries catastrophic consequences. When a dataset contains disproportionately fewer
+samples for rare failure modes compared to more common ones, machine learning models trained on such
+data may become biased towards more frequent categories. This imbalance reduces the model’s predictive
+performance for less common but critical failure modes, posing a significant limitation to achieving the
+seismic resilience of structural systems.
+Various methods have been developed to address the issue of imbalanced datasets [20–24], which can be
+broadly categorized into three. First, resampling techniques such as under- or over-sampling can be used
+to balance the class ratios by adjusting the representation of the minority or majority classes. Second,
+algorithmic modifications, wherein classification algorithms are adjusted to minimize the misclassification
+error for the minority class, can be employed. Note that these two approaches primarily address imbalance
+issues in pre-constructed datasets. Third, during dataset construction, a proactive strategy can be employed
+by identifying multiple failure modes and ensuring proper sampling of each mode to create a balanced
+dataset. Advanced techniques for this purpose include genetic algorithms [25], surrogate modeling [26], and
+deep reinforcement learning [27].
+While these approaches offer potential solutions to the issue, three significant limitations pertain. First,
+the first two approaches are unsuitable for unobserved datasets or for failure modes that are difficult to
+capture using brute-force Monte Carlo simulations (MCS). Second, while research on the third approach
+facilitates data generation for multiple failure modes, most studies focus only on identifying dominant failure
+modes, i.e., those with relatively high failure probabilities. As a result, existing research efforts remain
+inadequate for detecting black swan-type failure modes. Third, in addition to the second limitation, the
+majority of studies on the third approach have concentrated on identifying failure modes in structural systems
+under static loads. In other words, aleatoric uncertainties within these frameworks remain inadequately
+addressed.
+To address these research gaps, this study proposes a framework for constructing a balanced dataset
+to predict failure modes of structural systems subjected to seismic excitations.
+The framework begins
+by identifying a set of critical ground motion features (GMFs) based on their correlation with structural
+responses. By treating GMFs as random variables alongside structural system parameters, an adaptive
+algorithm is proposed, inspired by the importance sampling for noteworthy scenarios (ISNS) framework
+[28]. The algorithm is designed to systemically identify the probability densities of various failure domains
+while accounting for both epistemic uncertainties, such as material and geometric randomness, and aleatoric
+uncertainties arising from record-to-record variability in ground motions. The samples generated from the
+identified probability densities are mapped back to the ground motion time history space by using a scaling
+factor optimization process to construct a balanced dataset for failure mode prediction. Once the balanced
+dataset is constructed, we evaluate the performance of deep neural network (DNN) models in predicting
+failure modes under two scenarios: (i) using an imbalanced dataset typically obtained from brute-force MCS,
+and (ii) using a balanced dataset generated by using the proposed framework. This comparative analysis
+demonstrates the effectiveness of the proposed framework for predicting structural failure modes.
+The remainder of the paper is organized as follows. Section 2 defines the failure modes of structural
+systems and the DNN architecture developed for predicting failure modes. Section 3 details the proposed
+framework for constructing balanced datasets, including critical GMF selection, estimation of failure modes’
+probability densities, and scaling factor optimization process. This section also examines the performance of
+DNN models using the constructed balanced dataset. Section 4 presents numerical investigations conducted
+on high-fidelity structural models to validate the applicability and effectiveness of the proposed framework.
+Finally, Section 5 presents the key findings and concluding remarks.
+2. Background methodologies
+2.1. Failure modes of structural systems under seismic excitations
+In earthquake engineering, the failure of a structural component Ci is, in general, defined in terms of an
+engineering demand parameter (EDP) [29, 30]. The failure event of the i-th component is denoted as Ci,
+2
+
+--- Sayfa 3 ---
+while its survival is represented as Ci, where i = 1, 2, . . . ., Nc, and Nc denotes the total number of structural
+components. Mathematically, the failure event Ci is expressed as the exceedance of the EDP’s capacity:
+Ci : gi(x) = EDPL,i −EDPi(x) ≤0 ,
+(1)
+where EDPL,i represents the seismic capacity or performance limit for the i-th component, EDPi(x) denotes
+the seismic demand obtained from nonlinear response history analysis (RHA), and gi(x) is the limit state
+function, with its negative sign indicating the occurrence of failure. Here, x = [xGM, xS] ∈RN denotes the
+input random variables, in which xGM ∈RNGM captures aleatory uncertainties associated with record-to-
+record variability of ground motions, and xS ∈RNS accounts for epistemic uncertainties such as material
+property and geometric variability. The combined input dimension is N = NGM + NS, while the dimension
+of the structural responses under seismic loading, EDP ∈RNc, is equal to the number of components Nc.
+Based on the aforementioned definition, a set of failure modes, F, is defined as:
+F =
+
+F | F = (∩i∈SCi) ∩
+ ∩j∈ScCj
+
+, S ⊂{1, 2, ..., Nc}
+	
+,
+(2)
+where F is an instance of failure mode, and Sc represents the complement of the set S. For example, a
+failure mode in which only the first component fails while all others remain operational can be represented
+as F =
+ C1 ∩C2 ∩· · · ∩CNc
+
+. Considering the Boolean characteristics of structural component states and
+excluding the scenario of surviving all components, the total number of possible failure modes, NF , can be
+estimated by NF = 2Nc −1.
+Identifying samples within each failure mode Fi presents several challenges. Such samples are denoted
+as XFi = {x : x ∈Ω(x|Fi)}, where Ω(x|Fi) represents the domain of x corresponding to the failure mode Fi.
+First, since failure modes are functions of random variables, some failure modes are difficult to identify due
+to their rarity. Second, the high dimensionality of seismic excitations (xGM) hinder the direct integration of
+existing research efforts aimed at constructing balanced datasets [31]. Moreover, due to the record-to-record
+variability, multiple GMFs are required to distinguish ground motion time histories, instead of relying on a
+single GMF such as peak ground acceleration (PGA).
+2.2. DNN model for predicting failure modes
+A DNN model is designed to facilitate near-real-time prediction of structural failure modes under seismic
+excitations. Based on the mathematical representation of failure modes in Eq. (2), the DNN model outputs
+the Boolean states of structural components. Each failure mode is represented in binary form, where a
+value of 1 indicates failure (Ci) and 0 indicates survival (Ci). For example, a failure mode F=[1 0 · · · 0] in
+Section 2.1 corresponds to
+ C1 ∩C2 ∩· · · ∩CNc
+
+.
+To enable near-real-time prediction, the inputs to the model can include structural responses, such as
+peak acceleration value obtained from accelerometers for each building story, along with a set of GMFs.
+Figure 1 illustrates the architecture of the proposed DNN model.
+Note that a separate DNN model is
+constructed for each structural system under investigation.
+Figure 1: Architecture of the DNN model for near-real time failure mode prediction.
+3
+
+--- Sayfa 4 ---
+The Rectified Linear Unit (ReLU) is utilized as the activation function for the hidden layers, while a
+sigmoid function is employed in the final hidden layer to predict whether a component has failed or not.
+The number of hidden layers and units varies based on numerical investigations, with details provided
+in each subsection.
+The number of units in the output layer corresponds to the number of structural
+components under consideration, i.e., Nc. Section 3 presents a framework for constructing a balanced dataset
+for training the DNN model. Note that since the DNN architecture is designed primarily for demonstrating
+the effectiveness of the constructed balanced dataset, alternative configurations and input types can also be
+employed.
+3. Construction of balanced datasets for predicting failure modes
+Figure 2 provides a comprehensive overview of the entire procedure from data preprocessing to the demon-
+stration of the proposed algorithm using DNN models. Section 3.1 presents a ground motion dataset and
+a benchmark structural model used as an illustrative example in this study. In other words, we develop
+a balanced seismic demand database using selected ground motions in Section 3.1. Section 3.2 details the
+selection of critical GMFs that effectively represent the variability of structural responses. Sections 3.3 and
+3.4 describe the identification of the probability densities of critical failure mode domains and the scaling
+factor optimization process, respectively. The scaling factor optimization process is designed to identify the
+appropriate ground motion and scaling factor that align with the critical GMFs of the generated samples
+derived from the identified probability density function. This selected ground motion is then used in nonlin-
+ear RHAs for generating structural responses. The collection of these responses forms a balanced dataset.
+To demonstrate the efficacy of the proposed algorithm, Section 3.5 presents numerical investigations that
+evaluate the performance of the DNN model trained on (i) an imbalanced dataset obtained from MCS and
+(ii) a balanced dataset generated using the proposed framework.
+Figure 2: Proposed framework for constructing balanced datasets for failure mode prediction.
+3.1. Ground motion dataset and benchmark structural model
+According to modern seismic design standards, a set of spectrum-compatible ground motions is required for
+the design and performance assessment of structural systems [32]. To achieve this, a set of ground motions
+4
+
+--- Sayfa 5 ---
+is selected to be compatible with a spectrum derived from the ground motion prediction equation (GMPE)
+developed by Boore and Stewart [33] and the spectral correlation model proposed by Baker and Jayaram
+[34]. Table 1 summarizes the seismic hazard parameters, representing a moderate seismic scenario. A ground
+motion selection method [35] is employed to identify recorded motions that align with the target spectrum.
+This method selects ground motions with minimal errors relative to the target spectrum and applies scaling
+for improved spectral alignment. As a result, 523 ground motions are selected from the PEER NGA-West
+2 database [36]. Figure 3(a) presents the response spectra of the selected ground motions, along with the
+median and 2.5%–97.5% quantiles of the target spectrum.
+Table 1: Seismic hazard parameters defining the target spectrum.
+Parameter
+Value
+Earthquake magnitude
+6.8
+Closest distance to fault rupture (km)
+15
+Average shear wave velocity (m/s)
+450
+Fault type
+Strike-slip
+Region
+California
+To illustrate the proposed framework, a three-story shear-type multi-degree-of-freedom (MDOF) building
+shown in Figure 3(b) is modeled using OpenSees [37], incorporating bilinear springs to capture nonlinearities.
+Yield force (Fy) and strength hardening ratio (αh) are treated as deterministic, defined as Fy = 10 mm×Ks
+and αh = 4.5%, respectively, whereas damping ratio (ξ), floor mass (m), and story stiffness (Ks) are treated
+as random variables.
+In other words, epistemic uncertainties are represented as xS = [ξ, m, uk].
+The
+damping ratio and floor mass follow lognormal distributions with means of 0.03 and 90,000 kg, respectively,
+and coefficients of variation (CoV) of 0.25. The story stiffness is modeled as Ks = ˜kseσkuk, where σk = 0.25,
+uk represents the standard Gaussian variable, and ˜ks denotes the nominal stiffness values of 25,000 kN/m,
+20,000 kN/m, and 15,000 kN/m for the first, second, and third stories, respectively.
+Figure 3: (a) Response spectra of selected ground motions with the target spectrum and (b) structural model.
+Figure (a) shows 100 response spectra with the median and 2.5%-97.5% quantiles of the target spectrum superimposed.
+By setting the peak inter-story drift ratio (IDR) as the EDP of interest, MCS is performed to construct
+a seismic demand database. Failure is defined as an IDR exceeding 1.7%. Figure 4 presents the distribution
+of failure modes obtained from 523 simulations. Note that each selected ground motion is used only once
+for RHA. During RHA with these ground motions, the structural parameters xS are randomly generated
+according to the statistical distribution defined in the previous paragraph. However, ground motions could
+be used multiple times with different structural parameter realizations or by varying the ground motion
+scaling factor.
+5
+
+--- Sayfa 6 ---
+Among 23 −1 = 7 possible failure modes, F1 corresponds to the failure mode [1 0 0], where only the first
+story fails, while F7 represents the mode [1 1 1], where all stories fail. The histogram reveals a predominance
+of the safe scenario, with limited samples in failure domains, emphasizing the need to construct balanced
+datasets to address this imbalance.
+Figure 4: Histogram of failure modes obtained through MCS. This represents an imbalanced dataset dominated by
+safe scenario.
+3.2. Identification of critical ground motion features
+To effectively incorporate the aleatoric uncertainty, a set of critical GMFs needs to be defined.
+These
+features, denoted as xGMF, are selected based on their ability to capture the essential attributes of ground
+motions that influence structural responses. The selection process employs Gaussian process (GP) models
+to evaluate the relationship between the feature space, x′ = [xGMF, xS], and the EDPs. The introduction
+of GP model is to ensure consistency with the proposed GP-based adaptive algorithm for identifying failure
+mode density, as detailed in subsequent sections.
+Table 2 summarizes a total of 18 candidate GMFs from the literature [2, 38, 39]. A damping ratio of
+5% is assumed when calculating spectral values. Among the candidate GMFs, critical GMFs are identified
+through cross-validation using the structural model and the set of ground motions introduced in Section 3.1.
+To this end, the 523 samples generated in Section 3.1 are first divided into training subset of 100 samples
+and test subset of 423 samples. GP models are then trained to predict EDPs for different number of GMFs,
+ranging from individual features to combinations of up to 16 features. Note that for a given input feature
+set, three GP models are trained to predict IDR for each story. The performance of the GP models is
+evaluated using R-squared values (R2) for EDP predictions on the test set within the feature space.
+The first row of Figure 5 illustrates R2 values for various GMF combinations corresponding to three
+EDPs: IDR at the 1st, 2nd, and 3rd stories. The x-axis represents the number of GMFs, and each box
+plot summarizes the results for all possible feature combinations at that number. For instance, for a GMF
+set having seven features,
+ 16
+7
+
+= 11, 440 modeling results are summarized in a box plot. In addition to the
+R2 value, the incremental improvement in R2 between successive steps, calculated as ∆R2 = R2
+i −R2
+i−1, is
+shown in the second row, where i represents the number of GMFs starting from 2.
+6
+
+--- Sayfa 7 ---
+Table 2: Summary of candidate ground motion features (GMFs) considered for feature selection.
+Feature
+Unit
+Description
+PGA
+m/s2
+PGV
+m/s
+PGD
+m
+Peak ground acceleration (PGA), velocity (PGV), and displacement (PGD).
+Sa(T1)
+m/s2
+Sv(T1)
+m/s
+Sd(T1)
+m
+Maximum pseudo-acceleration (Sa), velocity (Sv), and displacement (Sd) for a linear oscillator
+with the first mode period T1. Note that Sv(T1) ≈Sa(T1)/ω and Sd(T1) ≈Sa(T1)/ω2, where ω
+denotes circular frequency.
+Sageo
+m/s2
+Svgeo
+m/s
+Sdgeo
+m
+Geometric mean of pseudo-acceleration, velocity, and displacement over periods ranging from 0.1
+to 2.5 seconds. For example, Sageo is defined as (Qn
+i=1 Sa(Ti))1/n.
+Saeff
+m/s
+Sveff
+m
+Sdeff
+m·s
+Effective spectral acceleration, velocity, and displacement integrated over periods ranging from 0.1
+to 2.5 seconds. For example, Sveff is defined as
+R 2.5
+0.1 Sv(T) dT, also referred to as Housner
+intensity [40].
+PGV/PGA
+s
+Ratio of PGV to PGA.
+Spectral
+shape
+m/s2
+Geometric mean of Sa(T1) and Sa(2 · T1), reflecting nonlinear structural behavior
+such as period elongation [41].
+IA
+m/s
+Arias intensity, defined as the integral of squared ground motion acceleration
+over the motion duration Td: IA = π
+2g
+R Td
+0
+a(t)2 dt [42].
+D5−95
+s
+Duration between 5% and 95% of Arias intensity, indicative of shaking duration.
+Figure 5: R-squared values (first row) and incremental improvements (second row) for different GMF combi-
+nations: (a) IDR1, (b) IDR2, and (c) IDR3.
+As the number of GMFs increases, the improvement in R2 generally decreases, indicating that a repre-
+sentative subset of GMFs is adequate to capture the variability in seismic responses. Negative increments
+in R2 observed in some cases may indicate potential overfitting when excessive GMFs are included. The
+optimal number of GMFs for identifying the critical GMFs is selected based on a threshold of ∆R2 < 0.001,
+7
+
+--- Sayfa 8 ---
+ensuring adequate representation while avoiding overfitting. Among the combinations satisfying this crite-
+rion, the one maximizing R2 is selected as the optimal GMF set, highlighted with dashed lines in the first
+row of Figure 5 and listed in Table 3.
+To examine the impact of training dataset size on the identification of critical GMFs, we repeat the
+identification process using training set sizes of 200 and 300 samples, respectively. The same procedure
+described earlier is applied. Table 3 lists the identified GMFs for each EDP under training set sizes of 200
+and 300 samples in addition to the 100 samples. While some variations in critical GMFs are observed,
+similar GMFs are consistently selected across different training set sizes. Based on these results, Figure 6
+summarizes the frequencies of GMFs identified as critical, showing that eight features are consistently
+identified: spectral shape, PGV, PGD, Sdeff, Sveff, Sd(T1), Saeff, and Sageo. These GMFs form xGMF,
+effectively representing ground motion variability in the proposed framework. These selections align well
+with previous literature [2, 38, 39, 43, 44], which analyzed the effect of ground motion on the peak response
+of structures.
+Table 3: Critical GMFs identified for each EDP across different training set sizes.
+Training
+set size
+EDP
+Number of
+GMFs
+Identified GMFs
+100
+IDR1
+3
+PGV
+Spectral shape
+Sveff
+IDR2
+5
+PGV
+PGD
+Sa(T1)
+Spectral shape
+Sdeff
+IDR3
+6
+PGV
+PGD
+Spectral shape
+Sageo
+Sveff
+Sdeff
+200
+IDR1
+6
+PGV
+PGD
+Spectral shape
+Sveff
+Sdeff
+Sageo
+IDR2
+5
+PGV
+PGD
+Sd(T1)
+Saeff
+Sdeff
+IDR3
+5
+PGD
+PGV/PGA
+Spectral shape
+Saeff
+IA
+300
+IDR1
+4
+PGV
+Sd(T1)
+Sveff
+Sdeff
+IDR2
+6
+PGV
+PGD
+Sd(T1)
+Spectral shape
+Sageo
+Sveff
+IDR3
+6
+PGA
+PGD
+Spectral shape
+Sd(T1)
+Saeff
+Sdeff
+Figure 6: Frequencies of GMFs identified as critical. This histogram summarizes the GMFs selected across multiple
+training set sizes, highlighting the eight features chosen for the proposed framework.
+Based on comprehensive numerical investigations and a thorough literature review, this study identifies
+eight critical GMFs using a three-story MDOF system and a specific ground motion set. These GMFs
+are deemed sufficient to capture the variability in seismic responses for commonly configured structural
+systems subjected to ground motion sets compatible with a general design spectrum. Consequently, the
+identified GMFs are utilized throughout this manuscript. Nevertheless, if the proposed framework is applied
+to complex structural systems with unique ground motion sets, it is required to identify new critical GMFs
+following the procedure outlined in this section.
+8
+
+--- Sayfa 9 ---
+3.3. Algorithm for identifying probability density of failure modes
+Inspired by the ISNS algorithm [28], a failure mode identification framework is proposed. The failure mode
+identification procedure, illustrated in Figure 7, proceeds through the following steps:
+Figure 7: Illustration of the algorithm for identifying the probability density of failure modes.
+1. Probabilistic transformation: Input variables are transformed into the standard Gaussian space
+using the Nataf model [45], leading to uncorrelated standard Gaussian variables, u′ = [uGMF, uS].
+This transformation ensures that GMFs and structural parameters are represented in a space with
+rotational symmetry, facilitating efficient exploration of failure domains. GMFs are transformed using
+empirical cumulative distribution functions (CDFs) derived from the dataset of 523 ground motions
+introduced in Section 3.1. These transformed variables serve as the input space for subsequent analyses.
+2. Component limit state modeling: Using a subset of the total samples in the pervious step (e.g.,
+30%), GP surrogate models, ˆgk(u′), are constructed for each structural component. The role of the
+surrogate models is to approximate their respective limit state functions. These models enable efficient
+identification of failure domains and are integrated with n-ball sampling. Details of the of GP modeling
+are provided in Appendix A.
+3. Adaptive learning: An active learning strategy is implemented to iteratively update the GP models
+by selecting training points that maximize information gain. In other words, new points are chosen from
+the total sample set, combined with the previously used training points, and subsequently utilized to
+retrain the GP models. This approach reduces redundant RHAs and enhances computational efficiency.
+The optimal training point, u′
+∗, is identified by minimizing a composite learning criterion:
+u′
+∗= arg min
+u′
+α(u′) = arg min
+u′
+|µˆgct(u′)|
+σˆgct(u′) ,
+(3)
+where µˆgct(u′) and σˆgct(u′) are respectively the GP mean and standard deviation of the most critical
+limit state function (indexed by ct), defined as the function with the smallest |µˆgi(u′)| for i = 1, ..., Nc.
+This criterion consolidates multiple components into a single learning function. The training dataset
+is iteratively updated with RHA evaluations at u′
+∗until the convergence criterion, min α(u′) > 2, is
+met.
+4. Failure point identification using n-ball sampling: Uniform samples are generated within an
+n-dimensional hypersphere of radius R, where n represents the dimension of u′. The joint probability
+density function (PDF) of the n-ball samples is defined as hb(u′) = 1/Vb(R) when ∥u′∥2 ≤R, and
+hb(u′) = 0 otherwise, where Vb(R) denotes the volume of the hypersphere. Within the n-ball domain,
+failure points with occurrence probabilities below Φ(−R), where Φ is the standard Gaussian CDF, are
+identified. In other words, the n-ball samples, denoted as Ub = {u′
+i, i = 1, ..., nb}, are evaluated using
+GP models to identify failure points associated with each failure mode. The identified failure points
+for the i-th failure mode are expressed as:
+UFi = {u′ ∈Ub : u′ ∈ˆΩ(u′|Fi)} ,
+(4)
+9
+
+--- Sayfa 10 ---
+where ˆΩ(u′|Fi) represents the GP-predicted failure domain for mode Fi (defined by replacing g with
+ˆg in Eqs. (1) and (2). Note that the radius of hypersphere R is defined based on the decision-maker’s
+preference to establish trivial cases of failure modes.
+5. Probability density construction for failure modes: The probability density of each failure mode
+is approximated using a Gaussian mixture model [46] fitted to the n-ball samples within the identified
+failure regions, UFi. For the i-th failure mode, the density describing the samples UFi is expressed as:
+ˆfFi(u′) =
+nm
+X
+k=1
+φi
+kfN(u′; µi
+k; Σi
+k) ,
+(5)
+where fN is the Gaussian PDF, nm is the number of mixture components, and φi
+k, µi
+k, and Σi
+k
+are the mixture weights, mean vectors, and covariance matrices, respectively, determined using the
+expectation-maximization algorithm.
+Starting from 200 initial training points, the adaptive algorithm selects 97 more samples to construction
+GP models, i.e., results up to Step 3 in the framework. Figure 8 presents scatter plots of the three limit
+states, gi, against their GP predictions, ˆgi, constructed using 297 training samples. The trained GP models
+exhibit high predictive performance, with R2 values of 0.9535, 0.8630, and 0.7301 for the 1st, 2nd, and 3rd
+limit states, respectively.
+Utilizing nb = 107 samples generated within an n-ball of radius R = 6.0 and nm = 3, the framework
+identifies five critical failure modes: F1, F2, F3, F4, F7, as summarized in Table 4. For simplicity, the
+cap notation is omitted in the third column of the table. The probability densities of these modes serve
+as the sampling distributions for balanced dataset construction. Note that failure modes with occurrence
+probabilities below Φ(−6.0) = 9.8 × 10−10 are considered trivial and excluded from the analysis. To explore
+failure modes with extremely low probabilities, one can increase the radius of the n-ball sampling and
+enhance the variability of the sample set in Step 1.
+Figure 8: Scatter plots of true limit state values against GP predictions for the MDOF building structure:
+(a) 1st story, (b) 2nd story, and (c) 3rd story. The solid line represents perfect agreement between predictions and
+observations, while the dashed line indicates the failure threshold.
+Table 4: Failure modes identified for the MDOF building structure.
+Case
+Mode index (i)
+Failure mode (Fi)
+1
+1
+
+C1C2C3
+	
+2
+2
+
+C1C2C3
+	
+3
+3
+
+C1C2C3
+	
+4
+4
+
+C1C2C3
+	
+5
+7
+{C1C2C3}
+10
+
+--- Sayfa 11 ---
+3.4. Balanced dataset construction via scaling factor optimization
+Once the failure-mode-specific samples are obtained in the standard Gaussian space, they must be trans-
+formed into the domain of ground motion time histories to construct the balanced dataset. This task is
+important as the generated samples which follow the probability density shown in Eq (5), x′ = [xGMF, xS]
+do not directly correspond to the ground motion time histories x = [xGM, xS].
+To address this issue, a scaling factor optimization process is proposed. Scaling is a widely accepted
+practice in earthquake engineering, enabling the modification of ground motions to achieve desired charac-
+teristics from a finite dataset [35, 38, 44]. The objective of this process is to determine an optimal scaling
+factor and corresponding ground motion that minimize the discrepancy between the GMFs derived from
+the scaled ground motion and the generated sample x′ = [xGMF, xS]. The mismatch is quantified using the
+root mean squared error (RMSE), defined as:
+εj(γ) = RMSE
+
+xj
+GMF(γ), xGMF
+
+,
+(6)
+where j ∈{1, ..., ndata} indexes the ground motions in the dataset (ndata = 523 in this study), γ is the
+scaling factor, and xj
+GM(γ) represents the GMFs derived from the j-th ground motion scaled by factor γ.
+The optimal scaling factor for each ground motion, γj
+∗, is obtained by solving:
+γj
+∗= arg min
+γ
+εj(γ) .
+(7)
+Figure 9 illustrates an instance of the convergence history of the scaling factor optimization. Figure 9(a)
+presents the evolution of the scaling factor over iterations, while Figure 9(b) depicts the corresponding
+convergence history of the RMSE. In this case, an optimal scaling factor of γj
+∗= 2.529 is identified, achieving
+a minimal RMSE of 0.147.
+Figure 9: Convergence histories of (a) scaling factor and (b) RMSE during optimization.
+This optimization is performed for all ndata ground motions in the dataset. Among these, the ground
+motion corresponding to the overall minimum error is selected as:
+j∗=
+arg min
+j=1,...,ndata
+εj(γj
+∗) .
+(8)
+The reconstructed ground motion corresponding to the selected index is then expressed as:
+xrecon
+GM = xj∗
+GM(γj∗
+∗) .
+(9)
+This process ensures that each generated sample x′ is associated with a physically meaningful reconstructed
+ground motion. By iterating over all generated samples, the framework constructs a balanced dataset in
+the original parameter space. The reconstructed ground motions, combined with their associated structural
+parameters, form the final dataset as x = [xrecon
+GM , xS]. Note that in this process, the maximum scaling factor
+is limited to 7 to prevent excessive distortion of the original ground motion characteristics.
+11
+
+--- Sayfa 12 ---
+RHAs are performed on this reconstructed dataset to evaluate the distribution of failure modes. Figure 10
+illustrates the reconstructed dataset, which appropriately captures the identified failure modes reported in
+Table 4. Note that inherent approximation errors arising from the reconstruction of ground motions during
+scaling factor optimization lead to minor deviations in the sample distribution across failure modes. As
+a result, for the five critical failure modes F1, F2, F3, F4, and F7, a total of 242, 200, 199, 237, and 180
+samples are generated, respectively. Also, note that 250 samples corresponding to the non-failure (safe) case
+are selected from MCS results. These results confirm that the proposed framework provides an effective
+distribution of samples across critical failure modes, including rare scenarios, addressing the limitations of
+the imbalanced dataset shown in Figure 4.
+Figure 10: Histogram of failure modes obtained using the proposed framework. This represents a balanced dataset
+that ensures sufficient representation across identified critical failure modes.
+3.5. DNN prediction: balanced vs. imbalanced datasets
+To evaluate the effectiveness of the balanced dataset, two distinct DNN models are trained using both
+balanced and imbalanced datasets, respectively, based on the proposed architecture shown in Figure 1. The
+input and output dimensions of the DNN models are 11 × 1 and 3 × 1, respectively.
+To mitigate the issue of overfitting, we employ different numbers of units in the hidden layers while
+maintaining the same number of hidden layers (i.e., three hidden layers) for the two DNN models. Specifi-
+cally, the DNN model trained with the imbalanced dataset consists of 16, 8, and 4 units in its hidden layers,
+whereas the model trained with the balanced dataset consists of 32, 16, and 8 units. Each dataset is first
+split into training and test subsets, with 80% allocated for training and 20% for testing. The DNN models
+are trained for 2,000 epochs using the training dataset by minimizing the binary cross-entropy loss function
+with the Adam optimizer.
+Tables 5 and 6 present the prediction accuracy of the trained DNN models. Table 5 reports the accuracy
+of the model trained on the imbalanced dataset, while Table 6 shows the accuracy of the model trained on
+the balanced dataset. To further evaluate model performance, each DNN model is also tested on the opposite
+dataset. In particular, Table 5 includes results for the imbalanced model tested on the balanced dataset,
+whereas Table 6 shows the performance of the balanced model tested on the imbalanced dataset.
+Two key observations are found from these results. First, there is no strong evidence of overfitting in
+either model. Second, the model trained on the balanced dataset demonstrates higher accuracy compared
+to the one trained on the imbalanced dataset. Notably, the imbalanced model performs poorly when tested
+on the balanced dataset, whereas the balanced model maintains comparable accuracy, as shown in Table 6,
+when tested on the imbalanced dataset. This discrepancy arises because the majority of samples in the
+imbalanced dataset correspond to the safe case [0 0 0], leading to a common misclassification where the
+model predicts [0 0 0] even when the true label indicates failure.
+12
+
+--- Sayfa 13 ---
+Table 5: Prediction accuracy of DNN model trained using imbalanced dataset.
+Imbalanced dataset
+Balanced dataset
+Training set
+88.8%
+28.7%
+Test set
+85.7%
+24.4%
+Table 6: Prediction accuracy of DNN model trained using balanced dataset.
+Imbalanced dataset
+Balanced dataset
+Training set
+87.6%
+92.4%
+Test set
+87.6%
+89.7%
+Since the objective of this examination is to demonstrate the effectiveness of the balanced dataset instead
+of proposing a highly optimized DNN architecture for precise failure mode prediction, a simple architecture
+is sufficient. However, if the goal is to achieve higher predictive accuracy, one could improve performance
+by utilizing the entire acceleration history and incorporating advanced deep learning models such as trans-
+formers [47].
+4. Numerical investigations
+The accuracy and effectiveness of the proposed balanced dataset construction framework are demonstrated
+through numerical investigations of two finite element structural models: a nine-story steel building and a
+three-story moment-resisting frame (MRF) structure. The nine-story steel building is introduced to illustrate
+the framework’s applicability to more complex structural systems compared to the three-story shear-type
+structure discussed in the previous section. Additionally, the framework is applied to the three-story MRF
+structure subjected to a synthetic ground motion set, demonstrating not only its applicability to high-fidelity
+numerical models but also its robustness across different ground motion datasets.
+4.1. Nine-story steel building structure
+4.1.1. Structural model and random variables
+A nine-story steel building structure, adopted from the SAC Phase II steel project [48] is modeled in
+OpenSees [37]. Figure 11 illustrates the configuration of the structure, which has a width of 45.73 m and a
+total height of 37.19 m. Column splices are located at the first, third, fifth, and seventh levels to resist uplift
+forces during seismic excitations, and the basement is laterally restrained to prevent horizontal displacement.
+Concrete foundation walls and surrounding soil provide additional lateral confinement at the base of the
+structure. To capture the nonlinear force-displacement behavior of beams and columns, a bilinear material
+model is employed. Furthermore, a fiber model is utilized to define the cross-sections of beams and columns.
+Six structural parameters summarized in Table 7 are treated as random variables. Considering the rigid
+diaphragm effect, each story is treated as an individual component when defining failure modes. Treating
+each story as a component is widely adopted in structural resilience analysis research [28, 49]. Component
+failure is defined as the IDR exceeding the threshold of 1.5%. Given that the building structure consists of
+nine components (i.e., 9 stories), the total number of potential failure modes is NF = 511 (29 −1).
+13
+
+--- Sayfa 14 ---
+Figure 11: Nine-story steel building model.
+Table 7: Probabilistic distributions of uncertain parameters for the nine-story steel building.
+Variable
+Mean
+CoV
+Distribution
+Damping ratio (%)
+3
+0.20
+Lognormal
+Modulus of elasticity (MPa)
+200,000
+0.10
+Lognormal
+Yield strength for beam (MPa)
+248
+0.15
+Lognormal
+Yield strength for column (MPa)
+345
+0.15
+Lognormal
+Strain hardening ratio for beam
+0.01
+0.25
+Lognormal
+Strain hardening ratio for column
+0.01
+0.25
+Lognormal
+4.1.2. Failure mode identification and balanced dataset construction
+The 523 spectrum-compatible ground motions introduced in Section 3.1 are employed along with the eight
+critical GMFs from Section 3.2, to characterize aleatoric uncertainties. Following the procedure described in
+Section 3.3, GP surrogate models are initially trained using 150 initial samples. Subsequently, 65 additional
+samples are adaptively selected to refine the GP models. Figure 12 illustrates the scatter plots of true
+limit state values compared to their GP predictions, which demonstrates high accuracy. The refined models
+achieve R2 values of 0.9355, 0.9370, 0.9445, 0.9489, 0.9439, 0.9282, 0.9042, 0.8760, and 0.8643 for the first
+through ninth story limit states, respectively.
+By setting the algorithm parameters as nb = 107, R = 5.0 and nm = 3, the framework identifies 11
+critical failure modes, as summarized in Table 8. For simplicity, the mode indices in the table represent
+combinations of failed components instead of a numerical sequence. For example, F7,8 denotes a failure
+mode where only the seventh and eighth stories fail, while other stories remain intact. Due to the strong
+correlation of story drifts in building structures, multi-story failures are observed more frequently than
+single- or bi-component failures. A balanced dataset is constructed by uniformly generating 250 samples
+for each failure mode, resulting in a total of 2,750 samples. These samples are transformed into the ground
+motion time history domain through the scaling factor optimization process described in Section 3.4.
+Figure 13 compares the failure mode distributions from the imbalanced dataset (obtained via MCS) and
+the balanced dataset (generated by the proposed framework). For clarity, Figure 13(a) includes only failure
+modes that occurred at least once in the MCS results. The MCS dataset is heavily skewed toward non-failure
+cases, with only a small fraction of samples representing various failure modes. In contrast, the proposed
+framework identifies 11 critical failure modes and constructs a balanced dataset that provides equitable
+representation across these modes. While the MCS dataset includes 18 failure modes, the additional modes
+14
+
+--- Sayfa 15 ---
+are rare events outside the n-ball domain with occurrence probabilities below Φ(−5) = 2.8 × 10−7 and are
+excluded as non-critical in the balanced dataset. Additionally, 250 samples corresponding to the non-failure
+(safe) case are included from the MCS results in the balanced dataset. The findings demonstrate that the
+proposed framework effectively addresses the data imbalance issue commonly encountered in traditional
+MCS-based approaches, particularly for high-fidelity structural models with a large number of potential
+component failures.
+Figure 12: Scatter plots of true limit state values against GP predictions for the nine-story steel building.
+The solid line represents perfect agreement between predictions and observations, while the dashed line indicates the failure
+threshold.
+Table 8: Failure modes identified for the nine-story steel building.
+Case
+Mode index (i)
+Failure mode (Fi)
+1
+8
+
+C1C2C3C4C5C6C7C8C9
+	
+2
+7,8
+
+C1C2C3C4C5C6C7C8C9
+	
+3
+8,9
+
+C1C2C3C4C5C6C7C8C9
+	
+4
+2,3,4
+
+C1C2C3C4C5C6C7C8C9
+	
+5
+7,8,9
+
+C1C2C3C4C5C6C7C8C9
+	
+6
+1,2,3,4
+
+C1C2C3C4C5C6C7C8C9
+	
+7
+6,7,8,9
+
+C1C2C3C4C5C6C7C8C9
+	
+8
+1,2,3,4,5
+
+C1C2C3C4C5C6C7C8C9
+	
+9
+1,2,3,4,5,6
+
+C1C2C3C4C5C6C7C8C9
+	
+10
+1,2,3,4,5,6,7,8
+
+C1C2C3C4C5C6C7C8C9
+	
+11
+1,2,3,4,5,6,7,8,9
+{C1C2C3C4C5C6C7C8C9}
+15
+
+--- Sayfa 16 ---
+Figure 13: Comparison of failure mode distributions for the nine-story steel building: (a) imbalanced dataset
+from MCS and (b) balanced dataset generated by the proposed framework.
+4.1.3. DNN model performance: balanced vs. imbalanced datasets
+Due to the presence of nine components in the structure, the input and output dimensions are adjusted to
+17 × 1 and 9 × 1, respectively. Furthermore, the number of units in the hidden layers of the DNN model
+trained on the balanced dataset is configured as 64, 32, and 16 for the first, second, and third hidden
+layers, respectively. The DNN models are trained on both imbalanced and balanced datasets using the same
+training environments described in Section 3.5. Tables 9 and 10 present the accuracy of the DNN model
+trained on the imbalanced and balanced datasets, respectively. The prediction accuracy of the DNN models
+when tested on the opposite dataset is also reported.
+The prediction accuracy of the DNN model trained on the imbalanced dataset decreases to approximately
+1/12 when tested on the balanced dataset. This result is inversely proportional to the number of safe cases
+and failure modes represented in the balanced dataset. The primary reason for this is that the DNN model
+trained on the imbalanced dataset tends to predict the safe mode regardless of the input data. Furthermore,
+it is observed that the model classifies every failure mode as a safe case within the imbalanced dataset. This
+occurs because the safe case constitutes approximately 95% of the dataset, leading the model to favor the
+majority class and potentially overlook minority class instances.
+In contrast, the DNN model trained on the balanced dataset demonstrates better prediction accuracy
+across both datasets over the other DNN model. Furthermore, its accuracy in predicting failure modes in the
+balanced dataset reaches approximately 46%, confirming that a model trained on a balanced dataset is more
+effective in identifying failure modes with extremely low probabilities of occurrence. The lower prediction
+accuracy of 46%, compared to the value reported in the third row of Table 10, can be attributed to the
+presence of several failure modes in the imbalanced dataset that are not included in the balanced dataset.
+However, given the prediction accuracy of the DNN model trained on the balanced dataset, the input data
+used to develop the DNN model may not be insufficient for accurately predicting failure modes, particularly
+in structures with a substantial number of components. The primary reason for this is that the number
+of failure modes increases exponentially as the number of components grows, requiring more information
+to properly predict the state of each component. Therefore, further research is required to systematically
+determine the optimal input features for predicting failure modes, especially in such complex cases. Note
+that the objective of this study is to highlight the importance of using a balanced dataset over an imbalanced
+one, rather than to propose the optimal input dataset and architecture for failure mode prediction.
+16
+
+--- Sayfa 17 ---
+Table 9: Prediction accuracy of DNN model trained using imbalanced dataset for the nine-story steel building.
+Imbalanced dataset
+Balanced dataset
+Training set
+95.2%
+9.3%
+Test set
+94.3%
+8.2%
+Table 10: Prediction accuracy of DNN model trained using balanced dataset for the nine-story steel building.
+Imbalanced dataset
+Balanced dataset
+Training set
+94.5%
+76.9%
+Test set
+92.4%
+71.3%
+4.2. Three-story steel MRF structure subjected to synthetic ground motions
+The second numerical investigation evaluates the framework’s performance using synthetic ground motions,
+demonstrating its robustness to different sets of ground motions and structural systems. To this end, a
+three-story steel MRF structure, adopted from the SAC joint venture project [48], is modeled in OpenSees.
+Figure 14(a) illustrates the configuration of the three-story building structure.
+Similar to the previous
+numerical investigation, the ”uniaxialMaterial” command is utilized to capture the material nonlinearity,
+while the fiber section approach is employed for section modeling. Further details can be found in Ohtori
+et al.[48].
+Synthetic motions are generated using the stochastic ground motion model developed by Yanni et al.[50],
+which simulates a filtered stochastic process modulated by two envelope functions and incorporates baseline
+correction for zero residual velocity and displacement. Similar to the recorded motion case, these motions
+are calibrated to a target spectrum following Section 3.1 with seismic hazard parameters corresponding to
+an earthquake magnitude of 6.5, rupture distance of 10 km, average shear wave velocity of 450 m/s, a normal
+faulting mechanism, and the California region. A total of 1,000 synthetic ground motions are generated,
+and their response spectra are presented in Figure 14(b).
+Similar to Section 4.1, each story is treated as an individual component in defining the failure mode.
+Structural component failure is characterized by IDR exceeding the threshold of 1.7%, resulting in NF = 7
+possible failure modes. Epistemic uncertainties in structural parameters are summarized in Table 11, while
+the eight critical GMFs are employed to account for aleatoric uncertainties.
+Figure 14: (a) Three-story steel MRF model and (b) response spectra of generated synthetic ground motions
+with the target spectrum. Figure (b) shows 100 response spectra with the median and 2.5%-97.5% quantiles of the target
+spectrum superimposed.
+17
+
+--- Sayfa 18 ---
+Table 11: Probabilistic distributions of uncertain parameters for the three-story MRF structure.
+Variable
+Mean
+CoV
+Distribution
+Damping ratio (%)
+3
+0.20
+Lognormal
+Modulus of elasticity (MPa)
+200000
+0.10
+Lognormal
+Yield strength for beam (MPa)
+248
+0.15
+Lognormal
+Yield strength for column (MPa)
+345
+0.15
+Lognormal
+Strain hardening ratio for beam
+0.01
+0.25
+Lognormal
+Strain hardening ratio for column
+0.01
+0.25
+Lognormal
+The proposed framework is initialized with 200 training samples, followed by the adaptive selection of 109
+additional points to identify the probability density of each failure mode. Figure 15 presents scatter plots
+of GP predictions against true limit state values, demonstrating high predictive accuracy with R2 values of
+0.8941, 0.9431, and 0.8687 for the first, second, and third story limit states, respectively. Using parameters
+of nb = 107, R = 6.0, and nm = 3, the framework identifies five critical failure modes, as summarized in
+Table 12.
+To construct balanced datasets, 250 samples are uniformly generated for each failure mode (a total of
+1,250 samples) and transformed into the ground motion time history domain using the scaling factor opti-
+mization process. Figure 16 compares the failure mode distributions from the imbalanced dataset obtained
+via MCS with the balanced dataset generated by the proposed framework. In the balanced dataset, 250
+non-failure (safe) samples are also included, extracted from the MCS results. These findings confirm the
+framework’s capability to ensure improved representation across failure modes, addressing challenges posed
+by imbalanced datasets in traditional seismic analyses.
+Figure 15: Scatter plots of true limit state values against GP predictions for the three-story MRF structure:
+(a) 1st story, (b) 2nd story, and (c) 3rd story. The solid line represents perfect agreement between predictions and
+observations, while the dashed line indicates the failure threshold.
+Table 12: Failure modes identified for the three-story MRF structure.
+Case
+Mode index (i)
+Failure mode (Fi)
+1
+2
+
+C1C2C3
+	
+2
+3
+
+C1C2C3
+	
+3
+5
+
+C1C2C3
+	
+4
+6
+
+C1C2C3
+	
+5
+7
+{C1C2C3}
+18
+
+--- Sayfa 19 ---
+Figure 16: Comparison of failure mode distributions for the three-story MRF structure: (a) imbalanced dataset
+from MCS and (b) balanced dataset generated by the proposed framework.
+Using the same architecture and training environments described in Section 3.5, two DNN models are
+trained on the imbalanced and balanced datasets, respectively.
+As in previous investigations, Table 13
+presents the accuracy of the model trained on the imbalanced dataset, while Table 14 reports the accuracy
+of the model trained on the balanced dataset. Additionally, each DNN model is tested on the opposite
+dataset.
+Similar results are observed, demonstrating that the proposed framework maintains consistent
+performance across different types of ground motions, with comparable effectiveness for both synthetic and
+recorded ground motion sets.
+Table 13: Prediction accuracy of DNN model trained using imbalanced dataset for the three-story MRF struc-
+ture.
+Imbalanced dataset
+Balanced dataset
+Training set
+95.6%
+25.7%
+Test set
+96.4%
+23.1%
+Table 14: Prediction accuracy of DNN model trained using balanced dataset for the three-story MRF structure.
+Imbalanced dataset
+Balanced dataset
+Training set
+98.1%
+95.2%
+Test set
+97.5%
+93.8%
+5. Conclusions
+This study proposed a framework for constructing a balanced dataset to facilitate training machine learning
+(or deep learning) models for predicting structural failure modes under seismic excitations. The framework
+achieved this by introducing three key methodologies. First, a procedure was developed to identify critical
+ground motion features (GMFs) that effectively capture the variability in structural responses. Second,
+an adaptive algorithm based on Gaussian processes was designed to efficiently estimate the probability
+densities of failure modes while accounting for both epistemic and aleatoric uncertainties. Third, a scaling
+factor optimization process was implemented to transform generated samples from the critical GMF space
+to the ground motion time history domain without compromising the physical characteristics of seismic
+excitations. The framework’s effectiveness was demonstrated by training deep neural network (DNN) models
+on both balanced and imbalanced datasets. Two numerical investigations including nine-story and three-
+story building structures validated the framework’s applicability to complex structural systems and its
+19
+
+--- Sayfa 20 ---
+robustness across different sets of ground motions. Results consistently indicate higher prediction accuracy
+for models trained on the balanced dataset, highlighting the merits of the proposed framework in improving
+machine learning performance for structural failure mode prediction. Further research includes two key areas.
+First, while this study employed a simple DNN architecture for classifying the failure modes, future research
+can explore the integration of advanced deep learning models, such as transformers [4] or graph neural
+networks [19], to further improve the prediction accuracy. Second, integrating the framework with reliability-
+based design optimization [51] and resilience assessment [52] can broaden its utility in risk-informed decision-
+making and seismic resilience analysis.
+Acknowledgments
+This research was supported by the National Research Foundation of Korea grant funded by the Korea
+government (MSIT) (RS-2023-00242859). This research was also supported by the Basic Science Research
+Program through the National Research Foundation of Korea funded by the Ministry of Education (RS-
+2024-00407901). These supports are gratefully acknowledged.
+Appendix A. Fundamentals of GP modeling
+A Gaussian process (GP) provides a probabilistic framework for modeling responses f(x) as realizations of
+a stochastic process [53]. The GP model is defined as:
+f(x) ∼GP (µf(x), kf (x, x′; θ)) ,
+(A.1)
+where µf(x) is the mean function, kf(x, x′) is the covariance kernel function, and θ represents hyperparam-
+eters defining the kernel’s structure.
+In practice, observations often include Gaussian noise, leading to y = f(x) + ε, where ε ∼N(0, σ2
+n).
+Given n training samples XD = [x1, ..., xn]T and corresponding observations YD = [y1, ..., yn]T , the hyper-
+parameters θ can be estimated by maximizing the log marginal likelihood:
+ln p(YD|XD, θ) = −1
+2YT
+D(Kf + σ2
+nI)−1YD −1
+2 ln |Kf + σ2
+nI| −n
+2 ln 2π ,
+(A.2)
+where Kf is the covariance matrix with elements Kfij = kf(xi, xj), and I is the identity matrix.
+Once trained, the GP model predicts the response at a new input x∗. The predictive mean and variance
+are:
+µ ˆY (x∗) = kT
+f∗(Kf + σ2
+nI)−1YD ,
+(A.3)
+σ2
+ˆY (x∗) = kf∗∗−kT
+f∗(Kf + σ2
+nI)−1kf∗,
+(A.4)
+where kf∗is the covariance vector between x∗and the training points, and kf∗∗is the self-covariance of
+x∗. The GP model not only provides predictions through µ ˆY (x∗) but also quantifies the uncertainty via
+σ2
+ˆY (x∗), making it suitable for applications requiring uncertainty-aware modeling and active learning.
+References
+[1] X. Lu, H. Burton, and M. Nakashima. Ai and data-driven methods in earthquake engineering. Earthquake Engineering
+& Structural Dynamics, 51(7):1589–1590, 2022.
+[2] T. Kim, O.S. Kwon, and J. Song.
+Deep learning-based response spectrum analysis method for building structures.
+Earthquake Engineering & Structural Dynamics, 53(4):1638–1655, 2024.
+[3] S. Oh, J. Song, and T. Kim. Deep learning-based modularized loading protocol for parameter estimation of bouc-wen
+class models. arXiv preprint arXiv:2411.02776, 2024.
+[4] Q. Zhang, M. Guo, L. Zhao, Y. Li, X. Zhang, and M. Han. Transformer-based structural seismic response prediction. In
+Structures, volume 61, page 105929. Elsevier, 2024.
+[5] J. Kim and T. Kim. Efficient seismic fragility analysis considering uncertainties in structural systems and ground motions.
+Earthquake Engineering & Structural Dynamics, 54(1):206–226, 2025.
+20
+
+--- Sayfa 21 ---
+[6] M. Mojtahedi and B.L. Oo. Critical attributes for proactive engagement of stakeholders in disaster risk management.
+International journal of disaster risk reduction, 21:35–43, 2017.
+[7] P. Kalakonas and V. Silva. Seismic vulnerability modelling of building portfolios using artificial neural networks. Earth-
+quake Engineering & Structural Dynamics, 51(2):310–327, 2022.
+[8] N. Wang, M. Wu, and K.F. Yuen. Assessment of port resilience using bayesian network: A study of strategies to enhance
+readiness and response capacities. Reliability Engineering & System Safety, 237:109394, 2023.
+[9] B.R. Ellingwood and K. Kinali. Quantifying and communicating uncertainty in seismic risk assessment. Structural safety,
+31(2):179–187, 2009.
+[10] G. Cremen and C. Galasso. A decision-making methodology for risk-informed earthquake early warning. Computer-Aided
+Civil and Infrastructure Engineering, 36(6):747–761, 2021.
+[11] A. Amini, A. Abdollahi, and M.A. Hariri-Ardebili. An automated machine-learning-assisted stochastic-fuzzy multi-criteria
+decision making tool: Addressing record-to-record variability in seismic design. Applied Soft Computing, 154:111354, 2024.
+[12] J. Kim and Z. Wang.
+Uncertainty quantification for seismic response using dimensionality reduction-based stochastic
+simulator. Earthquake Engineering & Structural Dynamics, 54(2):471–490, 2025.
+[13] H. Hao, K. Bi, W. Chen, T.M. Pham, and J. Li. Towards next generation design of sustainable, durable, multi-hazard
+resistant, resilient, and smart civil engineering structures. Engineering Structures, 277:115477, 2023.
+[14] J. Kim, S. Yi, and J. Song. Active learning-based optimization of structures under stochastic excitations with first-passage
+probability constraints. Engineering Structures, 307:117873, 2024.
+[15] Z. Tan, S. Qin, K. Hu, W. Liao, Y. Gao, and X. Lu. Intelligent generation and optimization method for the retrofit design
+of rc frame structures using buckling-restrained braces. Earthquake Engineering & Structural Dynamics, 54(2):530–547,
+2025.
+[16] S. Mangalathu and J.S. Jeon.
+Machine learning–based failure mode recognition of circular reinforced concrete bridge
+columns: Comparative study. Journal of Structural Engineering, 145(10):04019104, 2019.
+[17] H. Naderpour, M. Mirrashid, and P. Parsa. Failure mode prediction of reinforced concrete columns using machine learning
+methods. Engineering Structures, 248:113263, 2021.
+[18] A.B. Kabir, A.S. Hasan, and M. Billah. Failure mode identification of column base plate connection using data-driven
+machine learning techniques. Engineering Structures, 240:112389, 2021.
+[19] M. Kim, J. Song, and C.W. Kim. Near-real-time damage identification under vehicle loads using dynamic graph neural
+network based on proper orthogonal decomposition. Mechanical Systems and Signal Processing, 224:112175, 2025.
+[20] S. Kim and T. Kim. Machine-learning-based prediction of vortex-induced vibration in long-span bridges using limited
+information. Engineering Structures, 266:114551, 2022.
+[21] E. Jafarigol and T. Trafalis. A review of machine learning techniques in imbalanced data and future trends. arXiv preprint
+arXiv:2310.07917, 2023.
+[22] Q. Zhou, Y. Qi, H. Tang, and P. Wu. Machine learning-based processing of unbalanced data sets for computer algorithms.
+Open Computer Science, 13(1):20220273, 2023.
+[23] X. Yuan, S. Wang, T. Qu, H. Feng, P. Liu, J. Zeng, and X. Chen.
+Learning the hard-to-learn: Active learning for
+imbalanced datasets in data-centric tunnel engineering. Computers and Geotechnics, 174:106629, 2024.
+[24] C.X. Qu, Y.T. Yang, H.M. Zhang, T.H. Yi, and H.N. Li. Two-stage anomaly detection for imbalanced bridge data by
+attention mechanism optimisation and small sample augmentation. Engineering Structures, 327:119613, 2025.
+[25] D.S. Kim, S.Y. Ok, J. Song, and H.M. Koh. System reliability analysis using dominant failure modes identified by selective
+searching technique. Reliability Engineering & System Safety, 119:316–331, 2013.
+[26] Y. Jiang, L. Zhao, M. Beer, L. Wang, and J. Zhang. Dominant failure mode analysis using representative samples obtained
+by multiple response surfaces method. Probabilistic Engineering Mechanics, 59:103005, 2020.
+[27] X. Guan, Z. Xiang, Y. Bao, and H. Li. Structural dominant failure modes searching method based on deep reinforcement
+learning. Reliability Engineering & System Safety, 219:108258, 2022.
+[28] J. Kim, S. Yi, J. Park, and T. Kim.
+Efficient system reliability–based disaster resilience analysis of structures using
+importance sampling. Journal of Engineering Mechanics, 150(11):04024081, 2024.
+[29] Y.J. Park and A.H.S. Ang. Mechanistic seismic damage model for reinforced concrete. Journal of structural engineering,
+111(4):722–739, 1985.
+[30] Applied Technology Council. Quantification of building seismic performance factors (FEMA P695). US Department of
+Homeland Security, FEMA, 2009.
+[31] J. Kim, S. Yi, and Z. Wang. Dimensionality reduction can be used as a surrogate model for high-dimensional forward
+uncertainty quantification. arXiv preprint arXiv:2402.04582, 2024.
+[32] American Society of Civil Engineers. Minimum design loads and associated criteria for buildings and other structures
+(ASCE/SEI 7-22), 2022.
+[33] D.M. Boore, J.P. Stewart, E. Seyhan, and G.M. Atkinson. NGA-West2 equations for predicting PGA, PGV, and 5%
+damped PSA for shallow crustal earthquakes. Earthquake Spectra, 30(3):1057–1085, 2014.
+[34] J.W. Baker and N. Jayaram. Correlation of spectral acceleration values from NGA ground motion models. Earthquake
+Spectra, 24(1):299–317, 2008.
+[35] Jack W Baker and Cynthia Lee. An improved algorithm for selecting ground motions to match a conditional spectrum.
+Journal of Earthquake Engineering, 22(4):708–723, 2018.
+[36] T.D. Ancheta, R.B. Darragh, J.P. Stewart, E. Seyhan, W.J. Silva, B.S. Chiou, K.E. Wooddell, R.W. Graves, A.R. Kottke,
+D.M. Boore, et al. NGA-West2 database. Earthquake Spectra, 30(3):989–1005, 2014.
+[37] F. McKenna.
+OpenSees: a framework for earthquake engineering simulation.
+Computing in Science & Engineering,
+13(4):58–66, 2011.
+21
+
+--- Sayfa 22 ---
+[38] J.E. Padgett, B.G. Nielson, and R. DesRoches. Selection of optimal intensity measures in probabilistic seismic demand
+models of highway bridge portfolios. Earthquake engineering & structural dynamics, 37(5):711–725, 2008.
+[39] T. Kim, O.S. Kwon, and J. Song. Clustering-based adaptive ground motion selection algorithm for efficient estimation of
+structural fragilities. Earthquake Engineering & Structural Dynamics, 50(6):1755–1776, 2021.
+[40] G.W. Housner. Intensity of earthquake ground shaking near the causative fault. In Proc. of 3rd World Conference on
+Earthquake Engineering, pages 94–115, 1965.
+[41] P.P. Cordova, G.G. Deierlein, S.F. Mehanny, and C.A. Cornell. Development of a two-parameter seismic intensity measure
+and probabilistic assessment procedure. In The second US-Japan workshop on performance-based earthquake engineering
+methodology for reinforced concrete building structures, volume 20, page 0, 2000.
+[42] A. Arias. A measure of earthquake intensity. Seismic design for nuclear plants, pages 438–483, 1970.
+[43] J. Hu, B. Liu, and L. Xie. An unsupervised machine learning based ground motion selection method for computationally
+efficient estimation of seismic fragility. Earthquake Engineering & Structural Dynamics, 52(8):2360–2383, 2023.
+[44] J.Y. Ding and D.C. Feng. Feature selection of ground motion intensity measures for data-driven surrogate modeling of
+structures. Earthquake Engineering & Structural Dynamics, 53(3):1216–1237, 2024.
+[45] A. Der Kiureghian. Structural and system reliability. Cambridge University Press, 2022.
+[46] D.A. Reynolds et al. Gaussian mixture models. Encyclopedia of biometrics, 741(659-663), 2009.
+[47] A. Vaswani. Attention is all you need. Advances in Neural Information Processing Systems, 2017.
+[48] Y. Ohtori, R.E. Christenson, B.F. Spencer, and S.J. Dyke. Benchmark control problems for seismically excited nonlinear
+buildings. Journal of engineering mechanics, 130(4):366–385, 2004.
+[49] T. Kim and S. Yi. Accelerated system-reliability-based disaster resilience analysis for structural systems. Structural Safety,
+109:102479, 2024.
+[50] H. Yanni, M. Fragiadakis, and I.P. Mitseas. Probabilistic generation of hazard-consistent suites of fully non-stationary
+seismic records. Earthquake Engineering & Structural Dynamics, 2024.
+[51] J. Kim and J. Song. Quantile surrogates and sensitivity by adaptive gaussian process for efficient reliability-based design
+optimization. Mechanical Systems and Signal Processing, 161:107962, 2021.
+[52] S. Yi and T. Kim. System-reliability-based disaster resilience analysis for structures considering aleatory uncertainties in
+external loads. Earthquake Engineering & Structural Dynamics, 52(15):4939–4963, 2023.
+[53] C.K.I. Williams and C.E. Rasmussen. Gaussian processes for machine learning, volume 2. MIT press Cambridge, MA,
+2006.
+22

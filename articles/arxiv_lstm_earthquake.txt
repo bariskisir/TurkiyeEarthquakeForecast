@@ -1,0 +1,1012 @@
+
+--- Sayfa 1 ---
+Impact of the Hubble tension on the r −ns contour
+Jun-Qian Jiang, a,b Gen Ye,c Yun-Song Piaoa,b,d,e
+aSchool of Fundamental Physics and Mathematical Sciences, Hangzhou Institute for Advanced
+Study, UCAS, Hangzhou 310024, China
+bSchool of Physics, University of Chinese Academy of Sciences, Beijing 100049, China
+cLeiden University, Instituut-Lorentz for Theoretical Physics, 2333CA, Leiden, Netherlands
+dInternational Center for Theoretical Physics Asia-Pacific, Beijing/Hangzhou, China
+eInstitute of Theoretical Physics, Chinese Academy of Sciences, P.O. Box 2735, Beijing 100190,
+China
+E-mail: jiangjq2000@gmail.com, ye@lorentz.leidenuniv.nl,
+yspiao@ucas.ac.cn
+Abstract: The injection of early dark energy (EDE) before the recombination, a possible
+resolution of the Hubble tension, will not only shift the scalar spectral index ns towards
+ns = 1, but also be likely to tighten the current upper limit on tensor-to-scalar ratio r.
+In this work, with the latest CMB datasets (Planck PR4, ACT, SPT and BICEP/Keck),
+as well as BAO and SN, we confirm this result, and discuss its implication on inflation.
+We also show that if we happen to live with EDE, how the different inflation models
+currently allowed would be distinguished by planned CMB observations, such as CMB-S4
+and LiteBIRD.
+arXiv:2303.12345v2  [astro-ph.CO]  19 Mar 2024
+
+--- Sayfa 2 ---
+Contents
+1
+Introduction
+1
+2
+Results with current data
+2
+2.1
+Datasets and models
+2
+2.2
+Results
+4
+3
+Forecast with CMB-S4 and LiteBIRD
+6
+4
+Conclusion
+8
+A Priors for cosmological parameters
+9
+B Results for nt and αs
+9
+C On noise power spectrum and delensing
+10
+D Marginalized posterior distributions for all cosmological parameters
+12
+1
+Introduction
+Inflation is a current paradigm of the very early universe, predicting a nearly scale-invariant
+primordial scalar perturbation and primordial gravitational wave (GW). A combined anal-
+ysis of the CMB observations by Planck with other datasets showed the scalar spectral
+index ns = 0.965 ± 0.004 (68% CL) [1], while its combination with the recent BICEP/Keck
+dataset showed tensor-to-scalar ratio r < 0.036 (95% CL) [2]. However, both results are
+based on the ΛCDM model, and cosmological model-dependent.
+Recently, some inconsistencies in cosmological observations have been suggested, see
+e.g.
+Refs.[3, 4] for recent reviews.
+The most well-known is the Hubble tension, which
+have inspired the exploring beyond ΛCDM model, e.g.[5–12].
+In the early dark energy
+(EDE) resolution [13, 14] of the Hubble tension, a unknown EDE component before the
+recombination lowered the sound horizon rs =
+R
+cs
+H(z)dz, where cs and H(z) is the sound
+speed and Hubble parameter before the recombination respectively, so that H0 is lifted,
+which, however, also brings an unforeseen effect on our understanding on inflation.
+It has been found that the injection of EDE 1 will alter the results of ns [15–19],
+specially if H0 ≳72 km/s/Mpc, ns will be shifted to ns = 1 (|ns −1| ∼O(0.001))[20],
+and the current limit on tensor-to-scalar ratio r [21], see also [22–24] for studies on the
+possibilities of ns = 1. Thus some inflation models that had been considered possible in
+1Actually, “EDE" corresponds to EDE+ΛCDM, which is only a pre-recombination modification to
+ΛCDM, and the evolution after the recombination must still be ΛCDM-like.
+– 1 –
+
+--- Sayfa 3 ---
+the ΛCDM model might be excluded, while some inflation models which had been excluded
+might be reconsidered as possible. However, it is interesting to ask whether the result on
+r −ns is still credible with the Planck PR4 [25], as well as latest ACT [26], SPT-3G [27, 28]
+dataset. In this work, we will investigate this issue.
+It is expected that cosmological observations would have the ability to discriminate
+between different inflation models if their precision becomes high enough. In upcoming
+decade, the Simons Observatory[29], CMB-S4[30], as well as the LiteBIRD satellite[31],
+will play significant roles in improving the constraint on r −ns. The combination of CMB-
+S4 and LiteBIRD will be able to reach σ(ns) ∼0.005 and σ(r) < 10−3.
+This forecast is
+obtained assuming AdS-EDE, in which the potential is ϕ4-like but with an anti-de Sitter
+(AdS) phase [20], but we expect this should be similar for other EDE models.
+Here, we
+also will show how different inflation models allowed by the present observations can be
+distinguished by upcoming CMB-S4 and LiteBIRD experiments.
+The outline of paper is as follows. We show in section 2 the impact of EDE on the
+current constraint on r −ns and its implication for inflation. The abilities of CMB-S4
+and LiteBIRD with EDE is forecasted in section 3. We conclude in section 4. The priors
+for all cosmological parameters employed in our analysis are shown in Appendix A. In
+Appendix B, we present the results with the tensor spectral index nt and running of scalar
+spectral index αs. The details on noise power spectrum and delensing used in our forecast
+are shown in Appendix C and posterior distributions for all cosmological parameters are
+shown in Appendix D.
+2
+Results with current data
+2.1
+Datasets and models
+Datasets are as follows:
+• PR4: The latest release of Planck maps (PR4), with the NPIPE code [25].
+We
+take use of the hillipop likelihood [32] for high-ℓpart and lollipop [33] as low-ℓ
+polarization likelihood. As for the low-ℓTT power spectrum, we take use of the public
+commander likelihood [34]. Planck PR4 lensing likelihood [35] is included.
+• ACT: The ACTPol Data Release 4 (DR4) [26] likelihood for all TT, TE, EE power
+spectrum, which has already been marginalized over SZ and foreground emission.
+• SPT: The SPT-3G Y1 data [27] of the TE, EE power spectrum and the recent TT
+power spectrum data [28]. We take use of the likelihoods adapted for cobaya2.
+• BK18: The latest BICEP/Keck likelihood on the BB power spectrum[2].
+• BAO: The 6dF Galaxy Survey [36] and SDSS DR7 main Galaxy sample [37] for the
+low-z part.
+The eBOSS DR16 data [38], which include LRG, ELG, Quasar, Lyα
+2https://github.com/xgarrido/spt_likelihoods
+– 2 –
+
+--- Sayfa 4 ---
+auto-correlation and Lyα-Quasar cross-correlation, for the high-z part 3 . We use a
+combined likelihood with the BOSS DR12 BAO data [41].
+• SN: The uncalibrated measurement of Pantheon+ on the Type Ia supernovae (SNe
+Ia) ranging in redshift from z = 0.001 to 2.26. [42]
+In this work, for the CMB observations, we consider the combination of Planck and BI-
+CEP/Keck, and also the combination of Planck, ACT, SPT and BICEP/Keck.
+When the
+small scales of CMB spectrum can be complemented by ground-based CMB observations
+focused on small scales, we cut the PR4 TT spectrum to ℓ<1000 as there are some doubts
+about the Planck TT high-ℓpart (e.g. [43–45]). Meanwhile, it has been shown that EDE
+seems to resolve Hubble tension in this scenario.
+As we are investigating the impact of
+Hubble tension, we only focus on the scenario where Hubble tension can be resolved.
+Be-
+sides, we cut the hillipop EE likelihood to ℓ> 150 in order to avoid the correlations with
+the lollipop likelihood. BAO and SN, which do not conflict with the CMB observations,
+are included in all datasets.
+In canonical scalar field models of EDE, the EDE field is frozen initially due to the
+Hubble friction, and thus contributes extra energy before recombination, resulting in a
+lower sound horizon r∗
+s , so a higher H0, as θs = rs/DA ∼rsH0 is set precisely by CMB
+observations. As the expansion of the Universe slows down, the EDE begins to roll down and
+lose its energy. The requirement that EDE must decay fast enough to avoid disruption of the
+CMB fit has motivated different EDE models. Here, we consider the axion-like EDE [14],
+which is achieved by a scalar field with axion-like potential (see recent [46, 47] for models
+in string theory), and the AdS-EDE [20, 48, 49]. In the axion-like EDE model, the fast
+decay is achieved through an oscillation phase, which has an equation-of-state parameter
+w = 1/2 (here we consider the case n = 3 for the axion-like EDE potential). While in
+the AdS-EDE model, it is achieved through an AdS phase, which has an equation-of-state
+parameter w > 1. Here we consider an AdS-EDE with a ϕ4-like potential. In both cases,
+EDE can decay faster than the radiation. In our analysis, we use the phenomenological
+parameter zc, which means the redshift when the field starts rolling, and fEDE, which means
+the energy fraction of EDE at zc, instead of the theoretical parameters.
+The MCMC sampling is performed using Cobaya [50], while we use the modified CLASS
+[51] 4 to calculate models.
+The cosmological parameters include the six standard ΛCDM
+parameters {H0, ns, ωb, ωcdm, τreio, As}, where H0 is Hubble constant, ns is scalar spectral
+index, ωb = Ωbh2 (h = H0/100) is baryon density today, ωcdm = Ωcdmh2 is dark matter den-
+sity today, τreio is optical depth, As is the primordial curvature perturbations. In addition
+to these, we also sample on the tensor/scalar ratio r = AT
+As at the pivot scale 0.05 Mpc−1
+3Although it has been argued that there may be some inconsistency with the Lyman-α BAO data (see
+e.g. Ref.[39]), the joint constraint does not depend on whether the Lyman-α BAO data is included or not
+in the new data [40]. And we have checked that our conclusion does not depend on the selection of BAO
+data.
+4The codes are available at https://github.com/PoulinV/AxiCLASS for axion-like EDE and https:
+//github.com/genye00/class_multiscf for AdS-EDE.
+– 3 –
+
+--- Sayfa 5 ---
+and the parameters of EDE models zc and fEDE. For axion-like EDE, we also sample the
+initial phase Θini.
+2.2
+Results
+0.02
+0.04
+r
+3.02
+3.06
+3.10
+log(1010As)
+0.15
+0.16
+mh2
+0.96
+0.98
+1.00
+ns
+70
+75
+H0
+0.1
+0.2
+fEDE(zc)
+0.1
+0.2
+fEDE(zc)
+68 70 72 74
+H0
+0.96
+0.98
+1.00
+ns
+0.145
+0.160
+mh2
+3.02
+3.06
+3.10
+log(1010As)
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+CDM (PR4+ACT+SPT)
+CDM (PR4)
+Figure 1: Marginalized posterior distributions (68% and 95% confidence intervals) for
+relevant parameters in different models with different datasets. See Appendix D for all
+parameters. BK18 is included in all datasets. Constraint of R21[52] on H0 is shown as a
+gray band.
+Our results are shown in Figure 1 and Table 1.
+Since we are exploring the impact
+on the r-ns contour of EDE models in light of the Hubble tension, we choose the models
+and corresponding data set that allow enough EDE to resolve the tension, even it cannot
+degenerate to ΛCDM. In such EDE-like models 5, we have H0 ≳72km/s/Mpc, compatible
+with the recent local H0 measurement [52] (hereafter R21), see also Refs.[16, 17, 53] with
+Planck PR3, and Appendix B for the results with nt and the running αs of ns.
+Apart from the uplift of H0, another dramatic change is the shift of the ns-r contour,
+5 In the AdS-EDE model, with only PR4+BAO+SN(+BK18) dataset, H0 ≳72km/s/Mpc is acquired
+due to the existence of the AdS bound, where the field failed to climb out of the AdS potential for small
+fEDE. Therefore, the posterior will not be connected to the ΛCDM even if the parameter prior range allows
+it. However, ΛCDM is allowed in some AdS-EDE models in which the depth of AdS vacuum is varied and
+regarded as a MCMC parameter, while AdS-EDE and higher H0 are still preferred, see e.g. [48]. Here we
+take AdS-EDE with ϕ4-like potential for simplicity.
+– 4 –
+
+--- Sayfa 6 ---
+parameters
+AdSEDE (PR4+ACT+SPT)
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+log10(zc)
+3.470(3.4647)+0.022
+−0.027
+3.514(3.5022) ± 0.044
+3.540(3.4536)+0.035
+−0.041
+fEDE
+0.1193(0.11326)+0.0028
+−0.0070
+0.119(0.0967)+0.038
+−0.032
+0.1123(0.1225)+0.0040
+−0.0062
+Θini
+2.737(2.752) ± 0.087
+r
+< 0.0303
+< 0.0324
+< 0.0284
+log(1010As)
+3.070(3.0663) ± 0.011
+3.060(3.0613) ± 0.012
+3.078(3.0706) ± 0.011
+ns
+0.9966(0.99438) ± 0.0049
+0.9893(0.9857) ± 0.0063
+0.9932(0.9903)+0.0049
+−0.0044
+H0
+72.62(72.255)+0.42
+−0.51
+71.9(71.12) ± 1.3
+71.96(71.58) ± 0.50
+Ωbh2
+0.02300(0.022928) ± 0.00016
+0.02251(0.022424)+0.00015
+−0.00017
+0.02321(0.023108)+0.00018
+−0.00016
+Ωch2
+0.1365(0.13588)+0.0013
+−0.0016
+0.1319(0.12895) ± 0.0045
+0.1352(0.13622) ± 0.0018
+τreio
+0.0521(0.0505) ± 0.0060
+0.0542(0.0561) ± 0.0056
+0.0591(0.0580) ± 0.0063
+Ωm
+0.3038(0.30541) ± 0.0050
+0.2987(0.29929) ± 0.0050
+0.3072(0.3122) ± 0.0053
+S8
+0.868(0.8676) ± 0.010
+0.848(0.8448) ± 0.012
+0.871(0.8751) ± 0.011
+χ2 −χ2
+ΛCDM
+−6.0
+−11.2
+2.0
+Table 1: 68% confidence intervals for the parameters in different EDE models with different
+datasets, the best-fit values are shown in parentheses. And for the one-tailed distribution
+we show 95% confidence intervals. BK18 is included in all datasets.
+which is shown in Figure 2, specially ns is shifted close to ns = 1 6. The shift of ns is a
+common result of any prerecombination resolution (without modifying the recombination
+physics) for the Hubble tension [15]. The shift of ns with respect to H0 can be approximated
+as [15, 16]:
+δns ≈0.4δH0
+H0
+.
+(2.1)
+The upper limit of r (e.g. r < 0.028 in AdS-EDE) has been slightly lower than that under
+the ΛCDM model r < 0.330 (PR4) 7 and r < 0.0352 (PR4+ACT+SPT) This is mainly
+because the slight uplifts of ωm and As in EDE models, compared with ΛCDM, enhance
+the lensing spectrum between 200 < ℓ< 800. The constraint on r mainly comes from the
+observation of the CMB BB spectrum, where the effect of lensing is the main contributor
+in the present observational range. A larger lensing spectrum means a higher contribution,
+which in other words is smaller r after subtracting this contribution [21].
+In well-known single field slow-roll inflation models, ns follows [59–62]
+ns −1 = −O(1)
+N∗
+(2.2)
+in large N∗limit, where N∗is the e-folding number spent during inflation (Mp = 1)
+N∗≈∆N +
+Z ϕc
+ϕe
+dϕ
+√
+2ϵ =
+Z ϕ∗
+ϕc
++
+Z ϕc
+ϕe
+ dϕ
+√
+2ϵ ≈N(ϕ∗),
+(2.3)
+where ϵ = −˙H/H2 is the slow-roll parameter and ϕ∗is the value of the field at which the
+perturbation mode with k = k∗exits horizon, which sets N∗. Here ϕc is the value of the field
+when ∆N ≈60 was reached and ϕe is the value of the field when inflation ended in these
+6It has even been found that if the Hubble tension is fully resolved in such EDE models, it may suggest
+a Harrison-Zeldovich spectrum (i.e. ns = 1) [18].
+7See Table 4 for detailed values. Our results differ slightly from Ref.[54] due to the different CMB data
+combinations selected and the BAO+SN dataset.
+– 5 –
+
+--- Sayfa 7 ---
+0.95
+0.96
+0.97
+0.98
+0.99
+1.00
+1.01
+ns
+10
+4
+10
+3
+10
+2
+10
+1
+r
+AdSEDE (PR4+ACT+SPT)
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+CDM (PR4)
+p inflation
+hybird 
+p inflation (p > 2
+3 )
+Starobinski inflation
+hybird Starobinski inflation
+Figure 2: The r-ns contour for different models and different combinations of datasets. We
+also plot the predictions of some inflation models on ns and r. The yellow line and the blue
+band represent Starobinski inflation [55] and ϕp inflation, respectively, with 50 ⩽N∗⩽60.
+The dashed yellow line and the cyan band correspond to their hybrid variants where the
+inflation ended in a deep slow-roll region so that N∗≫60. The left bound (p = 2/3) of
+the cyan band is associated with the monodromy inflation [56, 57] and the right bound
+(p →∞) is associated with the power-law inflation [58].
+models. Thus both ns and r are related to N∗rather than ∆N. It is usually thought that
+inflation ended at ϕe when the slow-roll condition breaks down, we have N∗= ∆N ≈60
+(inflation ends around ∼1015GeV). However, if inflation ended prematurely at ϕc during
+the slow-roll regime when ϵ ≪1, we will have N∗≫60 but still ∆N ≈60 [63, 64].
+It is interestingly found that some inflation models, such as the power-law inflation
+[58] and the ϕp inflation [56, 57, 65, 66], which were disfavored in the ΛCDM model, are
+now compatible with the EDE, see Figure 2. In such inflation models, the inflation might
+end up by a waterfall instability, which is similar to the hybrid inflation [67, 68], at a deep
+slow-roll region ϵ ≪1, so that N∗≫60. The perturbation modes near N∗can be just
+at CMB band, so we have |ns −1| ≪O(0.01). See also e.g. [69–72] for recent significant
+endeavors in inflation model with ns = 1.
+3
+Forecast with CMB-S4 and LiteBIRD
+It is also significant to investigate the impact of EDE on the constraining power of CMB-S4
+and LiteBIRD. The CMB-S4 [73] will cover the sky area of fsky = 0.4, so 20 < ℓ< 5000 for
+CMB, while the LiteBIRD [31] is a satellite covering a larger sky area. Here, we assume
+fsky = 0.9 (so 2 < ℓ< 200) for LiteBIRD, and also set ℓmin = 200 for CMB-S4 to avoid the
+– 6 –
+
+--- Sayfa 8 ---
+correlation between them. And relevant noise power spectrum and delensing are presented
+in Appendix C.
+We use the Fisher matrix to make predictions.
+The Fisher matrix is the expectation
+of the Hessian of the log-likelihood [74]:
+Fij = ⟨Hij⟩=
+∂2 ln L
+∂θi∂θj
+
+=
+X
+ℓ
+Tr
+∂Cℓ
+∂θi
+C−1
+ℓ
+∂Cℓ
+∂θj
+C−1
+ℓ
+
+(3.1)
+where CXY
+ℓ
+≡
+  2ℓ+1
+2 fsky
+−1/2  CXY
+ℓ
++ NℓδXY 
+is the covariance matrix. X, Y represent T,
+E, B respectively, fsky is the fraction of the sky, and Cℓ, Nℓis the power spectrum and
+noise curve (defined in Appendix C) respectively. Thus we can estimate the parameter
+probability covariance matrix: C = [F]−1.
+0.98
+0.99
+1.00
+ns
+10
+4
+10
+3
+r
+CMB-S4
+CMB-S4 + LiteBIRD
+0.98
+0.99
+1.00
+ns
+10
+3
+10
+2
+r
+p inflation
+hybird 
+p inflation (p > 2
+3 )
+hybird Starobinski inflation
+Figure 3: The forecasted r-ns contours with CMB-S4 and CMB S4+LiteBIRD in AdSEDE.
+Based on the bestfit results of AdSEDE for PR4+BK18, we fix r to 0 (left) and 0.003 (right).
+We also plot the predictions of some inflation models on ns and r, the same as Figure 2.
+Here, we assume AdS-EDE as the fiducial cosmological model. And set the cosmological
+parameters to the best-fit values 8 based on the PR4+BK18 dataset. The detailed values
+are shown in Table 2. We then considered different r as the fiducial values. The results are
+shown in Figure 3, where we set r = 0 (left) and r = 0.003 (right) respectively.
+The ϕp
+inflation (p > 2/3) and the power-law inflation with a hybrid end will be ruled out at 2σ
+8When searching for the best-fit values, we fixed r = 0 as we expect that r ≲0.003 will not have a
+significant impact on the other parameters.
+– 7 –
+
+--- Sayfa 9 ---
+parameters
+values
+log10(zc)
+3.512
+fEDE
+0.112
+log(1010As)
+3.076
+ns
+0.9916
+H0
+71.92
+Ωbh2
+0.02317
+Ωch2
+0.1362
+τreio
+0.0578
+Table 2: The fiducial values for the cosmological parameters used to create the forecast.
+level, if r is still undetected, while the Starobinski inflation with N∗≈300 is consistent,
+since
+r = 12
+N2∗
+∼O(1/104).
+(3.2)
+However, if r = 0.003, which would be detected by CMB-S4 and LiteBIRD, the ϕp inflation
+(p > 2/3), power-law inflation and Starobinski inflation all will be ruled out at 2σ level,
+only the ϕp inflation with p < 2/3 with a hybrid end might survive.
+4
+Conclusion
+It has been widely thought that the conflicts in cosmological observations imply modifica-
+tions beyond ΛCDM model. However, such modifications, specially the injection of EDE
+before the recombination, might be bringing a unforeseen impact on searching for primordial
+GW and setting the value of ns, so our perspective on inflation.
+Here, with the latest CMB datasets, we found for EDE that |ns−1| ≲O(0.01), while the
+upper limit of r is also slightly tighten, r < 0.028 with Planck PR4+BK18 and r < 0.030
+with Planck PR4+ACT+SPT+BK18 dataset, which is consistent with the results with
+Planck PR3+BK18 [21]. In light of our constraint on r −ns, the inflation models allowed
+by the results in the ΛCDM model, such as Starobinski inflation, will be excluded. However,
+in corresponding models satisfying (2.2), if inflation ends by a waterfall instability when
+inflaton is still at a deep slow-roll region, ns can be lifted close to ns = 1, so that the inflation
+models which have been ruled out, such as the ϕp inflation, and also the Starobinski model
+become possible again with their hybrid variants. It is also interesting to explore other
+models with |ns −1| ≲O(0.01).
+In upcoming decade, the combination of the CMB-S4[30] and the LiteBIRD satellite[31]
+will be able to reach σ(ns) ∼0.005 and σ(r) < 10−3. Here, we also show that the different
+inflation models allowed by the present observations (if we happen to live with EDE) would
+be distinguished by both experiments.
+Here, we only force the Hubble tension in our analysis. However, it is important to
+note that there are also many inconsistencies in other cosmological observations, such as
+S8 tension.
+Some of them call for the modification to the ΛCDM model (see e.g.[3, 4]
+– 8 –
+
+--- Sayfa 10 ---
+for reviews), and may also affect the r −ns contour in Figure 2, which will impact our
+perspective on the inflation models. Therefore, it is worth questioning the relevant issues
+beyond just the Hubble tension.
+Acknowledgments
+This work is supported by the NSFC No.12075246, the Fundamental Research Funds for
+the Central Universities.
+A
+Priors for cosmological parameters
+parameters
+priors
+r
+[0, 0.5]
+ln(1010As)
+[1.61, 3.91]
+ns
+[0.8, 1.2]
+H0
+[20, 100]
+ωb
+[0.005, 0.1]
+ωcdm
+[0.05, 0.99]
+τreio
+[0.01, 0.8]
+log10(1 + zc)
+[2, 4.5]
+fEDE
+[0, 0.3]
+Θi
+[0, 3.1]
+nt
+[−10, 10]
+αs
+[−0.1, 0.1]
+Table 3: Priors for cosmological parameters used in this work. All of them are flat priors
+for corresponding parameters. log10(1 + zc) and fEDE are only used for EDE models. Θi
+are only used for the axion-like EDE model. ns and αs are only used in Appendix B.
+B
+Results for nt and αs
+In Figure 4, we present the result for the spectral tilt nt of primordial GW and the running
+of scalar spectral index αs = dns/dk. We imposed the flat priors on both nt and αs. We
+did not find the significant effects of EDE on the observations of nt and αs. The main
+difference on αs is attributed to the different combination of CMB datasets.
+However, when we switch from (rpivot, nt) to (rk1, rk2) through
+rk = rpivot
+
+k
+kpivot
+nt−ns+1
+(B.1)
+with k1 = 0.002Mpc−1 and k1 = 0.02Mpc−1, in light of Planck18 [75].
+We find their
+discrepancy on r2, as shown in Figure 5, which is constrained to r2 < 0.0457 and r2 < 0.0566
+(95% CL) for AdSEDE and axion-like EDE, respectively, with the PR4+ACT+SPT CMB
+– 9 –
+
+--- Sayfa 11 ---
+0
+4
+8
+nt
+0.96
+0.98
+1.00
+ns
+0.02
+0.00
+0.02
+s
+0.2
+0.4
+0.6
+0.8
+r
+0.2
+0.4
+0.6
+0.8
+r
+0.02 0.00
+0.02
+s
+0.96
+0.98
+1.00
+ns
+AdSEDE (PR4+ACT+SPT)
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+CDM (PR4)
+CDM (PR4+ACT+SPT)
+Figure 4: Marginalized posterior distributions (68% and 95% confidence intervals) for rel-
+evant parameters under different models and datasets. BK18 is included in all the dataset.
+dataset while r2 < 0.0424 (95% CL) for AdSEDE with the PR4 CMB dataset.
+Their
+values are lower than r2 < 0.0653 (95% CL) for ΛCDM with the PR4 CMB dataset and
+r2 < 0.0656 (95% CL) with the PR4+ACT+SPT CMB dataset. These discrepancy is more
+significant than that of rpivot. The main reason is that in EDE the lensing spectrum at this
+scale (ℓ∼250) is larger [21].
+C
+On noise power spectrum and delensing
+In section 3 we investigate the impact of EDE on the constraining power of CMB-S4 and
+LiteBIRD. The noise power spectrum Nℓfor CMB-S4 is taken from the wiki of CMB-S4. 9
+And for LiteBIRD, we consider a noise curve of
+NXY
+ℓ
+= s2 exp
+
+ℓ(ℓ+ 1)θ2
+FWHM
+8 log 2
+
+,
+(C.1)
+where the temperature noise is s = 2µK-arcmin, θFWHM = 30 arcmin for the full-width
+half-maximum beam size [76], and the polarization noise has additional factor
+√
+2.
+9https://cmb-s4.uchicago.edu/wiki/index.php/Survey_Performance_Expectations
+– 10 –
+
+--- Sayfa 12 ---
+0.005 0.010 0.015
+r0.002
+0.96
+0.98
+1.00
+ns
+0.02
+0.00
+0.02
+s
+0.02
+0.06
+0.10
+r0.02
+0.02
+0.06
+0.10
+r0.02
+0.02 0.00
+0.02
+s
+0.96
+0.98
+1.00
+ns
+AdSEDE (PR4+ACT+SPT)
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+CDM (PR4)
+CDM (PR4+ACT+SPT)
+Figure 5: Marginalized posterior distributions (68% and 95% confidence intervals) for
+relevant parameters under different models and datasets. BK18 is included from all the
+dataset.
+Delensing on the CMB maps can help improve constraints on r as well as reduce the
+effects of the cosmological models on the lensing, specially the EDE model. We simply
+model it as
+Cℓ= ALClensed
+ℓ
++ (1 −AL)Cunlensed
+ℓ
+(C.2)
+for the Cℓin Equation 3.1. The delensing efficiency factor AL = 0.27 is considered for
+CMB-S4 10 and AL = 0.57 for LiteBIRD [76]. In addition, we model the effects of thermal
+dust [77] and synchrotron [78] for those polarisation noise power spectrums which have not
+yet taken the foreground into account as
+Adust ℓ−2.42,
+Asynch ℓ−2.3,
+(C.3)
+respectively, where Adust and Asynch will be regarded as the nuisance parameters and be
+marginalised away.
+10https://cmb-s4.uchicago.edu/wiki/index.php/Estimates_of_delensing_efficiency
+– 11 –
+
+--- Sayfa 13 ---
+D
+Marginalized posterior distributions for all cosmological parameters
+0.02
+0.05
+r
+0.04
+0.06
+reio
+3.05
+3.10
+log(1010As)
+0.0225
+0.0235
+bh2
+0.12
+0.13
+0.14
+ch2
+0.96
+0.98
+1.00
+ns
+70
+75
+H0
+0.1
+0.2
+fEDE(zc)
+2.5
+3.0
+ini
+3.6
+3.8
+log10 (zc)
+3.6
+3.8
+log10 (zc)
+2.5
+3.0
+ini
+0.1
+0.2
+fEDE(zc)
+70
+75
+H0
+0.97
+1.00
+ns
+0.124 0.141
+ch2
+0.023
+bh2
+3.05 3.10
+log(1010As)
+0.04
+0.07
+reio
+axion-like EDE (PR4+ACT+SPT)
+AdSEDE (PR4+ACT+SPT)
+AdSEDE (PR4)
+CDM (PR4+ACT+SPT)
+CDM (PR4)
+Figure 6: Marginalized posterior distributions (68% and 95% confidence intervals) for all
+cosmological parameters in different models with different datasets. BK18 is included in all
+datasets. Constraint of R21[52] on H0 is shown as a gray band.
+parameters
+ΛCDM (PR4+ACT+SPT)
+ΛCDM (PR4)
+r
+< 0.0352
+r < 0.0330
+log(1010As)
+3.046(3.0376) ± 0.011
+3.048(3.0424) ± 0.011
+ns
+0.9736(0.97236) ± 0.0034
+0.9645(0.96627) ± 0.0038
+H0
+67.68(67.546) ± 0.34
+67.31(67.395) ± 0.38
+Ωbh2
+0.02231(0.022304) ± 0.00010
+0.02224(0.022257) ± 0.00012
+Ωch2
+0.11865(0.11887) ± 0.00079
+0.11956(0.11928) ± 0.00084
+τreio
+0.0575(0.0515) ± 0.0057
+0.0603(0.0575) ± 0.0059
+Ωm
+0.3092(0.31084) ± 0.0047
+0.3144(0.3130) ± 0.0051
+S8
+0.8220(0.8209) ± 0.0090
+0.8302(0.8256) ± 0.0095
+Table 4: 68% confidence intervals for the parameters in ΛCDM model with different
+datasets, the best-fit values are shown in parentheses. And for the one-tailed distribution
+we show 95% confidence intervals. BK18 is included in all datasets.
+– 12 –
+
+--- Sayfa 14 ---
+References
+[1] Planck Collaboration, N. Aghanim et al., Planck 2018 results. VI. Cosmological parameters,
+Astron. Astrophys. 641 (2020) A6, [arXiv:1807.06209]. [Erratum: Astron.Astrophys. 652,
+C4 (2021)].
+[2] BICEP, Keck Collaboration, P. A. R. Ade et al., Improved Constraints on Primordial
+Gravitational Waves using Planck, WMAP, and BICEP/Keck Observations through the 2018
+Observing Season, Phys. Rev. Lett. 127 (2021), no. 15 151301, [arXiv:2110.00483].
+[3] L. Perivolaropoulos and F. Skara, Challenges for ΛCDM: An update, New Astron. Rev. 95
+(2022) 101659, [arXiv:2105.05208].
+[4] E. Abdalla et al., Cosmology intertwined: A review of the particle physics, astrophysics, and
+cosmology associated with the cosmological tensions and anomalies, JHEAp 34 (2022)
+49–211, [arXiv:2203.06142].
+[5] E. Di Valentino, A. Melchiorri, and J. Silk, Planck evidence for a closed Universe and a
+possible crisis for cosmology, Nature Astron. 4 (2019), no. 2 196–203, [arXiv:1911.02087].
+[6] W. Handley, Curvature tension: evidence for a closed universe, Phys. Rev. D 103 (2021),
+no. 4 L041301, [arXiv:1908.09139].
+[7] E. Di Valentino, A. Melchiorri, and J. Silk, Reconciling Planck with the local value of H0 in
+extended parameter space, Phys. Lett. B 761 (2016) 242–246, [arXiv:1606.00634].
+[8] E. Mörtsell and S. Dhawan, Does the Hubble constant tension call for new physics?, JCAP
+09 (2018) 025, [arXiv:1801.07260].
+[9] S. Vagnozzi, New physics in light of the H0 tension: An alternative view, Phys. Rev. D 102
+(2020), no. 2 023518, [arXiv:1907.07569].
+[10] L. Knox and M. Millea, Hubble constant hunter’s guide, Phys. Rev. D 101 (2020), no. 4
+043533, [arXiv:1908.03663].
+[11] E. Di Valentino, A. Melchiorri, O. Mena, and S. Vagnozzi, Nonminimal dark sector physics
+and cosmological tensions, Phys. Rev. D 101 (2020), no. 6 063502, [arXiv:1910.09853].
+[12] N. Schöneberg, G. Franco Abellán, A. Pérez Sánchez, S. J. Witte, V. Poulin, and
+J. Lesgourgues, The H0 Olympics: A fair ranking of proposed models, Phys. Rept. 984
+(2022) 1–55, [arXiv:2107.10291].
+[13] T. Karwal and M. Kamionkowski, Dark energy at early times, the Hubble parameter, and the
+string axiverse, Phys. Rev. D 94 (2016), no. 10 103523, [arXiv:1608.01309].
+[14] V. Poulin, T. L. Smith, T. Karwal, and M. Kamionkowski, Early Dark Energy Can Resolve
+The Hubble Tension, Phys. Rev. Lett. 122 (2019), no. 22 221301, [arXiv:1811.04083].
+[15] G. Ye, B. Hu, and Y.-S. Piao, Implication of the Hubble tension for the primordial Universe
+in light of recent cosmological data, Phys. Rev. D 104 (2021), no. 6 063510,
+[arXiv:2103.09729].
+[16] J.-Q. Jiang and Y.-S. Piao, Toward early dark energy and ns=1 with Planck, ACT, and SPT
+observations, Phys. Rev. D 105 (2022), no. 10 103514, [arXiv:2202.13379].
+[17] T. L. Smith, M. Lucca, V. Poulin, G. F. Abellan, L. Balkenhol, K. Benabed, S. Galli, and
+R. Murgia, Hints of early dark energy in Planck, SPT, and ACT data: New physics or
+systematics?, Phys. Rev. D 106 (2022), no. 4 043526, [arXiv:2202.09379].
+– 13 –
+
+--- Sayfa 15 ---
+[18] J.-Q. Jiang, G. Ye, and Y.-S. Piao, Return of Harrison-Zeldovich spectrum in light of recent
+cosmological tensions, arXiv:2210.06125.
+[19] J. S. Cruz, F. Niedermann, and M. S. Sloth, A grounded perspective on new early dark energy
+using ACT, SPT, and BICEP/Keck, JCAP 02 (2023) 041, [arXiv:2209.02708].
+[20] G. Ye and Y.-S. Piao, Is the Hubble tension a hint of AdS phase around recombination?,
+Phys. Rev. D 101 (2020), no. 8 083507, [arXiv:2001.02451].
+[21] G. Ye and Y.-S. Piao, Improved constraints on primordial gravitational waves in light of the
+H0 tension and BICEP/Keck data, Phys. Rev. D 106 (2022), no. 4 043536,
+[arXiv:2202.10055].
+[22] E. Di Valentino, A. Melchiorri, Y. Fantaye, and A. Heavens, Bayesian evidence against the
+Harrison-Zel’dovich spectrum in tensions with cosmological data sets, Phys. Rev. D 98
+(2018), no. 6 063508, [arXiv:1808.09201].
+[23] W. Giarè, F. Renzi, O. Mena, E. Di Valentino, and A. Melchiorri, Is the Harrison-Zel’dovich
+spectrum coming back? ACT preference for ns ∼1 and its discordance with Planck, Mon.
+Not. Roy. Astron. Soc. 521 (2023), no. 2 2911–2918, [arXiv:2210.09018].
+[24] R. Calderón, A. Shafieloo, D. K. Hazra, and W. Sohn, On the consistency of ΛCDM with
+CMB measurements in light of the latest Planck, ACT and SPT data, JCAP 08 (2023) 059,
+[arXiv:2302.14300].
+[25] Planck Collaboration, Y. Akrami et al., Planck intermediate results. LVII. Joint Planck
+LFI and HFI data processing, Astron. Astrophys. 643 (2020) A42, [arXiv:2007.04997].
+[26] ACT Collaboration, S. K. Choi et al., The Atacama Cosmology Telescope: a measurement of
+the Cosmic Microwave Background power spectra at 98 and 150 GHz, JCAP 12 (2020) 045,
+[arXiv:2007.07289].
+[27] SPT-3G Collaboration, D. Dutcher et al., Measurements of the E-mode polarization and
+temperature-E-mode correlation of the CMB from SPT-3G 2018 data, Phys. Rev. D 104
+(2021), no. 2 022003, [arXiv:2101.01684].
+[28] SPT-3G Collaboration, L. Balkenhol et al., Measurement of the CMB temperature power
+spectrum and constraints on cosmology from the SPT-3G 2018 TT, TE, and EE dataset,
+Phys. Rev. D 108 (2023), no. 2 023510, [arXiv:2212.05642].
+[29] Simons Observatory Collaboration, P. Ade et al., The Simons Observatory: Science goals
+and forecasts, JCAP 02 (2019) 056, [arXiv:1808.07445].
+[30] CMB-S4 Collaboration, K. N. Abazajian et al., CMB-S4 Science Book, First Edition,
+arXiv:1610.02743.
+[31] LiteBIRD Collaboration, M. Hazumi et al., LiteBIRD: JAXA’s new strategic L-class
+mission for all-sky surveys of cosmic microwave background polarization, Proc. SPIE Int.
+Soc. Opt. Eng. 11443 (2020) 114432F, [arXiv:2101.12449].
+[32] F. Couchot, S. Henrot-Versillé, O. Perdereau, S. Plaszczynski, B. Rouillé d’Orfeuil,
+M. Spinelli, and M. Tristram, Cosmology with the cosmic microwave background
+temperature-polarization correlation, Astron. Astrophys. 602 (2017) A41,
+[arXiv:1609.09730].
+[33] M. Tristram et al., Planck constraints on the tensor-to-scalar ratio, Astron. Astrophys. 647
+(2021) A128, [arXiv:2010.01139].
+– 14 –
+
+--- Sayfa 16 ---
+[34] Planck Collaboration, N. Aghanim et al., Planck 2018 results. V. CMB power spectra and
+likelihoods, Astron. Astrophys. 641 (2020) A5, [arXiv:1907.12875].
+[35] J. Carron, M. Mirmelstein, and A. Lewis, CMB lensing from Planck PR4 maps, JCAP 09
+(2022) 039, [arXiv:2206.07773].
+[36] F. Beutler, C. Blake, M. Colless, D. H. Jones, L. Staveley-Smith, L. Campbell, Q. Parker,
+W. Saunders, and F. Watson, The 6dF Galaxy Survey: Baryon Acoustic Oscillations and the
+Local Hubble Constant, Mon. Not. Roy. Astron. Soc. 416 (2011) 3017–3032,
+[arXiv:1106.3366].
+[37] A. J. Ross, L. Samushia, C. Howlett, W. J. Percival, A. Burden, and M. Manera, The
+clustering of the SDSS DR7 main Galaxy sample – I. A 4 per cent distance measure at
+z = 0.15, Mon. Not. Roy. Astron. Soc. 449 (2015), no. 1 835–847, [arXiv:1409.3242].
+[38] eBOSS Collaboration, S. Alam et al., Completed SDSS-IV extended Baryon Oscillation
+Spectroscopic Survey: Cosmological implications from two decades of spectroscopic surveys at
+the Apache Point Observatory, Phys. Rev. D 103 (2021), no. 8 083533, [arXiv:2007.08991].
+[39] A. Cuceu, J. Farr, P. Lemos, and A. Font-Ribera, Baryon Acoustic Oscillations and the
+Hubble Constant: Past, Present and Future, JCAP 10 (2019) 044, [arXiv:1906.11628].
+[40] N. Schöneberg, L. Verde, H. Gil-Marín, and S. Brieden, BAO+BBN revisited — growing the
+Hubble tension with a 0.7 km/s/Mpc constraint, JCAP 11 (2022) 039, [arXiv:2209.14330].
+[41] BOSS Collaboration, S. Alam et al., The clustering of galaxies in the completed SDSS-III
+Baryon Oscillation Spectroscopic Survey: cosmological analysis of the DR12 galaxy sample,
+Mon. Not. Roy. Astron. Soc. 470 (2017), no. 3 2617–2652, [arXiv:1607.03155].
+[42] D. Brout et al., The Pantheon+ Analysis: Cosmological Constraints, Astrophys. J. 938
+(2022), no. 2 110, [arXiv:2202.04077].
+[43] G. E. Addison, Y. Huang, D. J. Watts, C. L. Bennett, M. Halpern, G. Hinshaw, and J. L.
+Weiland, Quantifying discordance in the 2015 Planck CMB spectrum, Astrophys. J. 818
+(2016), no. 2 132, [arXiv:1511.00055].
+[44] Planck Collaboration, N. Aghanim et al., Planck intermediate results. LI. Features in the
+cosmic microwave background temperature power spectrum and shifts in cosmological
+parameters, Astron. Astrophys. 607 (2017) A95, [arXiv:1608.02487].
+[45] P. Motloch and W. Hu, Lensinglike tensions in the Planck legacy release, Phys. Rev. D 101
+(2020), no. 8 083515, [arXiv:1912.06601].
+[46] E. McDonough and M. Scalisi, Towards Early Dark Energy in string theory, JHEP 10 (2023)
+118, [arXiv:2209.00011].
+[47] M. Cicoli, M. Licheri, R. Mahanta, E. McDonough, F. G. Pedro, and M. Scalisi, Early Dark
+Energy in Type IIB String Theory, JHEP 06 (2023) 052, [arXiv:2303.03414].
+[48] G. Ye and Y.-S. Piao, T0 censorship of early dark energy and AdS vacua, Phys. Rev. D 102
+(2020), no. 8 083523, [arXiv:2008.10832].
+[49] J.-Q. Jiang and Y.-S. Piao, Testing AdS early dark energy with Planck, SPTpol, and LSS
+data, Phys. Rev. D 104 (2021), no. 10 103524, [arXiv:2107.07128].
+[50] J. Torrado and A. Lewis, Cobaya: Code for Bayesian Analysis of hierarchical physical
+models, JCAP 05 (2021) 057, [arXiv:2005.05290].
+– 15 –
+
+--- Sayfa 17 ---
+[51] D. Blas, J. Lesgourgues, and T. Tram, The Cosmic Linear Anisotropy Solving System
+(CLASS) II: Approximation schemes, JCAP 07 (2011) 034, [arXiv:1104.2933].
+[52] A. G. Riess et al., A Comprehensive Measurement of the Local Value of the Hubble Constant
+with 1 km s−1 Mpc−1 Uncertainty from the Hubble Space Telescope and the SH0ES Team,
+Astrophys. J. Lett. 934 (2022), no. 1 L7, [arXiv:2112.04510].
+[53] A. La Posta, T. Louis, X. Garrido, and J. C. Hill, Constraints on prerecombination early
+dark energy from SPT-3G public data, Phys. Rev. D 105 (2022), no. 8 083519,
+[arXiv:2112.10754].
+[54] M. Tristram et al., Improved limits on the tensor-to-scalar ratio using BICEP and Planck
+data, Phys. Rev. D 105 (2022), no. 8 083524, [arXiv:2112.07961].
+[55] A. A. Starobinsky, A New Type of Isotropic Cosmological Models Without Singularity, Phys.
+Lett. B 91 (1980) 99–102.
+[56] E. Silverstein and A. Westphal, Monodromy in the CMB: Gravity Waves and String
+Inflation, Phys. Rev. D 78 (2008) 106003, [arXiv:0803.3085].
+[57] L. McAllister, E. Silverstein, and A. Westphal, Gravity Waves and Linear Inflation from
+Axion Monodromy, Phys. Rev. D 82 (2010) 046003, [arXiv:0808.0706].
+[58] L. F. Abbott and M. B. Wise, Constraints on Generalized Inflationary Cosmologies, Nucl.
+Phys. B 244 (1984) 541–548.
+[59] V. Mukhanov, Quantum Cosmological Perturbations: Predictions and Observations, Eur.
+Phys. J. C 73 (2013) 2486, [arXiv:1303.3925].
+[60] R. Kallosh and A. Linde, Universality Class in Conformal Inflation, JCAP 07 (2013) 002,
+[arXiv:1306.5220].
+[61] D. Roest, Universality classes of inflation, JCAP 01 (2014) 007, [arXiv:1309.1285].
+[62] J. Martin, C. Ringeval, and V. Vennin, Encyclopædia Inflationaris, Phys. Dark Univ. 5-6
+(2014) 75–235, [arXiv:1303.3787].
+[63] R. Kallosh and A. Linde, Hybrid cosmological attractors, Phys. Rev. D 106 (2022), no. 2
+023522, [arXiv:2204.02425].
+[64] G. Ye, J.-Q. Jiang, and Y.-S. Piao, Toward inflation with ns=1 in light of the Hubble tension
+and implications for primordial gravitational waves, Phys. Rev. D 106 (2022), no. 10 103528,
+[arXiv:2205.02478].
+[65] A. D. Linde, Chaotic Inflation, Phys. Lett. B 129 (1983) 177–181.
+[66] N. Kaloper and L. Sorbo, A Natural Framework for Chaotic Inflation, Phys. Rev. Lett. 102
+(2009) 121301, [arXiv:0811.1989].
+[67] A. D. Linde, Axions in inflationary cosmology, Phys. Lett. B 259 (1991) 38–47.
+[68] A. D. Linde, Hybrid inflation, Phys. Rev. D 49 (1994) 748–754, [astro-ph/9307002].
+[69] G. D’Amico and N. Kaloper, Rollercoaster cosmology, JCAP 08 (2021) 058,
+[arXiv:2011.09489].
+[70] G. D’Amico, N. Kaloper, and A. Westphal, Double Monodromy Inflation: A Gravity Waves
+Factory for CMB-S4, LiteBIRD and LISA, Phys. Rev. D 104 (2021), no. 8 L081302,
+[arXiv:2101.05861].
+– 16 –
+
+--- Sayfa 18 ---
+[71] F. Takahashi and W. Yin, Cosmological implications of ns ≈1 in light of the Hubble tension,
+Phys. Lett. B 830 (2022) 137143, [arXiv:2112.06710].
+[72] G. D’Amico, N. Kaloper, and A. Westphal, General double monodromy inflation, Phys. Rev.
+D 105 (2022), no. 10 103527, [arXiv:2112.13861].
+[73] K. Abazajian et al., CMB-S4 Science Case, Reference Design, and Project Plan,
+arXiv:1907.04473.
+[74] G. Jungman, M. Kamionkowski, A. Kosowsky, and D. N. Spergel, Weighing the universe with
+the cosmic microwave background, Phys. Rev. Lett. 76 (1996) 1007–1010,
+[astro-ph/9507080].
+[75] Planck Collaboration, Y. Akrami et al., Planck 2018 results. X. Constraints on inflation,
+Astron. Astrophys. 641 (2020) A10, [arXiv:1807.06211].
+[76] LiteBIRD Collaboration, E. Allys et al., Probing Cosmic Inflation with the LiteBIRD
+Cosmic Microwave Background Polarization Survey, PTEP 2023 (2023), no. 4 042F01,
+[arXiv:2202.02773].
+[77] Planck Collaboration, R. Adam et al., Planck intermediate results. XXX. The angular
+power spectrum of polarized dust emission at intermediate and high Galactic latitudes,
+Astron. Astrophys. 586 (2016) A133, [arXiv:1409.5738].
+[78] S. K. Choi and L. A. Page, Polarized galactic synchrotron and dust emission and their
+correlation, JCAP 12 (2015) 020, [arXiv:1509.05934].
+– 17 –

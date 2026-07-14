@@ -1,0 +1,1786 @@
+
+--- Sayfa 1 ---
+1
+A CNN-BiLSTM Model with Attention Mechanism
+for Earthquake Prediction
+Parisa Kavianpour1, Mohammadreza Kavianpour2, Ehsan jahani1, Amin Ramezani2
+1Department of Civil Engineering, University of Mazandaran, Babolsar, Iran
+2Department of Electrical and Computer Engineering, Tarbiat Modares University, Tehran, Iran
+E-mail address: kavianpour@modares.ac.ir
+Abstract—Earthquakes, as natural phenomena, have contin-
+uously caused damage and loss of human life historically.
+Earthquake prediction is an essential aspect of any society’s
+plans and can increase public preparedness and reduce damage
+to a great extent. Nevertheless, due to the stochastic character
+of earthquakes and the challenge of achieving an efﬁcient and
+dependable model for earthquake prediction, efforts have been
+insufﬁcient thus far, and new methods are required to solve
+this problem. Aware of these issues, this paper proposes a
+novel prediction method based on attention mechanism (AM),
+convolution neural network (CNN), and bi-directional long short-
+term memory (BiLSTM) models, which can predict the number
+and maximum magnitude of earthquakes in each area of main-
+land China-based on the earthquake catalog of the region. This
+model takes advantage of LSTM and CNN with an attention
+mechanism to better focus on effective earthquake characteristics
+and produce more accurate predictions. Firstly, the zero-order
+hold technique is applied as pre-processing on earthquake data,
+making the model’s input data more proper. Secondly, to ef-
+fectively use spatial information and reduce dimensions of input
+data, the CNN is used to capture the spatial dependencies between
+earthquake data. Thirdly, the Bi-LSTM layer is employed to
+capture the temporal dependencies. Fourthly, the AM layer is
+introduced to highlight its important features to achieve better
+prediction performance. The results show that the proposed
+method has better performance and generalize ability than other
+prediction methods.
+Index Terms—Earthquake prediction, convolution neural net-
+work, LSTM, time series prediction, attention mechanism
+I. INTRODUCTION
+Earthquakes are a type of natural catastrophe that can
+be extremely devastating. They are unexpected events and
+often occur without any prior warning, imposing human and
+ﬁnancial losses to society [1]. In addition, it can cause other
+various disasters such as ﬂood and avalanche 2, tsunamis [3]
+and debris collapse [4], and also various consequences for
+the ecosystem like soil liquefaction [5] and fault rupture [6].
+According to the high rate of damage and mortality [7], [8],
+also the primary and secondary consequences of earthquakes
+[9], researchers have conducted extensive research for many
+years to increase people’s awareness of the phenomenon
+of earthquakes. They have proposed various solutions for
+earthquake prediction [10]. Timely and reasonable prediction
+is critical to prevent or reduce the destructive effects of
+this phenomenon, and it aids society in developing more
+Copyright may be transferred without notice, after which this version
+may no longer be accessible.
+accurate scenarios of the crisis process and taking measures
+to manage it. In other words, such a prediction improves the
+level of readiness and speed of action in crisis control in the
+community. An efﬁcient prediction speciﬁes the magnitude
+and geographical location of a future earthquake over a
+period of time [11]. It can save plenty lives and prevent
+severe economic losses. However, many methods have been
+proposed based on the features and parameters affecting the
+earthquake, but only a few of these works have achieved
+accurate predictions because earthquakes are a stochastic and
+complex phenomenon involving a wide range of parameters
+that are difﬁcult to analyze [12]. Mathematical modeling,
+precursor signal analysis, shallow machine learning (ML)
+techniques, and deep learning (DL) algorithms are some of
+the most popular methods in earthquake prediction research.
+Table I displays the works related to earthquake prediction
+regarding to four categories.
+In
+the
+mathematical
+modeling
+attempts
+to
+formulate
+earthquake
+prediction
+using
+various
+statistical
+and
+mathematical methods [13]. For instance, Marisa et al.
+[14] applied a Poisson hidden Markov model (PHMM)
+to predict the probability of an earthquake in Sumatra
+island. Dehghani and Fadaee [15] proposed a bivariate
+lognormal distribution-based probabilistic prediction method.
+Its parameters are adjusted using the maximum likelihood
+method. They were able to predict the probability of an
+earthquake in Tehran with a magnitude of 6.6 to 6.8 in the
+next 10 to 15 years. Kannan [16] utilizes the hypothesis of the
+spatial connection to predicting the location of earthquakes in
+six major seismic regions. Spatial connections theory states
+that earthquakes within a fault zone are related to each other.
+Statistical approaches typically need prior assumptions such
+as stationarity and linear correlation between data, while
+earthquake data are non-stationarity. Therefore, the applying
+of these methods for earthquake prediction frequently does
+not yield good results [17].
+Another branch of research focuses on precursor signals
+analysis. Radon gas emissions [18], unusual animal behavior
+[19],
+electromagnetic
+signals
+[20],
+ionospheric
+analysis
+[21], and other anomalous phenomena that may indicate an
+impending earthquake are examples of precursors. Uyeda
+et al. [20] provided short-term earthquake predictions based
+on electromagnetic signals analyses. Li and Parrot [21]
+arXiv:2112.13444v1  [cs.LG]  26 Dec 2021
+
+--- Sayfa 2 ---
+2
+claimed that ionospheric density variations could be used
+as a seismic precursor. In another study, Wikelski et al.
+[19] examined the behaviors activities of farm animals in
+order to predict the short-term earthquake. The majority
+of the mentioned techniques are reliant on the occurrence
+of particular precursors. Predictions based on precursors
+rarely produce satisfactory results because they may occur
+without any further earthquake event and are difﬁcult to detect.
+The next category of research refers to the application of
+machine learning approaches in predicting earthquake. These
+approaches
+are
+data-driven,
+non-parametric,
+and
+require
+fewer a priori assumptions. In their study, Murwantara et
+al. [22] used three different neural networks, including
+multinomial logistic regression (LR), support vector machine
+(SVM), and Naive Bayes (NB), to predict the magnitude,
+location, and depth of earthquakes in Indonesia. They
+conﬁrmed that the SVM algorithm performs better than the
+other two methods in earthquake prediction. khalil et al.
+[23] developed an earthquake prediction approach along the
+Chaman fault in Baluchistan based on a hybrid neural network
+(HNN) and SVM approach. Lin. [24] proposed probability
+backpropagation neural network (BPNN) for prediction of
+earthquake Probabilistic in Taiwan. ML approaches have a
+limited ability to learn nonlinear and complex relationships
+of earthquake data. In addition, they only can extract shallow
+features in the dataset and almost need complex feature
+engineering operations.
+DL algorithms have recently made signiﬁcant progress
+in solving a wide range of earthquake prediction problem.
+Because
+these
+models
+include
+multiple
+hidden
+layers
+and densely connected many neurons, they have a high
+generalization
+power,
+which
+has
+signiﬁcantly
+increased
+their learning ability compared to shallow network. Many
+approaches based on DL have been expanded for earthquake
+prediction, such as convolutional neural networks (CNN)
+[25] and long short-term memory (LSTM) networks [26].
+Huang et al. [25] suggested the CNN model in their research
+to predict the magnitude of the major earthquake in Taiwan
+based on image data. Jozinovi´c et al. [27] offers a CNN-based
+approach for predicting earthquake ground shaking intensity
+measurements in Italy. Li et al. [28] introduced a Deep
+Learning model for Earthquake Prediction called DLEP by
+merging explicit and implicit earthquake characteristics. In
+DLEP, they employ eight precursory pattern-based indications
+as the explicit features, and utilize a CNN to extract implicit
+features. Bhandarkar et al. [26] examined the trend of
+upcoming earthquake using the LSTM network. Wang et al.
+[29] employed an LSTM network to learn the spatial-temporal
+correlation between earthquakes in different areas and make
+predictions based on it. Al Banna et al. [30] have suggested
+an
+attention-based
+bi-directional
+LSTM
+architecture
+for
+earthquake prediction in Bangladesh in the coming month.
+In earthquake prediction, it is critical to collect both the
+spatial and temporal information of the earthquake data at
+the same time. Nevertheless, the above studies frequently
+ignore the spatial or temporal characteristics of earthquake
+data, Which causes some hidden features in the data not
+to be extracted well. Combining CNN and LSTM methods
+can improve forecasting performance by combining their
+beneﬁts. Nicolis et al. [31] proposed a hybrid CNN-LSTM
+approach for earthquake prediction in Chile, and they utilized
+geographic images related to seismic data as input. Their
+study’s goal have been to predict the location and intensity of
+seismic events. Mousavi and Beroza [32] introduced a CNN-
+RNN network for earthquake magnitude estimation. They
+examined the time-frequency characteristics of the dominant
+phases in an earthquake signal from three component data
+recorded on individual stations in Northern California. Since
+earthquake data is a time series, it has a stronger prediction
+potential when both past and future features are analyzed
+simultaneously.
+By examining studies in the ﬁeld of earthquake prediction,
+it is obvious that for more accurate earthquake prediction, a
+method should be proposed that, in addition to simultaneously
+extracts the temporal and spatial features of the input, the
+inﬂuence of characteristics extracted from input variables to
+output to have the smallest amount of prediction error. In this
+study, a novel hybrid CNN-BiLSTM method based on atten-
+tion mechanism (AM) is proposed to predict the maximum
+magnitude of earthquakes and the number of earthquakes in a
+speciﬁed time period in Mainland China. The proposed method
+merges the beneﬁts of CNN and LSTM, and the AM can
+assess to dynamically the signiﬁcance of each feature in the
+sample input. The spatial features are extracted by the CNN
+layer, the BiLSTM layer is capable to process the extracted
+feature in order to learn the long-term dependency of the data
+, and the attention layer assigns high weights on important
+features. Also, appropriate preprocessing of input data affects
+the performance of a model. So, we utilize Zero-order hold
+techniques to preprocess the data to improve the results and
+generalization ability of the model.
+Our basic contributions in this research can be summed up
+as follows:
+1) A novel hybrid CNN-BiLSTM-AM method for earth-
+quake prediction is suggested, which predicts the max-
+imum magnitude and number of earthquakes in one
+month period.
+2) Due to the nature of the earthquake data, the CNN
+and BiLSTM-based networks is applied to fully extract
+the spatial-temporal characteristics of earthquake data.
+AM is also employed to focus on the important charac-
+teristics that have a strong correlation with earthquake
+prediction results.
+3) We have divided Mainland China into nine smaller sub-
+regions to determine the range of location of the next
+earthquake. The ZOH technique for data preprocessing
+has been used to reduce the effect of data’s zero-value
+on the network training process and reduce prediction
+error. The simulation results demonstrate the proposed
+method’s efﬁciency compared to other methods.
+The rest of this paper is organized as follows. Section II is
+
+--- Sayfa 3 ---
+3
+TABLE I
+RELATED WORKS ON EARTHQUAKE PREDICTION
+Category
+Authors
+Year
+Method
+Description
+Mathematical method
+S. Kannan. [16]
+2014
+Poisson distribution
+Predicting the location of the next earthquake
+according to the theory of spatial connections
+Marisa et al. [14]
+2019
+PHMM
+applied a PHMM model to predict the probability
+of an earthquake in Sumatra Island
+H. Dehghani and M. J. Fadaee. [15]
+2020
+BLD
+Predicting the time and magnitude of a future
+earthquake in Tehran using a model probabilistic
+Precursor method
+S. Uyeda et al. [20]
+2009
+statistical analysis
+Provide short-term earthquake predictions based
+on electromagnetic signal analysis
+M. Li and M. Parrot. [21]
+2013
+statistical analysis
+earthquake prediction based on ionospheric density
+variations
+M. Wikelski et al. [19]
+2020
+statistical analysis
+Investigate the behaviors and activities of farm
+animals in order to predict short-term earthquakes
+Shallow machine learning method
+I. M. Murwantara et al. [22]
+2020
+Multinomial LR, SVM and Naive Bayes
+Medium and long-term earthquake prediction
+in Indonesia using 30 years of historical data
+JW. Lin. [24]
+2020
+BPNN
+Probabilistic earthquake prediction in Taiwan
+using 25 years of historical data
+U. Khalil et al. [23]
+2021
+HNN-SVM
+Earthquake prediction along Chaman fault
+of Baluchistan based on seismic indicators
+Deep learning method
+Q.Wang et al. [29]
+2017
+LSTM
+Earthquake prediction by learning the
+spatial-temporal correlation between earthquakes
+in different areas
+JP. Huang et al. [25]
+2018
+CNN
+Major earthquake prediction in Taiwan
+based on image data
+T. Bhandarkart et al. [26]
+2019
+LSTM
+Predict future earthquake trends using
+earthquake historical data
+R. Li et al. [28]
+2020
+CNN
+Earthquake prediction by combining
+explicit and implicit earthquake features
+D. Jozinovi´c. [27]
+2020
+CNN
+Prediction of earthquake ground shaking
+intensity using raw waveform in Italy data
+Mousavi et al. [32]
+2020
+CNN-BiLSTM
+Earthquake magnitude estimation in
+Northern California based on earthquake signal
+Al Banna et al. [30]
+2021
+BiLSTM-AM
+Earthquake prediction in Bangladesh in the
+coming month based on eight seismic indicators
+O. Nicolis et al. [31]
+2021
+CNN-LSTM
+Earthquake prediction in Chile based
+on geographic images
+shown the preliminary knowledge. Section III is described
+the proposed method. experiment and compared method are
+provided in section IV. Section V is presented introduces our
+case stud and results analysis. Section VI concludes this study.
+II. PRELIMINARIES
+A. Covolutional Neural Network
+CNN has successfully been applied in image processing,
+face recognition, and time series analysis [33]. The CNN archi-
+tecture is created by stacking three main layers: convolution,
+pooling, and fully connected (FC). There is a set of learnable
+ﬁlters in each convolution layer whose goal is to extract local
+characteristics from the input matrix automatically. Filters
+perform convolution operations based on two important ideas,
+namely weight sharing and local connection, which can help
+to reduce the complexity of the computational burden and
+boost model performance [34]. The pooling layer follows the
+convolution layer and performs the downsampling operation.
+One distinguishing characteristic of pooling layer is that it
+reduces the feature map’s dimensionality and avoids over-
+ﬁtting. Usually, the FC layers are employed in the last layers
+of CNN architecture to learn the nonlinear combination of
+features extracted by the convolution layer to create the ﬁnal
+output [35].
+B. Bidirectional LSTM
+The RNN model, which is used to analyze time series data,
+contains a return loop to use prior information efﬁciently.
+However, RNN has limitations on memory and information
+storage. It cannot well learn long-term dependencies, and lead
+to vanishing gradient [36]. As a result, the LSTM was designed
+to address the shortcomings of RNN. The LSTM structure is
+based on using memory cells to remember long-term historical
+information and regulating this through a gate mechanism. A
+common LSTM unit has three types of gates: input gate it,
+forget gate ft, and output gate ot. These three gates are shown
+in Fig. 1. In each gate, controlling the state of memory cells
+is performed through point-wise multiplication and sigmoid
+function operations. Input data xt at the current state and
+output ht−1 from the hidden state of the previous layer enter
+all gates. The forget gate decides what information should
+be ignored or kept. Information from the current input xt
+and from the previously hidden state ht−1 are transitioned by
+the sigmoid function. Thus, the forget gate’s output value is
+between zero and one. If the value is near to zero, it indicates
+that the information will be discarded. Otherwise, the closer
+to one, the more information will be kept. The formula of the
+forget gate is calculated as follows:
+ft = σ (Wf. [ht−1, xt] + bf)
+(1)
+Where σ is the sigmoid activation function, and W and b
+denotes the weight and bias of any gate unit, respectively.
+The the current input xt and the previously hidden state ht−1
+are fed into the sigmoid function. By transforming the values
+from zero to one, the input gate decides which information
+are updated. Among them, zero denotes unimportant and one
+denotes importance. The input gate is formulated as:
+it = σ (Wi. [ht−1, xt] + bi)
+(2)
+
+--- Sayfa 4 ---
+4
+Fig. 1. schematic diagram of bidirectional LSTM
+Then the current input xt and hidden state ht−1 are fed to
+the tanh function. Now, the cell state ˆCt is calculated and the
+new value is updated to the cell state.
+ˆCt = tanh(Wc. [ht−1, xt] + bc)
+(3)
+Ct = ft ⊙Ct−1 + it ⊙ˆCt
+(4)
+Where, tanh is the hyperbolic tangent activation function. ⊙
+is the dot multiplication operation, and Ct is the new memory
+cell. Finally, the output gate selects the next hidden state. The
+new memory cell Ct and new hidden state ht are then passed
+to the next time step.
+ot = σ (Wo. [ht−1, pt] + bo)
+(5)
+ht = ot ⊙tanh(ct)
+(6)
+A single LSTM usually processes information from just
+one forward direction. In other words, it can only use prior
+information. In contrast, the structure of BiLSTM is such
+that it has two layers of LSTM, one at the forward and the
+other at the backward. Fig. 1 depicts the schematic diagram of
+BiLSTM. The forward LSTM can receive the input sequence’s
+past data information, whereas the reverse LSTM can obtain
+the input sequence’s future data information, then the output
+in both hidden layers is combined. The hidden state ht of
+Bi-LSTM at current time t contains both of forward⃗ht and
+backward
+←
+ht :
+ht =⃗ht ⊕
+←
+ht
+(7)
+Where ⊕denotes the summation by component, used
+to sum the forward and backward output components.
+Bi-LSTM produces better efﬁciency than LSTM and RNN
+because it can use both preceding and subsequent information.
+C. Attention Mechanism
+AM is an appropriate idea for upgrading the importance
+of crucial information inspired by the human visual system.
+When human vision observes anything in the environment,
+it does not usually witness a scene from beginning to end,
+but rather focuses on a speciﬁc section as needed. Based on,
+Fig. 2. The step in determining AM
+the AM selectively focuses on some of the more inﬂuential
+information, dismisses unnecessary information, and boosts
+desirable information. AM is commonly used in various ﬁelds
+such as image captioning [37], machine translation [38], earth-
+quake prediction [39]. AM acts based on weight allocation, de-
+termining the most effective information by distributing higher
+weights. As a result, it has a positive optimization impact on
+traditional models. The nature of the attention function can be
+deﬁned as a mapping from a Query to a sequence of Key-Value
+pairs. And, as seen in Fig. 2, calculating attention involves
+three phases. In the ﬁrst phase, the similarity or correlation
+between the Query and each Key is calculated as follows:
+st = tanh(Whht + bh)
+(8)
+where, st is attention score. Wh, bh are the weight and
+bias of AM, respectively. ht is the input vector. In the second
+phase, The score obtained of the ﬁrst stage is normalized, and
+the softmax function is utilized to convert the attention score
+as given in formula:
+at =
+exp(st)
+P
+t
+exp(st)
+(9)
+regarding to the weight coefﬁcient, the ﬁnal attention value
+is obtained by weighted summation of value as shown in
+formula :
+s =
+X
+t
+atht
+(10)
+AM usually is used after CNN and RNN networks to focus
+on the features that signiﬁcantly inﬂuence output variables,
+hence increasing the model’s performance.
+III. THE FRAMEWORK OF THE PROPOSED
+METHOD
+A. CNN-BiLSTM-AM
+In this section, we describe the proposed method archi-
+tecture of earthquake prediction and its main components.
+To extract features more effectively and enhance prediction
+performance, we integrate CNN, BiLSTM, and AM into a
+single framework and suggest a novel CNN-BiLSTM-AM
+earthquake prediction method. As shown in Fig. 3, the pro-
+posed method consists of ﬁve basic blocks: input block, feature
+extraction block, sequence learning block, attention block, and
+
+--- Sayfa 5 ---
+5
+Fig. 3. The architecture of proposed method
+the prediction block. In the feature extraction block, CNN is
+utilized to extract spatial features from the input data, and
+these recovered spatial features are sent into the BiLSTM
+network as input. The BiLSTM is used to learn long-term
+temporal information in the sequence learning block, and the
+results are fed as input to the AM layer. In attention block,
+AM through the model feature input, assigns various weights,
+highlighting the effect of the more signiﬁcant component, and
+assists the model in making more correct decisions. Finally,
+fully connected layers and output layer are stacked in the
+prediction block to carry out the ﬁnal prediction. Each of
+these parts contains trainable parameters such as ﬁlter size,
+lose function, number of neurons, and kernels that adjusting
+optimally of these parameters can reduce the prediction error
+of the proposed method. The structural details of the proposed
+method are given in Table II. In the following, each block of
+the proposed method are described in detail:
+1) Input block: The input block contains the earthquake
+information in the per month, which are preprocessed through
+ZOH technique. The ZOH technique helps to reduce the
+effect of data’s zero-value on the network training process and
+improve prediction performance.
+2) Feature extraction block: The feature extraction block
+is obtained by a one-dimensional CNN with nine layers, in-
+cluding four convolutional layers, four pooling layers, and one
+ﬂatten layer. The ﬁlter size is wide selected in the ﬁrst convolu-
+tion layer of convolution, unlike the subsequent layers. When
+compared to small kernels, this structure is superior at damping
+high-frequency signals. Stacking several convolutional and
+pooling layers allows higher-level features to be extracted from
+the input, which helps represent the input data better. The Max-
+pooling layer is implemented after each convolution layer to
+reduce the dimensions and parameters within the network. In
+the feature extraction block, rectiﬁed linear unit (ReLU) is
+used as the activation function to avoid gradient vanishing
+or explosion problems while enhancing the convergence rate.
+Following each convolution layer, a batch normalization (BN)
+algorithm is employed as an effective regularization strategy.
+In addition to having a regularizing effect, it can reduce
+the shift of internal covariate, better the network’s training
+performance, and increase the generalization capability of the
+network. BN is a feature normalization method in a layer-by-
+layer manner that is applied to accelerate the speed of the
+training process. Features in each layer are ﬁrst normalized to
+the standard distribution and are then regulated to the ideal
+distributions. BN method is calculated as follows:
+µ =
+1
+Nbatch
+XN
+i=1 xi
+(11)
+σ2 =
+1
+Nbatch
+XN
+i=1 (xi −µ)2
+(12)
+⌢xi =
+xi −µ
+√
+σ2 + ε
+(13)
+yi = γ
+⌢xi + β
+(14)
+Where Nbatch deﬁnes the size of mini-batch, xi and yi
+are the input and output of the ith observation value in
+the mini-batch. µ denotes the mean value of the mini-batch
+sample. γ is the standard deviation of the mini-batch sample.
+ε is a constant close to zero to ensure numerical stability,
+γ is a scaling parameter, and β is a bias parameter. The
+padding type is chosen same to ensure that no features are
+lost during convolution operations. Since the input data of the
+
+--- Sayfa 6 ---
+6
+TABLE II
+STRUCTURES OF PROPOSED METHOD
+Block
+Layer
+Number/ size/ stride of kernels
+or number of neurons
+Feature extraction block
+Conv1
+16*5*1
+Max-pooling
+16/2/1
+Conv2
+32*3*1
+Max-pooling
+32/2/1
+Conv3
+64*3*1
+Max-pooling
+64/2/1
+Conv4
+128*3*1
+Max-pooling
+128/2/1
+Flatten
+-
+Sequence learning
+block
+BiSTM1
+128
+BiLSTM2
+64
+Attention block
+Attention
+-
+Prediction block
+FC1
+32
+FC2
+10
+FC3
+1
+BiLSTM layer are required to be a one-dimensional array, the
+multidimensional output data of the Convolution layer needs
+to be ﬂattened into one-dimensional data by the ﬂatten layer.
+3) Sequence learning block: Sequence learning block aids in
+the learning of the temporal patterns of properties extracted via
+the feature extraction block. The sequence learning segment
+contains two BiLSTM layers and two dropout layers. After
+each BiLSTM layers, the dropout technique is used to prevent
+the over-ﬁtting issue. Dropout means that instead of training all
+the neurons in the network, only some of them are randomly
+selected and trained. In short, a certain percentage of neurons
+in each iteration train take zero output and are inactivated. It
+drives the network to learn more effective features and boosts
+the model’s generalization capacity.
+4) Attention block: In the attention block, an attention layer is
+added to the end of the sequence learning block that highlights
+the factors that are more inﬂuential on prediction results and
+improves the prediction accuracy.
+5) Prediction block: The prediction block is made up of two
+fully connected layers as well as an output layer. The fully
+connected layer performs a series of nonlinear transformations
+on the values of the features obtained by the attention block.
+In the end, the ﬁnal prediction results are generated.
+B. The overall procedure of the proposed CNN-BiLSTM-AM
+method
+In general, our proposed method in this paper contains
+three main phases: data preparation, model training, and model
+evaluation, which is shown in the Fig. 4. The ﬁrst step in the
+data preparation phase is to collect data from existing data
+sources. Subsequently, the collected data is normalized and
+divided into two parts of training and testing data. Training
+data is pre-processed using the ZOH technique. The second
+step is to build and train the proposed model. In this step, ﬁrst,
+the parameters of the constructed model are determined with
+the initial values. The spatial features of the input data are
+obtained through the feature extraction section and transferred
+to the layers of the sequence learning. The sequence learning
+part is used transferred spatial characterizes to model time
+series data. Finally, AM selects the output characteristics of
+the sequence learning part that have a stronger relationship
+Fig. 4. The ﬂow chart of the proposed method
+with the prediction results. The parameters are updated in
+each epoch utilizing the backpropagation algorithm, and this
+training process will continue until the maximum epoch is
+achieved. The third step is model evaluation, in which the
+trained model is used to predict test data. Through these three
+steps, earthquake prediction is made using the proposed model.
+
+--- Sayfa 7 ---
+7
+Fig. 5. A visual representation of the division of China’s nine study areas
+IV. EXPERIMENT AND COMPARISONS
+A. Division study area
+In this paper, mainland China has been chosen as the
+region of interest, situated in the southeast of the Eurasian
+plate. Mainland China is linked to the Siberia-Mongolia
+sub-plate, Philippine, and India plate; it is regarded as one
+of the most seismically active regions in the world. This
+country has already experienced many large and destructive
+earthquakes such as the 1966 Xingtai earthquake (Mw7.4),
+the 1975 Daguan earthquake (Mw7.1), the 2002 Jilin earth-
+quake (Mw7.2), the 2008 Wenchuan earthquake (Mw8.0),
+the 2013 Lushan earthquake(Mw7.0), and the 2015 Gorkha
+earthquake(MwW7.8). Since 1949, more than 100 catas-
+trophic earthquakes have occurred in mainland China. These
+earthquakes caused the death of more than 270,000 people,
+accounting for 54% of the overall death toll from natural
+catastrophes in mainland China [40]. Therefore, reliable and
+effective predictions in this area can help to reduce the damage
+and casualties caused by earthquakes. One of the aims of
+the earthquake prediction problem is to predict and identify
+regions where major earthquakes occur. In order to analyze
+and more accurately predict the range of location of the next
+earthquake, mainland China is divided into several smaller
+regions. However, the lack of enough and appropriate data
+makes earthquake prediction and model training in small areas
+challenging. The study area was divided into nine small areas
+to address this challenge. The latitude range from 23 to 45
+degrees, and the longitude range from 75 to 119 degrees; the
+range of latitude and longitude is divided into three equal parts.
+Fig. 5 depicts the nine study areas.
+B. Dataset and Data Preprocessing
+Typically, to characterize the main features of regional
+seismicity, the information of all earthquakes should be
+collected in the desired range. The database of earthquakes
+used in this paper has been obtained from the US Geological
+Survey (USGS) and National Seismological Center (NSC)
+websites. In order to produce a quality seismic catalog, any
+duplicate data from the rows are recognized and eliminated.
+The earthquake catalog consists of 11442 cases with a
+magnitude greater than or equal to 3.5, which occurred from
+January 15, 1966 to May 22, 2021. Each recorded earthquake
+contains vital information such as latitude and longitude,
+time of earthquakes, magnitude and depth of earthquakes,
+station number, etc. In addition to the importance of model
+learning structure, proper input and output adjustment also
+signiﬁcantly impacts model learning performance. Therefore,
+this study intends to investigate its impacts through two case
+studies with different input and output. In the present study,
+the input and output data in case study 1 is the number of
+earthquakes per month, and case study 2 is the maximum
+magnitude of earthquakes per month. Notice, when the time
+interval is one month is considered, there are 665 data samples.
+Min-Max standardization [41] was used to transforms the
+data to a speciﬁc range [0, 1]. Furthermore, 80% of the data is
+utilized for model training, with the remaining 20% used for
+testing. Also, given that earthquakes are complex, nonlinear,
+and non-stationary time series, the existence of these zero
+values negatively impacts model training and makes prediction
+difﬁcult. On the other hand, these values are not part of the
+system behavior, and by ﬁlling the zero values, the effect of
+earthquake complexity can be reduced and result in better
+predictions. Therefore, the ZOH technique is employed in
+training data to improve the generalizability and robustness
+of the proposed method, in which the zero values in each
+month are replaced with the last non-zero value of the previous
+month.
+C. Implementation details
+The selection of the model’s hyper-parameters is crucial to
+the well-trained model. This study is adjusted most of the
+hyper-parameters through trial and error. For example, several
+optimization algorithms are compared including, stochastic
+gradient descent (SGD) [42], RMSprop [43] and Adam [44].
+According to the comparison results, Adam can enhance the
+suggested model’s accuracy and is chosen as an optimization
+algorithm. Mean square error (MSE) is utilized as a loss
+function that can be backpropagated to update the weights
+and biases. The starting learning rate is adjusted to 0.001
+and gradually decreased linearly to 0.0001 by the ﬁnal epoch.
+This helps to keep a relatively stable pace during the learning
+process. The epoch number is set to be 150, and the batch
+size is 32. Each experiment is repeated ten times to limit
+the inﬂuence of random factors on network performance.
+Since each region has different geological characteristics and
+activities, separate training is necessary. Therefore, all nine
+regions use the same conﬁgurations and settings to train the
+network. The prediction results were obtained for each of the
+nine areas individually on the test dataset.
+D. Evaluation metrics
+In this study, the three evaluation criteria, such as root
+mean square error (RMSE), mean absolute error (MAE), r-
+squared R2 are employed to evaluate the performance of the
+proposed model and equitable comparisons with other models.
+The equations of RMSE, MAE, and R2 are represented as
+follows:
+
+--- Sayfa 8 ---
+8
+RMSE =
+v
+u
+u
+t 1
+n
+n
+X
+i=1
+
+yi −
+⌢y i
+2
+(15)
+MAE = 1
+n
+n
+X
+i=1
+yi −
+⌢y i
+
+(16)
+R2 = 1 −
+nP
+i=1
+
+⌢y i −yi
+2
+nP
+i=1
+(¯yi −yi)2
+(17)
+In the aforementioned formulas, n is the number of predicted
+data; the predictive value is
+⌢y i; the actual value is yi, and ¯y
+is the average of actual value. RMSE, MAE, R are the most
+common evaluation criteria for regression issues used in this
+study. In order to enhance the performance of the predicted
+model, RMSE, and MAE should be minimized, while R2
+needs to be maximized. The R2 metric indicates the strength
+of the linear regression between observed and predicted values.
+When R2 equals one, the strongest linear relationship occurs.
+The RMSE and MAE metrics indicate the performance of the
+models. Both metrics can have a value ranging from zero to
+Inﬁnite, with zero indicating the highest performance.
+E. Comparison method
+The models commonly utilized in shallow machine learning
+methods for earthquake prediction are SVM, MLP, DT, and
+RF. In deep learning neural networks, CNN, LSTM, and
+CNN-BiLSTM have satisfactory performance at prediction
+for time series data. Therefore, SVM, MLP, DT, RF, CNN,
+LSTM, and CNN-BiLSTM are chosen as the comparison
+methods for our proposed method. All Comparison models
+utilized a similar dataset and prediction process to the
+proposed method. In this article, comparison methods are
+divided into two major categories:
+• Shallow machine learning: SVM, DT, MLP, and RF
+are considered in the shallow machine learning category.
+These methods are proposed to evaluate the feature
+extraction ability of the proposed method compared to
+machine learning methods.
+SVMs are machine learning algorithms are based on sta-
+tistical learning theory. The main hyperparameters of the
+SVM model are set as follows: the type of kernel function
+is chosen Radial basis function (RBF) because it has
+fewer hyperparameters, which decreases the complexity
+of the model. The regulation factor (C), epsilon (e), and
+gamma (c) hyper-parameters are set to 1, 0.01, and 0.1,
+respectively.
+RF is an efﬁcient ensemble learning technique that em-
+ploys averaging to boost prediction performance and
+avoid overﬁtting. It is extensively utilized in a variety of
+regression problems. In this experiment, the maximum
+depth of the trees and the number of trees in the forest
+are set to 9 and 100, respectively.
+A DT algorithm is a supervised learning approach that
+uses a tree structure to generate regression or classiﬁca-
+tion models. The objective is to build a model that pre-
+dicts the value of a target variable using simple decision
+rules inferred from data features. In this experiment, the
+maximum depth of the tree is chosen to be 10.
+The MLP is one of the Neural Networks, which is
+often used in earthquake prediction studies [45]. MLP
+models are composed of three primary layers: one input
+layer, some hidden layer, and one output layer. Their
+performance is determined by their structure, activation
+functions, and the manner connection weights between
+processing components are updated [46]. Two hidden
+layers with 15 neurons in each layer are used in our case.
+The learning rate is set to 0.01. The epoch is 150, and
+the activation function is sigmoid.
+• Deep learning: The deep learning category includes
+CNN, LSTM, and CNN-BiLSTM methods. The CNN
+method is related to the feature extraction block of the
+proposed model. The LSTM method is also similar to the
+proposed model’s sequence learning block, except that
+LSTM is used instead of BiLSTM. The CNN-BiLSTM
+approach is built with a combination of feature extraction
+block and sequence learning block.
+In addition, all comparative methods without the ZOH tech-
+nique are performed to show the effectiveness of the proposed
+ZOH technique in earthquake prediction.
+V. RESULT
+A. Case 1: Number of earthquake
+The
+majority
+of
+research
+used
+seismic
+indicators,
+magnitude, depth, and geographical location of earthquakes as
+input and has only been able to predict the earthquake’s time,
+location, and magnitude. To the best of our knowledge, no
+predictions concerning the number of earthquakes have been
+proposed. The number of earthquakes can be an essential
+factor in predicting an earthquake that can assist in portraying
+a more accurate picture of a region’s seismicity. This case
+study is used with the same conditions and assumptions
+of the proposed method to predict the number of expected
+earthquakes in a month.
+The proposed method is compared with CNN-BiLSTM,
+LSTM, CNN, RF, MLP, DT, and SVM to verify the efﬁciency,
+superiority, and generalization ability. Table III shows the
+results of the proposed method and comparison methods
+in predicting the number of earthquakes for nine different
+regions.
+It is clear from the outcomes that the proposed method
+consistently achieves the best prediction performance in all
+regions, with the lowest RMSE and MAE values and the
+highest R2 score. This shows that the proposed method is
+appropriately performed in predicting the number of earth-
+quakes and its superior or competitive to other comparison
+methods. For example, in region 1, the other comparative
+models present high prediction errors, while the proposed
+model improvements prediction results with the RMSE value
+0.24, the MAE value 0.018, and R2 value 0.956.
+
+--- Sayfa 9 ---
+9
+TABLE III
+COMPARISON OF EVALUATION ERROR INDEXES OF THE EIGHT METHODS FOR NUMBER EARTHQUAKE
+Region
+Metric
+Method
+SVM
+DT
+MLP
+RF
+CNN
+LSTM
+CNN-BiLSTM
+Proposed method
+Region 1
+RMSE
+0.103
+0.094
+0.107
+0.094
+0.095
+0.093
+0.089
+0.024
+MAE
+0.061
+0.044
+0.048
+0.44
+0.051
+0.049
+0.041
+0.018
+R2
+-0.011
+0.157
+0.050
+0.154
+0.143
+0.174
+0.249
+0.956
+Region 2
+RMSE
+0.125
+0.094
+0.145
+0.128
+0.083
+0.073
+0.069
+0.064
+MAE
+0.086
+0.108
+0.092
+0.058
+0.049
+0.042
+0.037
+0.031
+R2
+0.604
+0.660
+0.432
+0.584
+0.826
+0.864
+0.882
+0.915
+Region 3
+RMSE
+0.282
+0.259
+0.182
+0.201
+0.199
+0.192
+0.189
+0.069
+MAE
+0.152
+0.152
+0.133
+0.112
+0.112
+0.119
+0.118
+0.030
+R2
+-0.226
+-0.030
+0.434
+0.37
+0.412
+0.450
+0.474
+0.937
+Region 4
+RMSE
+0.146
+0.145
+0.138
+0.139
+0.130
+0.128
+0.100
+0.096
+MAE
+0.088
+0.084
+0.072
+0.077
+0.069
+0.065
+0.066
+0.062
+R2
+0.011
+0.138
+0.263
+0.214
+0.432
+0.495
+0.613
+0.697
+Region 5
+RMSE
+0.196
+0.123
+0.097
+0.106
+0.092
+0.076
+0.088
+0.059
+MAE
+0.125
+0.082
+0.071
+0.075
+0.072
+0.07
+0.067
+0.047
+R2
+-0.049
+0.583
+0.749
+0.684
+0.695
+0.736
+0.721
+0.905
+Region 6
+RMSE
+0.229
+0.197
+0.174
+0.192
+0.195
+0.196
+0.183
+0.088
+MAE
+0.142
+0.125
+0.011
+0.126
+0.14
+0.132
+0.125
+0.06
+R2
+-0.347
+0.019
+0.213
+0.059
+0.054
+0.096
+0.154
+0.805
+Region 7
+RMSE
+0.159
+0.164
+0.106
+0.095
+0.093
+0.093
+0.086
+0.099
+MAE
+0.102
+0.138
+0.049
+0.039
+0.033
+0.035
+0.036
+0.026
+R2
+0.132
+0.110
+0.219
+0.365
+0.431
+0.458
+0.476
+0.609
+Region 8
+RMSE
+0.141
+0.141
+0.134
+0.141
+0.130
+0.131
+0.115
+0.092
+MAE
+0.078
+0.074
+0.067
+0.075
+0.058
+0.056
+0.062
+0.06
+R2
+0.075
+0.182
+0.264
+0.180
+0.392
+0.385
+0.426
+0.669
+Region 9
+RMSE
+0.122
+0.122
+0.124
+0.119
+0.120
+0.115
+0.097
+0.087
+MAE
+0.078
+0.091
+0.099
+0.093
+0.091
+0.087
+0.074
+0.059
+R2
+0.612
+0.509
+0.475
+0.524
+0.560
+0.573
+0.633
+0.812
+Fig. 6.
+Comparison of the mean of the three evaluation metrics between
+comparison methods and the proposed method for number of earthquake
+In one of the most challenging regions in terms of R2
+metric, namely region 7, the proposed method has 0.133
+and 0.5 better than the maximum and minimum R2 values
+in
+comparison
+methods,
+respectively.
+When
+there
+is
+a
+signiﬁcant seismic anomaly, this high performance illustrates
+the effectiveness of the proposed method. The reason for
+the better performance of the proposed method is that it
+has three key characteristics which can signiﬁcantly improve
+prediction performance: using the ZOH technique as a suitable
+preprocessing, learning the spatial and temporal characteristics
+using the CNN-BiLSTM hybrid model, applying the idea
+of AM to considering the importance of different hidden
+states and more focus on the most important states. As a
+result, these three types of characteristics together make the
+proposed method superior on both ML-based and DL-based
+approaches. On the other hand, the SVM model has the worst
+prediction performance in all regions, with the highest RMSE
+and MAE values and lowest R2 score. SVM method fails to
+catch the long-term correlation in the data series, despite its
+ability to solve nonlinear problems.
+Additionally, we also give the mean of evaluation metrics
+of each implemented method to demonstrate our proposed
+method’s overall advantages various methods for the number
+of earthquakes in all regions. As can be seen Fig. 6, there
+are clear disparities in the performance of various techniques.
+Speciﬁcally, the deep learning-based methods have a lower
+average error and more substantial predictive potential than
+shallow machine learning-based methods. This fact is that
+
+--- Sayfa 10 ---
+10
+Fig. 7. The comparison of proposed model and deep learning models for number of earthquake prediction in region 5.
+the shallow machine learning methods structure is relatively
+simple. While there is a nonlinear relationship between the
+earthquake data and the variables related to it. Therefore,
+deep learning-based approaches are more adaptable in mod-
+eling complicated and nonlinear earthquake interactions and,
+by introducing several hidden layers, they can provide the
+capability of learning features at different levels of abstraction.
+Also between comparison models of deep learning , the LSTM
+model (RMSE = 0.121, MAE = 0.072,R2= 0.47) performed
+better than the CNN model (RMSE = 0.126, MAE = 0.075,
+R2=0.438). Because in time series prediction, the LSTM
+model outperformed the CNN model. This is likely due to
+the fact that the CNN model cannot capture the long-term
+dependency. The hybrid model CNN-BiLSTM model has the
+lowest error values and highest R2 score compared with CNN
+and LSTM single. This is because that the hybrid model
+incorporates the advantages of both LSTM and CNN, with
+LSTM capturing temporal features and CNN capturing spatial
+features. The proposed ( RMSE = 0.075, MAE = 0.043, R2
+= 0.812) method performed better than the CNN-BiLSTM
+method for number of earthquake prediction. Overall, our
+proposed model shows improvements of 3.07% and 1.1%
+beyond the CNN-BiLSTM model on RMSE, MAE, and R2
+metrics, respectively. This improvement is due to the effec-
+tiveness of the two proposed ZOH and AM schemes. In other
+words, this demonstrates that the introduction of AM and ZOH
+into the original CNN-BiLSTM model can fully explore the
+complex relationship and enhance the earthquake prediction
+performance.
+Fig. 7 displays the comparison of the proposed method and
+deep learning models for predicting the number of earthquakes
+in region 5. Similar outcomes can also be found in other
+regions. From Fig. 7it can be seen, the proposed method is
+better ﬁtting impact than other methods and, in most cases,
+closer to the observed values.
+B. Case 2: Maximum magnitude of earthquake
+A major earthquake with a magnitude greater than ﬁve can
+cause great ﬁnancial and human losses and cause great concern
+to society. The existence of these destructive earthquakes
+in the history of mainland China highlights the signiﬁcance
+of the maximum earthquake magnitude of prediction in this
+earthquake-prone area. Also, a timely prediction of earthquake
+maximum magnitude can be an effective step in giving early
+earthquake warnings and reducing damage caused by its
+occurrence.
+Because major earthquakes occur in the region over a period
+of months, a prediction time span of one month is appropriate
+in this study [47]. However, there are also occasions where
+more than one major earthquake strikes the region in a month,
+but the algorithm only counts one. The overall percentage of
+months with major earthquakes is about 35%, with the other
+months recording mainly low-level earthquakes.
+In case study 2, we compare the performance of our
+proposed technique for maximum earthquake magnitude to
+various prediction methods. The input data contains the se-
+quence data of the maximum magnitude of earthquakes every
+month for a span of time, and the output data includes the
+maximum magnitude of earthquakes predicted for the next
+month.
+Table IV shows the simulation results of the proposed
+model and comparison models for predicting the maximum
+
+--- Sayfa 11 ---
+11
+TABLE IV
+COMPARISON OF EVALUATION ERROR INDEXES OF THE EIGHT METHODS FOR MAXIMUM MAGNITUDE
+Region
+Metric
+Method
+SVM
+DT
+MLP
+RF
+CNN
+LSTM
+CNN-BiLSTM
+Proposed method
+Region 1
+RMSE
+0.441
+0.437
+0.104
+0.442
+0.264
+0.240
+0.093
+0.021
+MAE
+0.380
+0.290
+0.040
+0.377
+0.062
+0.054
+0.041
+0.021
+R2
+-0.344
+-0.141
+0.052
+-0.256
+0.096
+0.164
+0.217
+0.995
+Region 2
+RMSE
+0.438
+0.234
+0.821
+0.194
+0.128
+0.109
+0.073
+0.042
+MAE
+0.210
+0.207
+0.191
+0.168
+0.175
+0.149
+0.041
+0.040
+R2
+0.502
+0.722
+0.107
+0.654
+0.592
+0.680
+0.867
+0.991
+Region 3
+RMSE
+0.438
+0.322
+0.330
+0.340
+0.332
+0.318
+0.307
+0.070
+MAE
+0.284
+0.302
+0.277
+0.284
+0.284
+0.245
+0.232
+0.062
+R2
+-0.251
+0.212
+0.296
+0.246
+0.360
+0.451
+0.473
+0.962
+Region 4
+RMSE
+0.518
+0.446
+0.428
+0.416
+0.405
+0.370
+0.342
+0.132
+MAE
+0.3112
+0.248
+0.262
+0.255
+0.212
+0.225
+0.198
+0.118
+R2
+-0.172
+0.088
+0.156
+0.072
+0.256
+0.261
+0.281
+0.866
+Region 5
+RMSE
+0.186
+0.165
+0.203
+0.151
+0.149
+0.149
+0.147
+0.029
+MAE
+0.161
+0.143
+0.185
+0.134
+0.136
+0.134
+0.135
+0.039
+R2
+0.252
+0.424
+0.158
+0.502
+0.497
+0.509
+0.545
+0.971
+Region 6
+RMSE
+0.398
+0.346
+0.394
+0.345
+0.342
+0.333
+0.330
+0.120
+MAE
+0.358
+0.288
+0.362
+0.285
+0.286
+0.275
+0.274
+0.272
+R2
+-0.301
+0.219
+-0.271
+0.243
+0.250
+0.300
+0.312
+0.921
+Region 7
+RMSE
+0.205
+0.190
+0.209
+0.187
+0.185
+0.184
+0.181
+0.128
+MAE
+0.186
+0.171
+0.198
+0.170
+0.167
+0.167
+0.165
+0.082
+R2
+0.256
+0.421
+0.302
+0.445
+0.501
+0.508
+0.550
+0.809
+Region 8
+RMSE
+0.150
+0.147
+0.138
+0.146
+0.117
+0.114
+0.109
+0.061
+MAE
+0.078
+0.072
+0.068
+0.072
+0.060
+0.059
+0.048
+0.024
+R2
+0.145
+0.178
+0.221
+0.174
+0.421
+0.450
+0.506
+0.914
+Region 9
+RMSE
+0.162
+0.164
+0.159
+0.163
+0.143
+0.140
+0.138
+0.072
+MAE
+0.135
+0.138
+0.133
+0.137
+0.128
+0.127
+0.124
+0.057
+R2
+0.142
+0.111
+0.165
+0.124
+0.201
+0.235
+0.256
+0.801
+Fig. 8.
+Comparison of the mean of the three evaluation metrics between
+comparison methods and the proposed method for maximum magnitude
+earthquake magnitude in nine areas. The results demonstrate
+that the proposed method consistently provides the strongest
+prediction performance in all areas, with the least RMSE,
+MAE values, and highest R2 value. This superiority is due
+to the three advantages of the proposed method: The spatial
+features and temporal correlations extracted by utilizing CNN-
+BiLSTM are considered to reﬂect the hidden features of the
+earthquake, The AM can highlight features that are important
+for earthquake prediction. The ZOH technique can help to
+reduce the effect of data’s zero-value on the network training
+process and reduce prediction error. For example, the proposed
+method shows improved results for regions 1 and 2 compared
+to other methods’ performance with (0.995), and (0.991) of
+R2. However, the R2 value of proposed methods in these
+regions is 0.69 and 0.545 greater than the best R2 value of
+the two categories, machine learning-based method and deep
+learning-based method. Moreover, the proposed method has
+shown the best prediction performance in one of the most
+difﬁcult regions, such as region9 with R2 of 0.801. while,
+the worst prediction performance in this region is related DT
+model with R2= 0.111. The proposed method has been able to
+improve the R2 value is 0.69 and 0.545 higher than the best R2
+value of the two categories machine learning-based and deep
+learning-based. This high performance indicates the proposed
+method’s efﬁciency when there is a substantial distribution
+difference between train and test data. The difference in the
+probability and statistical distribution of the data is related to
+variances in seismic behavior in various regions caused by
+changes in the arrangement of its tectonic plates.
+To show the results more clearly in Table IV, we calculate
+the values of the evaluation indices of all methods as averages
+
+--- Sayfa 12 ---
+12
+Fig. 9. The comparison of proposed model and deep learning models for maximum magnitude prediction in region 1
+and draw them in Fig. 8. Overall, all the deep learning models
+outperform the traditional models, and the proposed method
+has the best performance. Take RMSE and MAE as an exam-
+ple. SVR, DT, MLP, RF, CNN, LSTM, CNN-BiLSTM obtains
+(0.326, 0.23), (0.272, 0.209), (0.309, 0.192), (0.264, 0.212),
+(0.229, 0.176), (0.217, 0.166) and (0.191, 0.149) at RMSE and
+MAE, respectively; while proposed method reduces RMSE
+and MAE to (0.074, 0.076), respectively. For R2, the proposed
+method also achieves higher value (0.906) than the maximum
+values of the other comparison models. This minimum values
+of RMSE, MAE and maximum value of R2 conﬁrm the
+effectiveness of the ZOH and AM-based prediction method.
+Fig. 9 shows the comparison of the proposed model and deep
+learning models to predict the maximum magnitude of the
+earthquake in region 1. The proposed method is superior to
+other deep learning models on the upper and lower peak points,
+in terms of the trend shape and the ﬁtting degree.
+VI. CONCLUSION
+Due to the nonlinearity and complexity nature of earth-
+quakes data, this paper provides a new CNN-BiLSTM-AM
+approach and a novel and efﬁcient general framework for
+earthquake prediction in terms of number and maximum
+magnitude. The number and maximum magnitude of earth-
+quakes that occurred in each month over the past 50 years
+are considered the model’s input features, which makes the
+model can completely extract useful information from the
+historical data. A new data processing technique called ZOH is
+presented to better train the network and lessen the prediction
+difﬁculty. After data preprocessing, CNN is used to extract
+spatial characteristics. The features extracted by CNN are
+passed into BiLSTM. The BiLSTM is introduced to solve the
+data’s long-term dependency, and the AM is used to highlight
+the BiLSTM output features that have a high contribution
+to the prediction results. Finally, the output of the AM is
+sent to the fully connected layers to obtain the ﬁnal result.
+Compared to other shallow machine learning and deep learning
+approaches, the simulation results in two case studies reveal
+that the proposed method has the best performance.
+REFERENCES
+[1] A. S. Alariﬁ, N. S. Alariﬁ, and S. Al-Humidan, “Earthquakes magnitude
+predication using artiﬁcial neural network in northern red sea area,”
+Journal of King Saud University-Science, vol. 24, no. 4, pp. 301–313,
+2012.
+[2] P. Cui, X.-Q. Chen, Y.-Y. Zhu, F.-H. Su, F.-Q. Wei, Y.-S. Han, H.-J. Liu,
+and J.-Q. Zhuang, “The wenchuan earthquake (may 12, 2008), sichuan
+province, china, and resulting geohazards,” Natural Hazards, vol. 56,
+no. 1, pp. 19–36, 2011.
+[3] N. Jain, D. Virmani, and A. Abraham, “Proﬁcient 3-class classiﬁcation
+model for conﬁdent overlap value based fuzziﬁed aquatic information
+extracted tsunami prediction,” Intelligent Decision Technologies, vol. 13,
+no. 3, pp. 295–303, 2019.
+[4] P. Cui, L.-z. Xiang, and Q. Zou, “Risk assessment of highways affected
+by debris ﬂows in wenchuan earthquake area,” Journal of Mountain
+Science, vol. 10, no. 2, pp. 173–189, 2013.
+[5] R. Verdugo and J. Gonz´alez, “Liquefaction-induced ground damages
+during the 2010 chile earthquake,” Soil Dynamics and Earthquake
+Engineering, vol. 79, pp. 280–295, 2015.
+[6] J. D. Bray et al., “Developing mitigation measures for the hazards
+associated with earthquake surface fault rupture,” in Workshop on
+seismic fault-induced failures—possible remedies for damage to urban
+facilities. University of Tokyo Press, pp. 55–79, 2001.
+[7] R. Bilham, “The seismic future of cities,” Bulletin of earthquake
+engineering, vol. 7, no. 4, pp. 839–887, 2009.
+[8] N. N. Ambraseys and C. P. Melville, A history of Persian earthquakes.
+Cambridge university press, 2005.
+[9] J. Jia, “Earthquake damages,” in Modern Earthquake Engineering,
+pp. 413–431, Springer, 2017.
+[10] G. A. Sobolev, “Methodology, results, and problems of forecasting
+earthquakes,” Herald of the Russian Academy of Sciences, vol. 85, no. 2,
+pp. 107–111, 2015.
+[11] R. Kail, E. Burnaev, and A. Zaytsev, “Recurrent convolutional neural
+networks help to predict location of earthquakes,” IEEE Geoscience and
+Remote Sensing Letters, 2021.
+
+--- Sayfa 13 ---
+13
+[12] G. Otari and R. Kulkarni, “A review of application of data mining in
+earthquake prediction,” International Journal of Computer Science and
+Information Technologies, vol. 3, no. 2, pp. 3570–3574, 2012.
+[13] A. Boucouvalas, M. Gkasios, N. Tselikas, and G. Drakatos, “Modiﬁed-
+ﬁbonacci-dual-lucas method for earthquake prediction,” in Third In-
+ternational Conference on Remote Sensing and Geoinformation of the
+Environment (RSCy2015), vol. 9535, p. 95351A, International Society
+for Optics and Photonics, 2015.
+[14] Marisa, U. A. Sembiring, and H. Margaretha, “Earthquake probabil-
+ity prediction in sumatra island using poisson hidden markov model
+(hmm),” in AIP Conference Proceedings, vol. 2192, p. 090006, AIP
+Publishing LLC, 2019.
+[15] H. Dehghani and M. J. Fadaee, “Probabilistic prediction of earthquake
+by bivariate distribution,” Asian Journal of Civil Engineering, vol. 21,
+pp. 977–983, 2020.
+[16] S. Kannan, “Innovative mathematical model for earthquake prediction,”
+Engineering Failure Analysis, vol. 41, pp. 89–95, 2014.
+[17] K. Aggarwal, S. Mukhopadhyay, and A. K. Tangirala, “Statistical char-
+acterization and time-series modeling of seismic noise,” arXiv preprint
+arXiv:2009.01549, 2020.
+[18] H. Woith, “Radon earthquake precursor: A short review,” The European
+Physical Journal Special Topics, vol. 224, no. 4, pp. 611–627, 2015.
+[19] M. Wikelski, U. Mueller, P. Scocco, A. Catorci, L. V. Desinov, M. Y.
+Belyaev, D. Keim, W. Pohlmeier, G. Fechteler, and P. Martin Mai, “Po-
+tential short-term earthquake forecasting by farm animal monitoring,”
+Ethology, vol. 126, no. 9, pp. 931–941, 2020.
+[20] S. Uyeda, T. Nagao, and M. Kamogawa, “Short-term earthquake pre-
+diction: Current status of seismo-electromagnetics,” Tectonophysics,
+vol. 470, no. 3-4, pp. 205–213, 2009.
+[21] M. Li and M. Parrot, “Statistical analysis of an ionospheric parameter
+as a base for earthquake prediction,” Journal of Geophysical Research:
+Space Physics, vol. 118, no. 6, pp. 3731–3739, 2013.
+[22] I. M. Murwantara, P. Yugopuspito, and R. Hermawan, “Comparison of
+machine learning performance for earthquake prediction in indonesia
+using 30 years historical data,” Telkomnika, vol. 18, no. 3, pp. 1331–
+1342, 2020.
+[23] U. Khalil, B. Aslam, Z. A. Kazmi, A. Maqsoom, M. I. Qureshi,
+S. Azam, and A. Nawaz, “Integrated support vector regressor and hybrid
+neural network techniques for earthquake prediction along chaman fault,
+baluchistan,” Arabian Journal of Geosciences, vol. 14, no. 21, pp. 1–15,
+2021.
+[24] J.-W. Lin, “Researching signiﬁcant earthquakes in taiwan using two
+back-propagation neural network models,” Natural Hazards, vol. 103,
+no. 3, pp. 3563–3590, 2020.
+[25] J. Huang, X. Wang, Y. Zhao, C. Xin, and H. Xiang, “Large earthquake
+magnitude prediction in taiwan based on deep learning neural network,”
+Neural Network World, vol. 28, no. 2, pp. 149–160, 2018.
+[26] T. Bhandarkar, N. Satish, S. Sridhar, R. Sivakumar, S. Ghosh, et al.,
+“Earthquake trend prediction using long short-term memory rnn.,”
+International Journal of Electrical & Computer Engineering (2088-
+8708), vol. 9, no. 2, 2019.
+[27] D. Jozinovi´c, A. Lomax, I. ˇStajduhar, and A. Michelini, “Rapid predic-
+tion of earthquake ground shaking intensity using raw waveform data
+and a convolutional neural network,” Geophysical Journal International,
+vol. 222, no. 2, pp. 1379–1389, 2020.
+[28] R. Li, X. Lu, S. Li, H. Yang, J. Qiu, and L. Zhang, “Dlep: A deep
+learning model for earthquake prediction,” in 2020 International Joint
+Conference on Neural Networks (IJCNN), pp. 1–8, IEEE, 2020.
+[29] Q. Wang, Y. Guo, L. Yu, and P. Li, “Earthquake prediction based
+on spatio-temporal data mining: an lstm network approach,” IEEE
+Transactions on Emerging Topics in Computing, vol. 8, no. 1, pp. 148–
+158, 2017.
+[30] H. Al Banna, T. Ghosh, K. A. Taher, M. S. Kaiser, M. Mahmud,
+et al., “An earthquake prediction system for bangladesh using deep long
+short-term memory architecture,” in Intelligent Systems, pp. 465–476,
+Springer, 2021.
+[31] O. Nicolis, F. Plaza, and R. Salas, “Prediction of intensity and location
+of seismic events using deep learning,” Spatial Statistics, vol. 42,
+p. 100442, 2021.
+[32] S. M. Mousavi and G. C. Beroza, “A machine-learning approach
+for earthquake magnitude estimation,” Geophysical Research Letters,
+vol. 47, no. 1, p. e2019GL085976, 2020.
+[33] Y. Li, Y. He, and M. Zhang, “Prediction of chinese energy structure
+based on convolutional neural network-long short-term memory (cnn-
+lstm),” Energy Science & Engineering, vol. 8, no. 8, pp. 2680–2689,
+2020.
+[34] W. Lu, J. Li, Y. Li, A. Sun, and J. Wang, “A cnn-lstm-based model to
+forecast stock prices,” Complexity, vol. 2020, 2020.
+[35] R. Barzegar, M. T. Aalami, and J. Adamowski, “Short-term water quality
+variable prediction using a hybrid cnn–lstm deep learning model,”
+Stochastic Environmental Research and Risk Assessment, pp. 1–19,
+2020.
+[36] K. Miao, Q. Hua, and H. Shi, “Short-term load forecasting based
+on cnn-bilstm with bayesian optimization and attention mechanism,”
+in International Conference on Parallel and Distributed Computing:
+Applications and Technologies, pp. 116–128, Springer, 2020.
+[37] Y. Chu, X. Yue, L. Yu, M. Sergei, and Z. Wang, “Automatic image
+captioning based on resnet50 and lstm with soft attention,” Wireless
+Communications and Mobile Computing, vol. 2020, 2020.
+[38] B. Zhang, D. Xiong, J. Xie, and J. Su, “Neural machine translation with
+gru-gated attention model,” IEEE transactions on neural networks and
+learning systems, vol. 31, no. 11, pp. 4688–4698, 2020.
+[39] M. H. Al Banna, T. Ghosh, M. J. Al Nahian, K. A. Taher, M. S. Kaiser,
+M. Mahmud, M. S. Hossain, and K. Andersson, “Attention-based bi-
+directional long-short term memory network for earthquake prediction,”
+IEEE Access, vol. 9, pp. 56589–56603, 2021.
+[40] X. Xi-wei, W. Xi-yan, Y. Gui-hua, T. Xi-bin, and L. Kang, “Seismo-
+geological signatures for identifying m≥7.0 earthquake risk areas and
+their premilimary application in mainland china,” SEISMOLOGY AND
+EGOLOGY, vol. 39, no. 2, p. 219, 2017.
+[41] L. L. Moreira, M. M. de Brito, and M. Kobiyama, “Effects of different
+normalization, aggregation, and classiﬁcation methods on the construc-
+tion of ﬂood vulnerability indexes,” Water, vol. 13, no. 1, p. 98, 2021.
+[42] P. G. A. Njock, S.-L. Shen, A. Zhou, and H.-M. Lyu, “Evaluation of
+soil liquefaction using ai technology incorporating a coupled enn/t-
+sne model,” Soil Dynamics and Earthquake Engineering, vol. 130,
+p. 105988, 2020.
+[43] D. Xu, S. Zhang, H. Zhang, and D. P. Mandic, “Convergence of the rm-
+sprop deep learning method with penalty for nonconvex optimization,”
+Neural Networks, vol. 139, pp. 17–23, 2021.
+[44] Y. Ding, J. Chen, and J. Shen, “Conditional generative adversarial
+network model for simulating intensity measures of aftershocks,” Soil
+Dynamics and Earthquake Engineering, vol. 139, p. 106281, 2020.
+[45] J. Mahmoudi, M. A. Arjomand, M. Rezaei, and M. H. Mohammadi,
+“Predicting the earthquake magnitude using the multilayer perceptron
+neural network with two hidden layers,” Civil engineering journal,
+vol. 2, no. 1, pp. 1–12, 2016.
+[46] S. Haykin, “Neural networks: A comprehensive foundation upper,”
+Saddle River. NJ, USA, pp. 1–842, 1998.
+[47] K. Asim, F. Mart´ınez- ´Alvarez, A. Basit, and T. Iqbal, “Earthquake
+magnitude prediction in hindukush region using machine learning tech-
+niques,” Natural Hazards, vol. 85, no. 1, pp. 471–486, 2017.

@@ -1,0 +1,307 @@
+
+--- Sayfa 1 ---
+Turkey’s Earthquakes: Damage Prediction and
+Feature Significance Using A Multivariate Analysis
+Shrey Shah∗
+Alex Lin∗
+Scott Lin
+Josh Patel
+Michael Lam
+Kevin Zhu
+Algoverse AI Research
+shreyshah1011@gmail.com, kevin@algoverse.us
+Abstract
+Accurate damage prediction is crucial for disaster preparedness and response strate-
+gies, particularly given the frequent earthquakes in Turkey. Utilizing datasets on
+earthquake data, infrastructural quality metrics, and contemporary socioeconomic
+factors, we tested various machine-learning architectures to forecast death tolls and
+fatalities per affected population. Our findings indicate that the Random Forest
+model provides the most reliable predictions. The model highlights earthquake
+magnitude and building stability as the primary determinants of damage. This
+research contributes to the reduction of fatalities in future seismic events in Turkey.
+1
+Introduction
+Earthquakes serve as one of the most catastrophic natural disasters, claiming over 61,000 lives in
+2023 alone. [1, 2]Turkey, in particular, is struck by thousands of earthquakes annually because of
+the multiple major seismic fault lines running through its geography. Most notably, the recent 2023
+Turkey–Syria earthquakes, of magnitudes 7.8 and 7.7, killed a confirmed 53,537 people.[3] Recent
+predictive models, such as the RECAST model, excel at forecasting future earthquakes, along with
+information such as power level, location, and time of formation. [4] However, in order to better
+prepare earthquake mitigation strategies, it is necessary to predict the damage outcome and feature
+significance of these earthquakes. Our study bridges the gap in understanding earthquake damage by
+predicting its severity based on major influencing factors such as building stability, earthquake depth,
+and population density per province. We also seek to determine the significance of these factors in
+contributing to the overall destruction caused by earthquakes. The primary objective of this research
+is to formulate a model that accurately predicts the death toll and fatalities per affected population in
+Turkish earthquakes by testing various machine learning architectures and using the most accurate one
+to assess the significance of each factor, thereby enhancing earthquake preparedness and resistance
+(see results).
+2
+Methodology
+2.1
+Data
+In our study, we analyzed four datasets [5–8] of earthquakes occurring prior to 1950, each containing
+information on magnitude, earthquake depth(km), MMI (Modified Mercalli Intensity) or shaking
+intensity of earthquakes, death toll, and epicenter coordinates. Additionally, we integrated a 2022
+dataset on factors for each province in Turkey [9, 10] by matching epicenter coordinates with
+provinces. The factors used are population density, structural integrity and stability based on age,
+∗Lead Authors
+Preprint. Under review.
+arXiv:2411.08903v1  [physics.geo-ph]  29 Oct 2024
+
+--- Sayfa 2 ---
+design, etc. of building (BCI), and the susceptibility of buildings to earthquake damage (SVI). [11]
+We selected these variables since variations in them were hypothesized to influence death tolls. Our
+study requires two sets of machine learning models: one using death toll as the output variable and
+the other using death per capita of the affected population. Total deaths are useful in predicting the
+number of deaths from an upcoming earthquake in a specific region to help in immediate disaster
+response and resource allocation. Deaths per capita can be used for comparing the effectiveness of
+building codes and other infrastructural features more directly.
+To calculate the death per capita of each earthquake, we first utilized Joyner and Boore’s (1981)[12]
+attenuation relations that predict PGA (peak ground acceleration) using magnitude and the distance
+from the fault rupture, as shown in Formula 1.[12]
+log(PGA(gravity)) = b1 + b2M + b3 log(R + b4)
+(1)
+The values of the coefficients, b1, b2, b3, and b4 in the above formula were derived from a study by
+Kalkan and Gülkan (2004)[13] by performing regression analyses on ground motion data specific
+to Turkish seismic events. In our study, we consider individuals in an area with an MMI (Modified
+Mercalli Intensity)[9] of at least IV, where earthquakes are widely felt and fatalities are more likely,
+as affected by the event. This threshold was chosen because fatalities are unlikely below an MMI
+of IV, which corresponds to a Peak Ground Acceleration (PGA) of 2.8g [14]. By substituting the
+known values into the relations, the radius was found. In our study, we assume a circular pattern for
+earthquake damage prediction, which simplifies the complex nature of seismic wave propagation and
+distribution. Seismic waves radiate outward in all directions from the earthquake’s epicenter [15].
+While this circular approximation might not capture all the intricacies of fault geometries, the impact
+on our model’s accuracy is minimal due to the general nature of seismic wave dispersion. Using
+the radius derived from the attenuation relations, we applied the formula for the area of a circle to
+estimate the surface area of the affected region, which was then multiplied by the population density
+of the province where the earthquake occurred to find the total affected population. We then divided
+the total number of fatalities by the total affected population to calculate the death per capita for the
+earthquake.
+2.2
+Evaluation Metrics
+In training our models, we deviate from the standard Mean Squared Error (MSE) loss function due to
+its interpretative limitations with our data. Instead, we utilize Mean Absolute Percent Error (MAPE),
+which presents loss as a percentage error rather than a numerical discrepancy, making it more suitable
+for our context. Additionally, we employ Mean Absolute Error (MAE) as a complementary metric.
+MAE is beneficial as it uniformly weights all values, irrespective of direction, providing a robust
+assessment of model performance.
+2.3
+Model Selections
+In this study, our various machine learning models use the factors described in 2.1 as x-values and
+either the number of fatalities per population affected or the death toll as y-values.
+The linear regression model is this study’s baseline model. It implements Ordinary Least Squares
+(OLS) regression to fit the dataset and generate a model summary with the metrics described in 2.2.
+The neural network’s architecture features an input layer, multiple hidden layers, and an output layer.
+The model is compiled with the Adam optimizer and MAPE loss function. The data undergoes an
+80/20 train-test split, and the model is trained for 4500 epochs.
+For the Decision Tree, Random Forest, Ridge, and LASSO machine learning models, the data is first
+split in an 80/20 train test split. Hyperparameter optimization is conducted on the training data using
+grid search with 5-fold cross-validation, employing negative MAPE as the scoring metric. The model
+is then trained and evaluated on the test data.
+In the Decision Tree Regressor, the hyperparameters are the maximum depth, the minimum number
+of samples required to split an internal node, the minimum number of samples required to be at a leaf
+node, and the number of features to consider when looking for the best split. In the Random Forest
+Regressor, the hyperparameters are the number of trees in the forest, the maximum depth of each
+tree, the minimum number of samples required to split an internal node, the minimum number of
+2
+
+--- Sayfa 3 ---
+samples required to be at a leaf node, and whether bootstrap samples are used when building trees.
+Both Ridge and LASSO Regression models use one hyperparameter for ’alpha.’
+3
+Results
+The linear regression models exhibited a suboptimal performance, with a MAPE of 23.25 and a MAE
+of 0.0030 for per capita predictions and a MAPE of 88.92 and an MAE of 2737.01 for the total death
+toll. Despite the seemingly favorable per capita predictions, fitting the model directly to Ordinary
+Least Squares (OLS) without splitting the data into training and testing sets (as described in section
+2.3) suggests potential overfitting. Table 1 and Table 2 present the testing values for differing machine
+learning models grouped together due to their shared evaluation methods, as detailed in section 2.3.
+Table 1: Deaths per Population Predictor Evaluation Metrics
+Neural Network
+Decision Tree
+Random Forest
+Ridge
+LASSO
+Training MAPE
+85.70
+5.79
+7.79
+19.39
+35.01
+Training MAE
+0.0024
+0.0026
+0.0026
+0.0030
+0.0031
+Testing MAPE
+83.97
+9.92
+10.61
+32.09
+31.64
+Testing MAE
+0.0013
+0.0026
+0.0026
+0.0022
+0.0018
+Table 2: Death Toll Predictor Evaluation Metrics
+Neural Network
+Decision Tree
+Random Forest
+Ridge
+LASSO
+Training MAPE
+84.37
+3.99
+1.76
+35.01
+86.29
+Training MAE
+2379.86
+464.98
+187.83
+2193.49
+2453.03
+Testing MAPE
+83.78
+12.16
+6.20
+84.91
+63.93
+Testing MAE
+2091.89
+802.43
+1175.13
+3041.39
+2858.44
+Based on the performance metrics, the Decision Tree model and Random Forest model provide the
+best results due to having low MAPE and MAE values compared to the other data. The Random
+Forest model would be a better predictive model, not only due to the better MAPE scores, is an
+ensemble model combining multiple decision trees. Since the forest model averages many tree
+models, this leads to a lower risk of overfitting and better feature variability. Therefore, the Random
+Forest model is the best damage-predictive model for this study.
+Figure 1: Factor significance in Influencing
+Earthquake Deaths
+Figure 2: Factor significance in Influencing
+Earthquake Deaths Per Capita
+In Random Forest models, factor importance applies a score to each x-coordinate, reflecting how
+relatively significant each factor is in predicting the damage. This is calculated by adding the
+reduction in error that each feature contributes at each split across all nodes and trees in the forest
+and then averaging these scores. The importance values are normalized to sum to one, providing a
+clear comparison of how much each feature contributes to the model. The feature significance of
+both predicting deaths and predicting deaths per population affected is shown in the graphs above.
+3
+
+--- Sayfa 4 ---
+For the model predicting deaths per population affected, the feature importance values indicate
+that population density is overwhelmingly the most significant factor. This is because it is directly
+involved in calculating the target variable, as it is multiplied by surface area affected to get the number
+of people affected.
+In the death toll prediction model, magnitude is the most significant factor in earthquake damage.
+Notably, SVI and BCI have similar importance scores, suggesting that earthquake vulnerability
+and building stability have comparable influence on predicting the death toll. Understanding these
+importance scores helps in identifying which factors are most critical to focus on when developing
+models and strategies for earthquake impact mitigation and response planning.
+4
+Discussion
+In this paper, we designed models in the field of earthquake damage prediction and determined the
+significance of socioeconomic factors to earthquake damage. In the future, combining the results
+from earthquake prediction models such as the RECAST and ETAS model could make our model
+extremely useful to Turkish disaster preparation agencies, as we would be predicting vital information
+on earthquakes to come, leading to better mitigation strategies. [4, 16]
+Nonetheless, there are important limitations we hope to address in future iterations of this model. First,
+conceptually, there are many reasons earthquake damage prediction is difficult. Often, the aftermath
+of the earthquake can have a more devastating effect than the seismic event itself. Unpredictable
+variables such as possible fires or explosions can create a difficult environment for damage prediction
+as it is impossible to know what other catastrophes a simple earthquake could lead to. Our model
+provides a useful conceptual foothold to build upon. Theoretically, as technology advances, more
+sophisticated methods will enable us to conquer this issue. Additionally, since we only used data
+preceding 1950, there were certain limitations, as most data collected on earthquakes before that
+point would be inaccurate or incomplete. This led to a limited training dataset of only 99 values, but
+all with complete data in the most important variables.
+5
+Related Works
+Recent advancements in machine learning have improved the accuracy of many earthquake prediction
+models. These models, such as the recent RECAST models, rely on dense seismic networks
+and automated data processing techniques.[4] The RECAST Model utilizes deep learning neural
+networks to expand upon the ETAS model’s temporal point processing model. By adding features
+such as predicted location as well as other geophysical data, the RECAST model improves the
+accuracy and quantity of data in earthquake prediction. The development in machine learning and
+earthquake prediction technology has been paralleled by a rise in earthquake damage prediction. For
+example, DrivenData began hosting a damage prediction competition, where participants predict
+the level of damage caused to buildings from Nepal’s Gorkha earthquake, based on building data
+and socioeconomic statistics.[17] However, the competition overlooks dynamic variables having the
+largest effects on the loss of human life. Our team realized that with different data, we could use a
+similar approach to predict the damage of earthquakes that will happen in the future, thus connecting
+earthquake prediction to damage prediction.
+6
+Conclusion
+This study has concentrated on predicting earthquake damage severity in Turkey by analyzing factors
+such as building stability, earthquake depth, and population density. Through the evaluation of various
+machine learning architectures, our objective has been to accurately forecast death tolls and fatalities
+per affected population. Additionally, performing feature importance on the final model improves
+earthquake preparedness and resilience strategies. We hope that this research will prompt increased
+efforts toward mitigating fatalities caused by earthquakes.
+4
+
+--- Sayfa 5 ---
+7
+Acknowledgements
+All source code and the text of this paper were authored by Shrey Shah, Alex Lin, Scott Lin, and Josh
+Patel, who designed the project following an extensive literature review. Scott Lin and Josh Patel are
+high school students at Foothill High School and The Peddie School, respectively.
+We extend our gratitude to Mike Lam and Kevin Zhu for their contributions through lectures on
+machine learning and research skills, suggested readings, high-level guidance, and constructive
+comments on the manuscript.
+References
+[1] National geophysical data center / world data service (ngdc/wds): Ncei/wds global significant
+earthquake database. noaa national centers for environmental information., 2024.
+[2] Erdal HERECE. The fault trace of 1953 yen˙Ice-gÖnen earthquake and the westernmost known
+extension of the naf system in the b˙Iga peninsula. Bulletin of the Mineral Research and
+Exploration: Vol. 1990: Iss. 111, Article 4, 2023.
+[3] Presse A.F. Nearly 60,000 killed in 2023 turkey, syria quake: New toll.
+[4] Kelian Dascher-Cousineau, Oleksandr Shchur, Emily E Brodsky, and Stephan Günnemann.
+Using deep learning for flexible and scalable earthquake forecasting. Geophysical Research
+Letters, 50(17):e2023GL103909, 2023.
+[5] Kandilli Observatory and Earthquake Research Institute (2002): Large Turkish Earthquakes,
+Instanbul, Turkey.http://www.koeri.boun.edu.tr/sismo/eLarge0.htm.
+[6] K Ergin. A catalogue of earthquakes for turkey and surrounding area (11ad to 1964ad). Tech.
+Univ. Mining Eng. Fac. Publ., 24:189, 1967.
+[7] U.S. Department of the Interior, Geological Survey and U.S. Department of Commerce, National
+Oceanic and Atmospheric Administra (1928-1986): United States Earthquakes, Annual publica-
+tion, published 1928-1986. vol.s for 1928-1965 issued by the U.S. Coast and Geodetic Survey;
+volumes for 1966-1969 issued by the National Earthquake Information Center; volume for 1970
+issued by the National Geophysical Data Center; volumes for 1971-1972 issued by the National
+Geophysical And Solar-Terrestrial Data Center; volumes for 1973-1980 published jointly by the
+National Oceanic and Atmospheric Administration (NOAA) and the U.S. Geological Survey;
+volumes for 1981-1986 published by the U.S. Geological Survey.
+[8] Halil Sezen, Ahmet Can Altunisik, Mehmet Emin Arslan, Naci Caglar, Aydin Demir, NURUL-
+LAH BEKTAS, Abdullah Dilsiz, Selim Gunay, Zeyad Khalil, Marko Marinkovic, Amir Safiey,
+Mohammad Alam, Tracy Kijewski-Correa, and Khalid Mosalam. Steer 2022 mw 6.1 duzce,
+turkey earthquake preliminary virtual reconnaissance report (pvrr), 2023.
+[9] The modified Mercalli intensity (MMI) scale assigns intensities as ... The Modi-
+fied Mercalli Intensity (MMI) Scale assigns intensities as ... | U.S. Geological Sur-
+vey. (n.d.). https://www.usgs.gov/media/images/modified-mercalli-intensity-mmi-scale-assigns-
+intensities.
+[10] (info@geo-ref.net), Dr. H. F. (n.d.). Republic of türkiiye. Türkiiye Country data, links and map
+by administrative structure. http://www.geo-ref.net/en/tur.htm.
+[11] Turkiye istatistik Kurumu (TUIK). TUIK. (n.d.). https://www.tuik.gov.tr/.
+[12] William B Joyner and David M Boore. Peak horizontal acceleration and velocity from strong-
+motion records including records from the 1979 imperial valley, california, earthquake. Bulletin
+of the seismological Society of America, 71(6):2011–2038, 1981.
+[13] Erol Kalkan and Polat Gülkan. Site-dependent spectra derived from ground motion records in
+turkey. Earthquake Spectra, 20(4):1111–1138, 2004.
+5
+
+--- Sayfa 6 ---
+[14] David J Wald, Vincent Quitoriano, Thomas H Heaton, and Hiroo Kanamori. Relationships
+between peak ground acceleration, peak ground velocity, and modified mercalli intensity in
+california. Earthquake spectra, 15(3):557–564, 1999.
+[15] The Science of Earthquakes. The Science of Earthquakes | U.S. Geological Survey. (n.d.).
+https://www.usgs.gov/programs/earthquake-hazards/science-earthquakes.
+[16] Anna Maria Lombardi. Scientific reports, 5(1):8417, 2015.
+[17] DrivenData. (2019). "Open Machine Learning Competition for Earthquake Damage Prediction.".
+6

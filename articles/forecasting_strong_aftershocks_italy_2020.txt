@@ -1,0 +1,659 @@
+
+--- Sayfa 1 ---
+Improved Earthquake Forecasting Model Based on Long-
+term Memory in Earthquake
+Yongwen Zhang1,2,3, Dong Zhou4,1, Jingfang Fan5,2, Warner Marzocchi6, Yosef Ashkenazy1 and
+Shlomo Havlin2
+1Department of Solar Energy and Environmental Physics, The Jacob Blaustein Institutes for Desert
+Research, Ben-Gurion University of the Negev, Midreshet Ben-Gurion 84990, Israel;
+2Department of Physics, Bar-Ilan University, Ramat Gan 52900, Israel;
+3Data Science Research Center, Faculty of Science, Kunming University of Science and Technol-
+ogy, Kunming 650500, Yunnan, China;
+4School of Reliability and Systems Engineering, Beihang University, Beijing, 100191, China;
+5Potsdam Institute for Climate Impact Research, 14412 Potsdam, Germany;
+6Department of Earth, Environmental, and Resources Sciences, University of Naples, Federico II,
+Complesso di Monte SantAngelo, Via Cinthia, 21 80126 Napoli, Italy.
+A prominent feature of earthquakes is their empirical laws including memory (clustering) in
+time and space. Several earthquake forecasting models, like the EpidemicType Aftershock
+Sequence (ETAS) model1,2, were developed based on earthquake empirical laws. Yet, a re-
+cent study3 showed that the ETAS model fails in reproducing signiﬁcant long-term memory
+characteristics found in real earthquake catalogs. Here we modify and generalize the ETAS
+model to include short- and long-term triggering mechanisms, to account for the short- and
+long-time memory (exponents) recently discovered in the data. Our generalized ETAS model
+1
+arXiv:2003.12539v1  [physics.geo-ph]  22 Mar 2020
+
+--- Sayfa 2 ---
+reproduces accurately the short- and long-term/distance memory observed in the Italian and
+South California earthquake catalogs. The revised ETAS model is also found to signiﬁcantly
+improve earthquake forecasting.
+The forecasting of the timing, location, and magnitude of future earthquakes is a long stand-
+ing important problem. Past massive earthquakes resulted in catastrophic effects on human life, in-
+frastructure and property and therefore ﬁnding early earthquake precursors is of great importance.
+It is accepted that even a small improvement in earthquake forecasting can save many human lives.
+Currently, the understanding and forecasting of earthquake is limited. Predicting earthquakes by
+using a diagnostic precursor via some signal observable has not produced a reliable prediction
+scheme4–6. Actually, the current predictability of earthquakes is based on the known seismic laws:
+The distribution of earthquake magnitudes is exponential and follows the Gutenberg-Richter law
+(N(m) ∝10−bm, where N is number of earthquakes of magnitude m and b ≈1)7. The number
+of earthquakes triggered by a mainshock increases exponentially with the magnitude of the main-
+shock (Utsu law)8. In addition, the rate of triggered events decays as a power law with time (Omori
+law)9.
+An operational earthquake forecasting scheme has been developed and applied to forecast
+earthquake sequences based on the empirical laws, including clustering of earthquakes in space
+and time5; space-time earthquake clustering can be attributed to triggering of earthquakes10. The
+space-time clustering of earthquakes stimulated the development of a series of earthquake fore-
+casting models based on a branching process, such as the Epidemic–Type Aftershock Sequence
+2
+
+--- Sayfa 3 ---
+model (ETAS)1,2, and the Short–Term Earthquake Probability model (STEP)11. The ETAS model
+combines the Gutenberg-Richter, Utsu, and Omori laws into a Hawkes (point) process. In the
+ETAS model, every past earthquake (above a certain magnitude) triggers other earthquakes. Previ-
+ous studies and many retrospective analyses12,13 proved that clustering models, such as the ETAS
+model, provide better forecasts compared to other models; still, these models lack some central
+earthquake features14–17. Yet, it is possible that earthquake are erratic in their nature and, as such,
+are almost unpredictable. Indeed, many statistical physics features of seismic activity have not yet
+been fully understood18.
+Temporal and spatial memory (correlations) widely exist in many natural systems19,20 includ-
+ing in earthquake activity. For example, Livina et al.21 identiﬁed short-term memory of successive
+interevent times in real earthquake catalogs using a conditional probability method. They found a
+strong short-term memory where short (long) interevent time tends to follow short (long) interevent
+time. Other correlation detection methods like the detrended ﬂuctuation analysis (DFA)22 have
+also been applied to detect the memory of interevent times23. The empirical short-term memory
+between successive interevent times in real catalogs has been found to be reproduced by the ETAS
+model, only for a narrow range of model parameters24. Recently, a new measure has been3 intro-
+duced, called “lagged” conditional probability, to explore long-term memory, both in successive
+and non-successive interevent times and distances3. This analysis resulted in a memory measure
+versus (time or distance) lag for which a crossover between two distinct behaviors has been found.
+A slow decaying power law for short scales (time or distance) while signiﬁcantly faster decay (that
+might be exponential) at long scales has been found3. This behavior, discovered in real catalogs,
+3
+
+--- Sayfa 4 ---
+could not be reproduced by the ETAS model. More speciﬁcally, the model’s analysis resulted in
+single power law behavior (exponent) without a crossover that was observed in the real catalogs3;
+the model’s memory is weaker (stronger) in short (long) time scales compared to the real catalogs.
+The value of the power-law exponent depends on the productivity parameter α, a parameter in the
+model which is associated with the Utsu law. Earthquakes can trigger more correlated events with
+a larger α, resulting in enhanced earthquake memory. Therefore, based on the empirical ﬁnding3
+of crossover in the memory behavior, here we introduce into the ETAS model two productivity
+parameters, large and small, α1 and α2, for short and long time scales. We show here that this re-
+vised ETAS model reproduces the observed double power law behavior of memory, as well as the
+crossover observed in real data. Moreover, we show that the revised model improves signiﬁcantly
+the forecasting performance of earthquake events.
+We ﬁrst deﬁne the earthquake interevent time interval as τi = ti+1 −ti (in days); this is
+the time interval between two consecutive earthquake events above a certain magnitude threshold.
+Similarly, an interevent distance ri is deﬁned as the distance (in km) between the locations of
+events i + 1 and i above a certain magnitude threshold. We calculate the interevent times and
+distances with the magnitude threshold M0 = 3.0 (Mw) for the seismic catalog of Italy that is
+known to be complete for earthquake magnitudes above 3.0 (see Methods); this catalog span 37
+years, from 1981 to 2017. We then propose the “lagged” conditional CDF method based on the
+“lagged” conditional PDF3 as follows. First, all interevent times (distances) are sorted in ascending
+order and then divided into three equal quantiles. The ﬁrst quantile, Q1, contains the smallest 1/3
+interevent times (distances) and the third quantile, Q3, contains the largest 1/3 interevent times
+4
+
+--- Sayfa 5 ---
+(distances). The conditional CDF of interevent times (distances) is deﬁned as C(τk|τ0) (C(rk|r0)),
+where τ0 (r0) belongs to Q1 or Q3, and τk (rk) is the lagged k-th interevent time that follows τ0
+(r0). This method generalizes previous studies that used lag 1 (k = 1)21, thus enabling to uncover
+the empirical laws of long-range memory of earthquake catalogs. To demonstrate the empirical
+long term memory, we show in Figs. 1(a) and (b), the lagged conditional CDFs C(τ50|τ0) and
+C(r50|r0) using a high lag number k = 50, for the ﬁrst and third quantiles, Q1 and Q3, for the
+Italian catalog. It can be seen that the lagged conditional CDFs of Q1 are signiﬁcantly different
+from that of Q3 (see Figure 1(a) and (b)). This implies the existence of memory (correlations) also
+for large number of lags. For the randomly shufﬂed catalogs which does not contain memory, both
+lagged conditional CDFs of Q1 and Q3 are identical to unconditional CDF (indicated by the black
+dashed curves in Figure 1(a) and (b)). Thus, the real catalogs exhibit memory, even for large k
+lags, as found earlier3.
+We next test the memory in the ETAS model by simulating earthquakes records for the re-
+gion of Italy (34◦N-48◦N, 6◦E-20◦E), based on the thinning method1,2. The original and our revised
+ETAS models are called here ETAS1 and ETAS2 respectively. In ETAS2, we introduce the produc-
+tivity parameter α1 for small lag-index k (short time scale), and the smaller productivity parameter
+α2 for large lag-index k above a crossover value (long time scale). See the Methods section for
+more details regarding the model. Figure 1(c) and (d) show the lagged conditional CDFs C(τ50|τ0)
+and C(r50|r0) for the catalogs simulated by ETAS2. Note that there are substantial differences
+between the CDFs of Q1 and Q3, where these differences are common both for the real (Figure
+1(a) and (b)) and for the ETAS2 simulated catalogs (Figure 1(c) and (d)). In contrast, the CDFs of
+5
+
+--- Sayfa 6 ---
+Q1 and Q3 of the original ETAS1 model almost completely overlap, for both interevent times and
+distances (Figure 1(e) and (f)), in contrast to the observed CDFs. This demonstrates the existence
+of stronger memory in ETAS2 and, in contrast, much weaker memory in ETAS1.
+To quantify the memory based on the lagged conditional CDF, the maximum gap S (indicated
+by double arrow in Figure 1) between the lagged conditional CDFs of the ﬁrst and third quantiles
+is calculated. It follows that S = 0 (complete overlap between Q1 and Q3 CDFs (PDFs)) indi-
+cates lack of memory while S = 1 (complete separation between Q1 and Q3 PDFs) indicates full
+memory; thus, the memory measure is deﬁned as S(τk|τ0) in the range between 0 and 1. We next
+calculate the memory measure for the real Italian catalog as a function of the lag index k for in-
+terevent times and distances respectively (Supplementary Fig. 1). Different magnitude thresholds
+M0 are also considered. We rescale the memory measure S(τk|τ0) by a factor 10aM0 which rep-
+resents the dependence of memory on the magnitude threshold3 (i.e., F(x) = S(x)10aM0) where
+the lag-index, k, is rescaled by x = k10bM0, to account for the Gutenberg-Richter law. The curves
+S(x) of all cases collapse into a single curve F(x) after the rescaling (Figure 2). It is seen that the
+rescaled memory measure F(x) of the Italian catalog decays slowly for small x (lags) and faster
+for large x (lags), both for interevent times and interevent distances, as seen in Figure 2(a) and (b).
+Figure 2 (c) and (d) depict the corresponding scaling measures for the new ETAS2 model and it
+is clear that it reproduces the two power law behavior of the real catalogs (Figure 2 (a), (b)) and
+the associated crossover of the scaling curves. Moreover, the crossovers are close to xc ≈105.0,
+for both the real catalog and our developed ETAS2 model. The averaged time corresponding to
+the crossover is around 100 days. The scaling function behaves as F(x) ∼x−γ1 for x < xc and
+6
+
+--- Sayfa 7 ---
+(a) Real
+S
+(b) Real
+(c) ETAS2
+(d) ETAS2
+(e) ETAS1
+(f) ETAS1
+0.00
+0.25
+0.50
+0.75
+1.00
+0.00
+0.25
+0.50
+0.75
+1.00
+0.00
+0.25
+0.50
+0.75
+1.00
+10−6
+10−4
+10−2
+100
+102
+10−2 10−1
+100
+101
+102
+103
+τ50(day)
+r50(km)
+CDF
+CDF
+CDF
+Q1
+Q3
+Figure 1: (Color online) Lagged conditional CDF of (a) interevent times τk and (b) interevent
+distances rk for lag-index k = 50 (where the magnitude threshold is M0 = 3.0) for the real
+catalog of Italy; The maximum gap S between the two lagged conditional CDFs (the ﬁrst and third
+quantiles, Q1 and Q3), is indicated by the blue double arrow between the two dotted blue lines.
+The value of 0 ≤S ≤1 represents the memory. (c), (d) Same as (a), (b) but for the (revised)
+ETAS2 model simulated catalog. (e), (f) Also same as (a), (b) but for the (original) ETAS1 model.
+The black dashed curves indicate the CDFs for all quantiles (all interevent series).
+7
+
+--- Sayfa 8 ---
+F(x) ∼x−γ2 for x ≥xc. These two exponents (γ1, γ2) and the parameter a are summarized in
+Table 1 showing that the new ETAS2 model reproduces quite accurately the scaling exponents of
+the real catalog. In contrast, the original ETAS1 model basically exhibits power-law behavior but
+with only a single exponent, without a crossover and thus fails in reproducing the observed mem-
+ory characteristics of the data (see Figure 2(e) and (f)). We also calculate the memory measure for
+the real and simulated catalogs of South California (see Supplementary Figures 2, 3 and Table 1).
+The results indicate that the new ETAS2 model reproduces quite well the scaling function of the
+real catalogs, in contrast to ETAS1 model.
+Next we test and compare the forecasting performance of ETAS1 and ETAS2 models. We
+perform the N-test25, which compares the total number of earthquakes forecasted by the model with
+the total observed number of earthquakes over the entire region; we apply this test to the L’Aquila
+(Italy) earthquake (magnitude 6.3), occurred on April 6, 200926. Figure 3(a) presents the loca-
+tions of earthquakes above magnitude threshold 3 occurred within one month after the L’Aquila
+mainshock. The number of earthquakes increased immediately after the L’Aquila mainshock (red
+circles in Figure 3(b)). Notably, the original ETAS1 model forecast much less events compared to
+the real catalog while the forecast of the revised ETAS2 is very similar to the real events. Indeed,
+the fact that the ETAS1 model severely underestimates the number of earthquakes immediately
+after large shocks has been reported previously27. The remedy was to speciﬁcally increase the
+α-value after large shocks; still, this increase of α-value is not consistent with the α-value that was
+estimated based in the entire Italian catalog26,28. In the ETAS2 model that we propose here, we
+introduce in the model a large α1 in short time scale (below the crossover) such that the rate of
+8
+
+--- Sayfa 9 ---
+(a) Real
+(b) Real
+(c) ETAS2
+(d) ETAS2
+(e) ETAS1
+(f) ETAS1
+10−1
+10−1
+10−1
+10−1
+10−1
+10−2
+10−2
+10−2
+10−2
+10−2
+10−1
+10−1
+10−1
+10−1
+10−2
+10−2
+10−1
+10−1
+10−2
+10−2
+10−1
+10−1
+10−3
+10−3
+10−2
+10−2
+103
+103
+104
+104
+105
+105
+103
+103
+104
+104
+105
+105
+k10bM0
+k10bM0
+S(τk|τ0) 10aM0
+S(rk|r0) 10aM0
+S(τk|τ0) 10aM0
+S(rk|r0) 10aM0
+S(τk|τ0) 10aM0
+S(rk|r0) 10aM0
+3
+3.5
+4
+Figure 2: (Color online) The rescaled memory measure, S, (y axis) as a function of k10bM0 (x axis)
+for (a) interevent times and (b) interevent distances for the real Italian catalog. Colors and symbols
+represent different magnitude thresholds, M0. (c), (d) Same as (a), (b) but for the simulated catalog
+of the new developed ETAS2 model. (e), (f) Same as (a), (b) but for the original ETAS1 model. The
+memory measure S is averaged over 50 independent realizations and the error bars show the 90%
+conﬁdence intervals. Black dashed lines are ﬁtted power-law curves. The values of the exponents
+are given in Table 1.
+9
+
+--- Sayfa 10 ---
+aftershock is effectively increased immediately after a large shock; on the other hand, a small α2
+is assumed for long time scales (above the crossover) that guarantees the averaged aftershock rate
+for long time period which is consistent with the rate of the entire real catalog.
+We also test the quality of forecast in space (Figure 3(c)) and ﬁnd that our revised ETAS2
+model outperform the original ETAS1 and it resulted in increased number of events, making its
+performance closer to real observations. Spatial clustering of aftershocks can cause a large fraction
+of events in short distance. Aftershocks are generally within a region of a radius 100 km from the
+epicenter of the mainshock. We ﬁnd that 98% of the events in Italy within 30 days after the
+L’Aquila mainshock are within a radius of R = 100 km (Fig. 4(c), (f)). We ﬁnd that 94% and 86%
+events (from 500 independent realizations) of ETAS1 and ETAS2 models occur within a radius of
+100 km within one month from the main shock.
+We also test the forecasts after six largest shocks (Mw ≥6) occurred in Italy between 1981-
+2017. Figs. 4(a), (b) and (c) show the results for the total number N of earthquakes after the
+mainshock for 1 day, 15 days and 30 days respectively. Almost for all these 6 major earthquakes
+the observed number of earthquakes (red dots) falls within the 90% conﬁdence intervals for new
+ETAS2 model forecasting. The exception is event L5 (Figs. 4(b), (c)), which occurred around the
+city of Norcia on October 26, 2016. This is because even a larger earthquake (L6, magnitude 6.6
+in comparison to magnitude of 6.1 of the L5 event) hit Norcia later, leading to more aftershocks
+four days after L5. We also show in Fig. 4(d)–(f) the fraction of earthquakes within a radius
+100 km around the mainshock epicenter and within different number of days from the mainshock.
+10
+
+--- Sayfa 11 ---
+13.1°E
+13.3°E
+13.5°E
+13.7°E
+42.2°N
+42.4°N
+42.6°N
+(a)
+10 km
+Lon
+Lat
+(b)
+100
+200
+300
+400
+0
+10
+20
+30
+Time [days]
+Cumulative number of events
+Real
+ETAS1
+ETAS2
+(c)
+0.00
+0.25
+0.50
+0.75
+1.00
+100
+101
+102
+103
+R [km]
+NR N
+Figure 3: (Color online) Forecasting test for the L’Aquila earthquake sequences. (a) Locations of
+the L’Aquila earthquake sequences within 30 days after the mainshock. The red triangle represents
+the mainshock (Mw = 6.3), and the yellow triangles and dots represent the events after the main-
+shock (magnitude above M0 = 3.0). Triangles indicate earthquake with magnitude above 5.0. (b)
+Cumulative number of earthquakes as a function of days after the L’Aquila mainshock. (c) Fraction
+of the earthquakes within a radius R centered at the mainshock epicenter, within 30 days after the
+L’Aquila mainshock. The models’ mean are averaged over 500 independent realizations where the
+green and blue shadow areas indicate the 90% conﬁdence intervals for ETAS1 and ETAS2 models.
+11
+
+--- Sayfa 12 ---
+The results indicate that the observed fraction of number of earthquakes (red dots) falls within the
+narrower error bars of the proposed ETAS2 model while the observations fall outside the error
+bars of the ETAS1 model, despite the larger error bars of this model (Fig. 4(d)–(f)). We thus
+conclude that the new ETAS2 forecasting is signiﬁcantly better than the forecasting performance
+of ETAS1 model. Similar improved forecasting performances of ETAS2 after large shocks in South
+California are shown in Supplementary Figure 4.
+The spatiotemporal clustering of aftershock sequences dominates the memory in interevent
+times and distances. This is incorporated in the ETAS model. Our results suggest that actually
+the memory of the ETAS model depends on the aftershock productivity parameter α. Following
+the observed catalogs3 we revised the ETAS model to include two productivity parameters α1 and
+α2 for short and long time scales. We show that the revised ETAS model suggested above not
+only reproduces the memory characteristics (scaling function) of the real catalog but also exhibits
+signiﬁcantly better forecasting skills in comparison to the original ETAS model. According to the
+Utsu law, the rate of aftershocks depends on the magnitude of the mainshock. The two α–values
+of the revised ETAS model indicate that the Utsu relation for long-term triggering is not same as
+short-term triggering. In short time, a large earthquake tends to trigger much more events. After
+a characteristic “time”, the triggering ability is substantially reduced. This may imply a possible
+mechanism regarding the triggering of aftershocks which depends on the stress conditions set up
+by historical events, not just a mainshock29,30. In other words, the aftershock triggering conditions
+could be changed by the sequentially dependent events occurred after the mainshock.
+12
+
+--- Sayfa 13 ---
+(a) 1d
+(b) 15d
+(c) 30d
+(d)
+(e)
+(f)
+100
+200
+100
+200
+300
+400
+500
+200
+400
+600
+0.925
+0.950
+0.975
+1.000
+0.7
+0.8
+0.9
+1.0
+0.6
+0.7
+0.8
+0.9
+1.0
+L1
+L2
+L3
+L4
+L5
+L6
+L1
+L2
+L3
+L4
+L5
+L6
+L1
+L2
+L3
+L4
+L5
+L6
+L1
+L2
+L3
+L4
+L5
+L6
+L1
+L2
+L3
+L4
+L5
+L6
+L1
+L2
+L3
+L4
+L5
+L6
+Index of events (magnitude >= 6)
+N
+NR N
+Real
+ETAS1
+ETAS2
+Figure 4: (Color online) Forecasting test after the six largest shocks of Mw ≥6 in Italy occurred
+between 1981 and 2017: L1 (1997 Umbria and Marche), L2 (2009 L’Aquila), L3 (2012 Emilia)
+and L4–6 (2016 Amatrice–Norcia). Total number of events after the mainshock within (a) 1 day,
+(b) 15 days and (c) 30 days after the mainshock. Fraction of the earthquakes within a radius 100
+km from the mainshock epicenter within (d) 1 day, (e) 15 days and (f) 30 days after the mainshock.
+The ETAS1 and ETAS2 model results are presented as averages over 500 realizations where the
+error bars indicate the 90% conﬁdence intervals.
+13
+
+--- Sayfa 14 ---
+Methods
+Data The Italian earthquake catalog is provided by the Seismic Hazard Center at Istituto Nazionale
+di Geoﬁsica e Vulcanologia (INGV, http://terremoti.ingv.it/it/). This catalog spans the time period
+from 1981 to 2017 and it is complete for earthquake magnitudes above M0 = 3.0; a catalog is
+“complete” when all events above the speciﬁed magnitude are included in the catalog. The South
+California catalog (https://scedc.caltech.edu/research-tools/alt-2011-dd-hauksson-yang-shearer.html)
+is from 1981 to 2018 and it is complete for earthquake magnitudes above M0 = 2.031.
+The revised ETAS Model Seismic events are assumed in the ETAS model to involve a space-time
+stochastic point process1,2. Each event above a magnitude M0 is selected independently from the
+Gutenberg–Richter distribution (where b = 1). The conditional rate, λ, at location (x, y) at time t
+is given by
+λ (x, y, t|Ht) = µ(x, y) +
+X
+ti<t
+k (Mi) g (t −ti) f (x −xi, y −yi, Mi) ,
+(1)
+where Ht is the history process prior t, ti are the times of the past events and Mi are their mag-
+nitudes. µ(x, y) = µ0u(x, y) is the background intensity at location (x, y), where u is the spatial
+PDF of background events, which is estimated by the method proposed by Zhuang32; µ0 is the
+background rate of the entire region. We represent the total number of the past events as n −1.
+The dependence of the triggering ability on magnitude is given by the Utsu law as
+k (Mi) =
+
+
+
+
+
+
+
+
+
+A exp(α1(Mi −M0))
+i > n −h10−bM0
+A exp(α2(Mi −M0))
+i ≤n −h10−bM0
+,
+(2)
+14
+
+--- Sayfa 15 ---
+where A is the occurrence rate of earthquakes at zero lag. In Eq. 2 we introduce two productivity
+parameters α1 and α2 (α1 ≥α2). When α1 = α2, Eq. 2 reduces to the original ETAS model.
+h10−bM0 is the crossover number of events with the magnitude threshold M0; h is a parameter that
+can be estimated from the data. The i-th historical event has a larger rate to trigger the n-th event
+(due to the larger α1), when the number of events between the i-th and n-th events is smaller than
+h10−bM0.
+The function g (t −ti) follows the Omori law as
+g (t −ti) =
+
+1 + t −ti
+c
+−p
+,
+(3)
+where c and p are the Omori law parameters. Spatial clustering of aftershocks is implemented by
+introducing a spatial kernel function f (x −xi, y −yi, Mi)32 as
+f (x −xi, y −yi, Mi) = q −1
+πζ2
+
+1 + (x −xi)2 + (y −yi)2
+ζ2
+−q
+,
+(4)
+where ζ = D exp [γm (Mi −M0)] indicates that the distances between triggering and triggered
+events depend on the magnitudes of triggering events. q, D and γm are the estimated parameters.
+The parameters of the original ETAS model (ETAS1) for Italy, were chosen as follows:
+µ = 0.2, A = 6.26, α1 = α2 = 1.5, p = 1.13, c = 0.007 based on refs.
+24,33. The spatial
+parameters were chosen to be q = 2.0, D = 0.03 (in units of “degree”) and γm = 0.48, and were
+estimated based on the method described in ref. 32. The parameters of the revised ETAS model
+(ETAS2) were chosen to be A = 3.26, α1 = 2.0, α2 = 1.4 and h = 2 × 105 (the crossover
+h10−bM0 = 200 for the magnitude threshold M0 = 3.0); the other parameters are the same as for
+the ETAS1 model.
+15
+
+--- Sayfa 16 ---
+1. Ogata, Y. Statistical models for earthquake occurrences and residual analysis for point pro-
+cesses. J. Am. Stat. Assoc. 83, 9–27 (1988).
+2. Ogata, Y. Space-time point-process models for earthquake occurrences. Ann. Inst. Stat. Math.
+50, 379–402 (1998).
+3. Zhang, Y. et al. Scaling laws in earthquake memory for interevent times and distances. Phys.
+Rev. Res. 2, 013264 (2020).
+4. Jordan, T. H. Earthquake predictability, brick by brick. Seismol. Res. Lett. 77, 3–6 (2006).
+5. Jordan, T. H. et al. Operational earthquake forecasting: State of knowledge and guidelines for
+utilization. Ann. Geophys. 54, 319–391 (2011).
+6. Ogata, Y. Statistics of earthquake activity: Models and methods for earthquake predictability
+studies. Annu. Rev. Earth Planet. Sci. 45, 497–527 (2017).
+7. Gutenberg, B. & Richter, C. F. Frequency of earthquakes in California. Bull. Seismol. Soc.
+Am. 34, 185–188 (1944).
+8. Utsu, T. Aftershocks and earthquake statistics (3) : Analyses of the distribution of earth-
+quakes in magnitude, time and space with special consideration to clustering characteristics of
+earthquake occurrence(1). J. Fac. Sci. Hokkaido Univ. Ser. 7, Geophys. 4, 1–42 (1972).
+9. Utsu, T. A statistical study on the occurrence of aftershocks. Geophys. Mag. 30, 521–605
+(1961).
+16
+
+--- Sayfa 17 ---
+10. Zaliapin, I., Gabrielov, A., Keilis-Borok, V. & Wong, H. Clustering analysis of seismicity and
+aftershock identiﬁcation. Phys. Rev. Lett. 101, 4–7 (2008).
+11. Gerstenberger, M. C., Wiemer, S., Jones, L. M. & Reasenberg, P. A. Real-time forecasts of
+tomorrow’s earthquakes in California. Nature 435, 328–331 (2005).
+12. Saichev, A., Helmstetter, A. & Sornette, D. Power-law distributions of offspring and gen-
+eration numbers in branching models of earthquake triggering. Pure Appl. Geophys. 162,
+1113–1134 (2005).
+13. Woessner, J. et al. A retrospective comparative forecast test on the 1992 Landers sequence. J.
+Geophys. Res. 116 (2011).
+14. Vere-Jones, D. A class of self-similar random measure. Adv. Appl. Probab. 37, 908–914
+(2005).
+15. Lippiello, E., De Arcangelis, L. & Godano, C. Inﬂuence of time and space correlations on
+earthquake magnitude. Phys. Rev. Lett. 100, 1–4 (2008).
+16. Gulia, L. et al. The effect of a mainshock on the size distribution of the aftershocks. Geophys.
+Res. Lett. 45, 13,277–13,287 (2018).
+17. Gulia, L. & Wiemer, S. Real-time discrimination of earthquake foreshocks and aftershocks.
+Nature 574, 193–199 (2019).
+18. de Arcangelis, L., Godano, C., Grasso, J. R. & Lippiello, E. Statistical physics approach to
+earthquake occurrence and forecasting. Phys. Rep. 628, 1–91 (2016).
+17
+
+--- Sayfa 18 ---
+19. Koscielny-Bunde, E. et al. Indication of a universal persistence law governing atmospheric
+variability. Phys. Rev. Lett. 81, 729–732 (1998).
+20. Bunde, A. et al. Correlated and uncorrelated regions in heart-rate ﬂuctuations during sleep.
+Phys. Rev. Lett. 85, 3736–3739 (2000).
+21. Livina, V. N., Havlin, S. & Bunde, A. Memory in the occurrence of earthquakes. Phys. Rev.
+Lett. 95, 208501 (2005).
+22. Peng, C. K. et al. Mosaic organization of DNA nucleotides. Phys. Rev. E 49, 1685 (1994).
+23. Lennartz, S., Livina, V. N., Bunde, A. & Havlin, S. Long-term memory in earthquakes and
+the distribution of interoccurrence times. EPL 81, 3–7 (2008).
+24. Fan, J. et al. Possible origin of memory in earthquakes: Real catalogs and an epidemic-type
+aftershock sequence model. Phys. Rev. E 99, 042210 (2019).
+25. Schorlemmer, D., Gerstenberger, M. C., Wiemer, S., Jackson, D. D. & Rhoades, D. A. Earth-
+quake likelihood model testing. Seismol. Res. Lett. 78, 17–29 (2007).
+26. Marzocchi, W. & Lombardi, A. M. Real-time forecasting following a damaging earthquake.
+Geophys. Res. Lett. 36 (2009).
+27. Marzocchi, W., Taroni, M. & Falcone, G.
+Earthquake forecasting during the complex
+Amatrice-Norcia seismic sequence. Sci. Adv. 3, 1–8 (2017).
+28. Lombardi, A. M. & Marzocchi, W. The ETAS model for daily forecasting of italian seismicity
+in the CSEP experiment. Ann. Geophys. 53, 155–164 (2010).
+18
+
+--- Sayfa 19 ---
+29. Parsons, T. et al. Stress-based aftershock forecasts made within 24 h postmain shock: Ex-
+pected north San Francisco Bay area seismicity changes after the 2014 M = 6.0 West Napa
+earthquake. Geophys. Res. Lett. 41, 8792–8799 (2014).
+30. Lippiello, E., Giacco, F., Marzocchi, W., Godano, C. & de Arcangelis, L. Mechanical origin
+of aftershocks. Sci. Rep. 5, 15560 (2015).
+31. Hauksson, E., Yang, W. & Shearer, P. M. Waveform relocated earthquake catalog for Southern
+California (1981 to June 2011) (2012).
+32. Zhuang, J. Long-term earthquake forecasts based on the epidemic-type aftershock sequence
+(ETAS) model for short-term clustering. Res. Geophys. 2, 8 (2012).
+33. Lombardi, A. M. Estimation of the parameters of ETAS models by Simulated Annealing. Sci.
+Rep. 5, 8417 (2015).
+Acknowledgements
+We thank the Italian Ministry of Foreign Affairs and International Cooperation jointly
+with the Israeli Ministry of Science, Technology, and Space (MOST); the Israel Science Foundation, ONR,
+the Japan Science Foundation with MOST, BSF-NSF, ARO, the EU H2020 project RISE, and DTRA (Grants
+no. HDTRA-1-14-1-0017 and HDTRA-1-19-1-0016) for ﬁnancial support.
+Competing Interests
+The authors declare that they have no competing ﬁnancial interests.
+Correspondence
+Correspondence and requests for materials should be addressed to Yongwen Zhang
+(email: zhangyongwen77@gmail.com).
+19
+
+--- Sayfa 20 ---
+Table 1: Estimated parameters (mean ± std), a exponent in the scaling factor 10aM0 and
+power law exponents of the scaling function, γ1, γ2 for the interevent times and distances
+for the real catalog of Italy, ETAS1 and ETAS2 models.
+Parameters
+Real
+ETAS1
+ETAS2
+a
+0.09 ± 0.01
+0.17 ± 0.02
+0.07 ± 0.01
+Time
+γ1
+0.19 ± 0.01
+0.38 ± 0.01
+0.25 ± 0.01
+γ2
+0.88 ± 0.05
+0.38 ± 0.01
+1.11± 0.04
+a
+0.24 ± 0.02
+0.37 ± 0.03
+0.21 ± 0.02
+Distance
+γ1
+0.21 ± 0.01
+0.46 ± 0.01
+0.33 ± 0.01
+γ2
+1.11 ± 0.07
+0.46 ± 0.01
+1.05 ± 0.03
+20

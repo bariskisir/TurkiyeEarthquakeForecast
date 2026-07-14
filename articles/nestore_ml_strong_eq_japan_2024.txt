@@ -1,0 +1,2767 @@
+
+--- Sayfa 1 ---
+WaveCastNet: Rapid Wavefield Forecasting for Earthquake Early
+Warning via Deep Sequence to Sequence Learning
+Dongwei Lyu1,2,3
+Rie Nakata1,2,4,∗
+Pu Ren2
+Michael W. Mahoney1,2,3
+Arben Pitarka5
+Nori Nakata1,2
+N. Benjamin Erichson1,2 *
+1International Computer Science Institute, Berkeley, USA
+2Lawrence Berkeley National Laboratory, Berkeley, USA
+3Department of Statistics, University of California, Berkeley, USA
+4Earthquake Research Institute, University of Tokyo, Tokyo, Japan
+5Lawrence Livermore National Laboratory, Livermore, USA
+Abstract
+We propose a new deep learning model, WaveCastNet, to
+forecast high-dimensional wavefields. WaveCastNet inte-
+grates a convolutional long expressive memory architec-
+ture into a sequence-to-sequence forecasting framework, en-
+abling it to model long-term dependencies and multiscale
+patterns in both space and time. By sharing weights across
+spatial and temporal dimensions, WaveCastNet requires sig-
+nificantly fewer parameters than more resource-intensive
+models such as transformers, resulting in faster inference
+times. Crucially, WaveCastNet also generalizes better than
+transformers to rare and critical seismic scenarios, such as
+high-magnitude earthquakes. Here, we show the ability of
+the model to predict the intensity and timing of destructive
+ground motions in real time, using simulated data from the
+San Francisco Bay Area. Furthermore, we demonstrate its
+zero-shot capabilities by evaluating WaveCastNet on real
+earthquake data. Our approach does not require estimating
+earthquake magnitudes and epicenters, steps that are prone
+to error in conventional methods, nor does it rely on em-
+pirical ground-motion models, which often fail to capture
+strongly heterogeneous wave propagation effects.
+1 Introduction
+Earthquakes generate complex seismic wavefields as en-
+ergy is released from the rupture and propagates through the
+Earth’s interior and surface, producing ground motions that
+can cause significant damage. Real-time prediction of how
+these ground motions evolve in space and time following the
+onset of rupture is critical for impact assessment and haz-
+ard mitigation, forming the foundation of earthquake early
+warning systems (EEW). Such forecasts provide immediate
+information that supports timely and potentially life-saving
+decision making. However, accurately predicting ground
+motions remains a challenge. Traditional approaches often
+rely on estimating earthquake source parameters, such as
+location, magnitude, and fault geometry, and use empiri-
+cal ground-motion models to predict shaking intensity [4].
+These methods are highly sensitive to errors in early pa-
+rameter estimates, particularly magnitude, which can result
+in missed or false alerts by warning systems [74, 51, 14].
+*Corresponding authors:
+N. Benjamin Erichson (erichson@icsi.
+berkeley.edu), Rie Nakata (rnakata@lbl.gov), and Dongwei Lyu
+(dw_lyu@berkeley.edu).
+Moreover, empirical models commonly assume ergodicity,
+averaging over space and time in ways that neglect important
+regional and path-dependent variations in wave propagation
+and site effects [32, 9, 11, 20, 7]. Although region-specific or
+non-ergodic corrections have been proposed [76, 58, 44, 67],
+they are not yet widely adopted.
+Recent methods aim to forecast ground-motion intensity
+measures or waveforms ahead of sensor detection by simu-
+lating the evolution of the seismic wavefield [36, 27]. These
+physics-based approaches typically combine numerical sim-
+ulations (e.g., radiative transfer theory or finite-difference
+methods) with data assimilation techniques such as optimal
+interpolation [41]. By directly modeling wave propagation,
+they avoid reliance on early arrival detection or magnitude
+estimation and can account for source complexity and path-
+dependent effects. Despite these advantages, their prediction
+accuracy has generally been insufficient for operational de-
+ployment [4], and the computational cost remains prohibitive
+for real-time use [27]. These limitations have motivated
+growing interest in data-driven alternatives that can more effi-
+ciently capture the rich spatio-temporal dynamics of seismic
+wavefields. In particular, deep neural networks have shown
+promise in modeling ground motions [25, 63, 26, 77, 37],
+and have achieved encouraging results in the context of
+earthquake early warning [66, 18, 54, 53, 42, 43, 46]. These
+models can learn complex spatial and temporal patterns di-
+rectly from the data, enabling fast and scalable inference
+suitable for real-time applications.
+Building on these recent advances, we formalize the
+problem of seismic wavefield forecasting within a spatio-
+temporal sequence prediction framework. The objective
+is to predict future wavefields based on observed histor-
+ical data.
+Formally, we are given a sequence of J el-
+ements, X1, X2, . . . , XJ, and aim to predict the subse-
+quent K elements, XJ+1, XJ+2, . . . , XJ+K. Each element
+Xt ∈RC×H×W represents a three-dimensional seismic
+wavefield, encoding particle velocity on an RH×W spatial
+grid across C channels corresponding to the X, Y, and Z
+directions of wave propagation. Figure 1(a–c) illustrates our
+problem setup, including an example snapshot demonstrat-
+ing viscoelastic wave propagation. Our goal is to forecast
+future wavefields over time horizons of up to 100 seconds.
+However, capturing the complex, multiscale structure inher-
+ent in seismic wavefields remains a major challenge.
+arXiv:2405.20516v2  [cs.LG]  26 Oct 2025
+
+--- Sayfa 2 ---
+1
+INTRODUCTION
+37°N
+38°N
+ 
+123°W
+122°W
+ 
+0
+50
+kilometers
+NC.J020
+NP.1788
+123°W
+122°W
+BK.JRSC
+0
+50
+kilometers
+A
+B
+C
+b
+a
+Y
+X
+123°W
+122°W
+-1.5
+1.5
+mm/s
+0
+50
+kilometers
+c
+decoder
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+encoder state
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+encoder
+embedding
+embedding
+embedding
+reconstruct
+reconstruct
+reconstruct
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+recurrent
+cell
+(i) dense input
+(ii) sparse input
+d
+Figure 1: Illustration of the problem setup and our proposed WaveCastNet architecture. (a) Simulation domain in the
+San Francisco Bay Area. The area of interest is indicated by the black rectangular box. Point-source earthquakes are
+placed along the thick white line. Known faults are shown in black [72]. Black triangles mark the sensor locations used
+for training under a sparse sensor configuration (see Section 4.1), red triangles denote the ShakeAlert stations, and blue
+triangles represent additional sensors used for real-data experiments on the 2018 Berkeley earthquake. (b) Schematic of a
+6.0-magnitude earthquake’s rupture plane (blue line). Red stars indicate epicenters of two hypothetical earthquakes (A, B)
+and the 2018 Berkeley earthquake (C). Large red triangles highlight the three sensor locations referenced in the discussion.
+(c) Example snapshot of the horizontal X-component velocity wavefield at T = 16.67 seconds from a point-source
+simulation. (d) Schematic of the WaveCastNet forecasting framework, consisting of encoder and decoder modules built
+from stacked recurrent cells. The embedding layer supports both (i) dense wavefield inputs and (ii) sparse sensor inputs,
+trained using a random masking strategy (gray pixels) to enable high-resolution forecasting.
+To address this challenge, we propose a deep learning-based
+approach for seismic wavefield prediction, as an alternative
+to the physics-based methods of [36, 27], with the aim of
+reducing inference time and improving predictive accuracy.
+Specifically, we develop a wavefield forecasting network,
+WaveCastNet, that is based on the sequence-to-sequence
+(Seq2Seq) framework introduced by [73]. The core architec-
+ture of WaveCastNet consists of an encoder and a decoder:
+the encoder processes the input sequence of seismic wave-
+fields and summarizes it into a single latent state, while the
+decoder generates the future sequence conditioned on this
+state. Figure 1(d) provides an overview of the WaveCastNet
+architecture. Both the encoder and decoder are composed of
+stacked recurrent units designed to handle sequential data.
+Modern recurrent cells include unitary recurrent units [5],
+gated recurrent units (GRUs) [17, 22], and long-short-term
+memory units (LSTM) [35]. However, these architectures
+rely on fully connected layers, which do not preserve the
+inherent multiscale spatial information present in 2-D or
+3-D data. The convolutional LSTM (ConvLSTM) architec-
+ture [69] addresses this limitation by incorporating convo-
+lution operations into the update and gating mechanisms
+of the LSTM, making it particularly effective for modeling
+spatiotemporal sequences. Although ConvLSTM captures
+multiscale spatial patterns through convolutional filters, it
+remains limited in modeling temporal multiscale structures.
+To overcome this, we design a convolutional long expres-
+sive memory (ConvLEM) model, an extension of the LEM
+architecture [65], that integrates convolutional layers into
+the LEM framework. ConvLEM effectively models the joint
+spatial and temporal correlations that govern the evolution of
+2
+
+--- Sayfa 3 ---
+2
+RESULTS
+the wavefield and serves as the backbone of both the encoder
+and the decoder in WaveCastNet.
+In this work, we show that WaveCastNet can directly model
+the spatio-temporal evolution of seismic wavefields, enabling
+real-time prediction of ground motions across a region with
+high fidelity. Trained on synthetic or observed data, Wave-
+CastNet bypasses the need for explicit arrival detection or
+source parameter estimation, and produces both full wave-
+form predictions and derived ground-motion intensity mea-
+sures. These capabilities support detailed wavefield analy-
+sis as well as rapid hazard assessment. Once trained, the
+model operates with low computational overhead, making it
+suitable for deployment in low-latency EEW systems. We
+demonstrate robust performance on synthetic benchmarks
+and present a proof-of-concept using real earthquake data.
+With further development, including adaptation to observa-
+tional conditions, validation in various seismic settings, and
+optimization for subsecond inference, our framework could
+complement and enhance current ground motion forecasting
+modules in operational EEW systems.
+The main advantages of WaveCastNet are as follows:
+• Predictive Accuracy: Outperforms Seq2Seq models
+based on ConvLSTM, gated variants, and transformers.
+• Flexibility: Capable of handling both dense (fully cap-
+tured) wavefields and sparse sensor measurements.
+• Generalizability: Scales to higher-magnitude events and
+exhibits zero-shot performance on real earthquake data.
+• Robustness to Real-World Conditions: Maintains perfor-
+mance under background noise and variable data latency.
+• Uncertainty Estimation: Supports ensemble-based pre-
+diction to quantify uncertainty in model outputs.
+• Operational Forecasting: Forecasts spatially varying
+waveforms without requiring event detection, source pa-
+rameter estimation, or empirical ground-motion models.
+Limitations.
+While our approach demonstrates strong gen-
+eralization and fast inference on synthetic data, several limi-
+tations warrant further investigation. First, although Wave-
+CastNet generalizes to moderate and large-magnitude events,
+its performance on high-magnitude finite-fault earthquakes
+remains constrained by the diversity of training data, particu-
+larly due to the shift from point sources to extended rupture
+geometries. This introduces challenges such as amplitude
+scaling, spatial decay variability, and normalization insta-
+bility, showing the need to incorporate a broader range of
+finite-fault simulations during training. Second, our cur-
+rent experiments are restricted to low-frequency waveforms
+(< 0.5 Hz), limiting applicability in scenarios where higher-
+frequency content is critical, such as near-fault engineering
+applications. Finally, while we observe promising zero-shot
+performance on real earthquake data, bridging the domain
+gap between synthetic and real-world observations remains
+an open challenge. Addressing this will require expanded
+datasets, improved data augmentation strategies, and po-
+tentially physics-informed regularization to ensure robust
+performance in operational settings.
+2 Results
+We evaluated our methodology by forecasting particle ve-
+locity waveforms near the Hayward Fault, simulating earth-
+quake scenarios in the San Francisco Bay Area as shown in
+Figure 1(a–c). San Francisco, located approximately 20 km
+west of the Hayward Fault, is one of the most densely popu-
+lated metropolitan areas in the United States. Our prediction
+domain spans approximately 120 km along the X direction
+(parallel to the fault) and 80 km along the Y direction (per-
+pendicular to the fault), delineated by the black rectangle.
+We train WaveCastNet using low-magnitude, point-source
+synthetic waveforms and evaluate its performance across
+multiple settings.
+These include both dense, regularly
+gridded sensor locations and sparse sensor configurations.
+We further assess the robustness to background noise and
+test generalization to challenging cases such as out-of-
+distribution source locations, high-magnitude events, and
+real earthquake data.
+2.1 Point-Source Small Earthquakes
+We first evaluate WaveCastNet by predicting ground motions
+from point-source earthquakes with magnitudes below M4.5.
+The training dataset is generated using simulated waveforms
+at frequencies below 0.5 Hz, with a minimum S-wave veloc-
+ity of 500 m/s. A total of 960 point sources are positioned
+at 1-km intervals along the white line shown in Figure 1a.
+These sources span depths between 2 km and 15 km; the
+white line denotes a rectangular fault plane extending 60 km
+horizontally and 13 km vertically. The wavefields are gener-
+ated using a fourth-order finite-difference viscoelastic model
+from the open-source SW4 package [59, 60], and the sub-
+surface properties are derived from the USGS San Francisco
+Bay Region 3D seismic velocity model v21.1 [1, 34]. Each
+source is modeled as a delta function low-pass filtered at
+0.5 Hz, under the assumption that the corner frequencies of
+small earthquakes exceed this value, resulting in relatively
+flat frequency spectra within the simulation bandwidth. A
+uniform double-couple mechanism is applied to all sources.
+These simulations serve as ground truth for model training
+and evaluation (see Section 4.4 for details).
+WaveCastNet is trained to forecast the next 100 seconds
+of the wavefield evolution based on an initial observation
+window.
+Rather than generating the entire sequence in
+a single pass, we adopt an iterative forecasting strategy.
+Specifically, the model predicts overlapping subsequences
+of 15.6 seconds (J = 60 time steps at ∆t = 0.26 s),
+which are recursively fed into subsequent iterations. At
+each iteration i, the model takes as input a subsequence of
+the form {Xi
+1, . . . , Xi
+J} and outputs the next subsequence
+{Xi+1
+1
+, . . . , Xi+1
+J
+}. Here for each step k, Xi
+k = X(iJ+k)∆t
+and Xi+1
+k
+= Xi
+k+J. This process is repeated until the entire
+100-second forecast horizon is covered. On an NVIDIA
+A100 GPU, WaveCastNet generates the complete forecast
+in less than one second.
+Importantly, the model remains effective even when the ini-
+tial post-rupture input is shorter than 15.6 seconds. We can
+simply pad the shorter sequences with white noise up to the
+3
+
+--- Sayfa 4 ---
+2.1
+Point-Source Small Earthquakes
+2
+RESULTS
+20
+40
+60
+80
+100
+X (km)
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+80
+100
+X (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+log
+error
+(a) Snapshots
+(b) PGV
+(c) PGV error
+(d) TPGV 
+(e) TPGV error
+-1.5
+1.5
+0
+mm/s
+7.4 s
+11.75 s
+16.1 s
+20.45 s
+Ground Truth
+Dense sampling
+Sparse sampling
+0.1
+0.8
+4.5
+-0.8
+0.8
+0
+mm/s
+s
+-4
+4
+0
+s
+10 
+50
+Figure 2: Point-source earthquake prediction. (a) Snapshots of Y-component velocity wavefields at T = 7.4, 11.75, 16.1,
+and 20.45 seconds for (top) ground truth, (middle) predictions from densely and regularly sampled input, and (bottom)
+predictions from sparsely and irregularly sampled input (triangles denote sensor locations). (b) Map of predicted PGV
+values and (c) corresponding PGV prediction errors. (d) Map of predicted TP GV values and (e) corresponding TP GV
+prediction errors. Errors are computed as the difference between predicted and ground-truth values; positive errors indicate
+overestimation, and negative errors indicate underestimation.
+required 60 steps. Accurate forecasts can be achieved with
+as little as 5.7 seconds of post-rupture data (see Figure C.1
+in the appendix for how forecasting accuracy evolves over
+time since rupture onset). In operational settings, this iter-
+ative strategy enables continuous real-time forecasting by
+updating inputs as new observations become available.
+In the following, we consider two scenarios: (i) input se-
+quences consisting of densely sampled wavefields; and (ii)
+input sequences consisting of sparsely sampled wavefields.
+Densely sampled input data. We begin by evaluating Wave-
+CastNet using densely sampled wavefields as input, where
+each element of the input and target sequences is a three-
+dimensional tensor Xt with dimensions 3 × 344 × 224, cor-
+responding to the three velocity components and the spatial
+grid in the X and Y directions.
+Figure 2(a) presents a series of ground-truth wavefield snap-
+shots (top row) alongside the corresponding predictions by
+WaveCastNet (middle row). The model accurately recon-
+structs the primary characteristics of seismic wave propaga-
+tion, including the P- and S-wavefronts and scattered coda
+waves. To further assess performance, we analyze both the
+intensity and timing of ground motions, focusing on the peak
+ground velocity (PGV) and its timing (TP GV ). The spatial
+distributions of PGV and TP GV are shown in Figure 2(b–d).
+WaveCastNet accurately reproduces high PGV values and
+their arrival times, particularly in three key regions: near the
+earthquake hypocenter at (X = 40, Y = 38) km, within the
+Livermore Basin at X = 60–80 km and Y = 40–60 km, and
+in the northeastern portion of the domain at X = 20–40 km.
+Deviations in the magnitude of the PGV are minimal, typ-
+ically within 5% of the ground truth. Errors in TP GV are
+generally negligible, although localized discrepancies appear
+in regions where TP GV exhibits discontinuities, likely due
+to underlying geological complexity.
+These results demonstrate that WaveCastNet effectively cap-
+tures the complex kinematics and dynamics of seismic wave
+propagation, including amplitude decay from geometrical
+spreading and intrinsic attenuation, as well as amplification
+effects due to wave reverberation in geological basins.
+Sparsely sampled input data. Next we simulate a scenario
+that more closely reflects real-world conditions, in which
+seismograph distributions are sparse and irregular, as shown
+in Figure 1(a). Specifically, we use 101 sensor locations that
+correspond to stations in the current ShakeAlert network.
+To extract sparsely sampled data, we locate the row and
+column indices [h, w] of each sensor within the wavefield
+snapshot Xt, forming an input sequence in which each el-
+ement is a two-dimensional tensor of size 3 × 101, corre-
+sponding to three velocity components across 101 sparse
+measurements. The corresponding target sequence consists
+of densely sampled wavefields, consistent with the previous
+experimental setup. To accommodate this sparse input repre-
+4
+
+--- Sayfa 5 ---
+2.1
+Point-Source Small Earthquakes
+2
+RESULTS
+Time (s)
+Frequency (Hz)
+Time (s)
+Frequency (Hz)
+Velocity Y (mm/s)
+Amplitude Y (mm/s)
+Velocity X (mm/s)
+Velocity Z (mm/s)
+Velocity Y (mm/s)
+Velocity X (mm/s)
+Velocity Z (mm/s)
+Amplitude Z (mm/s)
+Amplitude X (mm/s)
+Amplitude Y (mm/s)
+Amplitude Z (mm/s)
+Amplitude X (mm/s)
+(a) San Francisco (NC.J020)
+(b) San Jose (NP.1788)
+Figure 3: Waveforms from (a) San Francisco (NC.J020) and (b) San Jose (NP.1788) for a point-source earthquake. The
+blue lines indicate the ground truth, the red lines show the mean of the predicted waveforms, and the red shaded areas
+represent three times the standard deviation bands. The gray shaded areas indicate the input time window of 5.7 seconds.
+sentation, WaveCastNet uses a specialized embedding layer
+that maps sparse measurements to a latent representation,
+while the rest of the model architecture remains unchanged.
+As shown in the bottom row of Figure 2, WaveCastNet
+reconstructs wave propagation patterns (PGV, and TP GV )
+across the spatial domain, even when given only sparsely
+sampled inputs. While the prediction errors are higher than
+in the densely sampled case, the sparse measurements still
+capture the dominant features of seismic wave propagation.
+Uncertainty estimation. Quantifying uncertainty in ground-
+motion forecasting is important for risk-informed decision-
+making. To this end, we adopt an ensemble approach by
+training 50 instances of WaveCastNet, each initialized with
+different random seeds and trained on bootstrapped datasets.
+This setup allows us to compute ensemble means and stan-
+dard deviations for both time series and their corresponding
+amplitude spectra in the frequency domain. Figure 3 illus-
+trates the results for the San Francisco and San Jose stations.
+The ensemble captures the full waveform structure, and the
+predicted amplitude spectra closely align with the ground-
+truth data. WaveCastNet also performs reliably in the cases
+where no seismic energy reaches a station during the initial
+input window. For example, at the NC.J020 station in San
+Jose, see Figure 3(b), the model accurately predicts ground
+motions based solely on contextual information. The ensem-
+ble mean values of PGV and their arrival times (TP GV ) show
+excellent agreement with the reference data, as shown in Fig-
+ures 4(a, b, d, e). The standard deviations of the logarithmic
+PGV and TP GV values are consistently below 1% of their
+corresponding means, indicating high reliability. Slightly
+elevated deviations are observed within the Livermore basin,
+likely due to complex wavefield interactions from multiple
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+80
+100
+X (km)
+(b)
+(b)
+(a)
+(a)
+(c)
+(c)
+(e)
+(e)
+(d)
+(d)
+(f)
+(f)
+0.1
+0.8
+4.5
+mm/s
+log
+error
+-0.8
+0.8
+0
+0
+0.1
+log
+(mm/s)
+s
+10       
+50
+-4
+4
+0
+s
+10
+0
+s
+Figure 4: Uncertainty estimates for dense point-source
+ground-motion prediction. (a–c) Mean, error, and standard
+deviation of ln PGV, respectively. (d–f) Corresponding
+maps for TP GV . The error maps (b, e) show the differ-
+ence between predictions and ground truth. The hole in (f),
+centered at X = 40, Y = 38 km, corresponds to a location
+where TP GV falls within the input time window and is there-
+fore excluded from evaluation.
+5
+
+--- Sayfa 6 ---
+2.2
+Generalization
+2
+RESULTS
+(a) North Hayward Fault EQ
+(b) San Andreas Fault EQ
+PGV
+0.02
+0.5
+4.5
+mm/s
+PGV
+TPGV 
+20
+40
+60
+20
+40
+60
+80
+100
+X (km)
+20
+40
+60
+20
+40
+60
+80
+100
+X (km)
+20
+40
+60
+20
+40
+60
+Ground truth
+Prediction
+s    
+         15      30    45
+Y (km)
+Y (km)
+Y (km)
+Y (km)
+TPGV
+PGV
+TPGV
+Figure 5: PGV and TP GV predictions for earthquakes lo-
+cated outside the source distribution used during training.
+(a) Event at point A (see Figure 1(b)), located north of the
+training region along the Hayward Fault. (b) Event at point
+B (see Figure 1(b)), located on the San Andreas Fault. For
+both events: (left) PGV map and (right) TP GV map, with
+(top) ground truth and (bottom) WaveCastNet predictions.
+incoming fronts, highlighting WaveCastNet’s sensitivity to
+heterogeneous propagation conditions.
+2.2 Generalization
+We assess WaveCastNet’s generalization capabilities across
+three challenging scenarios: (i) point-source earthquakes lo-
+cated outside the training source distribution, (ii) finite-fault,
+large-magnitude earthquakes, and (iii) real-world earthquake
+recordings.
+Point sources outside the training distribution. We first
+evaluate WaveCastNet on point-source events located be-
+yond the spatial extent of the training dataset. Figure 5 shows
+PGV and TP GV maps for two such events: one located north
+of the training region along the Hayward Fault, see point A
+in Figure 1(b), and another across the Bay along the San
+Andreas Fault (point B). While WaveCastNet maintains high
+accuracy for the Hayward Fault event, performance declines
+for the more distant San Andreas scenario. These results
+demonstrate that WaveCastNet can generalize wavefield dy-
+namics beyond the training region, but also highlight the
+expected limitations when forecasting ground motions from
+events far outside the spatial and structural scope of the
+training distribution.
+Finite-fault large earthquakes.
+Unlike small earthquakes,
+which can be modeled as point sources, large-magnitude
+earthquakes require representation as finite rupture planes.
+Rupture initiates at the hypocenter and propagates along
+the fault surface, emitting seismic energy from each point
+over time. This physical process can be approximated by
+aggregating the responses of many point sources distributed
+along the fault, each activated at a prescribed rupture time.
+Using Green’s functions and kinematic rupture models, it is
+possible to synthesize ground motions for large events by in-
+tegrating the responses of these point sources [33, 31, 30, 61].
+Inspired by this approach, we test WaveCastNet’s ability
+to forecast waveforms from finite-fault earthquakes using
+only point-source-based training. We employ a suite of
+kinematic rupture models spanning magnitudes M4.5 to
+M7 generated using the physics-based method of [30] with
+updated slip-time functions [61]. These models serve as
+source terms in SW4 simulations to generate wavefields,
+a procedure commonly adopted for recorded and scenario
+earthquakes [61, 49, 50]. Each fault rupture is represented
+by a vertical rectangular plane aligned with the grid of
+point sources. The rupture dimensions scale with magni-
+tude following [45], ensuring the appropriate energy release.
+The source parameters, namely the slip, slip rate, initiation
+time, and dip, vary spatially and stochastically, resulting
+in complex ground-motion fields. WaveCastNet does not
+receive any of these parameters during inference. Further-
+more, because the duration of the rupture increases with
+magnitude [75, 56], and the early waveforms remain similar
+across magnitudes [52], forecasting full wavefields becomes
+increasingly difficult for larger events.
+Initially, we normalize the finite-fault input data using the
+pixel-wise mean and standard deviation tensors derived from
+the point-source training set. To improve stability, we further
+scale inputs using the standard deviation computed from the
+initial 5.7 seconds of waveform data. WaveCastNet achieves
+robust performance for events up to M5.5. However, as
+shown in Table 1b, performance degrades for M6.0 and
+larger earthquakes. This degradation correlates with rupture
+durations, 13.2 seconds for M6.5 and 26.2 seconds for M7.0
+events, which match or exceed the input window length. As
+a result, the input does not capture the full duration of the
+seismic energy release, leading to an underestimation of the
+amplitude, although the kinematics are still recovered (see
+Figure 6a).
+To address this limitation, we extended the input time win-
+dow, an adjustment that is feasible in practical applica-
+tions. As shown in Figures 6(b–d) and 7, this extension
+improves waveform recovery, particularly low-frequency
+content. WaveCastNet accurately predicts waveform phases,
+although it continues to underestimate amplitudes, especially
+for early arrivals. Despite this, PGV errors remain within
+1.5 log units, although timing errors can be significant. In
+Figure 6, multiple wavelets exhibit comparable peak ampli-
+tudes, complicating their temporal separation, especially in
+reverberant environments. These findings highlight Wave-
+CastNet’s substantial potential to generalize to finite-fault
+events, while also identifying areas for further improvement
+in modeling long-duration, high-magnitude earthquakes.
+Real-world data application. To assess WaveCastNet’s
+performance on real-world observations, we evaluate the
+2018 M4.4 Berkeley earthquake, which occurred at a depth
+of 12.3 km (see Section 4.6). WaveCastNet was trained ex-
+clusively on synthetic data, without any fine-tuning on real
+waveforms, making this a strict zero-shot generalization sce-
+nario. Following the procedure used in our large-magnitude
+experiments, we apply a 15.6-second input window to pre-
+6
+
+--- Sayfa 7 ---
+3
+DISCUSSION
+(a)
+(b)
+(c)
+Figure 6: Evolution of ground-motion prediction for a 6.0-
+magnitude earthquake at station NP.1788 (San Jose), show-
+ing the X-component velocity. Predictions are made using
+input windows of (a) 5.68 s, (b) 8.29 s, and (c) 10.90 s. The
+blue lines indicate the ground truth, the red lines indicate the
+prediction, and the gray shaded regions indicate the duration
+of the input window used for each inference. Longer input
+durations lead to improved amplitude recovery in the pre-
+dicted waveforms.
+Input-setting
+ACC
+RFNE
+Dense and regular sampling
+0.98
+0.20
+Sparse and irregular sampling
+0.93
+0.36
+(a) Performance metrics for the dense and sparse sampling scenar-
+ios. Providing the model with more information (i.e., dense inputs)
+helps to improve performance.
+Mw
+Fault size
+Trup
+ACC
+RFNE
+(km × km)
+(s)
+4.5
+1.8 × 1.8
+3.5
+0.95
+0.35
+5.0
+3.4 × 3
+3.7
+0.95
+0.37
+5.5
+8 × 4
+6.0
+0.95
+0.42
+6.0
+12.5 × 8
+9.6
+0.88
+0.52
+6.5
+26 × 12
+13.2
+0.66
+0.84
+7.0
+66 × 15
+26.6
+0.53
+0.86
+(b) Fault size and performance metrics of finite-fault earthquake
+data predictions. Trup indicates the end time of the rupture. See
+Figure E.1-E.6 for the rupture models.
+Table 1: Model performance summary using 5.7-second in-
+put time window. Evaluation on (a) point-source earthquakes
+with different input sampling strategies; on (b) domain-
+shifted finite-fault earthquakes across different magnitudes.
+dict an equally long output sequence per inference. To im-
+prove spatial coverage, we increase the number of input
+stations from 101 (ShakeAlert) to 178, including additional
+Berkeley Digital Seismic Network and USGS stations.
+As shown in Figure 8(a), the predicted waveforms closely
+reproduce key characteristics of the observed signals, includ-
+ing shaking duration, prominent S and surface waves, and
+peak amplitudes. In particular, strong noise in the initial
+input sequence does not degrade the quality of the fore-
+cast, consistent with our earlier robustness tests. While
+some phase misalignments exist between the predicted and
+recorded signals, the overall waveform morphology is well
+captured. These discrepancies likely arise from the mis-
+match between the true subsurface structure and the velocity
+model used to generate the synthetic training data [34], as
+no domain adaptation or fine-tuning was applied.
+Figure 8(b) further shows that WaveCastNet produces spa-
+tially coherent PGV and TP GV maps, capturing distance-
+based attenuation and amplification effects in sedimentary
+basins. The cross plots in Figure 8(c) confirm a strong agree-
+ment in the PGV values between the predictions and the
+observations, while the values TP GV exhibit greater scatter,
+reflecting the inherent sensitivity of phase-based measure-
+ments to structural and timing discrepancies. These results
+demonstrate WaveCastNet’s promise for real-world deploy-
+ment and highlight the primary challenges associated with
+zero-shot transfer from synthetic to observational domains.
+3 Discussion
+Our experiments demonstrate that WaveCastNet holds sub-
+stantial promise for forecasting seismic wavefields derived
+from both point-source and finite-fault simulations of large-
+magnitude earthquakes, as well as from real observational
+data, such as the 2018 M4.4 Berkeley event. Across both
+dense and irregularly sparse sensor configurations, Wave-
+CastNet reliably predicts seismic wave propagation and cap-
+tures PGV values and their timing with high fidelity. The
+fit between predicted and ground-truth signals, from initial
+arrivals to later coda waves, is notable.
+We attribute this predictive performance in part to Wave-
+CastNet’s ability to internalize the Huygens principle: each
+spatial point acts as a secondary source of wavefronts. This
+principle helps explain the model’s ability to generalize to
+out-of-distribution events, including point sources located
+along the San Andreas fault and finite-fault ruptures. In
+addition to its predictive accuracy, WaveCastNet is robust
+to background noise, variable input latencies, and diverse
+sensor configurations (see additional experiments in the ap-
+pendix). In particular, the model generates 100-second fore-
+casts in just 0.56 seconds on a single NVIDIA A100 GPU,
+demonstrating its suitability for real-time applications.
+Designed to directly predict full waveforms, WaveCastNet
+effectively captures spatial heterogeneity in ground-motion
+intensities, an advantage over traditional parameter-based ap-
+proaches. This opens the door for integration with structural
+response models, enabling near-instantaneous assessment of
+infrastructure vulnerability during seismic events.
+Generalization to Large-Magnitude Earthquakes. Wave-
+CastNet generalizes robustly to events up to M5.5, and
+achieves reasonable accuracy for M6 earthquakes when us-
+ing a sliding-window inference strategy. This modification,
+7
+
+--- Sayfa 8 ---
+3
+DISCUSSION
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+80
+100
+X (km)
+20
+40
+60
+Y (km)
+20
+40
+60
+Y (km)
+(a) Snapshots
+(b) PGV
+(c) PGV error
+(d) TPGV 
+(e) TPGV error
+-0.28
+0.28
+0
+m/s
+Ground truth
+Prediction
+21.75 s
+30.45 s
+39.15 s
+log
+error
+-1.5
+1.5
+0
+m/s
+s
+-20
+20
+0
+s
+ 10                    40
+0.05
+0.1
+1 2
+Figure 7: Ground-motion prediction for a 6.0-magnitude earthquake using an 8.2-second input window. (top) Ground truth
+and (bottom) WaveCastNet predictions are shown for each panel. (a) Snapshot of Y-component velocity wavefields at a
+representative time step. (b) PGV map. (c) PGV prediction error (predicted minus ground truth). (d) PGV arrival time map
+(TP GV ). (e) TP GV prediction error.
+Velocity X (mm/s)
+0
+20
+40
+60
+80
+100
+0
+20
+40
+60
+80
+100
+Time (s)
+Time (s)
+(a)
+NC.1788
+BK.JRSC
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+PGV
+TPGV 
+(b)
+0.02
+0.2
+2.5
+mm/s
+PGV
+TPGV 
+s
+15 
+30 
+45
+0.0 0.1 0.2 0.3 0.4
+Predicted PGV (mm/s)
+0.1
+0.2
+0.3
+0.4
+True PGV (mm/s)
+20
+30
+40
+50
+Predicted TPGV (s)
+20
+30
+40
+50
+True TPGV (s)
+(c)
+Velocity X (mm/s)
+0.04
+0.00
+-0.04
+0.01
+0.00
+-0.01
+Figure 8: Results for a real-data example in which WaveCastNet is applied to the 2018 Berkeley earthquake (magnitude
+4.4, depth 12.3 km). (a) X-component velocity waveforms at stations NC.1788 (San Jose) and BK.JRSC (Palo Alto), with
+WaveCastNet predictions shown in red and observed waveforms in blue. The gray shaded regions indicate the 15.6-second
+input window used for inference. (b) Spatial maps of predicted peak ground velocity (PGV, left) and its arrival time TP GV
+(right). (c) Scatter plots comparing predicted and observed values for PGV (top) and TP GV (bottom).
+previously used in data assimilation-based early warning
+systems, accounts for the energy released later in the rupture
+process and can be implemented without retraining or archi-
+tectural changes. Importantly, WaveCastNet does not rely
+on prior knowledge of earthquake magnitude or hypocentral
+location, suggesting that it can be trained on a relatively
+limited dataset while still generalizing to a wide range of
+seismic scenarios.
+However, applying a model trained on point-source simula-
+tions to large-magnitude events remains a significant chal-
+lenge. As earthquakes increase in size, their physical repre-
+sentation transitions from point sources to extended rupture
+planes governed by complex kinematic models. Waveform
+amplitudes can vary by factors exceeding 80 between M4.5
+and M7 events, and spatial decay rates of ground-motion
+intensity are magnitude-dependent due to differences in fault
+geometry. These effects complicate data normalization and
+often lead to underprediction of amplitudes. Our findings
+show that extending the input window can help improve the
+forecast accuracy, but this does not fully mitigate these is-
+sues. To overcome these limitations, it is essential to expand
+the training dataset to include finite-fault simulations across
+8
+
+--- Sayfa 9 ---
+3
+DISCUSSION
+1.0 
+0.9 
+0.8 
+0.7 
+0.6 
+0.5 
+0.4 
+0.3 
+0.2 
+Point-Source 4.5 
+5.0 
+Magnitude 
+5.5 
+6.0 
+RFNE 
+(b) 
+5 
+10 
+15 
+20 
+25 
+30 
+35 
+0.18 
+0.20 
+0.22 
+0.24 
+0.26 
+0.28 
+0.30 
+0.32 
+0.34 
+ConvGRU 
+ConvLSTM 
+WaveCastNet (ours)
+Swin Transformer 
+Time-S-Former 
+Swin Transformer* 
+Time-S-Former* 
+Parameter Volume (Millions) 
+RFNE
+(a) 
+WaveCastNet (ours) 
+Generalizarion Gap
+Figure 9: Performance comparison between sequence-to-seqence frameworks with different recurrent cells and state-of-the-
+art transformers in both in-domain and out-of-domain settings. (a) In-domain forecasting performance on point-source
+earthquakes as a function of model parameter size. (b) Generalization performance as a function of earthquake magnitude.
+All models are trained only on point-source earthquakes. Colors indicate model type and parameter count (in millions,
+consistent with (a)): yellow for Swin Transformer (13.72 million parameters), orange for Swin Transformer* (24.27 million
+parameters), light blue for Time-S-Former (10.21 million parameters), and dark blue for Time-S-Former* (33.82 million
+parameters). While larger vision transformers may achieve higher accuracy on in-domain tasks, WaveCastNet generalizes
+best to domain-shifted settings. Detailed configurations and evaluation metrics for all baselines are provided in Table D.1.
+a broad range of magnitudes. This will enable the model to
+better learn the amplitude scaling, energy release duration,
+and rupture complexity inherent in large earthquakes.
+Generalization vs. Memorization. Generalization refers to
+a model’s ability to perform well on previously unseen data,
+while memorization describes the tendency to recall specific
+patterns or instances from the training set without capturing
+the underlying relationships [6]. Importantly, memorization
+is not necessarily detrimental, particularly if the model also
+generalizes effectively. Recent studies suggest that gener-
+alization and memorization often coexist in modern deep
+learning systems [15], with performance depending on a
+nuanced balance between the two.
+In our case, WaveCastNet demonstrates a successful gen-
+eralization to out-of-distribution inputs, including large-
+magnitude finite-fault events, earthquakes originating out-
+side the training domain, and real observational data. Al-
+though some degree of memorization may occur, it does not
+hinder performance; rather, we expect that it coexists with
+WaveCastNet’s ability to learn underlying physical relation-
+ships and apply them in various and challenging scenarios.
+Comparative study. To demonstrate the advantages of
+our proposed approach, we show performance comparisons
+with baseline models. We evaluated WaveCastNet against
+Seq2Seq frameworks that use ConvLSTM [69] and Con-
+vGRU [8] as backbones. The results, presented in Fig-
+ure 9(a), show a lower relative Frobenius norm error for
+WaveCastNet in the prediction of point-source earthquakes.
+These experiments use data that are spatially downsampled
+by a factor of four to ensure model convergence with fewer
+computational resources (i.e., we use the configuration in
+Section 2.1, with each Xt reduced to RC× H
+4 × W
+4 ).
+Furthermore, we compare WaveCastNet to state-of-the-art
+transformer architectures designed for spatio-temporal mod-
+eling, including the Swin transformer [47, 48] and the Time-
+S-Former [28]. Despite good performance in the task of pre-
+dicting point source earthquakes, these transformers strug-
+gled with generalization in the prediction of higher magni-
+tude earthquakes, as indicated by large relative errors be-
+tween magnitudes in Figure 9(b). The comparative study re-
+veals that our WaveCastNet offers beneficial trade-offs: it re-
+quires fewer parameters than transformers, enables faster in-
+ference times, and introduces a regularization effect through
+its information bottleneck, aiding generalization.
+Future Directions. In the following we discuss future di-
+rections that should be studied to extend WaveCastNet. Our
+experiments mainly used synthetic data at frequencies below
+0.5 Hz and demonstrated potential applicability to the real
+observations. Moving forward, we plan to extend the mag-
+nitude and frequency range during the training phase and
+improve WaveCastNet’s performance on real observations.
+• Extending the Magnitude and Frequency Range. A key
+direction for future work is expanding the training dataset
+to cover a broader range of magnitudes, source complex-
+ities, and rupture styles. Our current model is trained on
+M4-scale point-source simulations, which may not suffi-
+ciently capture the physical diversity of larger, finite-fault
+earthquakes. Incorporating high-magnitude rupture sce-
+narios into the training distribution could improve gen-
+eralization performance. Although high-frequency syn-
+9
+
+--- Sayfa 10 ---
+4
+METHODS
+thetic wavefield simulation remains computationally de-
+manding, advances in scalable simulation frameworks and
+the availability of large open-source simulation databases
+[57, 10, 49] may make this direction increasingly feasible.
+• Generative Modeling for Uncertainty-Aware Forecast-
+ing. Future work could also explore extending WaveCast-
+Net with generative frameworks, such as diffusion models,
+that better reflect the uncertainty in earthquake ground
+motion forecasting [70, 24]. These models may enable the
+synthesis of full spatio-temporal distributions of wavefield
+evolution, conditioned on partial observations. Such a
+probabilistic approach could enhance robustness and offer
+more physically plausible forecasts across a wide range
+of magnitudes and source types. However, the effective-
+ness of these methods for real-time earthquake forecasting
+remains an open question that needs further investigation.
+• Self-Supervised Pretraining for Foundation Models. To
+reduce dependence on large volumes of task-specific la-
+beled data, future research might leverage self-supervised
+learning (SSL) [39, 38] to pretrain models on unlabeled
+waveform datasets. Techniques such as masked model-
+ing and temporal contrastive learning [19, 40] could help
+extract generalizable seismic representations. These rep-
+resentations may then be fine-tuned with smaller labeled
+datasets for downstream tasks like real-world wavefield
+forecasting, potentially improving data efficiency and en-
+abling deployment in data-sparse regions. The extent to
+which SSL can improve generalization in this domain is a
+promising but still largely unexplored area.
+• Fine-Tuning and Domain Adaptation with Real Seismic
+Data. Bridging the gap between synthetic training data
+and real-world deployment remains a critical challenge.
+Future work should evaluate fine-tuning strategies that
+adapt pretrained models to real seismic recordings, which
+exhibit complexities such as sensor noise, site-specific
+amplification, and regional geological variation. When
+combined with SSL pretraining or generative modeling,
+fine-tuning could help calibrate models to the nuances
+of observational data and improve reliability. However,
+optimal domain adaptation strategies, especially under
+limited real data availability, are still an open question that
+requires further study.
+• Accelerating Inference for Real-Time Forecasting. To
+meet the strict latency requirements of early warning sys-
+tems, future research should also investigate approaches
+to optimize inference speed without sacrificing accu-
+racy. Promising directions include mixed-precision in-
+ference [62], model pruning [16], and quantization [29],
+which could substantially reduce computational cost. Eval-
+uating the trade-offs between speed, accuracy, and robust-
+ness in the context of seismic forecasting remains a neces-
+sary step before deployment in a real-world setting.
+4 Methods
+In this section, we describe the methodology underlying
+WaveCastNet. We begin with an overview of the Seq2Seq
+framework, which forms the foundation of our forecasting
+model. We then introduce the convolutional long expressive
+memory (ConvLEM) architecture that serves as the core
+building block of WaveCastNet. Finally, we detail the data
+normalization and preprocessing strategies that we used, as
+well as the procedures used to generate synthetic datasets and
+curate the real-world observations used in our experiments.
+4.1 Wavefield Forecasting Network
+Similarly to other Seq2Seq models, WaveCastNet is com-
+posed of four main components:
+• Embedding layer. This layer maps input wavefields into
+a latent space. We employ two types of embedding layers:
+(i) convolutional layers enhanced with batch normaliza-
+tion and LeakyReLU activation, optimized for embedding
+densely sampled wavefields into a latent space; and (ii)
+fully connected layers, followed by convolutional layers,
+optimized for embedding sparsely sampled wavefields into
+a latent space. For scenario (ii), we employed a Masked
+Autoencoder (MAE) strategy, in which 80% of the sta-
+tions (558 stations recorded motions over the past decade)
+are randomly masked without replacement following a
+uniform distribution. The same mask is consistently ap-
+plied across all time steps within each batch to maintain
+the continuity of temporal data from active stations. This
+approach enables a robust embedding layer for sparse
+sampled data with a significantly reduced number of ac-
+tive stations and mitigates the risk of overfitting that may
+arise from training on fixed, limited station inputs. This
+approach can support various sensor configurations.
+• Encoder. The encoder processes the embedded sequence
+into a fixed-size encoder state that provides a compressed
+summary of the input sequence necessary for generating
+the target sequence.
+• Decoder. Operating sequentially, the decoder predicts
+each element of the target sequence one at a time. It uses
+the previously predicted output combined with the encoder
+state to forecast the next element.
+• Reconstruction layer. The reconstruction layer allows
+us to recover detailed spatial information from predicted
+latent sequences by using transposed convolutional layers
+along with pixel-shuffle techniques to reconstruct the high-
+resolution wavefield.
+Both the encoder and decoder use our ConvLEM cell (see
+Section 4.2 for details), which is designed to capture com-
+plex multiscale patterns in both spatial and temporal dimen-
+sions. Additional technical details of the embedding and
+reconstruction layers are discussed in the appendix.
+The Seq2Seq framework seeks to find a target sequence
+Y := XJ+1, . . . , XJ+K, from a given input sequence X :=
+X1, . . . , XJ. The objective is to optimize the conditional
+probability:
+˜Y = arg max
+Y
+p(Y|X) ≈Ddecoder(Eencoder(X)).
+(1)
+Although it is challenging to compute the conditional proba-
+bility directly, an encoder-decoder framework can be used
+to generate an approximate target sequence [73]. In this
+10
+
+--- Sayfa 11 ---
+4.2
+Convolutional Long Expressive Memory
+4
+METHODS
+process, an encoder, denoted as Eencoder, compresses the
+embedded input sequence X into a concise encoder state.
+Subsequently, a decoder, Ddecoder, uses this state to gener-
+ate the predicted latent sequence ˜Y, which is then mapped
+to the desired output space by a reconstruction layer. This
+approach effectively leverages the encoded information to
+produce a sequence that approximates the target sequence.
+WaveCastNet tailors this Seq2Seq framework specifically for
+the task of forecasting ground motions, treating the predic-
+tion challenge as a regression problem. We aim to minimize
+the sum of all squared differences between the predicted
+wavefields ˆX and the actual wavefields X:
+L2 = 1
+T
+T
+X
+t=1
+∥ˆXt −Xt∥2
+F ,
+(2)
+where ∥· ∥F denotes the Frobenius norm. Under the as-
+sumption that prediction errors follow a normal distribution,
+minimizing the L2 loss corresponds to maximizing the like-
+lihood of the data given the model. This approach guides the
+learning of the model parameters through the minimization
+of the loss across all actual and predicted sequences. Dur-
+ing inference, the model uses these learned parameters to
+generate target sequences for new input sequences.
+To further enhance the model’s performance, we adopt the
+Huber loss during training, defined as follows:
+LHuber =
+P
+t,c,h,w Lδ
+
+ˆXt[c, h, w], Xt[c, h, w]
+
+TCHW
+,
+(3)
+with the loss function Lδ given by:
+Lδ (ˆx, x) =
+(
+1
+2 (ˆx −x)2
+for |ˆx −x| ≤δ,
+δ ·
+ |ˆx −x| −1
+2δ
+
+otherwise.
+(4)
+The Huber loss effectively balances the L1 and L2 norms,
+which supports a more robust fitting in various earthquake
+conditions and depths during training. Specifically, we find
+that the Huber loss improves WaveCastNet’s ability to better
+capture the challenging PGV patterns. Moreover, we observe
+that using this loss enables our model to better generalize
+across different earthquake magnitudes and conditions, while
+also ensuring faster convergence during training.
+4.2 Convolutional Long Expressive Memory
+We propose Convolutional Long Expressive Memory (Con-
+vLEM) to overcome the limitations of traditional recurrent
+units in modeling complex multiscale structures across spa-
+tial and temporal dimensions. These limitations are high-
+lighted when recurrent units are viewed as dynamical sys-
+tems [13, 21], where the evolution over time is governed by
+a system of input-dependent ordinary differential equations:
+dh
+dt = τ · fθ(h(t), x(t)),
+(5)
+where inputs x(t) ∈Rd and hidden states h(t) ∈Rl are
+modeled as continuous functions over time t ∈[0, T]. How-
+ever, this model is limited to modeling dynamics at a fixed
+temporal scale τ. An intuitive approach to address this issue
+involves integrating a high-dimensional gating function to
+replace τ, aiming to model dynamics occurring on various
+time scales [17, 22]. However, employing a single gating
+mechanism often fails to adequately capture the complexities
+found in more challenging dynamical systems.
+In this work, we enhance the modeling of multiscale tem-
+poral structures by extending the recently introduced Long
+Expressive Memory (LEM) unit [65]. This approach is based
+on the following coupled differential equations:
+dc(t)
+dt
+= gc ⊙
+
+f c
+θc(h(t), x(t)) −c(t)
+
+,
+dh(t)
+dt
+= gh ⊙
+
+f h
+θh(c(t), x(t)) −h(t)
+
+,
+(6)
+where h(t) ∈Rl and c(t) ∈Rl represent the slow- and fast-
+evolving hidden states, respectively. The gating functions
+gc and gh, which depend on both input and output states,
+introduce variability in temporal scales into the dynamics of
+the model. Here, ⊙signifies the Hadamard product, ensuring
+element-wise multiplication.
+We advance the basic LEM unit by incorporating convolu-
+tional operations that facilitate modeling of input-to-state
+and state-to-state transitions, similar to those used in the
+ConvLSTM model [69]. By representing hidden states and
+inputs as tensors, we are better able to preserve and model
+critical multiscale spatial patterns. The ConvLEM is thus
+formulated as follows:
+dC(t)
+dt
+= gc ⊙
+
+f c
+θc(H(t), X(t)) −C(t)
+
+,
+dH(t)
+dt
+= gh ⊙
+
+f h
+θh(C(t), X(t)) −H(t)
+
+,
+(7)
+In this equation, H(t) ∈Rr×p×q and C(t) ∈Rr×p×q de-
+note the slow and fast evolving hidden states, respectively.
+The input X(t) ∈Rc×h×w is a three-dimensional tensor.
+To effectively train this model, it is essential to use an ap-
+propriate discretization scheme, as it enables the learning
+of model weights through backpropagation over time. Fol-
+lowing the methodology presented in [65], we consider a
+positive time step ∆t and use the Implicit-Explicit (IMEX)
+time step scheme. This approach helps to formulate the
+discretized version of the ConvLEM unit as follows:
+∆tn = ∆t gc
+∆tn = ∆t gh
+Cn = (1 −∆tn) ⊙Cn−1 + ∆tn ⊙f c
+θc
+Hn =
+ 1 −∆tn
+
+⊙Hn−1 + ∆tn ⊙f h
+θh
+(8)
+with update functions
+f c
+θc = tanh (Whc ∗Hn−1 + Wxc ∗Xn) ,
+f h
+θh = tanh (Wch ∗Cn + Wxh ∗Xn) ,
+(9)
+and gating functions
+gh = σ (Wxt ∗Xn + Wht ∗Hn−1) ,
+gc = σ (Wxt ∗Xn + Wht ∗Hn−1) .
+(10)
+In this notation, W·,· denotes the weight tensors, ⊙repre-
+sents the Hadamard product, and ∗indicates the convolu-
+tional operator, with subscript n marking a discrete time
+11
+
+--- Sayfa 12 ---
+4.3
+Normalization
+4
+METHODS
+step ranging from 1 to N. The matrix of ones, denoted as
+1, matches the shape of the hidden states. The sigmoid
+function σ, used in gating functions, maps activations to a
+range between 0 and 1. Note that for brevity, bias vectors
+are omitted from the update and gating functions.
+Based on the model structures outlined above, we further
+introduce a reset gate greset to refine the modeling of the
+correlation between fast and slow hidden states:
+greset = σ (Wxr ∗Xn + Whr ∗Hn−1) .
+(11)
+The reset gate is integrated into the update function for the
+slow hidden states as follows:
+f h
+θh = tanh (greset ⊙(Wch ∗Cn) + Wxh ∗Xn) . (12)
+Intuitively, this additional gate helps to improve the flow of
+relevant information from the updated fast hidden states to
+updating the slow hidden states.
+Enhancing the gating functions proves beneficial for model-
+ing complex spatio-temporal problems in practice. Using the
+concept of “peephole connections” [71], we further enhance
+the gates by injecting information about fast hidden states.
+We define these gates as follows:
+gh = σ (Wxt ∗Xn + Wht ∗Hn−1 + Wct ⊙Cn−1) ,
+gc = σ (Wxt ∗Xn + Wht ∗Hn−1 + Wct ⊙Cn) ,
+greset = σ (Wxr ∗Xn + Whr ∗Hn−1 + Wcr ⊙Cn) .
+(13)
+These modified gates show an improved ability to process
+longer sequences with more accuracy. Intuitively, by incor-
+porating additional contextual information, these gates are
+better suited to model complex multiscale dynamics, which
+in turn improves the model’s expressiveness.
+4.3 Normalization
+Seismic waves exhibit varying residence times as they travel
+through different geographic locations, leading to signifi-
+cantly greater variance in ground motion in certain regions.
+Therefore, normalizing is crucial in order to obtain a good
+forecasting performance. In this work, we use a particle
+velocity-wise normalization scheme for each snapshot.
+Consider all Q sequences in the training set, while each
+sequence is composed of T snapshots {Xt
+q}. For each par-
+ticle velocity X[c, h, w], we compute the mean and standard
+deviation values across all snapshots in the training set:
+{Xt
+q[c, h, w]|q = 0, 1, 2, . . . Q −1; t = 0, 1, 2, . . . T −1}.
+The resulting mean and standard deviation tensors have the
+same shape as the snapshot Xt, denoted as Xmean, Xstd,
+respectively. During the data pre-processing stage, for each
+snapshot Xt, we apply particle velocity-wise normalization
+as follows:
+¯
+Xt = Xt[c, h, w] −Xmean[c, h, w]
+Xstd[c, h, w]
+.
+(14)
+Particle velocity-wise normalization also prevents potential
+spatial information leakage during the normalization process
+for our sparse sampling scenario.
+Normalization for domain-shifted settings.
+The ground-
+motion of earthquakes with higher magnitudes (e.g., M4.5-
+M7), once normalized, exhibits a considerably wider range
+compared to normalized M4 data. Thus, we need to normal-
+ize the ground motions again to obtain a reasonable range
+using the information present in the input window. Given the
+input window from time step t1 to t2, we perform a channel-
+wise normalization for each input snapshot Xt based on the
+standard deviation values computed for the following set:
+{ ¯Xt[c, h, w]|t = t1, t1 + 1, . . . , t2; h = 0, 1, 2, . . . H −1;
+w = 0, 1, 2, . . . W −1}.
+The reasons for not using the particle velocity-wise normal-
+ization here are twofold. Firstly, the initial velocity-wise
+normalization of the particles has already introduced varying
+standard deviations for different spatial locations. Secondly,
+since ground motion in the forecast area is observed to be
+zero within the input window, the velocity-wise standard
+deviation tensor would consist mostly of zeros, making the
+normalization process infeasible.
+Metrics. The performance of WaveCastNet is assessed by
+analyzing the intensity of ground motions using the peak
+ground velocity (PGV) values, which are defined as
+PGV (X) = max
+t
+q
+X2
+t[cX] + X2
+t[cY ],
+(15)
+where X2
+t[cX] and X2
+t[cY ] represent the velocity data in the
+X and Y directions, respectively. Additionally, we exam-
+ine the corresponding arrival time, Tpgv, determined by the
+equation:
+Tpgv(X) = arg max
+t
+q
+X2
+t[cX] + X2
+t[cY ],
+(16)
+indicating the moment when the horizontal amplitude of the
+particle velocity reaches its peak.
+Furthermore, to evaluate the accuracy of the predicted wave-
+field ˆX versus the target ground truth X, we use the accuracy
+metric (ACC), expressed as:
+ACC =
+P
+t,h,w ˆ
+Xt[c,h,w]·Xt[c,h,w]
+rP
+t,h,w ˆ
+X2
+t [c,h,w]
+
+·(
+P
+t,h,w X2
+t [c,h,w])
+,
+(17)
+and the relative Frobenius norm error (RFNE), defined as:
+RFNE =
+r
+P
+t,h,w
+
+ˆ
+Xt[c, h, w] −Xt[c, h, w]
+2
+qP
+t,h,w X2
+t[c, h, w]
+.
+(18)
+4.4 Data Generation
+We simulate point-source and finite-fault earthquake ground-
+motions up to 0.5 Hz within a three-dimensional (3D) vol-
+ume extending 120 km in the fault parallel (FP) direction (X
+direction), 80 km in the fault normal (FN) direction (Y direc-
+tion), and 30 km in depth. These simulations are conducted
+using the USGS San Francisco Bay region 3D seismic veloc-
+ity model (SFVM) v21.1 [34]. Material properties, including
+the Vp-Vs relationships, are defined for each geological unit
+12
+
+--- Sayfa 13 ---
+4.5
+Random Shifts For Latency Tests
+REFERENCES
+based on laboratory and well-log measurements, which in-
+clude parameters such as P- and S-wave velocities [34, 12, 2].
+Simulations are initiated with a minimum S-wave velocity
+of 500 m/s. We generate viscoelastic wave fields using the
+open source SW4 package, which computes the fourth-order
+finite difference solution of the viscoelastic wave equations
+[60]. This software package is well-established, validated
+through numerous ground-motion simulations [49, 50, 64].
+The surface of the Earth is modeled with a free surface con-
+dition, while the outer boundaries use absorbing boundary
+conditions through a super grid approach spanning 30 grids.
+We consider a flat surface, and to avoid numerical dispersion,
+we consider a simulation grid with a mesh size of 150 m3 on
+the surface, designed to ensure a minimum of six grids per
+wavelength. To optimize computational resources, the mesh
+size is doubled at depths of 2.2 km and 6.6 km. The largest
+grid size used is 600 m3, covering a total of approximately
+9.59 million grid points. The attenuation and velocity disper-
+sion are modeled using three standard linear solid models,
+assuming a constant Q over the simulated frequency range.
+Each simulation runs for 120 seconds with a time step of
+0.0260134 seconds, resulting in 4,613 time steps. The three
+component particle velocity motions are recorded every 10
+steps (i.e. 0.26014 second) on 150 m x 150 m grids and
+then downsampled to 300 m × 300 m grids for training and
+testing WaveCastNet.
+4.5 Random Shifts For Latency Tests
+For simulating the uneven latency test, we introduce random
+time shifts by sampling from a standard normal distribution
+N(0, 1). Given a sampled shift value s, we compute the
+adjusted shift as: sign(s) · min(⌈|s|⌉, 4)∆t, where sign(s)
+preserves the original direction of the shift, ⌈|s|⌉rounds the
+absolute value of s to the nearest integer, with the maximum
+time difference at 4∆t.
+4.6 Data Preparation for Real World Tests
+Seismic records of the Berkeley 2018 event are downloaded
+from North California Earthquake Data Center [55]. The
+downloaded records start 20 seconds before the reported
+origin time, and the total recording length is 140 seconds.
+After resampling to the 0.01 second time interval, we remove
+the instrument response and apply a bandpass filter between
+0.06 and 0.5 Hz. The data is further downsampled to a time
+interval of 0.26 seconds.
+Data Availability
+The training and evaluationwaveform datasets generated in
+this study are fully accessible via shared cloud drive. In-
+structions for accessing the data and trained model check-
+points are available on GitHub at https://github.
+com/dwlyu/WaveCastNet.
+We provide an efficient
+data loader for multi-GPU computing in Pytorch. Real
+waveform data, metadata, or data products are accessed
+through the Northern California Earthquake Data Cen-
+ter (NCEDC) at doi:10.7932/NCEDC. Quarternary fault
+traces are obtained from https://www.usgs.gov/
+programs/earthquake-hazards/faults.
+San
+Francisco
+Bay
+region
+3D
+seismic
+velocity
+model
+v21.1 used for physic-based simulation is accessed
+from https://www.sciencebase.gov/catalog/
+item/61817394d34e9f2789e3c36c
+Code Availability
+Research code to reproduce the results of this study is avail-
+able on GitHub at https://github.com/dwlyu/
+WaveCastNet. We provide training, evaluation, and visu-
+alization scripts in Python, optimized for Pytorch. Physics-
+based SW4 simulation code is available on GitHub at
+https://github.com/geodynamics/sw4.
+Acknowledgements
+NBE acknowledges NSF, under Grant No. 2319621, and
+the US Department of Energy, under Contract Number DE-
+AC02-05CH11231 and DE-AC02-05CH11231, for provid-
+ing partial support of this work. RN acknowledges the U.S.
+Department of Energy Contract No. DE-AC02-05CH11231
+and DESC0016520 for providing partial support. AP’s work
+was performed at the Lawrence Livermore National Lab-
+oratory under contract DE-AC52-07NA27344. MWM ac-
+knowledges the NSF and the DOE, under the LBNL’s LDRD
+program. This research used computational cluster resources,
+including LLNL’s HPC Systems (funded by the LLNL Com-
+puting Grand Challenge), LBNL’s Lawrencium and NERSC
+(under Contract No. DE-AC02-05CH11231).
+Author Contributions
+D.L., R.N., and N.B.E. conceived the study and designed the
+research plan. D.L. performed the numerical simulations and
+data analysis. R.N. and N.N. contributed to the seismological
+interpretation and methodological guidance. P.R. supported
+model development and implementation. M.W.M. provided
+input on algorithmic design and theoretical underpinnings.
+R.N. performed the physics-based seismic modeling, and
+A.P. provided earthquake rupture models. N.B.E. super-
+vised the computational aspects of the study and coordinated
+project integration. All authors contributed to the interpreta-
+tion of results and the writing of the manuscript. R.N. and
+N.B.E. co-led the project and share senior authorship.
+Competing Interests
+The authors declare no competing interests.
+References
+[1] B. T. Aagaard, T. M. Brocher, D. Dolenc, D. Dreger,
+R. W. Graves, S. Harmsen, S. Hartzell, S. Larsen, and
+M. L. Zoback. Ground-Motion Modeling of the 1906
+San Francisco Earthquake, Part I: Validation Using the
+1989 Loma Prieta Earthquake. Bulletin of the Seismo-
+logical Society of America, 98(2):989–1011, 2008.
+13
+
+--- Sayfa 14 ---
+REFERENCES
+REFERENCES
+[2] B. T. Aagaard, R. W. Graves, A. Rodgers, T. M.
+Brocher, R. W. Simpson, D. Dreger, N. A. Petersson,
+S. C. Larsen, S. Ma, and R. C. Jachens. Ground-Motion
+Modeling of Hayward Fault Scenario Earthquakes, Part
+II: Simulation of Long-Period and Broadband Ground
+Motions. Bulletin of the Seismological Society of Amer-
+ica, 100(6):2945–2977, 2010.
+[3] N. A. Abrahamson, W. J. Silva, and R. Kamai. Sum-
+mary of the ASK14 Ground Motion Relation for Ac-
+tive Crustal Regions. Earthquake Spectra, 30(3):1025–
+1055, 2014.
+[4] R. M. Allen and D. Melgar. Earthquake Early Warn-
+ing: Advances, Scientific Challenges, and Societal
+Needs. Annual Review of Earth and Planetary Sci-
+ences, 47(1):1–28, 2019.
+[5] M. Arjovsky, A. Shah, and Y. Bengio. Unitary Evo-
+lution Recurrent Neural Networks. In International
+Conference on Machine Learning, pages 1120–1128,
+2016.
+[6] D. Arpit, S. Jastrzebski, N. Ballas, D. Krueger,
+E. Bengio, M. S. Kanwal, T. Maharaj, A. Fischer,
+A. Courville, Y. Bengio, et al. A closer look at memo-
+rization in deep networks. In International conference
+on machine learning, pages 233–242. PMLR, 2017.
+[7] G. M. Atkinson and D. M. Boore. Modifications to
+Existing Ground-Motion Prediction Equations in Light
+of New DataModifications to Existing Ground-Motion
+Prediction Equations in Light of New Data. Bulletin
+of the Seismological Society of America, 101(3):1121–
+1135, 2011.
+[8] N. Ballas, L. Yao, C. Pal, and A. Courville. Delv-
+ing Deeper Into Convolutional Networks for Learning
+Video Representations. International Conference on
+Learning Representations, 2016.
+[9] J. Bayless and N. A. Abrahamson. Summary of the
+BA18 Ground-Motion Model for Fourier Amplitude
+Spectra for Crustal Earthquakes in CaliforniaSummary
+of the BA18 Ground-Motion Model for Fourier Ampli-
+tude Spectra for Crustal Earthquakes. Bulletin of the
+Seismological Society of America, 109(5):2088–2105,
+2019.
+[10] N. Bijeli´c, T. Lin, and G. G. Deierlein. Validation
+of the SCEC Broadband Platform simulations for tall
+building risk assessments considering spectral shape
+and duration of the ground motion. Earthquake En-
+gineering & Structural Dynamics, 47(11):2233–2251,
+2018.
+[11] Y. Bozorgnia, N. A. Abrahamson, L. A. Atik, T. D.
+Ancheta, G. M. Atkinson, J. W. Baker, A. Baltay, D. M.
+Boore, K. W. Campbell, B. S.-J. Chiou, R. Darragh,
+S. Day, J. Donahue, R. W. Graves, N. Gregor, T. Hanks,
+I. Idriss, R. Kamai, T. Kishida, A. Kottke, S. A. Mahin,
+S. Rezaeian, B. Rowshandel, E. Seyhan, S. Shahi,
+T. Shantz, W. Silva, P. Spudich, J. P. Stewart, J. Watson-
+Lamprey, K. Wooddell, and R. Youngs. NGA-West2
+Research Project. Earthquake Spectra, 30(3):973–987,
+2014.
+[12] T. M. Brocher. Compressional and Shear-Wave Veloc-
+ity versus Depth Relations for Common Rock Types
+in Northern CaliforniaCompressional and Shear-Wave
+Velocity versus Depth Relations for Common Rock
+Types in Northern CA. Bulletin of the Seismological
+Society of America, 98(2):950–968, 2008.
+[13] B. Chang, M. Chen, E. Haber, and E. H. Chi. Anti-
+symmetricRNN: A dynamical system view on recur-
+rent neural networks. In International Conference on
+Learning Representations, 2018.
+[14] A. Chatterjee, N. Igonin, and D. T. Trugman.
+A
+Real-Time and Data-Driven Ground-Motion Prediction
+Framework for Earthquake Early Warning. Bulletin of
+the Seismological Society of America, 113(2):676–689,
+2022.
+[15] S. Chatterjee and P. Zielinski.
+On the general-
+ization mystery in deep learning.
+arXiv preprint
+arXiv:2203.10036, 2022.
+[16] H. Cheng, M. Zhang, and J. Q. Shi.
+A survey on
+deep neural network pruning: Taxonomy, comparison,
+analysis, and recommendations. IEEE Transactions on
+Pattern Analysis and Machine Intelligence, 2024.
+[17] K. Cho, B. Van Merri¨enboer, C. Gulcehre, D. Bah-
+danau, F. Bougares, H. Schwenk, and Y. Bengio.
+Learning Phrase Representations Using RNN Encoder-
+Decoder for Statistical Machine Translation. In Empir-
+ical Methods in Natural Language Processing, pages
+1724–1734, 2014.
+[18] T. Clements, E. S. Cochran, A. Baltay, S. E. Minson,
+and C. E. Yoon. GRAPES: Earthquake Early Warning
+by Passing Seismic Vectors Through the Grapevine.
+Geophysical Research Letters, 51(9), 2024.
+[19] I. Dave, R. Gupta, M. N. Rizve, and M. Shah. Tclr:
+Temporal contrastive learning for video representa-
+tion.
+Computer Vision and Image Understanding,
+219:103406, 2022.
+[20] J. Douglas, S. Akkar, G. Ameri, P.-Y. Bard, D. Bindi,
+J. J. Bommer, S. S. Bora, F. Cotton, B. Derras,
+M. Hermkes, N. M. Kuehn, L. Luzi, M. Massa, F. Pa-
+cor, C. Riggelsen, M. A. Sandıkkaya, F. Scherbaum,
+P. J. Stafford, and P. Traversa. Comparisons Among
+the Five Ground-Motion Models Developed Using RE-
+SORCE for the Prediction of Response Spectral Accel-
+erations due to Earthquakes in Europe and the Middle
+East. Bulletin of Earthquake Engineering, 12(1):341–
+358, 2014.
+[21] N. B. Erichson, O. Azencot, A. Queiruga, L. Hodgkin-
+son, and M. W. Mahoney. Lipschitz recurrent neural
+networks. In International Conference on Learning
+Representations, 2021.
+[22] N. B. Erichson, S. H. Lim, and M. W. Mahoney. Gated
+recurrent neural networks with weighted time-delay
+feedback. In International Conference on Artificial
+Intelligence and Statistics, 2025.
+[23] N. B. Erichson, L. Mathelin, Z. Yao, S. L. Brunton,
+M. W. Mahoney, and J. N. Kutz.
+Shallow Neural
+14
+
+--- Sayfa 15 ---
+REFERENCES
+REFERENCES
+Networks for Fluid Flow Reconstruction With Lim-
+ited Sensors.
+Proceedings of the Royal Society A,
+476(2238):20200097, 2020.
+[24] N. B. Erichson, V. Mikuni, D. Lyu, Y. Gao, O. Azencot,
+S. H. Lim, and M. W. Mahoney. Flex: A backbone for
+diffusion-based modeling of spatio-temporal physical
+systems. arXiv preprint arXiv:2505.17351, 2025.
+[25] R. D. D. Esfahani, F. Cotton, M. Ohrnberger, and
+F. Scherbaum.
+TFCGAN: Nonstationary Ground-
+Motion Simulation in the Time–Frequency Domain
+Using Conditional Generative Adversarial Network
+(CGAN) and Phase Retrieval Methods. Bulletin of
+the Seismological Society of America, 113(1):453–467,
+2022.
+[26] M. A. Florez, M. Caporale, P. Buabthong, Z. E. Ross,
+D. Asimaki, and M.-A. Meier. Data-Driven Synthe-
+sis of Broadband Earthquake Ground Motions Using
+Artificial Intelligence. Bulletin of the Seismological
+Society of America, 112(4):1979–1996, 2022.
+[27] T. Furumura, T. Maeda, and A. Oba. Early forecast
+of long-period ground motions via data assimilation
+of observed ground motions and wave propagation
+simulations. Geophysical Research Letters, 46(1):138–
+147, 2019.
+[28] Gedas Bertasius and Heng Wang and Lorenzo Torre-
+sani. Is Space-Time Attention All You Need for Video
+Understanding? In International Conference on Ma-
+chine Learning, 2021.
+[29] A. Gholami, S. Kim, Z. Dong, Z. Yao, M. W. Mahoney,
+and K. Keutzer. A survey of quantization methods for
+efficient neural network inference. In Low-power com-
+puter vision, pages 291–326. Chapman and Hall/CRC,
+2022.
+[30] R. Graves and A. Pitarka. Kinematic Ground-Motion
+Simulations on Rough Faults Including Effects of
+3D Stochastic Velocity Perturbations. Bulletin of the
+Seismological Society of America, 106(5):2136–2153,
+2016.
+[31] R. W. Graves and A. Pitarka.
+Broadband Ground-
+Motion Simulation Using a Hybrid Approach. Bulletin
+of the Seismological Society of America, 100(5A):2095–
+2123, 2010.
+[32] N. Gregor, N. A. Abrahamson, G. M. Atkinson, D. M.
+Boore, Y. Bozorgnia, K. W. Campbell, B. S.-J. Chiou,
+I. Idriss, R. Kamai, E. Seyhan, W. Silva, J. P. Stewart,
+and R. Youngs. Comparison of NGA-West2 GMPEs.
+Earthquake Spectra, 30(3):1179–1197, 2014.
+[33] S. Hartzell, S. Harmsen, A. Frankel, and S. Larsen.
+Calculation of Broadband Time Histories of Ground
+Motion: Comparison of Methods and Validation Us-
+ing Strong-Ground Motion From the 1994 Northridge
+Earthquake. Bulletin of the Seismological Society of
+America, 89(6):1484–1504, 1999.
+[34] E. Hirakawa and B. Aagaard. Evaluation and Updates
+for the USGS San Francisco Bay Region 3D Seismic
+Velocity Model in the East and North Bay Portions.
+Bulletin of the Seismological Society of America, 2022.
+[35] S. Hochreiter and J. Schmidhuber. Long Short-Term
+Memory. Neural Computation, 9(8):1735–1780, 1997.
+[36] M. Hoshiba and S. Aoki. Numerical Shake Predic-
+tion for Earthquake Early Warning: Data Assimi-
+lation, Real-Time Shake Mapping, and Simulation
+of Wave PropagationNumerical Shake Prediction for
+Earthquake Early Warning. Bulletin of the Seismologi-
+cal Society of America, 105(3):1324–1338, 2015.
+[37] T. Hsu and A. Pratomo. Early Peak Ground Accelera-
+tion Prediction for On-Site Earthquake Early Warning
+Using LSTM Neural Network. Frontiers in Earth Sci-
+ence, 10:911947, 2022.
+[38] H. Hu, X. Wang, Y. Zhang, Q. Chen, and Q. Guan. A
+comprehensive survey on contrastive learning. Neuro-
+computing, page 128645, 2024.
+[39] A. Jaiswal, A. R. Babu, M. Z. Zadeh, D. Banerjee, and
+F. Makedon. A survey on contrastive self-supervised
+learning. Technologies, 9(1):2, 2020.
+[40] R. Jiang, P. Y. Lu, E. Orlova, and R. Willett. Train-
+ing neural operators to preserve invariant measures of
+chaotic attractors. Advances in Neural Information
+Processing Systems, 2023.
+[41] E. Kalnay. Atmospheric Modeling, Data Assimilation,
+and Predictability. Cambridge University Press, 2003.
+[42] P. Lara, Q. Bletery, J. P. Ampuero, A. Inza, and
+H. Tavera. Earthquake early warning starting from
+3 s of records on a single station with machine learn-
+ing. Journal of Geophysical Research: Solid Earth,
+128(11):e2023JB026575, 2023.
+[43] P. Lara, H. Tavera, Q. Bletery, J. P. Ampuero, A. Inza,
+D. Portugal, and F. Meza. Implementation of the pe-
+ruvian earthquake early warning system. Bulletin of
+the Seismological Society of America, 115(1):191–209,
+2025.
+[44] G. Lavrentiadis, N. A. Abrahamson, and N. M. Kuehn.
+A non-ergodic effective amplitude ground-motion
+model for California. Bulletin of Earthquake Engi-
+neering, pages 1–32, 2021.
+[45] M. Leonard. Earthquake Fault Scaling: Self-Consistent
+Relating of Rupture Length, Width, Average Displace-
+ment, and Moment Release. Bulletin of the Seismolog-
+ical Society of America, 100(5A):1971–1988, 2010.
+[46] J. T. Lin, D. Melgar, A. M. Thomas, and J. Searcy.
+Early warning for great earthquakes from characteri-
+zation of crustal deformation patterns with deep learn-
+ing. Journal of Geophysical Research: Solid Earth,
+126(10):e2021JB022703, 2021.
+[47] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin,
+and B. Guo. Swin Transformer: Hierarchical Vision
+Transformer Using Shifted Windows. In Proceedings
+of the IEEE/CVF International Conference on Com-
+puter Vision and Pattern Recognition, pages 10012–
+10022, 2021.
+15
+
+--- Sayfa 16 ---
+REFERENCES
+REFERENCES
+[48] Z. Liu, J. Ning, Y. Cao, Y. Wei, Z. Zhang, S. Lin, and
+H. Hu. Video Swin Transformer. In Proceedings of
+the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition, pages 3202–3211, 2022.
+[49] D. McCallen, A. Petersson, A. Rodgers, A. Pitarka,
+M. Miah, F. Petrone, B. Sjogreen, N. Abrahamson, and
+H. Tang. EQSIM—A Multidisciplinary Framework for
+Fault-to-Structure Earthquake Simulations on Exascale
+Computers Part I: Computational Models and Work-
+flow. Earthquake Spectra, page 875529302097098,
+2020.
+[50] D. McCallen, F. Petrone, M. Miah, A. Pitarka,
+A. Rodgers, and N. Abrahamson. EQSIM—A Multidis-
+ciplinary Framework for Fault-to-Structure Earthquake
+Simulations on Exascale Computers, Part II: Regional
+Simulations of Building Response. Earthquake Spec-
+tra, page 875529302097098, 2020.
+[51] M. Meier, T. Heaton, and J. Clinton. The Gutenberg Al-
+gorithm: Evolutionary Bayesian Magnitude Estimates
+for Earthquake Early Warning with a Filter BankThe
+Gutenberg Algorithm: Evolutionary Bayesian Magni-
+tude Estimates for EEW. Bulletin of the Seismological
+Society of America, 105(5):2774–2786, 2015.
+[52] M.-A. Meier, J. P. Ampuero, and T. H. Heaton. The
+Hidden Simplicity of Subduction Megathrust Earth-
+quakes. Science, 357(6357):1277–1281, 2017.
+[53] J. M¨unchmeyer, D. Bindi, U. Leser, and F. Tilmann.
+Earthquake magnitude and location estimation from
+real time seismic waveforms with a transformer net-
+work. Geophysical Journal International, 226(2):1086–
+1104, 2021.
+[54] J. M¨unchmeyer, D. Bindi, U. Leser, and F. Tilmann.
+The transformer earthquake alerting model: A new
+versatile approach to earthquake early warning. Geo-
+physical Journal International, 225(1):646–656, 2021.
+[55] NCEDC. Northern California Earthquake Data Center.
+UC Berkeley Seismological Laboratory.
+[56] S. Noda and W. L. Ellsworth. Scaling Relation Be-
+tween Earthquake Magnitude and the Departure Time
+from P Wave Similar Growth. Geophysical Research
+Letters, 43(17):9053–9060, 2016.
+[57] R. Paolucci, C. Smerzini, and M. Vanini.
+BB-
+SPEEDset: A Validated Dataset of Broadband Near-
+Source Earthquake Ground Motions from 3D Physics-
+Based Numerical Simulations. Bulletin of the Seismo-
+logical Society of America, 111(5):2527–2545, 2021.
+[58] G. A. Parker and A. S. Baltay. Empirical Map-Based
+Nonergodic Models of Site Response in the Greater
+Los Angeles Area. Bulletin of the Seismological Soci-
+ety of America, 112(3):1607–1629, 2022.
+[59] A. Petersson, B. Sjogreen, and H. Tang. SW4: User’s
+Guide, version 3.0.
+Technical Report LLNL-SM-
+741439, Lawrence Livermore National Laboratory,
+2023.
+[60] N. A. Petersson and B. Sj¨ogreen. Stable Grid Refine-
+ment and Singular Source Discretization for Seismic
+Wave Simulations. Comm. Comput. Phys., 8(5):1074–
+1110, 2010.
+[61] A. Pitarka, R. Graves, K. Irikura, K. Miyakoshi, C. Wu,
+H. Kawase, A. Rodgers, and D. McCallen. Refinements
+to the Graves–Pitarka Kinematic Rupture Generator, In-
+cluding a Dynamically Consistent Slip-Rate Function,
+Applied to the 2019 Mw 7.1 Ridgecrest Earthquake.
+Bulletin of the Seismological Society of America, 2021.
+[62] M. Rakka, M. E. Fouda, P. Khargonekar, and F. Kur-
+dahi.
+Mixed-precision neural networks: A survey.
+arXiv preprint arXiv:2208.06064, 2022.
+[63] P. Ren, R. Nakata, M. Lacour, I. Naiman, N. Nakata,
+J. Song, Z. Bi, O. A. Malik, D. Morozov, O. Azencot,
+N. B. Erichson, and M. W. Mahoney. Learning Physics
+for Unveiling Hidden Earthquake Ground Motions via
+Conditional Generative Modeling. arXiv, 2024.
+[64] A. J. Rodgers, A. Pitarka, N. A. Petersson, B. Sj¨ogreen,
+and D. B. McCallen. Broadband (0–4 Hz) Ground Mo-
+tions for a Magnitude 7.0 Hayward Fault Earthquake
+With Three-Dimensional Structure and Topography.
+Geophysical Research Letters, 45(2):739–747, 2018.
+[65] T. K. Rusch, S. Mishra, N. B. Erichson, and M. W.
+Mahoney. Long Expressive Memory for Sequence
+Modeling. In International Conference on Learning
+Representations, 2021.
+[66] O. M. Saad, I. Helmy, M. Mohammed, A. Savvaidis,
+A. Chatterjee, and Y. Chen.
+Deep Learning Peak
+Ground Acceleration Prediction Using Single-Station
+Waveforms. IEEE Transactions on Geoscience and
+Remote Sensing, 62:1–13, 2024.
+[67] V. J. Sahakian, A. Baltay, T. C. Hanks, J. Buehler, F. L.
+Vernon, D. Kilb, and N. A. Abrahamson. Ground Mo-
+tion Residuals, Path Effects, and Crustal Properties: A
+Pilot Study in Southern California. Journal of Geo-
+physical Research: Solid Earth, 124(6):5738–5753,
+2019.
+[68] W. Shi, J. Caballero, F. Husz´ar, J. Totz, A. P. Aitken,
+R. Bishop, D. Rueckert, and Z. Wang. Real-Time Sin-
+gle Image and Video Super-Resolution Using an Effi-
+cient Sub-Pixel Convolutional Neural Network. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vi-
+sion and Pattern Recognition, pages 1874–1883, 2016.
+[69] X. Shi, Z. Chen, H. Wang, D.-Y. Yeung, W.-K. Wong,
+and W.-c. Woo. Convolutional LSTM Network: A Ma-
+chine Learning Approach for Precipitation Nowcasting.
+Conference on Neural Information Processing Systems,
+28, 2015.
+[70] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar,
+S. Ermon, and B. Poole. Score-based generative mod-
+eling through stochastic differential equations. arXiv
+preprint arXiv:2011.13456, 2020.
+[71] N. Srivastava, E. Mansimov, and R. Salakhudinov.
+Unsupervised Learning of Video Representations Us-
+ing LSTMs. In International Conference on Machine
+Learning, pages 843–852, 2015.
+16
+
+--- Sayfa 17 ---
+REFERENCES
+REFERENCES
+[72] U. S. G. Survey and C. G. Survey. Quaternary fault
+and fold database for the United States, 2024.
+[73] I. Sutskever, O. Vinyals, and Q. V. Le. Sequence to
+Sequence Learning With Neural Networks. Conference
+on Neural Information Processing Systems, 27, 2014.
+[74] D. T. Trugman, M. T. Page, S. E. Minson, and E. S.
+Cochran. Peak Ground Displacement Saturates Exactly
+When Expected: Implications for Earthquake Early
+Warning.
+Journal of Geophysical Research: Solid
+Earth, 124(5):4642–4653, 2019.
+[75] T. Uchide and S. Ide. Scaling of Earthquake Rupture
+Growth in the Parkfield Area: Self-Similar Growth and
+Suppression by the Finite Seismogenic Layer. Jour-
+nal of Geophysical Research: Solid Earth, 115(B11),
+2010.
+[76] E. A. Wirth, J. E. Vidale, A. D. Frankel, T. L. Pratt,
+N. A. Marafi, M. Thompson, and W. J. Stephen-
+son. Source-Dependent Amplification of Earthquake
+Ground Motions in Deep Sedimentary Basins. Geo-
+physical Research Letters, 46(12):6443–6450, 2019.
+[77] Y. Yang, A. F. Gao, K. Azizzadenesheli, R. W. Clayton,
+Z. E. Ross, and Y. Yang. Rapid Seismic Waveform
+Modeling and Inversion With Neural Operators. IEEE
+Transactions on Geoscience and Remote Sensing, 61:1–
+12, 2023.
+17
+
+--- Sayfa 18 ---
+B
+TECHNICAL DETAILS
+A Notation
+Terms
+Definition
+WaveCastNet
+Wavefield forecasting network (WaveCastNet) based on a seq2seq model.
+Seq2Seq
+AI-enabled sequence to sequence (seq2seq) modelling framework.
+ConvLEM
+Convolutional long expressive memory (ConvLEM) recurrent unit.
+time window
+Sequence length in temporal dimension.
+arrival time
+Time step at which maximal waveform arrives.
+particle velocity
+Single pixel Xt[c, h, w] in the snapshot.
+waveform
+Time series recorded for a single particle velocity.
+wavefield
+Snapshot Xt at a certain time step.
+t
+Temporal coordinate (time point).
+h, w
+XY -index of each input snapshot.
+c
+Channel index for velocity in a certain direction.
+Xt
+Snapshot of shape C × H × W at time step t.
+Cn
+Fast hidden state in latent space.
+Hn
+Slow hidden state in latent space.
+X (NS)
+North-South direction.
+Y (EW)
+East-West direction.
+Z (UP)
+Vertical direction, positive values signify upward movement.
+Table A.1: Terms and Definitions
+B Technical Details
+B.1 Discretized ConvLEM
+Here we derive the discretized formula of ConvLEM from the following time-dependent ODEs:
+dC(t)
+dt
+= ψC (C(t), H(t), X(t)) = gc (H(t), X(t)) ⊙
+
+f c
+θc(H(t), X(t)) −C(t)
+
+,
+dH(t)
+dt
+= ψH (C(t), H(t), X(t)) = gh (H(t), X(t)) ⊙
+
+f h
+θh(C(t), X(t)) −H(t)
+
+.
+(19)
+The gating functions gc, gh, and update functions f c
+θc, f h
+θh are defined based on convolutional operation:
+gc (H, X) = σ (Wxt ∗X + Wht ∗H) ,
+gh (H, X) = σ (Wxt ∗X + Wht ∗H) ,
+f c
+θc(H, X) = tanh (Whc ∗H + Wxc ∗X) ,
+f h
+θh(C, X) = tanh (Wch ∗C + Wxh ∗X) .
+(20)
+In this notation, H(t) and C(t) denote the slow and fast evolving hidden states in latent space Rr×p×q respectively.
+X(t) ∈Rc×h×w represents a three-dimensional input tensor. W·,· denotes the convolutional kernels, ⊙represents
+the Hadamard product, and ∗indicates the convolutional operator. For brevity, bias vectors are omitted in gating
+and updated functions defined in 20.
+We utilize the Implicit-Explicit (IMEX) time-stepping scheme to write the ODEs in Eq. (19) in a discretized formula,
+with subscript n as time steps index ranging from 1 to N. Given ∆t > 0:
+Cn −Cn−1
+∆t
+= ψC (Cn−1, Hn−1, Xn) = gc (Hn−1, Xn) ⊙
+
+f c
+θc(Hn−1, Xn) −Cn−1
+
+,
+Hn −Hn−1
+∆t
+= ψH (Cn, Hn−1, Xn) = gh (Hn−1, Xn) ⊙
+
+f h
+θh(Cn, Xn) −Hn−1
+
+.
+(21)
+For discretized fast hidden state Cn, we have:
+Cn −Cn−1 = ∆t · gc ⊙(f c
+θc −Cn−1);
+Cn = (∆t · gc) ⊙f c
+θc + Cn−1 −(∆t · gc) ⊙Cn−1
+= (∆t · gc) ⊙f c
+θc + 1 ⊙Cn−1 −(∆t · gc) ⊙Cn−1
+= (∆t · gc) ⊙f c
+θc + (1 −∆t · gc) ⊙Cn−1,
+18
+
+--- Sayfa 19 ---
+B.2
+Gating Function Distribution
+B
+TECHNICAL DETAILS
++
++
+Figure B.1: Schematic of the ConvLEM cell. Here, σ1 and σ2 represent gc and gh respectively. Update function f is set to
+tanh. Red links indicate peephole connections.
+where 1 is the matrix of ones that matches the shape of hidden state Cn and Hn.
+Similarly, we have for Hn:
+Hn = (∆t · gh) ⊙f h
+θh + (1 −∆t · gh) ⊙Hn−1.
+Define ∆tn = ∆t gc, ∆tn = ∆t gh. By plugging in 20 and 21, we derive the discretized formula for ConvLEM:
+∆tn = ∆t gc(Hn−1, Xn)
+∆tn = ∆t gh(Hn−1, Xn)
+Cn = (1 −∆tn) ⊙Cn−1 + ∆tn ⊙f c
+θc(Hn−1, Xn)
+Hn =
+ 1 −∆tn
+
+⊙Hn−1 + ∆tn ⊙f h
+θh(Cn, Xn).
+(22)
+Figure B.1 illustrates the discretized ConvLEM unit.
+B.2 Gating Function Distribution
+We visualize the distribution of ∆t and ∆t for the encoder ConvLEM cells in WaveCastNet on point-source small
+earthquakes in Figure B.2. Here, we set the time step factor ∆t in 22 to 1, so ∆t and ∆t equal to the gating functions
+gc and gh for the hidden fast and slow states C(t) and H(t), respectively.
+As shown in Figure B.2, the observed occurrences of ∆t and ∆t on each scale decay as a power law with respect
+to the amplitude of the scale [65].
+By setting all axes to logarithmic scale, we can observe the different linear slopes and amplitude ranges for ∆t and ∆t.
+∆t exhibits a smaller linear slope and a longer trailing tail, with a distribution at the amplitude closer to 0 compared
+to ∆t, allowing H(t) to better capture low-frequency features. In contrast, ∆t is more centrally distributed near
+1, showing a smaller amplitude range and a larger linear slope, reflecting the rapid change in the hidden state C(t).
+These observations prove that the temporal multiscale resolution structure of ConvLEM is essential for modeling the
+fast-slow dynamical pattern in ground-motion data.
+B.3 Structure of Embedding and Reconstruction Layers
+Here, we discuss the embedding and reconstruction layers.
+The embedding layer for densely and regularly sampled inputs x ∈R3×344×224 is composed of three cascaded encoder
+layers. A standard encoder layer comprises a convolutional layer, with kernel size =(4, 4), stride=2, padding=1, followed
+19
+
+--- Sayfa 20 ---
+B.3
+Structure of Embedding and Reconstruction Layers
+B
+TECHNICAL DETAILS
+1.0
+10
+2
+10
+4
+10
+6
+10
+8
+10
+10
+log10(dt_bar)
+10
+0
+10
+1
+10
+2
+10
+3
+10
+4
+10
+5
+10
+6
+10
+7
+Frequency
+Linear Slope=2.85
+1.0
+10
+2
+10
+4
+10
+6
+10
+8
+10
+10
+log10(dt)
+10
+0
+10
+1
+10
+2
+10
+3
+10
+4
+10
+5
+10
+6
+10
+7
+Linear Slope=4.00
+M4.0 Encoder dt Distribution
+M4.0 Encoder Gating Function Distribution
+Figure B.2: Histogram of ∆t and ∆t for the encoder ConvLEM cells in WaveCastNet.
+by a LeakyRelu activation layer and BatchNorm layer. Each encoder layer reduces the input spatial dimensions by a factor
+of 2. After the input signal passes through three encoder layers, the dimensions change from 3 × 344 × 224 to a fixed-size
+latent space of 144 × 43 × 28. The channel transformation process is illustrated in Figure B.3.
+The embedding layer for sparsely and irregularly sampled data maps the inputs x ∈R3×564 to a latent space of dimension
+144 × 43 × 28. Specifically, this embedding layer uses a shallow multilayer feedforward network [23], followed by
+two convolutional layers, as illustrated in Figure B.3.
+The reconstruction layer retrieves the predicted wavefield snapshot, shaped 144 × 43 × 28, from the latent space. This
+process involves increasing spatial dimensions by a factor of 2 through transposed convolution, followed by a PixelShuffle
+layer [68] to further upscale the output by a factor of 4. The dimensional transformation process is depicted in Figure B.3.
+Conv + LeakyRelu + BatchNorm2d
+GroupNorm + SelfAttention
+Embedding Layer: dense and regular sampling
+Reconstruction Layer
+Embedding Layer: sparse and irregular sampling
+Reshape
+TransposedConv + LeakyRelu
+PixelShuffle(4) + Conv
+Linear + LeakyRelu + BatchNorm1d
+Shallow Encoder:
+Feature Extraction
+Figure B.3: Detailed structure for the embedding layers and reconstruction layer in dense and sparse sampling scenarios.
+20
+
+--- Sayfa 21 ---
+B.4
+Other Related Methods
+D
+ADDITIONAL EXPERIMENTAL RESULTS
+B.4 Other Related Methods
+We implemented ConvLSTM and ConvGRU with peephole connections as follows. For brevity, bias vectors are omitted
+from the activation and gating functions.
+ConvLSTM
+in = σ (Wxi ∗Xn + Whi ∗Hn−1 + Wci ⊙Cn−1) ,
+fn = σ (Wxf ∗Xn + Whf ∗Hn−1 + Wcf ⊙Cn−1) ,
+Cn = fn ⊙Cn−1 + in ⊙f (Wxc ∗Xn + Whc ∗Hn−1) ,
+on = σ (Wxo ∗Xn + Who ∗Hn−1 + Wco ⊙Cn) ,
+Hn = on ⊙f (Cn) .
+ConvGRU
+Zn = σ (Wxz ∗Xn + Whz ∗Hn−1) ,
+Rn = σ (Wxr ∗Xn + Whr ∗Hn−1) ,
+on = f (Wxo ∗Xn + Rn ⊙(Who ∗Hn−1)) ,
+Hn = (1 −Zn) ⊙Hn−1 + Zn ⊙on.
+C Details on Training, Validation, and Test Sets
+C.1 Post-Rupture Forecasting Accuracy
+RFNE
+Figure C.1: Forecasting accuracy as a function of time since rupture onset. The plot shows prediction errors in the
+waveforms (blue) and peak ground velocity (PGV) values (red) as the length of available post-rupture input increases.
+WaveCastNet remains effective even when provided with less than 15.6 seconds of initial input. Accurate forecasts are
+achieved with as little as 5.7 seconds of post-rupture data by padding shorter input sequences with white noise.
+C.2 Configuration details
+In Table C.1, we summarize the details of the settings used for the tests. The split into training and testing data is determined
+based on epicenter locations: 80% of the events at each depth are randomly assigned to the training set, and the remaining
+20% were assigned to the testing set. This selection process is conducted independently for each depth.
+D Additional Experimental Results
+D.1 Domain-shifted Settings
+Noise tests
+To evaluate our WaveCastNet’s robustness to noisy inputs, we augment our test data with two types of noise:
+• Empirical Noise: This noise was designed to preserve the network-scale correlations observed in real-world data.
+The empirical noise had the shape C × T(Input Length) × N(Number of Stations), where it was directly added to the
+original waveforms to simulate realistic noise patterns that occur in practice.
+• Gaussian Noise: To further stress-test the model, we also applied Gaussian noise with shape C × T × N, where the
+noise values were sampled from a normal distribution N(µ = 0, σ = 0.32). The standard deviation σ of the Gaussian
+21
+
+--- Sayfa 22 ---
+D.1
+Domain-shifted Settings
+D
+ADDITIONAL EXPERIMENTAL RESULTS
+Experiment
+Input Resolution Telapsed
+Tpred
+(s)
+(s)
+Dense Sampling
+344×224
+5.7
+101.4
+Sparse Sampling
+101
+5.7
+101.4
+Noise Test
+101
+5.7
+101.4
+Latency Test
+101
+5.7
+101.4
+Source Location Test
+344×224
+5.7
+101.4
+Large M Test
+344×224
+15.6
+101.4
+Real world Data
+178
+15.6
+15.6
+Table C.1: Configurations for different test setups. The prediction resolution is 344 × 224. Telapsed denotes the time
+interval between the earthquake onset and the start of the prediction, and Tpred indicates the duration of a single one-time
+prediction inference. Specifically, a rolling prediction strategy is applied in real world scenarios, where 15.6-second forward
+predictions are performed at successive time intervals.
+Velocity X (mm/s)
+Empirical noise
+Time latency
+Time (s)
+Time (s)
+0.2
+0.5
+4.5
+mm/s
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+TPGV 
+20
+40
+60
+20
+40
+60
+80
+100
+Y (km)
+X (km)
+20
+40
+60
+Y (km)
+TPGV 
+TPGV 
+PGV
+TPGV 
+s
+10
+40
+20
+30
+-5.2
+5.2
+0
+(b) Time shift
+s
+without latency
+with latency
+groundtruth
+noise*1
+noise*2
+noise*4
+(c) PGV
+(d) TPGV
+(e) PGV
+(f) TPGV
+(a)
+(b)
+Figure D.1: Noise (a,c,d) and time latency (b,e,f) tests. (a,b) X component waveforms at the San Jose station and (c,e)
+PGV (left) and (d,f) TP GV maps. The gray shades in (a,b) indicate the input time window, and the circles in (f) the time
+shifts introduced at each station, respectively.
+noise was chosen after several iterations to match the performance degradation observed with the empirical noise.
+This allowed us to evaluate the behavior of the model at varying levels ν of noise perturbation (that is, the noise level
+is a multiplicative factor σν).
+For both noise types, we use the ShakeAlert station lists, and use a sparse model trained without any noise injection
+to ensure the evaluations were realistic. Our results, shown in Figure D.2, demonstrate that the model maintains over
+80% accuracy for both noise types at noise levels up to a factor of 2. This indicates that the model is resilient and
+can still perform well under moderate noise perturbations.
+22
+
+--- Sayfa 23 ---
+D.2
+Comparisons with an empirical ground motion model
+D
+ADDITIONAL EXPERIMENTAL RESULTS
+As illustrated in Figures D.1(a), introducing empirical (station-specific) noise causes minimal performance degradation.
+We then scaled this noise by factors of 2 and 4 to simulate increasingly noisy scenarios. Even under these high-noise
+conditions, WaveCastNet effectively denoises and predicts the waveforms while accurately predicting PGVs and TP GV .
+However, its performance starts to degrade when the noise multiplier exceeds 4. This desirable robustness can be attributed
+to the Seq2Seq architecture, which encodes inputs into a compressed latent representation before decoding them. The
+compressed latent state creates an information bottleneck: Only the most relevant information is retained in the latent
+state, while irrelevant details, such as noise or spurious signals, are discarded.
+0
+1
+2
+3
+4
+5
+Noise Level
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+ACC
+White Noise
+Empirical Noise
+0
+1
+2
+3
+4
+5
+Noise Level
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+RFNE
+White Noise
+Empirical Noise
+Model Performance Across Noise Scales
+Figure D.2: Evaluation metrics of WaveCastNet under varying levels of noise perturbation.
+Uneven latency across the station. Real data transmission often results in uneven latencies across different stations.
+Asynchronous data ingestion can be addressed by using a buffer or interpolation mechanism to align incoming measurements
+with minimal delay. To simulate such conditions, we introduce random time shifts in sparse sampling scenarios (see
+Figure D.1b and Section 4.5 for details). The maximum time shift between stations is set to one second (equivalent
+to four discrete time steps), under which performance remains largely unaffected. However, when the maximum time
+shift exceeds two seconds, we observe a drop in accuracy.
+D.2 Comparisons with an empirical ground motion model
+To further validate the real-data results, we compare them against an ergodic ground motion model (GMM) using the
+ASK14 model from the NGA-West2 project [3]. Because our data are limited to a maximum frequency of 0.5,Hz, we
+evaluate spectral acceleration rather than PGVs. The PGVs calculated from this frequency range (<0.5 Hz) is lower than
+those predicted from the GMM that includes an entire frequency range. Figure D.3 shows the spectral acceleration at 3
+seconds of the GMM, our predicted values, and the observed waveforms. Since WaveCastNet does not generate predictions
+for the first 15.6 seconds, we calculate the spectral acceleration of the remaining portion of the signal. As a result, early
+arrival waveforms are not captured for near- to intermediate-distance stations (less than 30 km), causing underestimation
+relative to both the GMM and observed data. However, at larger distances, our predictions converge more closely with the
+observation, illustrating WaveCastNet’s ability to capture non-ergodic variations in ground-motion intensities.
+D.3 Comparative Study
+Table D.1 provides detailed configurations for the comparative studies.
+D.4 Moving MNIST
+Here, we show experiments for the MovingMNIST dataset to further demonstrate ConvLEM’s performance in spatio-
+temporal forecasting. The MovingMNIST dataset [71] is a well-established benchmark for video prediction and spa-
+tiotemporal modeling tasks. This dataset consists of a total of 10, 000 videos, each comprising 20 fixed-size frames with
+dimensions of 1 × 64 × 64 pixels. Each video sequence features two handwritten digits selected from the original MNIST
+dataset, which move within the frame at various speeds and directions. The digits exhibit diverse velocities and trajectories,
+23
+
+--- Sayfa 24 ---
+E
+KINEMATIC RUPTURE MODELS
+0
+20
+40
+60
+Distance (km)
+1e-05
+1e-04
+1e-03
+Spectral acceleration (g)
+Observation
+Prediction
+GMM
+Figure D.3: Comparisons of the spectral acceleration at 3 sec with respect to distances between (blue) real-world data, (red)
+WaveCastNet predictions and (gray) empirical ground motion model predictions. Circles indicate the calculated spectral
+accelerations, and solid lines indicate their median values computed for bins of 10 km
+Model
+Parameters
+Latent Space
+Patch Size
+Embed Dimension
+ACC
+RFNE
+Seq2Seq using ConvGRU[8]
+4.99M
+(144, 21, 14)
+-
+-
+0.94
+0.34
+Seq2Seq using ConvLSTM [69]
+6.65M
+(144, 21, 14)
+-
+-
+0.95
+0.32
+WaveCastNet (ours)
+8.15M
+(144, 21, 14)
+-
+-
+0.96
+0.27
+Swin Transformer [48]
+13.72M
+-
+(3,4,4)
+144
+0.95
+0.31
+Time-S-Former [28]
+10.21M
+-
+(1,8,8)
+192
+0.95
+0.31
+Swin Transformer*
+24.27M
+-
+(4,4,4)
+192
+0.97
+0.25
+Time-S-Former*
+33.82M
+-
+(1,8,8)
+192
+0.98
+0.20
+Table D.1: Performance comparison between Seq2Seq frameworks using different recurrent cells, and state-of-the-art
+transformers for forecasting small point-source earthquakes. While larger vision transformers can perform better on this
+task, we show that these models fail to generalize to domain-shifted settings in Figure 9.
+including linear motion, bouncing off the frame edges, and occasional overlap, presenting a complex and challenging
+scenario for spatiotemporal forecasting models. The diversity in motion patterns makes the MovingMNIST dataset an
+ideal benchmark for evaluating the ability of models to capture and predict dynamic changes over time.
+We use the first 10 frames as input to predict the subsequent 10 frames. The models consist of 3 stacked recurrent
+layers with no embedding or reconstruction layers involved. Table D.2 shows the results for this task. Although using
+fewer parameters, ConvLEM is able to outperform the prediction performance of the ConvLSTM model. This further
+demonstrates ConvLEM’s potential for spatio-temporal forecasting tasks.
+Model
+Parameters
+Latent Space
+Layers
+BCELoss ↓
+Stacked ConvLSTM
+3.10M
+(64, 64, 64)
+3
+206.13
+Stacked ConvLEM
+2.31M
+(64, 64, 64)
+3
+166.75
+Table D.2: Results for Moving Mnist. The ConvLEM demonstrates improved forecasting capabilities while requiring fewer
+parameters than ConvLSTM.
+E Kinematic rupture models
+We present example kinematic rupture models for large earthquakes as in
+• Figure E.1: Kinematic rupture model of the M4.5 earthquake
+• Figure E.2: Kinematic rupture model of the M5 earthquake
+• Figure E.3: Kinematic rupture model of the M5.5 earthquake
+• Figure E.4: Kinematic rupture model of the M6 earthquake
+24
+
+--- Sayfa 25 ---
+E
+KINEMATIC RUPTURE MODELS
+t=1
+Input Frames
+2
+3
+4
+5
+6
+7
+8
+9
+10
+Groundtruth
+ConvLEM
+ConvLSTM
+Figure D.4: An example on MovingMnist dataset.
+• Figure E.5: Kinematic rupture model of the M6.5 earthquake
+• Figure E.6: Kinematic rupture model of the M7 earthquake
+25
+
+--- Sayfa 26 ---
+E
+KINEMATIC RUPTURE MODELS
+Figure E.1: Kinematic rupture models for the M4.5
+earthquake. (Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+Figure E.2: Kinematic rupture models for the M5.0
+earthquake. (Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+26
+
+--- Sayfa 27 ---
+E
+KINEMATIC RUPTURE MODELS
+Figure E.3: Kinematic rupture models for the M5.5
+earthquake. (Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+Figure E.4: Kinematic rupture models for the M6
+earthquake. (Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+27
+
+--- Sayfa 28 ---
+E
+KINEMATIC RUPTURE MODELS
+Figure E.5: Kinematic rupture models for the M6.5
+earthquake. (Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+Figure E.6: Kinematic rupture models for the M7
+earthquake.(Top) slip (middle) rise time and (bot-
+tom) 5 Hz slip rate distributions.
+28

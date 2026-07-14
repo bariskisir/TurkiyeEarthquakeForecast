@@ -1,0 +1,1694 @@
+
+--- Sayfa 1 ---
+arXiv:2005.12345v1  [cs.CR]  25 May 2020
+Transparent IFC Enforcement:
+Possibility and (In)Efﬁciency Results
+Maximilian Algehed
+Computer Science and Engineering
+Chalmers
+G¨oteborg, Sweden
+algehed@chalmers.se
+Cormac Flanagan
+Computer Science and Engineering
+University of California Santa Cruz
+Santa Cruz, USA
+cormac@ucsc.edu
+Abstract—Information Flow Control (IFC) is a collection of
+techniques for ensuring a no-write-down no-read-up style security
+policy known as noninterference. Traditional methods for both
+static (e.g. type systems) and dynamic (e.g. runtime monitors) IFC
+suffer from untenable numbers of false alarms on real-world
+programs. Secure Multi-Execution (SME) promises to provide
+secure information ﬂow control without modifying the behaviour
+of already secure programs, a property commonly referred to
+as transparency. Implementations of SME exist for the web in
+the form of the FlowFox browser and as plug-ins to several
+programming languages. Furthermore, SME can in theory work
+in a black-box manner, meaning that it can be programming
+language agnostic, making it perfect for securing legacy or third-
+party systems. As such SME, and its variants like Multiple Facets
+(MF) and Faceted Secure Multi-Execution (FSME), appear to be
+a family of panaceas for the security engineer. The question is,
+how come, given all these advantages, that these techniques are
+not ubiquitous in practice?
+The answer lies, partially, in the issue of runtime and memory
+overhead. SME and its variants are prohibitively expensive to
+deploy in many non-trivial situations. The natural question is
+why is this the case? On the surface, the reason is simple. The
+techniques in the SME family all rely on the idea of multi-
+execution, running all or parts of a program multiple times to
+achieve noninterference. Naturally, this causes some overhead.
+However, the predominant thinking in the IFC community has
+been that these overheads can be overcome. In this paper we
+argue that there are fundamental reasons to expect this not to
+be the case and prove two key theorems:
+• All transparent enforcement is polynomial time equivalent
+to multi-execution.
+• All black-box enforcement takes time exponential in the
+number of principals in the security lattice.
+Our methods also allow us to answer, in the afﬁrmative, an
+open question about the possibility of secure and transparent
+enforcement of a security condition known as Termination
+Insensitive Noninterference.
+Index Terms—Secure Multi-Execution, Information Flow Con-
+trol, Noninterference, Transparency, Black-Box, White-Box, Ef-
+ﬁciency
+I. INTRODUCTION
+Language-Based Information Flow Control (IFC) [1–4] is a
+promising technology for securing systems against malicious
+The ﬁrst author was partially supported by the Wallenberg AI, Autonomous
+Systems and Software Program (WASP) funded by the Knut and Alice
+Wallenberg Foundation and The Osher Endowment’s through project Ghost:
+Exploring the Limits of Invisible Security. The second author was partially
+supported by NSF grant CCF-1813133
+third-party code. Approaches to IFC typically appear in the
+form of either a type system [3–5] or a custom programming
+language semantics [6, 7]. Traditionally, these approaches ei-
+ther statically or dynamically detect behaviour that violates the
+security criteria of Noninterference [1, 8–10] (secrets cannot
+inﬂuence attacker-observable behaviour) and either raise a type
+or runtime error. However, in order to be sound, even in the
+state-of-the-art implementations, these techniques need to be
+conservative and therefore suffer from unmanageable numbers
+of false alarms [11, 12].
+To remedy this issue, techniques have recently been devel-
+oped for ensuring so called transparent IFC [7, 13–17]. This
+line of work promises to provide security without raising false
+alarms. Because precisely detecting violations of noninterfer-
+ence is impossible [2] to do both statically and dynamically,
+methods for transparent IFC instead silently modify programs
+to ensure noninterference by construction.
+All known techniques for providing transparent IFC share
+one feature, they are all based on multi-execution. This tech-
+nique was pioneered by Devriese and Piessens [13] in their
+seminal paper on Secure Multi-Execution (SME). Under SME,
+the program being made secure is run once for each security
+level with carefully adapted inputs to ensure noninterference
+while removing false alarms.
+To see an example of how this works, consider the two
+security levels L (for Low or Public) and H (for High or
+Secret). Noninterference stipulates that low input is allowed
+to inﬂuence high output, but not the other way around. Under
+SME, a program p that takes both high and low inputs and
+produces both high and low output is run twice; one run of
+p is given only the low input and produces the low part of
+the output, and the other run of p is given both low and high
+input and contributes only the high output: see Figure 1.
+SME is a black-box enforcement mechanism, it does not
+need access to the source code of p to work. The ability to
+secure any program in a black-box manner is powerful and
+has potential applications in many areas, including databases
+[18], legacy code [19], and browsers [20].
+The black-box property of SME is shared by some [17, 21],
+but not all [7, 14, 15] transparent enforcement mechanisms in
+the literature. However, the idea of multi-execution, running
+the same code multiple times with slightly different inputs, is
+
+--- Sayfa 2 ---
+H
+H
+L
+L
+p
+p
+Fig. 1: Multi-Execution of the program p for the two-point
+lattice.
+shared among all known mechanisms in one form or another.
+Consequently, these mechanisms, no matter where they lie
+on the scale from black-box to white-box, suffer severe per-
+formance penalties as the number of multi-executions grows
+[7, 14, 16].
+In this paper, we provide a unifying formal, extensional,
+framework for studying multi-execution that is sufﬁciently
+expressive to formulate and prove a number of theorems that
+explain:
+1) Why all transparent enforcement mechanisms rely on
+multi-execution,
+2) Why all transparent black-box enforcement mechanisms
+are inefﬁcient (as seen empirically in previous work, e.g.
+[7, 14, 16, 22])
+Along the way, we use our framework to answer the open
+question of whether or not Termination Insensitive Noninter-
+ference can be transparently enforced. It turns out that it is
+possible, but inefﬁcient.
+Concretely, we provide the following contributions:
+• A novel yet simple framework for reasoning about secure
+programs and enforcement mechanisms (Section II).
+• A precise characterisation of the transparency guarantees
+provided by multi-execution (Section III).
+• A black-box version of secure multi-execution for inﬁn-
+inte lattices (Section III).
+• A novel enforcement mechanism that is sound and
+transparent for Termination Insensitive Noninterference
+(Section IV).
+• A general framework for optimising multi-execution
+(Section V) in which we prove a number of results in-
+cluding conditions for safe and transparent optimisation.
+• A proof that any secure and transparent enforcement is
+poly-time equivalent to a multi-execution based enforce-
+ment mechanism (Section V).
+• A proof that all secure and transparent black-box enforce-
+ment mechanisms are inefﬁcient (Section VI).
+II. AN EXTENSIONAL FRAMEWORK FOR SECURE
+INFORMATION FLOW
+In this section we develop an extensional framework for
+reasoning about secure information ﬂow. The goal is to create
+a simple, yet ﬂexible, context in which we can reason both
+about possibility of secure and transparent enforcement as well
+as efﬁciency.
+Programs with Labeled Inputs and Outputs
+As is usual in IFC research, we assume a join semi-lattice
+⟨L, ⊑, ⊥, ⊔⟩that encodes security labels in L (we use the
+words label and level interchangeably), the permitted ﬂows
+between them by the order
+⊑
+⊆L×L, the least privileged
+label with ⊥∈L, and a least-upper-bound operation
+⊔
+:
+L × L →L. We let the variables ℓ, ℓi, ℓ′, , i, ′ etc. range
+over elements of L and we write aℓfor the pair (a, ℓ).
+We work in a non-interactive setting, so a program takes
+input and eventually produces output (or diverges). The input
+(and output) is typically a compound data-structure consisting
+of various “pieces”, where each piece can be annotated with
+its own security label. For example, the input could be a set of
+ﬁles, where each ﬁle has a name, contents, and a security label.
+To model this kind of setting in a general way we assume that
+both the input and the output is a set of labeled data, and so
+we formalise the semantics of programs as partial recursive
+functions p : P(A × L) →p P(B × L).
+Here, P(•) denotes the power-set constructor and X →p
+Y denotes partial functions from X to Y , while X →Y
+denotes total functions. One beneﬁt of working with this “sets
+of labeled data” formalism is that it is simple to remove high-
+security information from an input or output x ∈P(A × L)
+via the following so-called ℓ-projection operation:
+x ↓ℓ= { a| a∈x, ⊑ℓ}
+Similarly, we can collect the labels of x as:
+L(x) = { ℓ| aℓ∈x}
+And ﬁnally, we deﬁne the ℓ-selection of x, i.e. all the elements
+of x at level ℓ, as:
+x@ℓ= { aℓ| a∈x, = ℓ}
+We refer to the syntax of p simply as p and the semantics
+of p as p(x) for some input x. Because the choice of
+programming language is orthogonal to our purposes, we keep
+it abstract. We write p(x)✓when p(x) is deﬁned and write
+p(x)× to mean that p(x) is undeﬁned (i.e. that p diverges on
+input x).
+Next we formalise what we mean by noninterfering pro-
+grams. Intuitively, a program p is noninterfering if, given
+inputs x and y that the attacker considers observably equiva-
+lent, p produces outputs p(x) and p(y) that the attacker also
+considers observably equivalent.
+Deﬁnition 1. We call x, y ∈P(A × L) ℓ-equivalent, written
+x ∼ℓy, if and only if the ℓ-projection of x and y are the same.
+x ∼ℓy ≜x ↓ℓ= y ↓ℓ
+
+--- Sayfa 3 ---
+A program p is noninterfering if, given any ℓand two x and y
+that are ℓ-equivalent such that both p(x) and p(y) are deﬁned,
+we have that p(x) is ℓ-equivalent to p(y).
+p is noninterfering ≜
+∀ℓ.∀x, y. x ∼ℓy ∧p(x)✓∧p(y)✓⇒p(x) ∼ℓp(y)
+■
+Example 1. We present a number of example programs that
+serve as running examples throughout the paper. First is the
+program id, the identity function, which is noninterfering.
+id(x) ≜x
+The next program combines information from multiple secu-
+rity labels, but is still noninterfering since the label on the
+output appropriately reﬂects the dependencies on the labeled
+input. We use |x| to denote the size of the set x.
+combine(x) ≜{(|x@Alice| + |x@Bob|)Alice⊔Bob⊔Charlie}
+Labels
+Alice,
+Bob,
+and
+Charlie
+are
+notational
+shorthand
+for
+labels
+{Alice},
+{Bob}
+and
+{Charlie}
+in
+the
+power-set
+lattice
+P(P)
+for
+some
+set
+of
+principals P
+which contains Alice,
+Bob,
+and Charlie.
+The program combineAll below is similar to combine, but
+is interfering because it combines everything, rather than a
+speciﬁc subset of the inputs.
+combineAll(x) ≜{|x|
+F L(x)}
+To see that combineAll is interfering, consider that ∅∼L {0H}
+but:
+combineAll(∅) = {0L}̸ ∼L {1H} = combineAll({0H})
+Another example of an interfering program is leakBit, which
+leaks one bit in the H input to L.
+leakBit(x) ≜if 1H ∈x then {1L} else {0L}
+The program leakAll below takes x and re-labels everything
+in the input to ⊥; it is also interfering.
+leakAll(x) ≜{ a⊥| aℓ∈x }
+Finally, the program termLeak below leaks information via
+termination, but is still noninterfering because our deﬁnition
+of noninterference does not consider the termination channel.
+termLeak(x) ≜if 1H ∈x then ∅else diverge
+To summarise, programs id, combine and termLeak are non-
+interfering, while combineAll, leakBit and leakAll are not.
+■
+Secure Programs and Termination Criteria
+The notion of noninterference introduced above does not
+prevent leaks through the termination channel, as illustrated
+by the termLeak example, and so captures what is normally
+called “Termination Insensitive” noninterference [23]. The
+prevention of termination leaks is a challenging topic for IFC
+enforcement, so to study it we introduce the following four
+termination criteria.
+Deﬁnition 2 (Termination Criteria).
+• All programs are Termination Insensitive (TI).
+• Program p is Monotonically Terminating (MT) if and only
+if whenever p(x) is deﬁned, so is p(x ↓ℓ) for all ℓ.
+p is MT ≜∀x. p(x)✓⇒∀ℓ.p(x ↓ℓ)✓
+• Program p is Termination Sensitive (TS) if and only if
+for all ℓand ℓ-equivalent x and y, p(x) is deﬁned if and
+only if p(y) is.
+p is TS ≜∀ℓ.∀x, y.x ∼ℓy ⇒(p(x)✓⇔p(y)✓)
+• p is Total if it always terminates.
+p is Total ≜∀x.p(x)✓
+■
+We let the meta-variable τ range over termination criteria.
+τ ::= TI | MT | TS | Total
+The termination criteria TS and TI are standard from the IFC
+literature [23–25], and the notion of total programs is also a
+natural termination criteria. Our new criteria, MT, is motivated
+by the termination requirements of SME, as we discuss below.
+MT is a weaker requirement than TS, but stronger than TI,
+which results in the following ordering of termination criteria.
+Proposition 1. The following chain of implications is strict.
+p is Total
+⇒p is TS
+⇒p is MT
+⇒p is TI
+Recall that an implication P ⇒Q is strict if it is not the
+case that P ⇔Q. Using the termination criteria, we deﬁne a
+family of notions of secure program in a way that separates
+termination and noninterference.
+Deﬁnition 3 (τ-secure). A program is τ-secure if and only if
+it is τ and noninterfering.
+■
+The τ-secure criteria are naturally ordered the same way as
+the termination criteria.
+
+--- Sayfa 4 ---
+Proposition 2. The following chain of implications is strict.
+p is Total-secure
+⇒p is TS-secure
+⇒p is MT-secure
+⇒p is TI-secure
+We re-visit some programs from Example 1 to illustrate the
+various termination criteria.
+Example 2. The programs id and combine from Example 1
+are noninterfering and Total; hence they are both Total-secure.
+The program termLeak is noninterfering, but its termination
+is inﬂuenced by H information, and so it is only TI-secure.
+Program leakBit, combineAll, and leakAll meanwhile are in-
+terfering and hence are not τ-secure for any τ.
+■
+Next we present three noninterfering programs that illustrate
+different termination criteria.
+Example 3. First, the following program is not Total, as it
+sometimes diverges, but divergence only depends on public
+(L-labeled) information, so it is TS.
+divergeIfLPresent(x) ≜if 1L ∈x then x else diverge
+In the next program, divergence depends on H information,
+so it is not TS. It is MT as removing H information only
+improves termination.
+divergeIfHPresent(x) ≜if 1H ∈x then diverge else ∅
+In contrast, for the following program, removing H informa-
+tion hurts termination, so this program is TI but not TS.
+divergeIfHAbsent(x) ≜if 1H̸ ∈x then diverge else ∅
+For a brief summary of this example and examples 1 and 2,
+see Table I.
+■
+A version of MT-security has been studied in the past
+by Rafnsson and Sabelfeld [21] and Jaskelioff and Russo
+[26]. These authors consider programs whose termination is
+stable under “default” inputs in a statically labeled setting.
+Speciﬁcally, they formulate deﬁnitions of security that require
+that the program preserves ℓ-equivalence and that replacing
+inputs with default values does not cause non-termination.
+This is analogous to MT-security, requiring that termination
+is preserved when the high inputs have a default value, like 0,
+is identical to saying that termination is preserved when the
+H-selection of the input is the “default value” ∅.
+Program
+NI
+Termination
+Security
+id
+yes
+Total
+Total-secure
+combine
+yes
+Total
+Total-secure
+combineAll
+no
+Total
+×
+leakBit
+no
+Total
+×
+leakAll
+no
+Total
+×
+termLeak
+yes
+TI
+TI-secure
+divergeIfLPresent
+yes
+TS
+TS-secure
+divergeIfHPresent
+yes
+MT
+MT-secure
+divergeIfHAbsent
+yes
+TI
+TI-secure
+TABLE I: Noninterference (NI), termination, and security of
+example programs
+Enforcement Mechanisms
+Next we turn our attention to mechanisms for enforcing τ-
+security.
+Deﬁnition 4 (Enforcement Mechanism). An enforcement
+mechanisms E is a polynomial-time total recursive function
+that takes any program p : P(A × L) →p P(B × L) to a
+program E[p] : P(A × L) →p P(B × L).
+■
+Normally, we talk about two properties of enforcement
+mechanisms: security and transparency [7, 13, 14, 17, 24, 27].
+Security means that applying a secure enforcement mecha-
+nism E to any program p always yields a secure program
+E[p]. Transparency, on the other hand, means that given a
+secure program p, applying E does not change the observable
+behaviour of p.
+Deﬁnition 5 (Security and Transparency). An enforcement
+mechanism E is (1) τ-secure and (2) τ ′-transparent if:
+1) For all p, E[p] is τ-secure
+2) For all τ′-secure p and inputs x, E[p](x) = p(x).
+We say that E is τ-τ ′ if it is τ-secure and τ ′-transparent.
+■
+The chains of implications from propositions 1 and 2 are
+reﬂected in the deﬁnitions of security and transparency for
+enforcement mechanisms.
+Proposition 3. The following two chains of implications are
+strict.
+E is Total-secure
+E is TI-transparent
+⇒
+E is TS-secure
+⇒
+E is MT-transparent
+⇒
+E is MT-secure
+⇒
+E is TS-transparent
+⇒
+E is TI-secure
+⇒
+E is Total-transparent
+Note that the transparency ordering is the converse of
+the security ordering. This is because security requires the
+mechanism to provide τ-security, while transparency allows
+the mechanism to rely on τ-security. Bearing these orderings
+in mind, if we write that E is not secure, we mean that it is
+not TI-secure, and if we write that E is not transparent, we
+mean that it is not Total-transparent.
+Example 4. We give a number of examples of secure and
+transparent enforcement mechanisms:
+
+--- Sayfa 5 ---
+• E[p](x) ≜∅is Total-secure, but is not transparent.
+• E[p](x) ≜p(x) is TI-transparent, but not secure.
+• No Sensitive Upgrade (NSU) [28] is TI-secure but not
+transparent.
+• Permissive Upgrade (PU) [29] is TI-secure and trans-
+parent for more programs than NSU [30], but still not
+transparent.
+• The Hybrid Monitoring (HM) technique is TI-secure [30].
+• Zanarini et al. [17] give an enforcement mechanism that
+is TI-secure and MT-transparent.
+• SME [13] provides MT-security and MT-transparency
+(see below).
+■
+Multi-Execution
+Inspired by Secure Multi-Execution (SME) [13], we deﬁne
+the enforcement mechanism ME (for “Multi-Execution”) in
+our framework. ME[p](x) runs p multiple times, once for each
+security label ℓin the lattice on appropriately censored input
+x ↓ℓthat only contains information visible to ℓ, and uses the
+output of p(x ↓ℓ) to construct the ℓ-labeled part of ﬁnal output
+of ME[p](x).
+Deﬁnition 6. ME[p](x) ≜S{ p(x ↓ℓ)@ℓ| ℓ∈L }
+■
+This mathematical deﬁnition of ME can naturally be imple-
+mented by iterating over all labels ℓin L, provided L is ﬁnite.
+Section III deals with the implementation in the case where L
+is non-ﬁnite.
+Figure 1 shows a graphical rendition of ME[p] for the two-
+point lattice {L, H}. The outer box represents ME[p](x), it
+takes both H and L input from the arrows on the left, and
+produces both H and L output in the arrows to the right. Both
+the H and L parts of the input are used in the top-most run
+of p, and only the L part of the input is used in the bottom-
+most run. The top-most run, the one given both the H and L
+input, then produces only the H output, whereas the bottom-
+most run contributes only the ﬁnal L output. Noninterference
+for this construction is easy to show, the L output can only
+be inﬂuenced by the L input, as that run of p never sees the
+actual H input.
+For example, consider how ME works with the program
+leakBit from Example 1 on inputs ∅and {1H}.
+leakBit(x) ≜if 1H ∈x then {1L} else {0L}
+Note
+that
+∅
+∼L
+{1H}
+and
+so
+we
+expect
+that
+ME[leakBit](∅)
+∼L
+ME[leakBit]({1H}).
+As
+leakBit
+is
+Total we can simply compute to see that this does indeed
+hold.
+ME[leakBit](∅) ↓L
+= leakBit(∅↓L) ↓L
+= leakBit(∅)
+↓L
+= {0L}
+↓L
+= {0L}
+ME[leakBit]({1H}) ↓L
+= leakBit({1H} ↓L) ↓L
+= leakBit(∅)
+↓L
+= {0L}
+↓L
+= {0L}
+Furthermore, when p is TI-secure and both ME[p](x) and
+p(x) terminate, the output of ME[p](x) has to equal that of
+p(x). The H part of ME[p](x) is clearly the same as the H
+part of p(x), and because p is noninterfering it follows that the
+L output of p(x) doesn’t depend on the H input, and so the
+L output of p(x) must be the same as the L part of p(x ↓L).
+Putting these two facts together allows us to conclude that
+ME[p](x) is the same as p(x) when both terminate.
+To see how ME deals with termination, consider program
+divergeIfHAbsent from Example 3:
+divergeIfHAbsent(x) ≜if 1H̸ ∈x then diverge else ∅
+It
+diverges
+if
+1H̸
+∈
+x
+and
+terminates
+with
+re-
+sult ∅otherwise. ME[divergeIfHAbsent] meanwhile runs
+both divergeIfHAbsent(x) and divergeIfHAbsent(x ↓L), which
+means that ME[divergeIfHAbsent] always diverges, as 1H̸ ∈
+x ↓L for all x.
+However,
+if
+we
+consider
+ME[divergeIfHPresent]
+we
+get a more interesting result. Unlike divergeIfHAbsent,
+divergeIfHPresent diverges when 1H ∈x and so if 1H̸ ∈x,
+then we have ME[divergeIfHPresent](x)✓with output ∅. As
+termination of ME[divergeIfHPresent](x) increases as we re-
+move H elements from x and the output is constant, and
+ME[divergeIfHAbsent](x) always diverges, we see that ME
+behaves in an MT-secure manner for both programs.
+Monotonic Termination of ME[p] follows from the fact that
+ME[p](x) diverges whenever p(x ↓ℓ) diverges for any ℓ, and
+so if ME[p](x) is deﬁned, then so is ME[p](x ↓ℓ).
+Theorem 1. ME is MT-secure.
+Proof. To show noninterference, pick any two x, y, and label ℓ
+such that x ∼ℓy and assume that ME[p](x)✓and ME[p](y)✓.
+For all ⊑ℓwe have that x ∼y and so:
+ME[p](x)
+@
+=
+[
+{ p(x ↓ℓ′)@ℓ′ | ℓ′ ∈L}@
+= p(x ↓)
+@
+= p(y ↓)
+@
+=
+[
+{ p(y ↓ℓ′)@ℓ′ | ℓ′ ∈L}@
+= ME[p](y)
+@
+Because x ↓ℓ
+=
+S{x@| 
+⊑
+ℓ} we now have that
+ME[p](x) ∼ℓME[p](y).
+For MT-termination, if ME[p](x)✓then p(x ↓ℓ)✓for all
+ℓand so ME[p](x ↓ℓ)✓for all ℓ. Consequently, ME is MT-
+secure.
+Naturally, a corollary of this theorem is that ME is also
+TI-secure.
+Corollary 1. ME is TI-secure.
+Next we address MT-transparency. Preservation of termina-
+tion follows immediately from the deﬁnition of the MT termi-
+nation criteria. This is a feature of the deﬁnition of MT ter-
+mination, it is precisely the deﬁnition we need in order to
+
+--- Sayfa 6 ---
+Transparency
+Security
+Total
+TS
+MT
+TI
+TI
+✓
+✓[16]
+✓[17]
+MEST
+MT
+✓
+✓
+ME
+TS
+× ([25])
+× [25]
+Total
+×
+TABLE II: Possible and impossible combinations of security
+and transparency.
+prove MT-transparency. While the observation that conditions
+such as MT
+are natural pre-requisites for transparency (see
+e.g. [21, 26]), we believe that this framework provides a clean
+explanation for why MT exists. Because ME runs a number of
+p(x ↓ℓ) for different ℓ, it is natural to require that these runs
+terminate if p(x) terminates in order to preserve termination.
+We note that MT-security is more useful as a correctness
+criteria for ME than as a notion of security. In other words,
+being MT-transparent is more useful than being MT-secure.
+Theorem 2. ME is MT-transparent.
+Proof. Pick any MT-secure program p and input x. We ﬁrst
+prove that ME[p](x)✓⇔p(x)✓. If p(x)× then because x =
+x ↓F L(x) we have that p(x ↓F L(x))× and so ME[p](x)×.
+If p(x)✓then p(x ↓ℓ)✓for all ℓ, and so clearly ME[p](x)✓.
+Next we show that when ME[p](x)✓and p(x)✓we have
+that ME[p](x) = p(x). For all aℓ∈p(x) is equivalent
+to aℓ∈p(x ↓ℓ)@ℓ(by p MT-secure), which in turn is
+equivalent to aℓ∈ME[p](x) (by deﬁnition). Consequently,
+p(x) = ME[p](x).
+Again, a simple corollary follows from the hierarchy of
+notions of security.
+Corollary 2. ME is TS- and Total-transparent.
+Note that MT-secure and MT-transparent is the strongest
+classiﬁcation of the security and transparency of the ME
+enforcement mechanism. For example, ME could not be MT-
+secure and TI-transparent, as this would require preserving TI-
+termination, which would in turn prohibit ME from being MT-
+secure. Likewise, ME could not be TS-secure, as this would
+prohibit it from preserving the semantics of merely MT-secure
+programs. In general, ME could not be τ-τ′ for any τ stronger
+than, or τ′ weaker, than MT.
+In the following few sections, we establish a number
+of results about the possibility and impossibility of secure,
+transparent, and efﬁcient information ﬂow control. Before
+doing so, we review the state of transparent enforcement of
+noninterference in the literature.
+The State of Transparent Enforcement
+Table II presents the combinations of secure and transparent
+enforcement that are possible or impossible to enforce. The
+table is upper-triangular as anything below the diagonal is
+impossible. For example, it is impossible to simultaneously
+enforce a strong property such as TS-security, while preserving
+the semantics of all programs that obey a weaker property,
+such as TI-security. Put differently, because some programs are
+TI-secure but not TS-secure, these programs must have their
+semantics altered by a TS-secure enforcement mechanism.
+As shown above, it is possible to construct an MT-MT en-
+forcement mechanism ME. Because possibility propagates
+“up and to the left” in our table, any MT-MT enforcement
+mechanism is also TI-MT and TI-TS, for example, we also
+mark all boxes to the left and above of MT-MT as possible.
+Ngo et al. [25] show that TS-TS enforcement is impos-
+sible. Their proof also works to show that the weaker TS-
+Total condition is impossible (we mark this by putting the
+citation in brackets in Table II), and consequently Total-
+Total enforcement is also impossible.
+One open question in the literature is whether or not TI-
+TI enforcement is possible. In Section IV we answer this ques-
+tion by presenting MEST, a TI-TI enforcement mechanism.
+One issue faced by ME is that a naive implementation fails
+to converge when L is non-ﬁnite, and takes infeasibly long to
+execute when L is very large. Running p once for each label
+in an inﬁnite lattice is, clearly, impossible. In Section III we
+construct MEF, a version of ME which lifts these restrictions
+and makes ME work for non-ﬁnite lattices.
+III. MULTI-EXECUTION FOR DECENTRALISED LATTICES
+In this section, we instantiate the framework of Section II
+in the form of a novel formulation of the ME enforcement
+mechanism. Our new enforcement mechanism is inspired by
+MF [7], FSME [14], and OGMF [15]. Unlike SME, these
+schemes do not run one parallel version of the program for
+each level in the lattice, instead multi-execution under these
+schemes is determined by the behaviour of the program and
+the levels in the input. These methods are “adaptively” multi-
+executing in a “white-box” manner. This allows them to avoid
+running one copy of p for each security level and thereby also
+allows them to work for inﬁnite L, something which SME is
+unable to do.
+We develop an enforcement mechanism MEF to provide a
+black-box account of these methods. MEF is, to the best of
+our knowledge, the ﬁrst black-box enforcement mechanism
+that is MT-secure, MT-transparent, and works for non-ﬁnite
+(so called “decentralised” [31]) lattices.
+We start by observing that the deﬁnition of ME requires
+running p on x ↓ℓfor each ℓ∈L. Assuming x is ﬁnite, then
+there is only a ﬁnite number of such downward projections of
+x, even for non-ﬁnite L. Thus, regardless of the size of L we
+only need to run p a ﬁnite number of times. The tricky part is
+to appropriately compose the result of these runs to produce
+the right output.
+To accomplish this, we need to introduce some additional
+machinery. If S is a ﬁnite subset of L we call
+C(S) ≜{
+G
+S′ | S′ ⊆S }
+the closure-set of S. Note that C(S) simply encodes all the
+ways of combining zero or more labels in S, including both the
+
+--- Sayfa 7 ---
+⊥
+⊥
+ℓ0
+0
+ℓ1
+1
+2
+Fig. 2: The upwards neighbourhoods of C({ℓ0, ℓ1})
+lower bound of ⊥and the upper bound of F S. For example,
+if S = L(x) for some x, then C(S) is all the ways to label
+data arising by combining zero or more aℓ∈x.
+For any set S ⊆L and label ℓ∈S we deﬁne the upward
+neighbourhood of ℓin S, written ℓ↑S, as:
+ℓ↑S ≜{ ∈L | ℓ⊑, ∀′ ∈S. ′ ⊑⇒′ ⊑ℓ}
+That is, ℓ↑S is the set of all ∈L such that if ℓ⊑, then
+there is no other label in S which can ﬂow to but can not ﬂow
+to ℓ. Put differently, if ∈ℓ↑S, then ℓis the greatest label in
+S such that ℓ⊑. From the point of view of information ﬂow,
+this means that ℓcaptures all the labels in s whose information
+may ﬂow to .
+For an illustration of how these upwards neighbourhoods
+work, see Figure 2. Each area in the diagram corresponds to
+the upwards neigbourhood of one of the levels in C({ℓ0, ℓ1}).
+The level ⊥in the middle square, for example, is in the
+upward neighbourhood of level ⊥in C({ℓ0, ℓ1}) while 0
+is in the upward neighbourhood of ℓ0. Likewise, 1 is in
+ℓ1 ↑C({ℓ0, ℓ1}) and 2 is in ℓ0 ⊔ℓ1 ↑C({ℓ0, ℓ1}).
+Note that in the case where S = {ℓ0, ℓ1} where ℓ0 and ℓ1
+are incomparable, neither ℓ0 ↑S nor ℓ1 ↑S contain ℓ0 ⊔ℓ1.
+For this reason, it is important to always consider upwards
+neighbourhoods in C(S) rather than S itself. The upward
+neighbourhood of ℓin C(S) precisely characterises the levels
+for which the computation p(x ↓ℓ) can produce output if there
+is one p(x ↓ℓ) for each ℓ∈C(S). This is captured by the
+following proposition together with the fact that ℓcan ﬂow to
+all levels in ℓ↑C(S).
+Proposition 4. Given any S ⊆L, the family which maps each
+ℓ∈C(S) to ℓ↑C(S) partitions L.
+Proof. See Appendix A.
+For the next deﬁnition we overload the @ operator to work
+for sets S ⊆L of labels as x@S = { aℓ| aℓ∈x, ℓ∈S }.
+Finally, we deﬁne a more sophisticated version of ME that we
+call MEF (for ME-Fastish).
+Deﬁnition 7.
+MEF[p](x) ≜
+[
+{ p(x ↓ℓ)@(ℓ↑C(L(x))) | ℓ∈C(L(x)) }
+■
+Intuitively, this deﬁnition computes all the possible combi-
+nations of levels which can arise from computing with data
+in the input (i.e. C(L(x))) and performs multi-execution with
+only these levels. However, this is not sufﬁcient to capture all
+the levels the data may be output at. In effect, this is because a
+computation may combine data labeled ℓ0 and ℓ1, but write the
+output at some level ℓ2 ⊐ℓ0 ⊔ℓ1. To get around this issue and
+ensure that we capture all outputs of a computation, we ﬁnally
+do the selection p(x ↓ℓ)@(ℓ↑C(L(x))). Because the upward
+neighbourhoods of C(L(x)) are disjoint, the ﬁnal output of
+MEF[p](x) is a union of disjoint sets, so each element of the
+output is added to the ﬁnal set only once. To see this principle
+in action, consider the following example.
+Example 5. Recall the deﬁnition of combine from Example
+1:
+combine(x) ≜{(|x@Alice| + |x@Bob|)Alice⊔Bob⊔Charlie}
+MEF[combine]({1Alice}) runs one opy of combine for each
+level in C({Alice}) = {⊥, Alice}. This means that MEF
+runs combine({1Alice} ↓⊥) and combine({1Alice} ↓Alice). The
+ﬁrst run outputs {0Alice⊔Bob⊔Charlie} and the second one
+{1Alice⊔Bob⊔Charlie}. Because Alice ⊔Bob ⊔Charlie is in the
+upwards closed neighbourhood of Alice in {Alice, ⊥} and
+not in the upwards closed neighbourhood of ⊥, we have that
+the output of MEF[combine]({1Alice}) is {1Alice⊔Bob⊔Charlie}.
+Note that, had MEF been using the same rule for selecting
+outputs as ME, i.e. had the deﬁnition used p(x ↓ℓ)@ℓrather
+than p(x ↓ℓ)@(ℓ↑C(L(x))), the output in our example would
+be ∅, as Alice ⊔Bob ⊔Charlie is equal to neither Alice nor
+⊥.
+■
+While the formulation of MEF looks similar to that of ME,
+it has the advantage of being implementable even for inﬁnite,
+“decentralised”, lattices like DC-labels [31]. It also has the
+nice property of being equivalent to ME (provided that both
+terminate).
+Theorem 3. For all p, x, if L is ﬁnite we have that:
+MEF[p]x = ME[p]x
+Proof. See Appendix A.
+The theorem above means that MEF inherits the MT-
+MT property of ME in the case when L is ﬁnite. In the
+case when L is non-ﬁnite, we still have that MEF is MT-MT.
+MEF[p] is MT-terminating because C(L(x ↓ℓ)) ⊆C(L(x))
+and if p is MT-secure then termination and output behaviour
+are preserved as well. The proof of MT-transparency works
+by establishing that MEF[p](x) implements ME[p](x) when
+read as a (non-runnable) speciﬁcation for inﬁnite lattices and
+so we relegate the proof to Appendix A.
+Proposition 5. MEF is MT-MT.
+IV. TERMINATION INSENSITIVE NONINTERFERENCE IS
+TRANSPARENTLY ENFORCEABLE
+In this section we answer an open question in the literature
+[30] by constructing a TI-TI enforcement mechanism. We
+start by brieﬂy exploring why ME and MEF are not TI-
+transparent. The issue lies in preserving the termination of TI-
+secure programs. Put simply, if p is a TI-secure program and
+
+--- Sayfa 8 ---
+p(x) is deﬁned, there is no guarantee that p(x ↓ℓ) is deﬁned
+and so there is no guarantee that ME[p](x) is deﬁned.
+Overcoming this limitation of ME boils down to two
+observations. The ﬁrst observation is that ME fails to be TI-
+transparent only because of termination, which boils down to
+the choice to use x ↓ℓas the input to the run of p at level ℓ.
+Because there is no guarantee that p(x)✓implies p(x ↓ℓ)✓,
+we can’t produce the output from the run at ℓ, even though
+p(x) is deﬁned. If we can choose some other x′ ∼ℓx such that
+p(x′)✓instead, we may be able to get something done. The
+second observation is that if p(x)✓, then for each ℓthere exists
+at least one x′ such that x′ ∼ℓx ↓ℓand p(x′)✓, namely x.
+We can unfortunately not simply run p(x) instead of p(x ↓ℓ)
+however, as this may not be secure. Instead, we need to ﬁnd
+x′ such that x′ ∼ℓx and p(x′)✓based only on x ↓ℓ, ℓ, and
+p.
+The question now becomes, how do we pick such an x′?
+One answer is to enumerate all x′ ∼ℓ(x ↓ℓ) in a deterministic
+order and dove-tail, that is run “in parallel”, all p(x′) and pick
+the ﬁrst x′ such that p(x′) terminates. Note that this does not
+mean we pick the ﬁrst x′ in the enumeration order, rather we
+pick the x′ such that, during dove-tailing, p(x′) is the ﬁrst
+run to terminate. In the rest of this section we formalise this
+simple idea and show that by using this one trick, we obtain
+a TI-TI enforcement mechanism.
+If p : P(A × L) →p P(B × L) is a program, ℓa level,
+x an input to p, and f : N →P(A × L) an enumeration of
+P(A × L) then the following function is partial recursive:
+ψℓ
+p,x(i) ≜
+(
+f(i) if f(i) ∼ℓx and p(f(i))✓
+divergent otherwise
+This means that, from Corollary 5.V(a) in [32], as long as
+there exists an x′ ∼ℓx such that p(x′)✓, then there exists
+a total recursive function φℓ
+p,x with the same range as ψℓ
+p,x.
+This is where the dove-tailing happens, φℓ
+p,x more or less
+works by interleaving the executions of p(f(i)) for all i until
+one terminates. There are two facts about φ we use when
+constructing our TI-TI enforcement mechanism:
+1) If x ∼ℓy then φℓ
+p,x ↓ℓ(i) = φℓ
+p,y ↓ℓ(i).
+2) If p is TI-secure, then p(φℓ
+p,x ↓ℓ(i)) ∼ℓp(x) provided
+both runs terminate.
+From these two observations we deﬁne our TI-TI enforcement
+mechanism MEST for “multi-execution search for termina-
+tion”.
+Deﬁnition 8. Deﬁne the enforcement mechanism MEST as:
+MEST[p](x) ≜
+
+
+
+
+
+divergent if p(x)×
+∪{ p(φℓ
+p,x ↓ℓ(0))@(ℓ↑C(L(x)))
+| ℓ∈C(L(x))} otherwise
+■
+To see how MEST works, consider again the program
+divergeIfHPresent from Example 3.
+divergeIfHPresent(x) ≜if 1H ∈x then diverge else ∅
+This
+program
+is
+TI-secure,
+and
+so
+we
+expect
+that
+MEST
+should
+preserve
+its
+semantics.
+Running
+MEST[divergeIfHPresent]({1H})
+diverges,
+as
+divergeIfHPresent({1H})×,
+and
+assuming
+without
+loss
+of generality that φℓ
+divergeIfHPresent,∅(0) = ∅for all ℓ, running
+MEST[divergeIfHPresent](∅) yields the expected result of ∅.
+The proof of security for MEST relies on the ﬁrst observa-
+tion above, and the proof of transparency relies on the second.
+Theorem 4. MEST is TI-secure
+Proof. To see that MEST is TI-secure, consider any level ℓ,
+program p, and inputs x ∼ℓy. It is the case that for all ℓ′ ⊑ℓ
+the greatest in C(L(x)) and C(L(y)) such that ⊑ℓ′ are
+the same, as L(x ↓ℓ′) = L(y ↓ℓ′). If both MEST[p](x)✓and
+MEST[p](y)✓then:
+MEST[p](x) @ℓ′
+= p(φ
+p,x ↓(0))@ℓ′
+= p(φ
+p,y ↓(0))@ℓ′
+= MEST[p](y) @ℓ′
+From which we conclude that MEST[p](x) ∼ℓMEST[p](y),
+in other words MEST is TI-secure.
+Theorem 5. MEST is TI-transparent.
+Proof. Note that p(x)✓⇔MEST[p](x)✓. If p is TI-secure
+then it holds that for all ℓand x ∼ℓy, p(y)@ℓ= p(x)@ℓ.
+Consider now the greatest ∈C(L(x)) such that ⊑ℓ, if
+y ∼x then y ∼ℓx and so φ
+p,x ↓(0) ∼ℓx and so, for all ℓ:
+MEST[p](x)@ℓ= p(φ
+p,x ↓(0))@ℓ= p(x)@ℓ
+Which gives us that MEST[p](x) = p(x).
+While MEST answers the question of whether or not TI-
+TI enforcement is possible, it does so in a somewhat unsat-
+isfactory manner. Computing MEST[p](x) is very slow, not
+only because we are computing something once for each ℓin
+C(L(x)) (which is an exponential number of levels!), but also
+because the computation of φℓ
+p,x ↓ℓ(0) requires interleaving
+several (possibly an exponential number!) of runs of p.
+V. TRANSPARENT ENFORCEMENT IS MULTI-EXECUTION
+Consider again the program combineAll from Example 1.
+combineAll(x) ≜{|x|
+F L(x)}
+Running MEF[combineAll](x) results in one run of combineAll
+for each level in C(L(x)) and thus, MEF[combineAll](x) pro-
+duces one output for each level in C(L(x)). In the worst case,
+the size of the output of MEF[combineAll](x) is exponential
+in the size of x whereas the original output of p is polynomial
+sized in the size of x.
+This observation that ME and MEF cause exponential over-
+head in the output of some programs causes severe issue for
+multi-execution. Many applications “in the wild” have large
+legacy code bases with vulnerabilities and would therefore
+
+--- Sayfa 9 ---
+beneﬁt from applying transparent IFC techniques. If these
+techniques introduce extraneous overhead, applying them to
+large legacy systems is out of the question.
+As insecure programs cause ME and MEF to produce ex-
+ponentially sized outputs, we know there can be no semantics
+preserving optimisation of these methods that gets rid of this
+overhead. This means that the work on OGMF [15] and some
+of the “data-oriented” optimisations of Algehed et al. [16],
+can not hope to make multi-execution practical on their own.
+Such techniques may be integral to the eventual success of
+multi-execution, but not without incorporating other measures
+as well.
+There is still hope that we may ﬁnd some efﬁcient enforce-
+ment mechanism, but this mechanism may need to behave
+differently to ME on programs such as combineAll above. Inse-
+cure programs aside, we begin by deﬁning the least restrictive
+notion of an efﬁcient enforcement mechanism, that it “only”
+produce polynomial overhead on already secure programs.
+Deﬁnition 9. An enforcement mechanism E is τ-efﬁcient
+if and only if E[p](x) runs in time polynomial in |p| + |x|
+whenever p is τ-secure and runs in time polynomial in |x|.
+■
+In this section we consider the connection between arbi-
+trary enforcement mechanisms and multi-execution and show
+that any enforcement mechanism for TI-security and MT-
+transparency gives rise to an efﬁcient strategy for multi-
+execution. In spirit, it is similar to MEF, we do multi-execution
+only for the levels that are necessary. We begin by generalising
+the deﬁnition of ME to allow it to selectively multi-execute at
+particular levels.
+Deﬁnition 10. A partial function L is a Level Assignment if
+given a program p : P(A × L) →p P(B × L) and an input
+x ∈P(A × L) we have L(p, x) ⊆L.
+■
+Given a level assignment L, we deﬁne the enforcement
+mechanism MEL:
+MEL[p](x) ≜
+[
+{ p(x ↓ℓ)@ℓ| ℓ∈L(p, x) }
+Note that MEL is simply a generalisation of ME. Level
+assignments naturally inherit deﬁnitions from enforcement
+mechanisms.
+Deﬁnition 11. We call a level assignment L τ-secure if
+MEL is τ-secure, and τ-transparent if MEL is τ-transparent.
+Furthermore, we call L τ-efﬁcient if for all polynomial-time τ-
+secure programs L(p, x) takes time polynomial in |p|+|x|.
+■
+Note that, if L takes time polynomial in |p| + |x| and p
+takes time polynomial in |x|, then MEL[p](x) also takes time
+polynomial in |p| + |x|. This is because if L is polynomial
+time, then it only produces a polynomially sized output and
+so MEL only executes a polynomial number of runs of the
+polynomial time program p.
+Example 6. Deciding if a level assignment is secure and
+transparent can be non-trivial. Consider the intuitive level
+assignment L(p, x) = L(p(x)). It allows us to compute
+levels without doing anything other than computing p(x).
+Unfortunately, however, it is insecure in the H −L lattice,
+as illustrated by the following program:
+leakLevel(x) ≜if x@H = ∅then {0L} else ∅
+We have that ∅∼L {0H}, but the following holds:
+leakLevel(∅) = {0L}
+L(leakLevel, ∅) = {L}
+MEL[leakLevel](∅) = {0L}
+leakLevel({0H}) = ∅
+L(leakLevel, {0H}) = ∅
+MEL[leakLevel]({0H}) = ∅
+Which gives us:
+MEL[leakLevel](∅) = {0L}̸ ∼H ∅= MEL[leakLevel]({0H})
+In conclusion, MEL[leakLevel] is not secure and so neither is
+L.
+■
+Clearly, there are some conditions which need to be met
+in order to produce a secure level assignment. The following
+lemma establishes one sufﬁcient condition for TI-security, that
+L(p, ) is a secure program. To make this precise, we observe
+that the notion of projection can be extended to sets of labels
+by observing that P(L) is isomorphic to P(1 × L) where 1 is
+the single-element set. Consequently, we extend the deﬁnition
+of projection (and thereby also ℓ-equivalence) for subsets S ⊆
+L as S ↓ℓ= { ℓ′ ∈L | ℓ′ ⊑ℓ}.
+Lemma 1. If the program λx. L(p, x) is TI-secure for all p,
+then L is TI-secure.
+Proof. See Appendix A.
+This lemma raises two immediate questions:
+1) Is the implication strict?
+2) Why TI and not MT-secure?
+The answer to the ﬁrst question is that the implication is indeed
+strict, as demonstrated by the following example.
+Example 7. Provided that L has at least one level ℓsuch that
+ℓ̸ ⊑⊥, there exists an MT-secure L for which L(p, ) is not
+secure for all p. To see this, consider the program:
+empty(x) ≜∅
+and deﬁne L to be:
+L(q, x) ≜
+
+
+
+
+
+∅
+if ℓ∈L(x) and q = empty
+{⊥}
+if ℓ̸ ∈L(x) and q = empty
+∅
+otherwise
+In the case where q = empty we have that:
+MEL[q](x) = ∅= MEL[q](y)
+giving us that MEL[q] is noninterfering. Furthermore, in the
+case where q̸ = empty, we have that MEL[q](x) = ∅, which
+is also MT-secure.
+■
+To see the answer to the second question, consider the next
+example.
+
+--- Sayfa 10 ---
+Example 8. Consider again the two-point lattice L ⊑H. The
+level assignment L(p, x) ≜{ H | H̸ ∈L(x)} satisﬁes the
+property that λx. L(p, x) is an MT-secure program for all p.
+Recall the program divergeIfHAbsent:
+divergeIfHAbsent(x) ≜if 1H̸ ∈x then diverge else ∅
+Notice that divergeIfHAbsent(∅)× and therefore we have that:
+L(divergeIfHAbsent, ∅) = {H}
+MEL[divergeIfHAbsent](∅)×
+Furthermore, as a general fact we have that if L(p, x) = ∅then
+MEL[p](x) = ∅for all L, p, and x. Therefore, the following
+holds:
+L(divergeIfHAbsent, {1H}) = ∅
+MEL[divergeIfHAbsent]({1H}) = ∅
+However,
+because
+∅
+=
+{1H} ↓L,
+we
+see
+that
+MEL[divergeIfHAbsent]
+is
+not
+an
+MT-secure
+program,
+as it is not MT-terminating; MEL[divergeIfHAbsent]({1H}) is
+deﬁned while MEL[divergeIfHAbsent]({1H} ↓L) is not.
+■
+Lemma 1 suggests the following class of level assignment
+techniques that are secure by construction.
+Proposition 6. If L(p, x) = C(L(x)) ∩L′(p) for some total
+L′, then L is an MT-secure level assignment.
+Proof. See Appendix A.
+For programs p that satisfy the property that for all x,
+L(p(x)) ⊆C(L(x)), such that L′(p) ⊇domain(L ◦p) the
+level assignment L above is MT-transparent (see Lemma 2
+below). This explains the “computation-oriented” optimisa-
+tions of Algehed et al. [16]. In their paper programs only
+produce outputs at levels in C(L(x)) and they attach so
+called “label-expressions”, booleans expressions over lattice
+elements, to program points to restrict the levels for which
+multi-execution is carried out. In one of their examples,
+program p takes input from multiple different inputs, but only
+ever writes to channels labeled with single principals like Alice
+or Bob. The authors then attach label-expressions on the form
+Alice∧¬Bob∨¬Alice∧Bob, which represents the set of labels
+{{Alice}, {Bob}} to the program p during multi-execution.
+Note that the sets of labels attached to a program in this
+scheme is constant, it does not depend on the input x and
+so L(p, x) is on the form required by Proposition 6.
+With an appropriate sufﬁcient condition for security es-
+tablished, the natural next question is if a similar sufﬁcient
+condition exists for transparency.
+Lemma 2. L is MT-transparent if for all MT-secure programs
+p and inputs x, we have that p(x)✓if and only if L(p, x)✓
+and L(p, x) = L(p(x)).
+Proof. See Appendix A.
+Next we develop one of the key contributions of this paper.
+We use the theory of level assignments to show that any TI-
+secure and MT-transparent enforcement mechanism E gives
+rise to a TI-secure and MT-transparent level assignment LE.
+Furthermore, it follows trivially that multi-executing a secure,
+polynomial time, programs p using LE is only polynomially
+slower than executing E[p]. Concretely, what this demonstrates
+is that any efﬁcient solution to the problem of MT-transparent
+enforcement gives rise to an efﬁcient solution to the problem
+of computing level assignments.
+Deﬁnition 12. Given an enforcement mechanism E, deﬁne
+the level assignment LE(p, x) ≜L(E[p](x)).
+■
+Theorem 6 (TI-Security). If E is TI-secure, then LE is a
+TI-secure level assignment.
+Proof. Immediate by Lemma 1.
+Theorem 7 (MT-Transparency). If E is MT-transparent, then
+so is LE.
+Proof. Immediate by Lemma 2.
+Proposition 7. If E[p](x) runs in time polynomial in |p|+|x|
+for all polynomial time MT-secure programs p and inputs x,
+then LE is MT-efﬁcient.
+This
+polynomial-time
+correspondence
+between
+multi-
+execution and any transparent enforcement mechanism means
+that any limit on the efﬁciency of multi-execution is a limit on
+the efﬁciency of transparent enforcement. This is a sobering
+thought, to the best of our knowledge there is no efﬁcient
+way to do multi-execution. In fact, it is not clear that there
+should be any efﬁcient way to do it. In a sense, the level
+assignment problem asks that we produce a program L that
+is capable of efﬁciently answering arbitrarily tricky questions
+about program executions.
+VI. EFFICIENT BLACK-BOX ENFORCEMENT IS
+IMPOSSIBLE FOR DECENTRALISED LATTICES
+As seen empirically in previous work, transparent enforce-
+ment suffers from exponential overheads [7, 14, 16, 22]. In this
+section we argue that there may be fundamental reasons why
+this is the case by showing that it is impossible to do efﬁcient,
+i.e. polynomial overhead, black-box enforcement. Intuitively,
+an enforcement mechanism E is black-box if E[p](x) can only
+do a series of tests of p : P(A×L) →p P(B×L), where each
+test consists of a test-input xt ∈P(A×L) and a “continuation”
+which takes the result of p(xt) and either returns a ﬁnal result
+E[p](x) ∈P(B ×L) or continues testing. Thus, we deﬁne the
+set of test sequences T from A to B inductively as:
+T ::= P(B × L) | P(A × L) × (P(B × L) →p T )
+A test sequence t ∈T is either ﬁnished, t ∈P(B × L),
+or it is a test a ∈P(A × L) together with a continuation
+c ∈P(B × L) →p T .
+For example, MEF can be understood as producing a test
+sequence where it tests all x ↓ℓfor ℓin C(L(x)), keeps the
+relevant parts of the output around, and constructs the ﬁnal
+union when it produces its ﬁnished result.
+
+--- Sayfa 11 ---
+We deﬁne the program Exec : Program× T →p P(B × L),
+which takes a program p and a test sequence t and produces
+the result of evaluating t with p.
+Exec(p, (y, c)) ≜Exec(p, c(p(y)))
+Exec(p, z)
+≜z
+If e : P(A × L) →p T takes an input and produces a test
+sequence, then we can execute e by running the following
+program Exec(p, e(x)): If Exec(p, e(x)) terminates, we can
+obtain the trace of tested inputs and the corresponding output
+of p (i.e. a list of P(A × L) × P(B × L)) by computing
+Trace(p, e(x)):
+Trace(p, (y, c)) ≜(y, p(y)) : Trace(p, c(p(y)))
+Trace(p, z)
+≜[]
+Because we are interested in entirely black-box methods, we
+require that the enforcement mechanism E should work for
+any choice of lattice. One consequence of this choice is that
+E must discover elements of L. We can formalise the idea that
+E must discover its labels by deﬁning a trace to be consistent
+with an initially known set of labels S inductively as:
+Consistent(S, [])
+L(y) ⊆C(S)
+Consistent(S ∪L(z), t)
+Consistent(S, (y, z) : t)
+With these deﬁnitions in place, we can deﬁne what it means
+for an enforcement mechanism to be black-box:
+Deﬁnition 13. E is a black-box enforcement mechanism if
+and only if there exists a function e : P(A × L) →p T such
+that:
+E[p](x) = Exec(p, e(x))
+We call Trace(p, e(x)) the trace of E at p, x and require that
+Consistent(∅, Trace(p, e(x))) always holds.
+■
+We refer to set of test inputs in the trace t produced by E
+at p and x, i.e. the set of ﬁrst elements of the tuples in t, as
+the test-set of E. Note that our deﬁnition pre-supposes that E
+initially does not know any of the labels in L. This restriction
+can be lifted to allow E to have prior knowledge of a ﬁnite
+proper subset of L and all the results in this section still hold.
+The intuition for the proof that efﬁcient black-box en-
+forcement does not exist is that all an efﬁcient black-box
+enforcement mechanism E can do is run the program p a
+polynomial number of times. This means that there is always
+a large number of subsets of the input x which E has not
+tried p on. We exploit this fact by constructing, from E, two
+secure programs p and q and an insecure program w. We then
+pick two ℓ-equivalent inputs such that w behaves like p on one
+input and q on the other. Because E is black-box, it can not
+tell the two runs of w apart from the runs of p and q, and so
+E is forced to preserve the semantics of w, which is insecure.
+Theorem 8. There is no Total-efﬁcient TI-Total black-box
+enforcement mechanism.
+Proof. Let L = P(N), the powerset lattice over the natural
+numbers. We consider programs where the domain and co-
+domain are both the singleton set {1}. In other words, we
+consider programs p : P({1} × L) →p P({1} × L).
+Assume E is a Total-efﬁcient TI-Total black-box enforce-
+ment mechanism. For any ﬁnite subset S of N deﬁne:
+toInput(S) ≜{1{n} | n ∈S}
+Deﬁne the Total-secure program empty(x) ≜∅. Let X(S)
+be test-set of E for empty, toInput(S). Because E is Total-
+efﬁcient, we can ﬁx a sufﬁciently large S such that there
+exists an S′
+⊂
+S such that there is no x
+∈
+X(S)
+that satisﬁes both toInput(S′)
+⊆
+x and ∪L(x)
+=
+S′,
+this is because the size of X(S) is polynomial in |S| but
+the number of choices for S′ grows exponentially in |S|.
+Note that toInput(S) ∼S′ toInput(S′), as toInput(S) ↓S′ =
+toInput(S′) = toInput(S′) ↓S′.
+Now deﬁne another Total-secure program:
+greater(x) ≜if toInput(S′) ⊆x then {1S′} else ∅
+and the TI-insecure program:
+equal(x) ≜if toInput(S′) ⊆x ∧∪L(x) = S′ then {1S′} else ∅
+Next
+consider
+two
+runs
+of
+E[equal].
+The
+ﬁrst
+is
+E[equal](toInput(S)). Recall that our choice of S′ guarantees
+that E never tests empty on any x such that toInput(S′) ⊆x
+and ∪L(x) = S′. Furthermore, equal behaves like empty on
+all other inputs. Hence we know that:
+E[equal](toInput(S)) = E[empty](toInput(S)) = ∅
+The second run we consider is E[equal](toInput(S′)), for
+which equal behaves as greater. To see why, consider that
+equal(x)̸ = greater(x) implies that the two tests in equal and
+greater evaluate to different things on x. Hence, toInput(S′) ⊆
+x and ∪L(x)̸ = S′, and so x must contain labels not in S′.
+However, consistency means that E can not construct any such
+x when testing either equal or greater on toInput(S′). As a
+consequence, when E tests greater it never does a test that
+would reveal the difference between greater and equal. This
+means that we can conclude that the following holds:
+E[equal](toInput(S′)) = E[greater](toInput(S′)) = {1S′}
+In conclusion, we have that both of the following two things
+hold:
+toInput(S) ∼S′ toInput(S′)
+E[equal](toInput(S)) = ∅̸ ∼S′ {1S′} = E[equal](toInput(S′))
+Which contradictions our assumption that E is TI-secure.
+Because Theorem 8 proves the easiest τ-τ′ enforcement
+to be impossible to do efﬁciently, a simple corollary is the
+following.
+Corollary 3. Efﬁcient black-box TI-TI, TI-MT, TI-TS, MT-MT,
+MT-TS, and MT-Total enforcement are all impossible.
+
+--- Sayfa 12 ---
+VII. FUTURE WORK
+There are a number of limitations to our model. Firstly,
+we do not consider reactive (like [13, 17]) or interactive (like
+[21]) programs. We expect that extending our model to cover
+this case will introduce new challenges related to termination
+and progress channels. For example, there is no reason to
+expect that reactive systems are any easier to secure than
+batch-job ones, as in the batch-job setting we have access
+to everything, including the program and all the inputs, from
+the start. Whereas in the reactive or interactive setting the
+enforcement mechanism needs to react to new information
+and act on partial knowledge of the input. Furthermore, in
+the interactive case, the fact that the attacker can dynamically
+choose inputs to respond to the action of the enforcement
+mechanism may pose additional issues for efﬁcient transparent
+enforcement.
+Likewise, our model does not yet deal with declassiﬁcation.
+Extensional accounts of declassiﬁcation in multi-execution
+already exist [21, 33], and we expect they can be adapted to
+our setting.
+The ﬁnal, and we believe most important, future work is to
+resolve the question of whether or not efﬁcient transparent
+enforcement is at all possible even for our simple model.
+The connection between multi-execution and transparent en-
+forcement established in Section V means that efﬁciency of
+enforcement and efﬁciency of multi-execution are intimately
+related. However, to the best of our knowledge multi-execution
+requires something akin to efﬁcient program analysis, either
+static or dynamic, to break the exponential blowup barrier [16].
+The inherent limitations posed by undecidability therefore
+leads us to conjecture that efﬁcient transparent enforcement
+is impossible.
+Conjecture 1. Total-efﬁcient TI-Total enforcement is impossi-
+ble.
+This conjecture states the strongest possible variant of
+this theorem in our framework. TI-Totalenforcement is our
+weakest condition, which means that impossibility of efﬁcient
+TI-Total
+enforcement implies impossibility of efﬁcient τ-τ′
+enforcement for all τ and τ ′ in this paper. We believe that
+a proof of this conjecture could use Theorems 6 and 7 and
+Proposition 7 from Section V, which we formalise in the
+following lemma statement.
+Lemma 3. Unless there is a Total-efﬁcient TI-Total level
+assignment L such that:
+1) For all Total-secure p, L(p(x)) = L(p, x)
+2) For all p, λx. L(p, x) is a TI-secure program
+There is no Total-efﬁcient TI-Total enforcement mechanism.
+The lemma uses the LE level-assignment from Section
+V. Condition (1) follows from the fact that L(E[p](x)) =
+L(p(x)) when E is Total-transparent and p Total-secure.
+Condition (2) meanwhile follows from E being TI-secure.
+VIII. RELATED WORK
+There exists a large body of work on the expressive
+power and precision of different enforcement mechanisms for
+noninterference. Bielova and Rezk [30] study a number of
+different mechanisms and rank them in order of precision.
+Ngo et al. [25] show that TS-TS enforcement is impossible.
+Hamlen et al. also study the complexity classes of monitors
+and enforcement mechanisms [27].
+Ngo et al. [34] provide both a generic black-box enforce-
+ment mechanism for reactive programs that is transparent,
+as well as lower and upper bounds on what hyperproperties
+can and cannot be black-box transparently enforced. While
+this work is impressive, it has two limitations. Firstly, in the
+interest of tractability the paper partly side-steps the issue
+of termination by demanding that programs always make
+progress. Secondly, the paper is only concerned with what
+can and cannot be enforced in a black-box manner. We believe
+that a natural and exciting direction for future work is to marry
+their formalism and ours to allow careful study of white-box
+transparency with non-termination in a reactive setting.
+A number of authors have provided multi-execution based
+enforcement mechanism with subtly different τ-τ ′ properties
+[7, 13–18, 21, 24, 26]. However, only a small number of articles
+focus on the efﬁciency trade-offs related to transparency.
+Austin and Flanagan [7] compare the performance of SME
+and MF on a number of micro-benchmarks. MF was originally
+proposed as an optimisation of SME. However, it has since
+been made clear that MF and SME have some complementary
+performance behaviours [14]. Schmitz et al. [14] study the
+time-memory trade-off in FSME, a system which attempts to
+get “the best of both worlds” performance between MF and
+SME. Ngo et al. [15] show a qualitative optimisation of MF.
+Pfeffer et al. [19] study a byte-code level multi-execution
+technique which they optimise by selectively multi-executing
+similarly to FSME [14]. However, they work in a statically
+labeled setting with small lattices, and do are not exposed to
+the issues of exponential overhead we study here.
+Algehed et al. [16] provide a framework for optimising
+FSME which inspired our discussion of level-assignments.
+Their “computation-oriented” optimisations are capable of
+reducing exponential to polynomial overhead. However, these
+methods have to be applied by manual analysis of the program
+being optimised. It is unlikely that the technique can be
+automated to work for all programs, as this requires a complete
+static analysis tool for level assignments.
+Some authors have also studied multi-execution in other
+contexts than security, notably with applications to debugging
+[22] and program repair [35]. While an implementation of
+these methods has been heavily optimised [22], they suffer
+from the same unavoidable exponential overheads as other
+multi-execution techniques discussed in this paper.
+IX. CONCLUSION
+In this paper we have presented a thorough study of the
+feasibility and efﬁciency of transparent information ﬂow con-
+trol. Our results indicate that while transparent IFC is possible
+
+--- Sayfa 13 ---
+to achieve for a diverse set of security criteria including
+Monotonically Terminating Noninterference and Termination
+Insensitive Noninterference, current methods are practically
+infeasible for many systems due to inherent limitations on
+efﬁciency. We show that any enforcement mechanism that
+is secure and transparent also gives rise to a secure and
+transparent multi-execution based enforcement with polyno-
+mial slowdown. We also show that any traditional multi-
+execution based enforcement mechanism can expect to have
+large runtime overheads. Furthermore, we prove that efﬁcient
+black-box IFC is impossible.
+We also pose the conjecture that transparent, efﬁcient, and
+secure IFC enforcement is impossible in general, not just
+in the black-box case. We give a lemma which we think
+will help researchers ﬁnd a proof for our conjecture that is
+based on our proof that transparent enforcement is intimately
+linked to multi-execution. Our conjecture, as stated, is without
+reference to any hardness assumptions for other problems in
+the complexity theory literature. Readers familiar with com-
+plexity theory may note that such un-qualiﬁed lower bounds
+are typically difﬁcult to prove, and we therefore think that a
+proof of a weakened version of our conjecture may be one
+suitable next step for the community.
+Taken together, our results indicate that the quest for trans-
+parent IFC is unlikely to generate a panacea for securing
+third-party and legacy code. This is a troubling result, it
+indicates that there is no “easy way out” for securing existing
+software systems. At the same time, we believe that our results
+indicate a clear future path for the IFC and programming
+languages communities. If efﬁcient transparent enforcement
+is impossible, the community ought instead to focus on tools
+to help software engineers build secure systems from scratch.
+We also note that while our results paint a bleak picture for
+multi-execution in general, they do not mean that there are
+no application areas for the techniques. For example, when
+the size of the security lattice is small multi-execution can
+still be applicable [19, 20]. The techniques are also useful in
+less efﬁciency-sensitive contexts than general enforcement, for
+example in testing [22] and program repair [35]. Similarly,
+efﬁcient transparent enforcement being unlikely to work does
+not preclude designing enforcement for the common case to
+achieve good average-case performance.
+REFERENCES
+[1] A. Sabelfeld and A. C. Myers, “Language-based information-ﬂow secu-
+rity,” IEEE Journal on selected areas in communications, vol. 21, no. 1,
+pp. 5–19, 2003.
+[2] D. E. Denning, “A lattice model of secure information ﬂow,” Commu-
+nications of the ACM, vol. 19, no. 5, pp. 236–243, 1976.
+[3] V. Simonet and I. Rocquencourt, “Flow caml in a nutshell,” in Proceed-
+ings of the ﬁrst APPSEM-II workshop, 2003, pp. 152–165.
+[4] A. Banerjee and D. A. Naumann, “Secure information ﬂow and pointer
+conﬁnement in a java-like language.” in CSFW, vol. 2, 2002, p. 253.
+[5] M. Abadi, A. Banerjee, N. Heintze, and J. G. Riecke, “A core calculus
+of dependency,” in Proceedings of the 26th ACM SIGPLAN-SIGACT
+symposium on Principles of programming languages.
+ACM, 1999, pp.
+147–160.
+[6] D. Stefan, A. Russo, J. C. Mitchell, and D. Mazi`eres, “Flexible dynamic
+information ﬂow control in haskell,” in ACM Sigplan Notices, vol. 46,
+no. 12.
+ACM, 2011, pp. 95–106.
+[7] T. H. Austin and C. Flanagan, “Multiple facets for dynamic information
+ﬂow,” in ACM Sigplan Notices, vol. 47, no. 1.
+ACM, 2012, pp. 165–
+178.
+[8] J. A. Goguen and J. Meseguer, “Security policies and security models,”
+in 1982 IEEE Symposium on Security and Privacy.
+IEEE, 1982, pp.
+11–11.
+[9] J. McLean, “Proving noninterference and functional correctness using
+traces,” Journal of Computer security, vol. 1, no. 1, pp. 37–57, 1992.
+[10] S. Zdancewic and A. C. Myers, “Observational determinism for concur-
+rent program security,” in 16th IEEE Computer Security Foundations
+Workshop, 2003. Proceedings.
+IEEE, 2003, pp. 29–43.
+[11] D. King, B. Hicks, M. Hicks, and T. Jaeger, “Implicit ﬂows: Can’t
+live with ’em, can’t live without ’em,” in International Conference on
+Information Systems Security.
+Springer, 2008, pp. 56–70.
+[12] C.-A. Staicu, D. Schoepe, M. Balliu, M. Pradel, and A. Sabelfeld, “An
+empirical study of information ﬂows in real-world javascript,” arXiv
+preprint arXiv:1906.11507, 2019.
+[13] D. Devriese and F. Piessens, “Noninterference through secure multi-
+execution,” in 2010 IEEE Symposium on Security and Privacy.
+IEEE,
+2010, pp. 109–124.
+[14] T. Schmitz, M. Algehed, C. Flanagan, and A. Russo, “Faceted secure
+multi execution,” in Proceedings of the 2018 ACM SIGSAC Conference
+on Computer and Communications Security.
+ACM, 2018, pp. 1617–
+1634.
+[15] M. Ngo, N. Bielova, C. Flanagan, T. Rezk, A. Russo, and T. Schmitz,
+“A better facet of dynamic information ﬂow control,” in WWW’18
+Companion: The 2018 Web Conference Companion, 2018, pp. 1–9.
+[16] M. Algehed, A. Russo, and C. Flanagan, “Optimising Faceted Secure
+Multi-Execution,” in Proc. of the 2019 32nd IEEE Computer Security
+Foundations Symp., ser. CSF ’19.
+IEEE Computer Society, 2019.
+[17] D. Zanarini, M. Jaskelioff, and A. Russo, “Precise enforcement of
+conﬁdentiality for reactive systems,” in 2013 IEEE 26th Computer
+Security Foundations Symposium.
+IEEE, 2013, pp. 18–32.
+[18] J. Yang, T. Hance, T. H. Austin, A. Solar-Lezama, C. Flanagan, and
+S. Chong, “Precise, dynamic information ﬂow for database-backed
+applications,” in ACM SIGPLAN Notices, vol. 51, no. 6.
+ACM, 2016,
+pp. 631–647.
+[19] T. Pfeffer, T. G¨othel, and S. Glesner, “Efﬁcient and precise information
+ﬂow control for machine code through demand-driven secure multi-
+execution,” in Proceedings of the Ninth ACM Conference on Data and
+Application Security and Privacy.
+ACM, 2019, pp. 197–208.
+[20] W. De Groef, D. Devriese, N. Nikiforakis, and F. Piessens, “Flowfox:
+a web browser with ﬂexible and precise information ﬂow control,” in
+Proceedings of the 2012 ACM conference on Computer and communi-
+cations security.
+ACM, 2012, pp. 748–759.
+[21] W. Rafnsson and A. Sabelfeld, “Secure multi-execution: Fine-grained,
+declassiﬁcation-aware, and transparent,” Journal of Computer Security,
+vol. 24, no. 1, pp. 39–90, 2016.
+[22] C.-P. Wong, J. Meinicke, L. Lazarek, and C. K¨astner, “Faster variational
+execution with transparent bytecode transformation,” Proceedings of the
+ACM on Programming Languages, vol. 2, no. OOPSLA, p. 117, 2018.
+[23] D. Hedin and A. Sabelfeld, “A perspective on information-ﬂow control.”
+Software Safety and Security, vol. 33, pp. 319–347, 2012.
+[24] N. Bielova and T. Rezk, “Spot the difference: Secure multi-execution
+and multiple facets,” in European Symposium on Research in Computer
+Security.
+Springer, 2016, pp. 501–519.
+[25] M. Ngo, F. Piessens, and T. Rezk, “Impossibility of precise and sound
+termination-sensitive security enforcements,” in 2018 IEEE Symposium
+on Security and Privacy (SP).
+IEEE, 2018, pp. 496–513.
+[26] M. Jaskelioff and A. Russo, “Secure multi-execution in haskell,” in
+International Andrei Ershov Memorial Conference on Perspectives of
+System Informatics.
+Springer, 2011, pp. 170–178.
+[27] K. W. Hamlen, G. Morrisett, and F. B. Schneider, “Computability classes
+for enforcement mechanisms,” Cornell University, Tech. Rep., 2003.
+[28] S. A. Zdancewic, “Programming languages for information security,”
+Ph.D. dissertation, Ithaca, NY, USA, 2002, aAI3063751.
+[29] T. H. Austin and C. Flanagan, “Permissive dynamic information ﬂow
+analysis,” in Proceedings of the 5th ACM SIGPLAN Workshop on
+Programming Languages and Analysis for Security, ser. PLAS ’10.
+New York, NY, USA: ACM, 2010, pp. 3:1–3:12. [Online]. Available:
+http://doi.acm.org/10.1145/1814217.1814220
+[30] N. Bielova and T. Rezk, “A taxonomy of information ﬂow monitors,” in
+International Conference on Principles of Security and Trust. Springer,
+2016, pp. 46–67.
+
+--- Sayfa 14 ---
+[31] D. Stefan, A. Russo, D. Mazi`eres, and J. C. Mitchell, “Disjunction
+category labels,” in Nordic conference on secure IT systems.
+Springer,
+2011, pp. 223–239.
+[32] H. Rogers, Theory of recursive functions and effective computability.
+McGraw-Hill New York, 1967, vol. 5.
+[33] I. Bolos¸teanu and D. Garg, “Asymmetric secure multi-execution with
+declassiﬁcation,” in International Conference on Principles of Security
+and Trust.
+Springer, 2016, pp. 24–45.
+[34] M. Ngo, F. Massacci, D. Milushev, and F. Piessens, “Runtime en-
+forcement of security policies on black box reactive programs,” in
+Proceedings of the 42nd Annual ACM SIGPLAN-SIGACT Symposium
+on Principles of Programming Languages, 2015, pp. 43–54.
+[35] C.-P. Wong, J. Meinicke, and C. K¨astner, “Beyond testing conﬁgurable
+systems: applying variational execution to automatic program repair
+and higher order mutation testing,” in Proceedings of the 2018 26th
+ACM Joint Meeting on European Software Engineering Conference and
+Symposium on the Foundations of Software Engineering.
+ACM, 2018,
+pp. 749–753.
+APPENDIX
+A. Proofs
+Proofs showing that C(S) partitions L
+Lemma 4. Given any ﬁnite S ⊆L and ℓ, ∈S such that
+ℓ̸ = , ℓ↑S is disjoint from ↑S.
+Proof. Assume ˆℓ∈ℓ↑S and ˆℓ∈↑S. Clearly ℓ⊑ˆℓ
+and ⊑ˆℓ, and so ⊑ℓand ℓ⊑, therefore ℓ= , a
+contradiction.
+Lemma 5. Given any ﬁnite S ⊆L we have that S{ ℓ↑
+C(S) | ℓ∈C(S) } = L.
+Proof. Left-to-right inclusion is trivial. For all ℓ∈L it is the
+case that there is a greatest element ∈C(S) such that ⊑ℓ
+(as ⊥∈C(S)) and ℓ∈↑C(S).
+Proposition 4. Given any S ⊆L, the family which maps each
+ℓ∈C(S) to ℓ↑C(S) partitions L.
+Proof. Immediate from lemmas 4 and 5.
+Properties of MEF
+Theorem 3. For all p, x, if L is ﬁnite we have that:
+MEF[p]x = ME[p]x
+Proof. We ﬁrst prove that MEF[p](x) ⊆ME[p](x). If aℓ∈
+MEF[p](x), then there exists some such that aℓ∈p(x ↓)
+and x ↓ℓ= x ↓and so aℓ∈p(x ↓ℓ)@ℓand so aℓ∈
+ME[p](x).
+Next we show that ME[p](x) ⊆MEF[p](x). If aℓ∈
+ME[p](x), then clearly aℓ∈p(x ↓ℓ) and there is an ∈
+C(L(x)) such that x ↓ℓ= x ↓and ℓ∈↑C(L(x))
+and, consequently, aℓ∈p(x ↓)@(↑C(L(x))) and so
+aℓ∈MEF[p](x).
+We have that MEF[p](x) ⊆ME[p](x) and ME[p](x) ⊆
+MEF[p](x) when both are deﬁned, and so MEF[p](x) =
+ME[p](x) provided both are deﬁned.
+Next we show that when L is ﬁnite, MEF[p](x)✓⇔
+ME[p](x)✓. If MEF[p](x)✓then p(x ↓ℓ)✓for all ℓ
+∈
+C(L(x)). But, for all ∈L it is the case that x ↓= x ↓ℓ
+for some ℓ∈C(L(x)) and so p(x ↓ℓ)✓, and consequently
+ME[p](x)✓. If ME[p](x)✓then clearly p(x ↓ℓ)✓for all ℓ∈
+C(L(x)) and so MEF[p](x)✓.
+Theorem 9. MEF is MT-transparent.
+Proof. By Theorem 3 we have that for all p and x it is the
+case that MEF[p](x) = ME[p](x) if ME[p](x) and MEF[p](x)
+are both deﬁned. Furthermore, by Theorem 2 we have that
+ME[p](x) = p(x) if p is MT-secure. If the lattice L is non-
+ﬁnite ME can only be read as a speciﬁcation, and not an algo-
+rithm. However, the argument in Theorem 3 sufﬁces to show
+that MEF implements the ME speciﬁcation when it terminates.
+Therefore, it remains only to show that given an MT-secure p,
+it is the case that MEF[p](x)✓⇔p(x)✓. If MEF[p](x)✓then
+p(x ↓F L(x))✓and so because x = x ↓F L(x) we have that
+p(x)✓. Conversely, if p(x)✓then by p MT-secure we know
+that p(x ↓ℓ)✓for all ℓand so MEF[p](x)✓.
+Level Assignments
+Proposition 6. If L(p, x) = C(L(x)) ∩L′(p) for some total
+L′, then L is an MT-secure level assignment.
+Proof. If x ∼ℓy then C(L(x)) ∼ℓC(L(y)) and so L(p, x) ∼ℓ
+L(p, y). Consequently, L(p, ) is TI-secure. By Lemma 1 we
+have that L is TI-secure and so MEL is noninterfering. To
+see that MEL[p] is MT-terminating, observe that L(p, x ↓ℓ) ⊆
+L(p, x) and so if MEL[p](x)✓then p(x ↓ℓ)✓for ℓ∈L(p, x)
+and so MEL[p](x ↓ℓ)✓.
+Lemmas for Theorems 6 and 7
+Recall the extended interpretation ℓ-equivalence from Sec-
+tion V to subsets of L based on the following deﬁnition of
+S ↓ℓ:
+S ↓ℓ= { ℓ′ ∈L | ℓ′ ⊑ℓ}
+Lemma 1. If the program λx. L(p, x) is TI-secure for all p,
+then L is TI-secure.
+Proof. Consider any ℓ, p, x ∼ℓy such that L(p, x)✓and
+L(p, y)✓. Clearly, for all ⊑ℓ, ∈L(p, x) if and only if
+∈L(p, y) and so if this is the case then:
+MEL[p](x)@
+= p(x ↓)
+@
+= p(y ↓)
+@
+= MEL[p](y)@
+And otherwise MEL[p](x)@= ∅
+= MEL[p](y)@. As
+MEL[p](x)@= MEL[p](y)@for all ⊑ℓwe have that
+MEL[p](x) ∼ℓMEL[p](y) and so MEL[p] is noninterfering.
+Consequently, MEL[p] is TI-secure for all p and then so is
+L.
+Lemma 2. L is MT-transparent if for all MT-secure programs
+p and inputs x, we have that p(x)✓if and only if L(p, x)✓
+and L(p, x) = L(p(x)).
+
+--- Sayfa 15 ---
+Proof. Assume L satisﬁes the stated condition and p is an MT-
+secure program. Clearly, MEL[p](x)✓if and only if p(x)✓.
+Furthermore aℓ∈p(x) if and only if aℓ∈p(x ↓ℓ) which
+means that aℓ∈MEL[p](x). For the other direction, if aℓ∈
+MEL[p](x) then aℓ∈p(x ↓ℓ) and so aℓ∈p(x).

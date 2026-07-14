@@ -1,0 +1,2380 @@
+
+--- Sayfa 1 ---
+ReCast: Reliability-aware Codebook Assisted Lightweight Time Series Forecasting
+Xiang Ma1, Taihua Chen1,2, Pengcheng Wang1, Xuemei Li1, Caiming Zhang1
+1Shandong University, Jinan, China
+2Joint SDU-NTU Centre for Artificial Intelligence Research (C-FAIR), Shandong University, Jinan, China
+{xiangma,xmli,czhang}@sdu.edu.cn, {cfair-cth,pengchengwang}@mail.sdu.edu.cn
+Abstract
+Time series forecasting is crucial for applications in various
+domains. Conventional methods often rely on global decom-
+position into trend, seasonal, and residual components, which
+become ineffective for real-world series dominated by local,
+complex, and highly dynamic patterns. Moreover, the high
+model complexity of such approaches limits their applica-
+bility in real-time or resource-constrained environments. In
+this work, we propose a novel REliability-aware Codebook-
+ASsisted Time series forecasting framework (ReCast) that
+enables lightweight and robust prediction by exploiting re-
+curring local shapes. ReCast encodes local patterns into dis-
+crete embeddings through patch-wise quantization using a
+learnable codebook, thereby compactly capturing stable reg-
+ular structures. To compensate for residual variations not pre-
+served by quantization, ReCast employs a dual-path archi-
+tecture comprising a quantization path for efficient modeling
+of regular structures and a residual path for reconstructing
+irregular fluctuations. A central contribution of ReCast is a
+reliability-aware codebook update strategy, which incremen-
+tally refines the codebook via weighted corrections. These
+correction weights are derived by fusing multiple reliability
+factors from complementary perspectives by a distribution-
+ally robust optimization (DRO) scheme, ensuring adaptabil-
+ity to non-stationarity and robustness to distribution shifts.
+Extensive experiments demonstrate that ReCast outperforms
+state-of-the-art (SOTA) models in accuracy, efficiency, and
+adaptability to distribution shifts.
+1
+Introduction
+In recent years, time series forecasting has gained significant
+attention due to its critical applications in various real-world
+applications, including finance, energy, healthcare, and in-
+dustrial automation (Wen et al. 2023; Ma et al. 2023; Qiu
+et al. 2024; Shibo et al. 2025). Capturing complex and irreg-
+ular temporal patterns accurately remains a primary chal-
+lenge in this domain. Conventional approaches typically ad-
+dress this complexity by globally decomposing time series
+into trend, seasonal, and residual components, and model-
+ing these components independently (Wu et al. 2021; Zhou
+et al. 2022; Hu et al. 2025). However, while effective for
+structured or periodic data, such global decomposition meth-
+ods often underperform when faced with dynamic and noisy
+Copyright © 2026, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+real-world time series (Tang and Zhang 2025). Moreover,
+these methods typically involve considerable model com-
+plexity, which limits their practicality in resource-limited
+environments (Ansari et al. 2025).
+To address these challenges, we introduce a novel
+REliability-aware Codebook-ASsisted Time series fore-
+casting (ReCast) framework, focusing explicitly on captur-
+ing local patterns. Observing that many real-world series ex-
+hibit recurring local shapes rather than clear global regular-
+ities (Yeh et al. 2016), ReCast quantizes these local shapes
+into a learnable codebook, generating discrete embeddings
+to represent evolving patterns. This codebook-based repre-
+sentation not only captures salient local structures but also
+reduces model complexity, enabling a inherently lightweight
+forecasting design. Meanwhile, residual modeling is intro-
+duced to capture irregular variations not adequately repre-
+sented by the quantized embeddings, ensuring robustness to
+fluctuations without excessively increasing model size.
+Specifically, ReCast segments input into patches, quanti-
+fying each as discrete embedding using a dynamically up-
+dated reliability-aware codebook. As shown in Figure 1, a
+quantization path is used to forecast the future discrete em-
+beddings, and a residual path learns to estimate the differ-
+ence between input and its approximate representation re-
+constructed by discrete embedding. These two paths work
+in synergy: the quantization path enables lightweight fore-
+casting of regular structures, while the residual path ensures
+the reliable reconstruction of irregular fluctuations. The pre-
+diction results combine outputs from both paths. To reduce
+overfitting and improve generalization to distribution shifts,
+we perform random patch sampling, and select only a sub-
+set of patches for training and codebook updates. Downsam-
+pling is applied prior to quantization, helping to highlight
+salient local structures and lower computational cost.
+More importantly, it can be observed that the performance
+of ReCast strongly depends on the stability and adaptability
+of the codebook (Guo et al. 2023). Therefore, we propose
+an incremental codebook update mechanism centered on a
+reliability-aware scoring method. This method can robustly
+guide the update process in response to evolving data distri-
+butions, striking a balance between stability and adaptabil-
+ity. Our contributions include:
+• We propose a codebook assisted lightweight forecasting
+framework that effectively captures both regular and ir-
+arXiv:2511.11991v3  [cs.LG]  5 Mar 2026
+
+--- Sayfa 2 ---
+…
+MLP
+𝑋−𝑋𝑞
+𝑋𝑟
+𝑌𝑟
+𝑋𝑞
+…
+Residual path
+…
+Instance norm
+Stage 1:Patch-wise quantization
+𝑋
+𝑃
+…
+𝑠1
+𝑠2
+𝑠𝐾
+𝑠1
+𝑠7
+𝑠9
+…
+𝑄𝑥
+Stage 2:Dual-path forecasting
+Unpatching
+Instance denorm
+Patching
+෠𝑌
+𝑆
+Quantization
+𝑄𝑥= 𝑆(𝑃)
+𝑞𝑖
+𝑠1
+𝑠7
+𝑠9
+…
+MLP
+𝑠7
+𝑠4
+𝑠6
+…
+𝑄𝑦
+Quantization path
+Reconstruction
+𝑅𝑒𝑐(𝑄|𝑆)
+𝑌𝑞
+෨𝑃𝑡
+center
+መ𝑆𝑡
+Random sampling
+Stage 3:Codebook construction and updating
+Clustering
+…
+Ƹ𝑠1
+𝑡
+Ƹ𝑠𝐾
+𝑡
+…
+Ƹ𝑠2
+𝑡
+෤𝑝𝑖
+𝑡
+pseudo codebook
+𝓛𝐩𝐫𝐞
+cluster centers
+Reliability-aware scoring
+…
+updated codebook 
+𝑠1
+𝑡
+𝑠𝐾
+𝑡
+𝑠2
+𝑡
+Incremental updating
+𝑆𝑡= 𝑆𝑡−1 + 1
+𝑡(𝑊𝑡መ𝑆𝑡−𝑆𝑡−1)
+𝓛𝒔𝒆𝒑
+𝑆𝑡
+Regularization
+…
+෤𝑝𝑖
+𝑡
+…
+𝑝𝑖
+…
+current codebook
+…
+at the t-th epoch
+Figure 1: ReCast overview. It comprises patch-wise quantization, dual-path forecasting, and codebook construction and updat-
+ing.
+regular local temporal patterns while significantly reduc-
+ing model complexity.
+• We introduce a reliability-aware updating mechanism for
+codebook, which enhances adaptability and robustness to
+noise and distribution shifts with low computational cost.
+• Extensive experiments show that ReCast achieves supe-
+rior accuracy, generalization, and robustness, relying on
+its lightweight architecture and efficient training strategy.
+2
+Related Work
+2.1
+Deep Learning-based Forecasting
+Recent advances in deep learning have significantly im-
+proved time series forecasting by leveraging powerful rep-
+resentation learning capabilities. The convolutional neural
+network(CNN)-based approaches (Wu et al. 2023) introduce
+local receptive fields to capture short-term dynamics effi-
+ciently, but they lack the ability to capture long-range de-
+pendencies. Transformer-based models (Liu et al. 2023; Nie
+et al. 2023) address this issue by employing self-attention to
+model global temporal interactions, achieving strong perfor-
+mance across benchmarks. Nonetheless, the quadratic com-
+plexity of attention and sensitivity to noise restrict their
+scalability and robustness in real-world scenarios. In paral-
+lel, lightweight MLP-based architectures (Tang and Zhang
+2025; Ma et al. 2024) have recently emerged as promising
+alternatives, offering high efficiency but often struggling to
+represent heterogeneous and irregular patterns effectively.
+2.2
+Patch-based Representation Learning
+To improve efficiency and capture fine-grained structures,
+patch-based strategies have gained increasing attention in
+time series modeling. Instead of processing sequences at
+raw temporal resolution, some methods (Wang et al. 2025;
+Nie et al. 2023; Tang and Zhang 2025) divide time series
+into non-overlapping or partially overlapping patches, en-
+abling models to operate on compact representations and re-
+duce sequence length. While effective in long-horizon fore-
+casting, these methods typically rely on continuous embed-
+dings without explicit mechanisms to leverage recurring lo-
+cal shapes, which are prevalent in real-world time series.
+Vector quantization (VQ) (Van Den Oord, Vinyals et al.
+2017) provides a complementary perspective by discretizing
+local segments into a finite set of codewords, facilitating rep-
+resentation reuse and improving robustness, as extensively
+explored in domains such as vision and speech (Tian et al.
+2024; Wu et al. 2025). Recent attempts (Shibo et al. 2025;
+Ansari et al. 2025) to integrate quantization into time se-
+ries tasks demonstrate its potential to capture recurring pat-
+terns efficiently. However, static or heuristic codebooks fail
+to adapt to real-world data dynamics.
+Different from existing methods, ReCast innovatively
+propose a dual-path forecasting architecture with quantiza-
+tion, capturing both stable recurring shapes and irregular
+fluctuations. Besides, it introduces a reliability-aware updat-
+ing incrementally refines codebook, ensuring robust adapta-
+tion to distribution shifts.
+3
+Methodology
+In this section, we present ReCast in detail, which has
+3 modules: patch-wise quantization, dual-path forecasting,
+codebook construction and updating, as shown in Figure 1.
+
+--- Sayfa 3 ---
+3.1
+Patch-wise Quantization
+Define the historical series as X ∈RC×L = {xi}L
+i=1, and
+the ground truth future values as Y ∈RC×H = {xi}L+H
+i=L+1.
+L and H are the length of the input and forecasting series,
+respectively. C means the number of variables (or channels).
+xi is a vector of dimension C at time step i. The goal of time
+series forecasting is to predict Y based on observed X. Re-
+Cast first normalizes the input using instance normalization,
+which is X = (X −µin)/
+p
+σ2
+in + ε. µin and σin denote the
+mean and variance of input, and ε is a small constant added
+for numerical stability. The normalized X is segmented into
+patches P = {pi}C×N
+i=1 . pi ∈RLp is the i-th patch. Lp is the
+patch length, and N = ⌈L/Lp⌉.
+Each patch is subsequently quantized by assigning it to
+the nearest codeword in a learnable codebook S = {sk}K
+k=1:
+qi = S(˜pi) = arg min
+sk∈S
+||˜pi −sk||2
+2,
+˜pi = Dsamp(pi), sk, ˜pi ∈RLp/2
+(1)
+where qi ∈{1, · · · , K} is the discrete index associated with
+patch pi. K is the number of codewords. To reduce compu-
+tational cost and suppress redundant local fluctuations, we
+apply downsampling Dsamp(·) on patches prior to quanti-
+zation. This is supported by the well-established assumption
+in time series modeling that local patterns demonstrate in-
+variance across scales and redundant morphology (Lu et al.
+2022), which makes resolution reduction both meaning-
+ful and robust (Senin and Malinchik 2013). ˜pi denotes the
+downsampled patch of pi. This operation reduces the di-
+mension of patches to Lp/2, significant savings in codebook
+matching, storage, and embedding projection. Additionally,
+it helps the codebook focus on salient structures, improving
+robustness and generalization to noisy or distribution shifts.
+The discrete embeddings for the full input series is organized
+as Qx = [Q1; · · · ; QC], and Qi = {qj}i·N
+j=(i−1)·N+1 repre-
+sents the discrete embedding of i-th variable. This discrete
+embeddings serves as the input to downstream forecasting
+modules.
+3.2
+Dual-path Forecasting
+To simultaneously achieve computational efficiency and rep-
+resentational fidelity, ReCast adopts a dual-path forecast-
+ing architecture. This design decomposes the prediction task
+into two complementary paths, each responsible for captur-
+ing distinct aspects of temporal dynamics.
+Quantization path
+To capturing the regular structures and
+modeling the evolution of local patterns, a lightweight multi-
+layer perceptron (MLP) Mquant is employed to forecast the
+discrete indices of future patches:
+Qy = Mquant(Qx),
+(2)
+where Qy ∈RC×Ny, and Ny = ⌈H/Lp⌉. This path enables
+compact and efficient modeling of stable local patterns.
+Residual path
+While quantization promotes simplicity, it
+inevitably discards subtle variations. To mitigate this loss,
+ReCast introduces a residual correction branch. First, the in-
+put X is approximately reconstructed from its quantized rep-
+resentation via codebook lookup:
+Xq = Rec(Qx|S) = Rec(Q1; · · · ; QC|S),
+Rec(Qi|S) = Usamp([sq(i−1)·N || · · · ||sqi·N ]),
+(3)
+where Xq ∈RC×L denotes the approximate representation
+of X. Rec(Qi|S) means reconstruction from discrete em-
+bedding Qi using the codebook S. Usamp(·) denotes the
+upsampling. || denotes the concatenation. The residual com-
+ponent Xr = X −Xq captures fine-scale discrepancies. A
+separate MLP forecaster Mres is trained to predict the resid-
+ual signal for the future window:
+Yr = Mres(Xr), Yr ∈RC×H,
+(4)
+The final result combines both paths and is followed by
+instance denormalization to restore the original scale
+ˆY = σin(Yq + Yr) + µin, ˆY ∈RC×H,
+Lpre = ||ˆY −Y||1,
+(5)
+where Yq = Rec(Qy|S). To mitigate the distribution shift
+effect between the input X and forecasting result, we use
+instance denormalization by σin and µin. We employ the L1
+Loss as the training objective to ensure robustness to outliers
+and stabilizes training.
+3.3
+Codebook Construction and Updating
+The performance and robustness of ReCast are tightly cou-
+pled with the quality of its quantization codebook. Since
+real-world time series are often non-stationary and subject to
+distribution shifts, a static codebook is insufficient for cap-
+turing evolving local patterns. So, we adopt an incremental
+updating strategy for codebook construction, which allows
+the model to gradually refine its representation of local pat-
+terns based on data observed over time, as shown in stage 3
+of Figure 1. This approach can enable adaptation to evolving
+distributions, and avoid the instability and overfitting asso-
+ciated with outliers.
+Pseudo codebook construction
+At each epoch, we clus-
+ter the patches and obtain cluster centers. These centers are
+the representative local patterns that can be used to construct
+pseudo codebooks in the current epoch. The clustering ob-
+jects are randomly sampled patches from the input. This
+random sampling reduces computational cost and prevents
+overfitting (Lu et al. 2022; Senin and Malinchik 2013). To
+ensure the efficiency, we express the energy function Lc of
+clustering in the form of matrix operation:
+Lc = Tr((˜P
+t −MˆS
+t)⊤I(˜P
+t −MˆS
+t)),
+(6)
+where ˆS
+t = {ˆst
+k}K
+k=1 and ˜P
+t = {˜pt
+i}C×Np
+i=1
+denote the clus-
+ter center matrix and the sampled downsampled patches at
+t-th epoch, respectively. ˜pt
+i ∈RLp/2 is the i-th patch of
+˜P
+t, and ˆst
+k ∈RLp/2 is the k-th cluster center of ˆS
+t. Np
+is the number of sampled patches. I is the weight matrix,
+here we take the identity matrix. Tr(·) is the trace of ma-
+trix. M ∈R(C×Np)×K is the indicator matrix to indicate the
+
+--- Sayfa 4 ---
+membership of patches, which is a learnable binary matrix.
+Mi,j = 1 means the patch i belong to cluster j. The update
+function of cluster center is:
+ˆS
+t = (M⊤I˜P
+t)/(M⊤IM),
+(7)
+the ˆS
+t reflects representative local patterns captured from
+the current training data distribution, which can serve as the
+pseudo codebook of t-th epoch.
+Incremental updating
+To ensure generalization to new
+patterns or distribution shifts, and avoid drastic changes of
+embeddings, we introduce a incremental updating strategy
+for codebook to balance adaptability and stability. At the
+first epoch, we initialize the codebook as S1 = ˆS
+1. In subse-
+quent epochs, the codebook is updated as:
+St = St−1 + 1
+t (WtˆS
+t −St−1),
+(8)
+where St denotes the codebook of t-th epoch. ˆS
+t is the
+pseudo codebook computed from the current epoch’s sam-
+pled patches via Equation 7. Wt is a set of correction
+weights that adjust the influence of the current epoch’s
+pseudo codebook. W t
+k is the weight for cluster center ˆst
+k.
+Equation 8 can ensure equitable contribution across epochs,
+while adaptively adjusting by Wt (See Appendix A.1 for
+complete proof).
+Embedding regularization
+To promote better utilization
+of the embedding space and prevent codeword collapse, we
+introduce a limited separation loss that encourages diversity
+among the cluster centers:
+Lsep = log
+k
+X
+i,j=1
+exp(−||ˆst
+i −ˆst
+j||2
+2)/τ,
+(9)
+where Lsep promotes the dispersion of embeddings in hid-
+den space and prevents excessive expansion of the space by
+the temperature τ. τ = ||ˆS
+t||2
+2 ensures the embedding space
+size remains approximately consistent across each epoch.
+This loss penalizes excessive similarity among codewords,
+encouraging a well-distributed and expressive codebook.
+3.4
+Reliability-aware Scoring
+As shown in Equation 8, Wt can control the contribution of
+each pseudo codeword during updating. Rather than treating
+all cluster centers equally, ReCast introduces a reliability-
+aware scoring method that selectively integrates pseudo
+codewords based on their reliability to ensure robust and
+adaptive codebook updates. Wt = {wt
+k}K
+k=1 is computed by
+aggregating three complementary factors: wt
+rep, wt
+∆, wt
+je ∈
+RK, and meets Wt ∝Mfus(wt
+rep, wt
+∆, wt
+je), PK
+k=1 wt
+k =
+1. Mfus is a fusion function.
+Representational quality
+The wt
+rep evaluates how well
+ˆS
+t
+k represents its assigned patches, measured by the intra-
+cluster reconstruction error:
+wt
+rep,k = 1 −exp(||Bk(Rec(ˆS
+t(˜P
+t)|ˆS
+t) −˜P
+t)||2
+2)
+exp(||Rec(ˆS
+t(˜P
+t)|ˆS
+t) −˜P
+t||2
+2) + ε
+,
+(10)
+𝝎∆
+𝒕
+joint energy
+𝜔𝑗𝑒,𝑖
+𝑡
+𝝎𝒋𝒆
+𝒕
+መ𝑆𝑡
+…
+Ƹ𝑠1
+𝑡
+Ƹ𝑠2
+𝑡
+Ƹ𝑠𝐾
+𝑡
+…
+…
+𝑆𝑡−1 𝑠1
+𝑡−1
+𝑠𝐾
+𝑡−1
+𝑠2
+𝑡−1
+current codebook
+pseudo codebook
+Fusion by distributionally robust optimization
+෡𝑊𝑡
+Incremental updating
+Historical consistency
+OOD sensitivity
+Representational quality
+෨𝑃𝑡
+…
+෤𝑝𝑖
+𝑡
+…
+𝝎𝒓𝒆𝒑
+𝒕
+…
+𝜔∆,𝑖
+𝑡
+𝝎∆
+𝒕
+𝝎𝒋𝒆
+𝒕
+𝝎𝒓𝒆𝒑
+𝒕
+𝑆𝑡= 𝑆𝑡−1 + 1
+𝑡( ෡𝑊𝑡መ𝑆𝑡−𝑆𝑡−1)
+target weights 
+||𝑅𝑒𝑐( መ𝑆𝑡( ෨𝑃𝑡)| መ𝑆𝑡)−෨𝑃𝑡||2
+2
+|| መ𝑆𝑡−𝑆𝑡−1||2
+2
+Fusion by distributionally 
+robust optimization (DRO)
+Figure 2: Illustration of reliability-aware scoring, showing
+three scoring factors and their fusion via distributionally ro-
+bust optimization (DRO).
+where wt
+rep,k ∈wt
+rep is the weight assigned to the k-th
+cluster center. Bk is a binary matrix to mask values unre-
+lated to the k-th cluster center. Rec(ˆS
+t(˜P
+t)|ˆS
+t) is the ap-
+proximate representation reconstructed from discrete em-
+beddings ˆS
+t(˜P
+t) using pseudo codebook ˆS
+t. Higher value of
+wt
+rep,k corresponds to better representational quality of the
+k-th cluster center, which has higher reliability.
+Historical consistency
+The wt
+∆assesses the temporal sta-
+bility of ˆS
+t
+k by measuring its deviation from the correspond-
+ing codeword in the previous epoch:
+wt
+∆,k = exp(||Bk(ˆS
+t −St−1)||2
+2)
+exp(||ˆS
+t −St−1||2
+2) + ε
+,
+(11)
+where wt
+∆,k ∈wt
+∆is the weight assigned to the k-th cluster
+center. Higher value of wt
+∆,k denotes the greater difference
+between ˆst and st−1. Under the constraint of wt
+rep, this dif-
+ference arises because St−1 lacks sufficient fitting capability
+for the newly input patches. So ˆS
+t should be given a greater
+weight to adjust the previous codebook, which is consistent
+with the expression of wt
+∆,k.
+OOD sensitivity
+The wt
+je measures the OOD sensitivity
+of ˆS
+t by capturing potentially novel or rare patterns, esti-
+mated from assignment frequency and variance. The func-
+tion is similar to joint-energy (Duvenaud et al. 2020):
+wt
+je,k = 1 −
+exp(PC×Np
+i=1
+|˜pt
+i −ˆst
+k|)
+exp(PK
+k=1
+PC×Np
+i=1
+|˜pt
+i −ˆst
+k|) + ε
+,
+(12)
+where wt
+je,k ∈wt
+je is the weight assigned to the k-th cluster
+center. Higher value of wt
+je,k indicates lower selection prob-
+abilities for the k-th cluster. By increasing its corresponding
+weight, we can prevent the embedding space of the code-
+book from collapsing into a few fixed codewords, and eval-
+uate adaptability to OOD data (Duvenaud et al. 2020).
+
+--- Sayfa 5 ---
+Fusion by distributionally robust optimization
+In Re-
+Cast, each pseudo codeword is associated with three normal-
+ized reliability scores: wt
+rep, wt
+∆, and wt
+je. While these met-
+rics are complementary, their relative importance may vary
+across epochs and data regimes. Directly assigning fixed
+weights can be suboptimal or unstable, especially when
+some metrics are noisy or biased due to transient data con-
+ditions (Duchi and Namkoong 2019). Thus, we formulate
+the fusion of reliability metrics as a distributionally robust
+optimization (DRO) problem (Qi et al. 2021). The goal is
+to obtain a conservative estimate of a codeword’s reliability
+by minimizing the expected reliability under the worst-case
+weighting distribution over the three metrics.
+Formally, let the score vector for the k-th pseudo code-
+word at epoch t be denoted as:
+zt
+k = [wt
+rep,k, wt
+∆,k, wt
+je,k] ∈R3.
+(13)
+Instead of computing a simple average, we consider all pos-
+sible distributions θ ∈Θ3 over the three scores, where
+Θ3 = {θ ∈R3 | P3
+i=1 θi = 1, θi ≥0}. We then
+define the reliability score wt
+k as the minimum expected
+value of zt
+k under the worst-case distribution within a KL-
+divergence neighborhood around the uniform distribution
+u = [1/3, 1/3, 1/3]:
+ˆwt
+k = min
+θ∈Uγ⟨θ, zt
+k⟩,
+(14)
+where Uγ = {θ ∈Θ3 | DKL(θ ∥u) ≤γ}. The parameter
+γ > 0 determines the size of the uncertainty set: smaller
+values encourage near-uniform weighting, while larger val-
+ues permit more skewed, adversarial distributions. This ro-
+bust optimization problem has a closed-form solution (See
+Appendix A.2 for complete proof):
+ˆwt
+k = −γ · log
+3
+X
+i=1
+exp(−
+zt
+k,i
+γ ).
+(15)
+The result is a soft-minimum over the scores, allowing the
+most reliable metric to dominate while softly discounting
+others. This formulation can be interpreted as an entropy-
+regularized minimization over reliability signals.
+By adopting this distributionally robust fusion scheme,
+ReCast is able to adaptively and conservatively score pseudo
+codewords, mitigating the impact of outliers or transient in-
+consistencies in individual metrics. This not only enhances
+the stability of the incremental codebook update but also im-
+proves the generalization of non-stationary time series.
+Finally, the reliability score ˆW
+t = { ˆwt
+k}K
+k=1 is used as
+a weighting coefficient to regulate the effect intensity of
+pseudo codewords in the codebook update. The Equation 8
+can been improved as:
+St = St−1 + 1
+t ( ˆW
+tˆS
+t −St−1).
+(16)
+3.5
+Learning Objective
+The final loss function is:
+L = Lpre + wsepLsep,
+(17)
+where wsep is adjustment parameters. During the inference
+phase, the codebook remains fixed, and only Equation 5
+needs to be computed to efficiently obtain prediction results
+in a lightweight manner.
+4
+Experiments
+4.1
+Datasets and Baselines
+We evaluate the proposed ReCast on 8 widely used real-
+world datasets: Electricity (ECL), Traffic, Weather, Solar
+(Liu et al. 2022; Wu et al. 2021), and 4 ETT datasets
+(ETTh1, ETTh2, ETTm1, ETTm2) (Zhou et al. 2021). The
+full details of datasets presented in Appendix B.1. To evalu-
+ate the performance of ReCast, we compare it against 8 rep-
+resentative SOTA models from recent years: Transformer-
+based models: TQNet (Lin et al. 2025), iTransformer (Liu
+et al. 2023), PatchTST (Nie et al. 2023); CNN-based model:
+TimeNet (Wu et al. 2023); MLP-based models: PatchMLP
+(Kong et al. 2025), CycleNet (Lin et al. 2024), DLinear
+(Zeng et al. 2023).
+4.2
+Metrics and Implementation Details
+The models are evaluated based on both Mean Squared Error
+(MSE) and Mean Absolute Error (MAE). ReCast is imple-
+mented using Pytorch (Paszke et al. 2019) and trained on an
+Nvidia L40 GPU (48GB). The detailed implementations are
+described in Appendix B.2. The corresponding pseudocode
+of ReCast is provided in Appendix B.3.
+4.3
+Main Results
+Table 1 compares the forecasting performance of ReCast
+with baselines across 8 datasets, with lower MSE/MAE val-
+ues indicating greater forecasting accuracy. ReCast achieves
+the best performance in 12 out of 16 forecasting error met-
+rics, demonstrating overall SOTA accuracy. Full results are
+provided in Appendix C.1.
+Notably, CNN-based models no longer retain a perfor-
+mance advantage due to their limited capacity in modeling
+long-range dependencies. Transformer-based models lies in
+modeling temporal contextual dependencies through atten-
+tion mechanisms, which exhibit high sensitivity to noise.
+This inherent sensitivity limits their potential for further
+improving predictive performance. While they occasionally
+outperform simple MLP-based models, their performance is
+inconsistent, especially in noisy or irregular settings. Recent
+lightweight MLP-based models offer improved efficiency,
+but some of them often struggle to capture intricate inter-
+variable dependencies.
+Moreover, channel-independent models (PatchTST and
+DLinear) often fail to realize their full potential, suggest-
+ing the irreplaceable role of inter-variable interactions. In
+contrast, ReCast employs a shared codebook across all vari-
+ables, implicitly facilitating inter-variable interaction and
+thereby circumventing the performance limitations inherent
+in channel-independent architectures.
+4.4
+Model Analysis
+Ablation Study
+Four variants are designed to assess the
+contributions of ReCast’s core components:‘-Residual’ dis-
+
+--- Sayfa 6 ---
+Models
+ReCast
+PatchMLP
+TQNet
+CycleNet
+iTransformer
+TimesNet
+PatchTST
+Dlinear
+Metric
+MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE
+ETTm1
+0.371 0.379 0.374 0.382 0.377 0.393 0.379 0.396 0.407 0.410 0.400 0.406 0.387 0.400 0.403 0.407
+ETTm2
+0.265 0.309 0.269 0.311 0.277 0.323 0.266 0.314 0.286 0.327 0.291 0.333 0.281 0.326 0.350 0.401
+ETTh1
+0.437 0.428 0.438 0.429 0.441 0.434 0.457 0.441 0.454 0.447 0.458 0.450 0.469 0.454 0.456 0.452
+ETTh2
+0.347 0.385 0.349 0.378 0.378 0.402 0.388 0.409 0.383 0.407 0.414 0.427 0.387 0.407 0.559 0.515
+ECL
+0.163 0.257 0.171 0.265 0.164 0.259 0.168 0.259 0.178 0.270 0.192 0.295 0.216 0.304 0.212 0.300
+Traffic
+0.418 0.272 0.417 0.273 0.445 0.276 0.472 0.301 0.428 0.282 0.620 0.336 0.555 0.362 0.625 0.383
+Weather
+0.229 0.250 0.231 0.256 0.242 0.269 0.243 0.271 0.258 0.279 0.259 0.287 0.259 0.281 0.265 0.317
+Solar
+0.209 0.260 0.211 0.261 0.198 0.256 0.210 0.261 0.233 0.262 0.319 0.330 0.307 0.641 0.401 0.282
+1st Count
+12
+2
+2
+0
+0
+0
+0
+0
+Table 1: Comparison of forecasting performance. The best results are highlighted in bold, while the second-best results are
+underlined. ReCast achieves the best performance in 12 out of 16 forecasting error metrics.
+Setup
+Original
+-Residual
+-Updating
+-Random
+-Scoring
+-DRO
+Metric
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+ETTm1
+0.371
+0.379
+0.377
+0.395
+0.400
+0.402
+0.377
+0.396
+0.385
+0.399
+0.375
+0.385
+Traffic
+0.418
+0.272
+0.435
+0.281
+0.553
+0.332
+0.427
+0.285
+0.441
+0.285
+0.424
+0.281
+Weather
+0.229
+0.250
+0.248
+0.275
+0.257
+0.303
+0.240
+0.271
+0.249
+0.277
+0.237
+0.266
+Table 2: Ablation study of ReCast.
+0
+50
+100
+150
+200
+0.20
+0.22
+0.24
+0.26
+MSE
+Train time(ms/iter)
+PatchTST
+ReCast (ours)
+TQNet
+PatchMLP
+CycleNet
+TimesNet
+iTransformer
+10M
+1.0M 25ms
+8.3M 195ms
+6M 36ms
+352k 18ms
+12M 70ms
+9.4M 70ms
+1.2M 19ms
+3M
+1M
+5M
+Parameters
+300k
+DLinear
+131k 18ms
+Figure 3: Computational efficiency of ReCast on the ECL
+dataset (horizon = 720).
+ables the residual path, retaining only the quantization
+path; ‘-Updating’freezes the codebook, preventing incre-
+mental updates; ‘-Random’removes both downsampling
+during quantization and random sampling during codebook
+construction; ‘-Scoring’ disables the reliability-aware fu-
+sion weights ˆWt in Equation 16, treating all pseudo code-
+words equally during codebook updates; ‘-DRO’ uniformly
+weights the three scores. These variants can systemati-
+cally evaluate the effects of dual-path architecture, robust
+enhancement operation, incremental updating, reliability-
+aware scoring, and DRO on model performance.
+The results of Table 2 lead to several key observations:
+Model
+iTransformer
+TimesNet
+Original
++ReCast
+Original
++ReCast
+Metric MSE MAE MSE MAE MSE MAE MSE MAE
+ETTm1 0.407 0.410 0.375 0.381 0.400 0.406 0.389 0.395
+Traffic 0.428 0.282 0.420 0.275 0.620 0.336 0.499 0.303
+Weather 0.258 0.279 0.231 0.259 0.259 0.287 0.245 0.272
+Table 3: Portability of ReCast across different backbones.
+1) All ablated variants exhibit degraded performance rel-
+ative to the full ReCast model, validating the effective-
+ness of each component. 2) The performance drop in ‘-
+Residual’ highlights the critical role of the residual path in
+recovering fine-grained variations that are lost during quan-
+tization. 3)The performance deterioration in ‘-Updating’
+and ‘-Scoring’ confirms that both dynamic codebook re-
+finement and reliability-aware weighting are essential for
+capturing evolving local patterns and ensuring adaptabil-
+ity to distribution shifts. 4) The degradation observed in ‘-
+Random’ underscores the importance of downsampling and
+random sampling for reducing overfitting and computational
+cost, while preserving performance. 5) The gap between ‘-
+Scoring’ and ‘-DRO’ reveals the importance of the DRO-
+based fusion strategy, which avoids over-reliance on any sin-
+gle score and enables robust reliability estimation.
+Portability
+To evaluate the portability of ReCast, we ex-
+amine whether its dual-path forecasting architecture and
+reliability-aware codebook mechanism can generalize be-
+yond the original MLP-based backbone. Specifically, we re-
+
+--- Sayfa 7 ---
+-50
+-100
+𝑺𝟏
+𝑺𝟐
+෡𝑺𝟐
+෡𝑊2
+Epoch 2
+-50
+-100
+𝑺𝟏
+𝑺𝟐
+𝑺𝟑
+෡𝑺𝟑
+෡𝑊3
+Epoch 3
+-50
+-100
+-100
+-50
+0
+𝑺𝟏
+Epoch 1
+111
+Selected
+UnSelected
+Past center
+Updated center
+-50
+-100
+𝑺𝟏
+𝑺𝟐
+෡𝑺𝟒
+෡𝑊4
+Epoch 4
+𝑺𝟑
+𝑺𝟒
+0
+50
+100
+-50
+-100
+-100
+-50
+0
+50
+100
+Updated
+center
+Cluster 1
+Cluster 3
+Cluster 2
+Cluster 4
+Cluster 5
+Cluster 6
+Cluster 7
+Cluster 8
+Past center
+Figure 4: Visualization of codebook evolution and cluster assignments across epochs.
+8
+16
+24
+32
+64
+0.160
+0.165
+0.170
+0.175
+0.180
+ ECL
+ ETTh2
+K
+0.34
+0.36
+0.38
+0.40
+8
+16
+24
+32
+64
+0.16
+0.17
+0.18
+0.19
+ ECL
+ ETTh2
+Lp
+0.34
+0.35
+0.36
+0.37
+Figure 5: Performance comparison under varying hyper-
+parameters.
+place the MLP backbone with two widely used backbones:
+iTransformer, representative of Transformer-based methods,
+and TimesNet, representative of CNN-based methods. As re-
+ported on Table 3, integrating ReCast’s dual-path framework
+with either iTransformer or TimesNet improves forecasting
+performance. These results demonstrate that the proposed
+architecture is not tightly coupled with any specific back-
+bone type and can be seamlessly adapted to a broad range of
+forecasting models, thereby confirming its strong portability
+and general applicability.
+Efficiency
+Benefiting from its lightweight dual-path archi-
+tecture and a series of efficiency-oriented design choices,
+such as patch-wise quantization, residual correction, and se-
+lective sampling, ReCast achieves state-of-the-art forecast-
+ing accuracy while maintaining low computational over-
+head. As illustrated in Figure 3, ReCast consistently ranks
+among the top-performing models in terms of both parame-
+ter efficiency and training speed, without compromising pre-
+dictive performance. These results highlight ReCast’s ability
+to strike a favorable balance between forecasting accuracy
+and computational complexity, making it well-suited for de-
+ployment in resource-constrained environments.
+Parameter sensitivity
+Figure 5 shows the performance
+under different hyperparameters (the number of clusters
+(codewords) K and the patch length Lp).
+4.5
+Visualization
+ReCast performs patch-wise clustering to generate discrete
+embeddings, its forecasting accuracy hinges on cluster-
+ing quality and the representational capacity of the result-
+ing cluster centers (codewords). To intuitively illustrate the
+codebook construction and update process, Figure 4 presents
+qualitative visualizations. Representative examples of code-
+words are provided in the Appendix C.2.
+The left side of Figure 4 shows clustering results over 8
+clusters and the evolution of cluster centers across epochs,
+where each color denotes a distinct cluster. Despite ran-
+dom sampling, cluster assignments remain stable and cen-
+ters converge smoothly, demonstrating the robustness of the
+clustering. The right side of Figure 4 illustrates the temporal
+dynamics of codebook updates. Taking epoch 2 as an ex-
+ample, the pseudo codebook ˆS
+2 better fits the current data
+distribution than S1, and the reliability-aware update assigns
+higher weight to ˆS
+2, shifting S2 closer to it. This confirms
+that the proposed reliability-aware update mechanism effec-
+tively balances adaptation and stability, supporting robust
+and generalizable forecasting.
+4.6
+Limitations
+Despite its demonstrated accuracy and efficiency, ReCast
+presents a notable practical limitation: As shown in Figure 5,
+its performance is sensitive to the choice of K and Lp. These
+parameters influence the trade-off between representational
+granularity and generalization capability to OOD patterns,
+yet are currently set empirically without adaptive or theoret-
+ical guidance. A promising direction is to scale ReCast to
+a pre-trained large language model with a richer codebook,
+diverse patch configurations, and heterogeneous time series
+pre-training, thereby improving robustness and reducing hy-
+perparameter sensitivity.
+5
+Conclusion
+In this work, we present ReCast, a novel codebook-assisted
+framework for reliable and efficient time series forecasting.
+Our dual-path architecture innovatively combines patch-
+wise quantization for capturing recurring local patterns
+
+--- Sayfa 8 ---
+with residual modeling for recovering irregular variations,
+achieving an optimal balance between lightweight design
+and forecasting accuracy. The proposed reliability-aware
+codebook update mechanism, supported by a reliability-
+aware scoring strategies, ensures robust adaptation to dis-
+tribution shifts while maintaining stability. Extensive exper-
+iments across 8 real-world datasets demonstrate that ReCast
+outperforms SOTA baselines, achieving superior accuracy
+with significantly reduced computational complexity.
+6
+Acknowledgments
+The authors appreciate the financial support by the National
+Natural Science Foundation of China (NSFC) Joint Fund
+with Zhejiang Integration of Informatization and Industri-
+alization under Key Project (Grant Number U22A2033),
+the Postdoctoral Fellowship Program of CPSF under Grant
+Number GZC20251643, the NSFC under Grant Number
+62576193.
+References
+Ansari, A. F.; Stella, L.; Turkmen, A. C.; Zhang, X.; Mer-
+cado, P.; Shen, H.; Shchur, O.; Rangapuram, S. S.; Arango,
+S. P.; Kapoor, S.; et al. 2025. Chronos: Learning the Lan-
+guage of Time Series. Transactions on Machine Learning
+Research.
+Duchi, J.; and Namkoong, H. 2019. Variance-based regular-
+ization with convex objectives. Journal of Machine Learn-
+ing Research, 20(68): 1–55.
+Duvenaud, D.; Wang, J.; Jacobsen, J.; Swersky, K.; Norouzi,
+M.; and Grathwohl, W. 2020. Your classifier is secretly an
+energy based model and you should treat it like one. In Inter-
+national Conference on Learning Representations (ICLR),
+volume 4.
+Guo, H.; Peng, S.; Yan, Y.; Mou, L.; Shen, Y.; Bao, H.; and
+Zhou, X. 2023. Compact neural volumetric video represen-
+tations with dynamic codebooks. Advances in Neural Infor-
+mation Processing Systems, 36: 75884–75895.
+Hu, Y.; Liu, P.; Zhu, P.; Cheng, D.; and Dai, T. 2025. Adap-
+tive multi-scale decomposition framework for time series
+forecasting. In Proceedings of the AAAI Conference on Ar-
+tificial Intelligence, volume 39, 17359–17367.
+Kong, Y.; Wang, Z.; Nie, Y.; Zhou, T.; Zohren, S.; Liang,
+Y.; Sun, P.; and Wen, Q. 2025.
+Unlocking the power of
+lstm for long term time series forecasting. In Proceedings of
+the AAAI Conference on Artificial Intelligence, volume 39,
+11968–11976.
+Lin, S.; Chen, H.; Wu, H.; Qiu, C.; and Lin, W. 2025. Tem-
+poral Query Network for Efficient Multivariate Time Series
+Forecasting. In Forty-second International Conference on
+Machine Learning.
+Lin, S.; Lin, W.; Hu, X.; Wu, W.; Mo, R.; and Zhong, H.
+2024. Cyclenet: Enhancing time series forecasting through
+modeling periodic patterns. Advances in Neural Information
+Processing Systems, 37: 106315–106345.
+Liu, M.; Zeng, A.; Chen, M.; Xu, Z.; Lai, Q.; Ma, L.; and
+Xu, Q. 2022. Scinet: Time series modeling and forecasting
+with sample convolution and interaction. Advances in Neu-
+ral Information Processing Systems, 35: 5816–5828.
+Liu, Y.; Hu, T.; Zhang, H.; Wu, H.; Wang, S.; Ma, L.;
+and Long, M. 2023. iTransformer: Inverted Transformers
+Are Effective for Time Series Forecasting. arXiv preprint
+arXiv:2310.06625.
+Lu, Y.; Wu, R.; Mueen, A.; Zuluaga, M. A.; and Keogh, E.
+2022. Matrix profile XXIV: scaling time series anomaly de-
+tection to trillions of datapoints and ultra-fast arriving data
+streams. In Proceedings of the 28th ACM SIGKDD confer-
+ence on knowledge discovery and data mining, 1173–1182.
+Ma, X.; Li, X.; Fang, L.; Zhao, T.; and Zhang, C. 2024. U-
+mixer: An unet-mixer architecture with stationarity correc-
+tion for time series forecasting. In Proceedings of the AAAI
+conference on artificial intelligence, volume 38, 14255–
+14262.
+Ma, X.; Li, X.; Feng, W.; Fang, L.; and Zhang, C. 2023.
+Dynamic graph construction via motif detection for stock
+prediction. Information Processing & Management, 60(6):
+103480.
+Nie, Y.; Nguyen, N. H.; Sinthong, P.; and Kalagnanam, J.
+2023. A Time Series is Worth 64 Words: Long-term Fore-
+casting with Transformers. In The Eleventh International
+Conference on Learning Representations.
+Paszke, A.; Gross, S.; Massa, F.; Lerer, A.; Bradbury, J.;
+Chanan, G.; Killeen, T.; Lin, Z.; Gimelshein, N.; Antiga, L.;
+et al. 2019. Pytorch: An imperative style, high-performance
+deep learning library. Advances in neural information pro-
+cessing systems, 32.
+Qi, Q.; Guo, Z.; Xu, Y.; Jin, R.; and Yang, T. 2021. An on-
+line method for a class of distributionally robust optimiza-
+tion with non-convex objectives. Advances in Neural Infor-
+mation Processing Systems, 34: 10067–10080.
+Qiu, X.; Hu, J.; Zhou, L.; Wu, X.; Du, J.; Zhang, B.; Guo,
+C.; Zhou, A.; Jensen, C. S.; Sheng, Z.; et al. 2024. TFB: To-
+wards Comprehensive and Fair Benchmarking of Time Se-
+ries Forecasting Methods. Proceedings of the VLDB Endow-
+ment, 17(9): 2363–2377.
+Senin, P.; and Malinchik, S. 2013. Sax-vsm: Interpretable
+time series classification using sax and vector space model.
+In 2013 IEEE 13th international conference on data mining,
+1175–1180. IEEE.
+Shibo, F.; Zhao, P.; Liu, L.; Wu, P.; and Shen, Z. 2025. Hdt:
+Hierarchical discrete transformer for multivariate time se-
+ries forecasting. In Proceedings of the AAAI Conference on
+Artificial Intelligence, volume 39, 746–754.
+Tang, P.; and Zhang, W. 2025.
+Unlocking the Power of
+Patch: Patch-Based MLP for Long-Term Time Series Fore-
+casting. In Proceedings of the AAAI Conference on Artificial
+Intelligence, volume 39, 12640–12648.
+Tian, K.; Jiang, Y.; Yuan, Z.; Peng, B.; and Wang, L. 2024.
+Visual autoregressive modeling: Scalable image generation
+via next-scale prediction. Advances in neural information
+processing systems, 37: 84839–84865.
+Van Den Oord, A.; Vinyals, O.; et al. 2017.
+Neural dis-
+crete representation learning. Advances in neural informa-
+tion processing systems, 30.
+
+--- Sayfa 9 ---
+Wang, M.; Yang, J.; Yang, B.; Li, H.; Gong, T.; Yang, B.; and
+Cui, J. 2025. Towards Lightweight Time Series Forecasting:
+a Patch-wise Transformer with Weak Data Enriching. arXiv
+preprint arXiv:2501.10448.
+Wen, Q.; Zhou, T.; Zhang, C.; Chen, W.; Ma, Z.; Yan, J.;
+and Sun, L. 2023. Transformers in time series: a survey. In
+Proceedings of the Thirty-Second International Joint Con-
+ference on Artificial Intelligence, 6778–6786.
+Wu, C.; Chen, X.; Wu, Z.; Ma, Y.; Liu, X.; Pan, Z.; Liu,
+W.; Xie, Z.; Yu, X.; Ruan, C.; et al. 2025. Janus: Decou-
+pling visual encoding for unified multimodal understanding
+and generation. In Proceedings of the Computer Vision and
+Pattern Recognition Conference, 12966–12977.
+Wu, H.; Hu, T.; Liu, Y.; Zhou, H.; Wang, J.; and Long, M.
+2023. TimesNet: Temporal 2D-Variation Modeling for Gen-
+eral Time Series Analysis. In International Conference on
+Learning Representations.
+Wu, H.; Xu, J.; Wang, J.; and Long, M. 2021. Autoformer:
+Decomposition transformers with auto-correlation for long-
+term series forecasting.
+Advances in Neural Information
+Processing Systems, 34: 22419–22430.
+Yeh, C.-C. M.; Zhu, Y.; Ulanova, L.; Begum, N.; Ding, Y.;
+Dau, H. A.; Silva, D. F.; Mueen, A.; and Keogh, E. 2016.
+Matrix profile I: all pairs similarity joins for time series: a
+unifying view that includes motifs, discords and shapelets.
+In 2016 IEEE 16th international conference on data mining
+(ICDM), 1317–1322. IEEE.
+Zeng, A.; Chen, M.; Zhang, L.; and Xu, Q. 2023. Are Trans-
+formers Effective for Time Series Forecasting? In Proceed-
+ings of the AAAI Conference on Artificial Intelligence.
+Zhou, H.; Zhang, S.; Peng, J.; Zhang, S.; Li, J.; Xiong, H.;
+and Zhang, W. 2021. Informer: Beyond efficient transformer
+for long sequence time-series forecasting. In Proceedings of
+the AAAI conference on artificial intelligence, volume 35,
+11106–11115.
+Zhou, T.; Ma, Z.; Wen, Q.; Wang, X.; Sun, L.; and Jin, R.
+2022. Fedformer: Frequency enhanced decomposed trans-
+former for long-term series forecasting.
+In International
+Conference on Machine Learning, 27268–27286. PMLR.
+
+--- Sayfa 10 ---
+A. Theoretical Proofs
+A.1 Proofs of Equation 8
+µv
+j = µv
+j−1 + 1
+j (wj ˆµv
+j −µv
+j−1) = j −1
+j
+µv
+j−1 + wj
+j ˆµv
+j
+= j −1
+j
+(j −2
+j −1µv
+j−2 + wj−1
+j −1 ˆµv
+j−1) + wj
+j ˆµv
+j
+= j −2
+j
+µv
+j−2 + wj−1
+j −1 ˆµv
+j−1 + wj
+j ˆµv
+j
+· · ·
+= 1
+j (wj0 ˆµv
+j0 + wj0+1ˆµv
+j0+1 + · · · + wj ˆµv
+j).
+(1)
+We expand Equation (8) to analyze the contribution of
+pseudo-codebooks across epochs and the role of W t:
+St = St−1 + 1
+t (WtˆS
+t −St−1)
+= t −1
+t
+St−1 + Wt
+t
+ˆS
+t
+(2)
+By recursively applying this update rule, we obtain:
+St = t −1
+t
+(t −2
+t −1St−2 + W t−1
+t −1
+ˆS
+t−1) + Wt
+t
+ˆS
+t
+= t −2
+t
+St−2 + Wt−1
+t −1
+ˆS
+t−1 + Wt
+t
+ˆS
+t
+· · ·
+= 1
+t (W1ˆS
+1 + W2ˆS
+2 + · · · + WtˆS
+t)
+(3)
+This shows that every previous pseudo codebook contributes
+to St through a structurally uniform form, while the degree
+of influence is exponentially decayed unless ˆW
+j is modu-
+lated.
+A.2 Closed-form Derivation of Reliability Fusion
+via DRO
+We present the derivation of the closed-form solution used
+in Equation (14), which applies a distributionally robust
+optimization (DRO) framework to fuse multiple reliability
+scores under a KL-divergence constraint.
+Problem Formulation
+We aim to compute the worst-case
+reliability score wt
+k for pseudo-codeword ˆst
+k at timestep t,
+defined by the following objective:
+wt
+k = min
+θ∈Uγ⟨θ, zt
+k⟩,
+where θ ∈R3 is a probability vector over the three relia-
+bility metrics, zt
+k = [wt
+rep,k, wt
+∆,k, wt
+je,k] contains the re-
+spective scores for representational quality, historical con-
+sistency, and OOD sensitivity, and Uγ is a KL-divergence
+ball centered at the uniform distribution:
+Uγ = {θ ∈Θ3 | DKL(θ∥u) ≤γ} ,
+with u = [1/3, 1/3, 1/3].
+Lagrangian Construction
+Introducing a Lagrange multi-
+plier λ ≥0, we construct the Lagrangian:
+L(θ, λ) = ⟨θ, zt
+k⟩+ λ
+ 3
+X
+i=1
+θi log(3θi) −γ
+!
+.
+Optimality Condition
+Taking the derivative w.r.t. θi and
+setting it to zero yields:
+∂L
+∂θi
+= zt
+k,i + λ(log(3θi) + 1) = 0
+⇒log(3θi) = −
+zt
+k,i
+λ −1 ⇒θi ∝exp
+ 
+−
+zt
+k,i
+λ
+!
+Normalization and Solution
+Normalizing over i
+∈
+{1, 2, 3}, we obtain the optimal weight vector:
+θ∗
+i =
+exp(−zt
+k,i/λ)
+P3
+j=1 exp(−zt
+k,j/λ)
+.
+Substituting θ∗back into the original objective gives:
+ˆwt
+k =
+3
+X
+i=1
+θ∗
+i zt
+k,i = −λ log
+3
+X
+i=1
+exp
+ 
+−
+zt
+k,i
+λ
+!
+.
+Letting γ = λ, we arrive at the final closed-form:
+ˆwt
+k = −γ · log
+3
+X
+i=1
+exp
+ 
+−
+zt
+k,i
+γ
+!
+.
+Interpretation
+This expression is a softmin function that
+balances conservativeness and averaging:
+• As γ →0, wt
+k →mini zt
+k,i
+• As γ →∞, wt
+k →mean(zt
+k)
+Such a form provides robustness against noisy or overly
+dominant scores, promoting conservative fusion under dis-
+tributional uncertainty.
+B. More Details of ReCast
+B.1 Datasets Details
+Detailed information about datasets is provided in Table 1.
+Dataset
+Channels
+Timesteps
+Interval
+Domain
+ETTm1
+7
+57,600
+15 mins
+Electricity
+ETTm2
+7
+57,600
+15 mins
+Electricity
+ETTh1
+7
+14,400
+1 hour
+Electricity
+ETTh2
+7
+14,400
+1 hour
+Electricity
+ECL
+321
+26,304
+1 hour
+Electricity
+Traffic
+862
+17,544
+1 hour
+Transportation
+Weather
+21
+52,696
+10 mins
+Weather
+Solar
+137
+52,560
+10 mins
+Energy
+Table 1: Statistics of the benchmark datasets
+
+--- Sayfa 11 ---
+B.2 Implementation Details
+The data splits follow a 6:2:2 ratio for the ETT datasets and
+a 7:1:2 ratio for the remaining datasets. The input sequence
+is segmented into patches of length Lp = 16 and vector-
+quantised with a codebook of size K ∈{8, 16, 24}. The
+quantization path implements as a single-layer MLP with
+hidden dimension 32, and the residual path implements as
+a single-layer MLP with hidden dimension 512. The batch
+size varies in [16,32,64] based on the dataset’s scale to max-
+imize GPU utilization while avoiding out-of-memory errors.
+To improve generalisation, 50% of the patches are randomly
+sampled during training. Training employs the Adam op-
+timiser with an initial learning rate of 3 × 10−4 under a
+cosine-annealing schedule. ReCast is trained for 30 epochs
+with early stopping based on a patience of 5 on the valida-
+tion set. All experiments are conducted in PyTorch on a
+single NVIDIA L40 GPU (48 GB).
+B.3 Pseudocode
+Algorithm 1: Overall Pseudocode of ReCast
+Input: historical series X∈RC×L, forecast horizon
+H
+patch length Lp, codebook size K, training epochs T
+Output: Forecasting series ˆY ∈RC×H
+1 X ∈RC×L ←(X −µin)/
+p
+σ2
+in + ε
+2 P = {pi}C×N
+i=1
+←Split X into length-Lp patches
+3 for t ←1 to T do
+4
+˜P
+t = {˜pt
+i}C×Np
+i=1
+←Randomly downsample(P)
+5
+ˆS
+t = {ˆst
+k}K
+k=1 ←Cluster(˜P
+t)
+6
+if t = 1 then
+7
+S1 = ˆS
+1
+8
+else
+9
+ˆW
+t ∈RK ←Fuse Representational quality
+wrep,k, Historical consistency w∆,k, and
+OOD sensitivity wje,k via distributionally
+robust optimization
+10
+St ←St−1 + 1
+t
+  ˆW
+t ˆS
+t −St−1
+11
+Qx ∈RC×N ←St(˜P
+t)
+12
+Qy ∈RC×Ny ←MLPquant(Qx)
+13
+Xr ∈RC×L ←X −Xq, Xq ←Rec(Qx | St)
+14
+Yr ←MLPres(Xr)
+15
+Yq ∈RC×H ←Rec(Qy | St)
+16
+ˆY ∈RC×H ←σin(Yq + Yr) + µin
+C. More Results of ReCast
+C.1 Full Comparison Results
+Table 2 presents the full comparison results of ReCast
+against several baselines across 8 datasets. The results
+demonstrate that ReCast consistently achieves state-of-the-
+art forecasting performance under most experimental set-
+tings, underscoring the effectiveness of the proposed ap-
+proach. For some baseline methods, only the average per-
+formance across all forecasting lengths is reported in the
+original papers, and their per-horizon results are unavail-
+able. Therefore, we include only the average results for these
+methods in our comparison.
+C.2 Examples of codewords
+To provide a clearer understanding of the learned discrete
+embeddings, we present representative examples of code-
+words under different configurations. Specifically, we con-
+sider two settings:
+• Patch length Lp = 16, with K = 8 clusters: The time
+series is segmented into patches of length 16, and each
+patch is quantized into one of 8 codewords. Representa-
+tive examples from each cluster are visualized to illus-
+trate the diversity and semantics captured by the code-
+book.
+• Patch length Lp = 24, with K = 16 clusters: The
+time series is divided into longer patches of length 24,
+and quantized into 16 codewords. We display represen-
+tative instances for each codeword to demonstrate the in-
+creased granularity and expressiveness provided by the
+larger codebook.
+The corresponding visualizations are shown in Figure 1
+and Figure 2, respectively. These visualizations demonstrate
+the structure and interpretability of the learned codewords,
+and how varying the patch length and codebook size influ-
+ences the representation capacity.
+
+--- Sayfa 12 ---
+Models
+ReCast
+PatchMLP
+TQNet
+CycleNet
+iTransformer
+TimesNet
+PatchTST
+Dlinear
+Metric
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+MSE
+MAE
+ETTm1
+96
+0.308
+0.345
+-
+-
+0.311
+0.353
+0.319
+0.360
+0.334
+0.368
+0.338
+0.375
+0.329
+0.367
+0.345
+0.372
+192
+0.352
+0.360
+-
+-
+0.356
+0.378
+0.360
+0.381
+0.377
+0.391
+0.374
+0.387
+0.367
+0.385
+0.380
+0.389
+336
+0.385
+0.381
+-
+-
+0.390
+0.401
+0.389
+0.403
+0.426
+0.420
+0.410
+0.411
+0.399
+0.410
+0.413
+0.413
+720
+0.439
+0.431
+-
+-
+0.452
+0.440
+0.447
+0.441
+0.491
+0.459
+0.478
+0.450
+0.454
+0.439
+0.474
+0.453
+Avg
+0.371
+0.379
+0.374
+0.382
+0.377
+0.393
+0.379
+0.396
+0.407
+0.410
+0.400
+0.406
+0.387
+0.400
+0.403
+0.407
+ETTm2
+96
+0.161
+0.243
+-
+-
+0.173
+0.256
+0.163
+0.246
+0.180
+0.264
+0.187
+0.267
+0.175
+0.259
+0.193
+0.292
+192
+0.231
+0.287
+-
+-
+0.238
+0.298
+0.229
+0.290
+0.250
+0.309
+0.249
+0.309
+0.241
+0.302
+0.284
+0.362
+336
+0.283
+0.322
+-
+-
+0.301
+0.340
+0.284
+0.327
+0.311
+0.348
+0.321
+0.351
+0.305
+0.343
+0.369
+0.427
+720
+0.386
+0.384
+-
+-
+0.397
+0.396
+0.389
+0.391
+0.412
+0.407
+0.408
+0.403
+0.402
+0.400
+0.554
+0.522
+Avg
+0.265
+0.309
+0.269
+0.311
+0.277
+0.323
+0.266
+0.314
+0.288
+0.332
+0.291
+0.333
+0.281
+0.326
+0.350
+0.401
+ETTh1
+96
+0.368
+0.387
+-
+-
+0.371
+0.393
+0.375
+0.395
+0.386
+0.405
+0.384
+0.402
+0.414
+0.419
+0.386
+0.400
+192
+0.426
+0.423
+-
+-
+0.428
+0.426
+0.436
+0.428
+0.441
+0.436
+0.436
+0.429
+0.460
+0.445
+0.437
+0.432
+336
+0.470
+0.440
+-
+-
+0.476
+0.446
+0.496
+0.455
+0.487
+0.458
+0.491
+0.469
+0.501
+0.466
+0.481
+0.459
+720
+0.485
+0.462
+-
+-
+0.487
+0.470
+0.520
+0.484
+0.503
+0.491
+0.521
+0.500
+0.500
+0.488
+0.519
+0.516
+Avg
+0.437
+0.428
+0.438
+0.429
+0.441
+0.434
+0.457
+0.441
+0.454
+0.448
+0.458
+0.450
+0.469
+0.455
+0.456
+0.452
+ETTh2
+96
+0.258
+0.329
+-
+-
+0.295
+0.343
+0.298
+0.344
+0.297
+0.349
+0.340
+0.374
+0.302
+0.348
+0.333
+0.387
+192
+0.341
+0.375
+-
+-
+0.367
+0.393
+0.372
+0.396
+0.380
+0.400
+0.402
+0.414
+0.388
+0.400
+0.477
+0.476
+336
+0.390
+0.406
+-
+-
+0.417
+0.427
+0.431
+0.439
+0.428
+0.432
+0.452
+0.452
+0.426
+0.433
+0.594
+0.541
+720
+0.400
+0.431
+-
+-
+0.433
+0.446
+0.450
+0.458
+0.427
+0.445
+0.462
+0.468
+0.431
+0.446
+0.831
+0.657
+0.347
+0.385
+0.349
+0.378
+0.378
+0.402
+0.388
+0.409
+0.383
+0.407
+0.414
+0.427
+0.387
+0.407
+0.559
+0.515
+ECL
+96
+0.135
+0.234
+-
+-
+0.134
+0.229
+0.136
+0.229
+0.148
+0.240
+0.168
+0.272
+0.181
+0.270
+0.197
+0.282
+192
+0.155
+0.244
+-
+-
+0.154
+0.247
+0.152
+0.244
+0.162
+0.253
+0.184
+0.289
+0.188
+0.274
+0.196
+0.285
+336
+0.163
+0.261
+-
+-
+0.169
+0.264
+0.170
+0.264
+0.178
+0.269
+0.198
+0.300
+0.204
+0.293
+0.209
+0.301
+720
+0.200
+0.290
+-
+-
+0.201
+0.294
+0.212
+0.299
+0.225
+0.317
+0.220
+0.320
+0.246
+0.324
+0.245
+0.333
+Avg
+0.163
+0.257
+0.171
+0.265
+0.164
+0.259
+0.168
+0.259
+0.178
+0.270
+0.193
+0.295
+0.205
+0.290
+0.212
+0.300
+Traffic
+96
+0.382
+0.257
+-
+-
+0.413
+0.261
+0.458
+0.296
+0.395
+0.268
+0.593
+0.321
+0.462
+0.290
+0.650
+0.396
+192
+0.406
+0.268
+-
+-
+0.432
+0.271
+0.457
+0.294
+0.417
+0.276
+0.617
+0.336
+0.466
+0.290
+0.598
+0.370
+336
+0.423
+0.273
+-
+-
+0.450
+0.277
+0.470
+0.299
+0.433
+0.283
+0.629
+0.336
+0.482
+0.300
+0.605
+0.373
+720
+0.459
+0.291
+-
+-
+0.486
+0.295
+0.502
+0.314
+0.467
+0.302
+0.640
+0.350
+0.514
+0.320
+0.645
+0.394
+Avg
+0.418
+0.272
+0.417
+0.273
+0.445
+0.276
+0.472
+0.301
+0.428
+0.282
+0.620
+0.336
+0.481
+0.300
+0.625
+0.383
+Weather
+96
+0.141
+0.181
+-
+-
+0.157
+0.200
+0.158
+0.203
+0.174
+0.214
+0.172
+0.220
+0.177
+0.210
+0.196
+0.255
+192
+0.189
+0.230
+-
+-
+0.206
+0.245
+0.207
+0.247
+0.221
+0.254
+0.219
+0.261
+0.225
+0.250
+0.237
+0.296
+336
+0.253
+0.267
+-
+-
+0.262
+0.287
+0.262
+0.289
+0.278
+0.296
+0.280
+0.306
+0.278
+0.290
+0.283
+0.335
+720
+0.333
+0.323
+-
+-
+0.344
+0.342
+0.344
+0.344
+0.358
+0.349
+0.365
+0.359
+0.354
+0.340
+0.345
+0.381
+Avg
+0.229
+0.250
+0.231
+0.256
+0.242
+0.269
+0.243
+0.271
+0.258
+0.278
+0.259
+0.287
+0.259
+0.273
+0.265
+0.317
+Solar
+96
+0.181
+0.237
+-
+-
+0.173
+0.233
+0.190
+0.247
+0.203
+0.237
+0.250
+0.292
+0.234
+0.286
+0.290
+0.378
+192
+0.215
+0.261
+-
+-
+0.199
+0.257
+0.210
+0.266
+0.233
+0.261
+0.296
+0.318
+0.267
+0.310
+0.320
+0.398
+336
+0.221
+0.273
+-
+-
+0.211
+0.263
+0.217
+0.266
+0.248
+0.273
+0.319
+0.330
+0.290
+0.315
+0.353
+0.415
+720
+0.217
+0.270
+-
+-
+0.209
+0.270
+0.223
+0.266
+0.249
+0.275
+0.338
+0.337
+0.289
+0.317
+0.356
+0.413
+Avg
+0.209
+0.260
+0.211
+0.261
+0.198
+0.256
+0.210
+0.261
+0.233
+0.262
+0.301
+0.319
+0.270
+0.307
+0.330
+0.401
+Table 2: Full time series forecasting results for all prediction horizons H ∈{96, 192, 336, 720}. The look-back length L = 96,
+and the reproduced baseline results are sourced from TQNet. The best results are highlighted in bold, while the second-best
+results are underlined.
+
+--- Sayfa 13 ---
+6
+8
+Figure 1: Representative examples of the learned codewords under the setting of window length Lp = 16 and codebook size
+K = 8.
+5
+0.10
+  0.00
+0.10
+  0.20
+0.00
+0.50
+0.00
+  0.30
+0.60
+  0.90
+0.20
+  0.40
+0.60
+0.10
+  0.00
+0.10
+Figure 2: Representative examples of the learned codewords under the setting of window length Lp = 24 and codebook size
+K = 16.Compared to the smaller configuration, the increased window length and codebook size lead to more expressive and
+fine-grained representations.

@@ -1,0 +1,697 @@
+
+--- Sayfa 1 ---
+A PROBABILISTIC VIEW ON RUPTURE PREDICTABILITY:
+ALL EARTHQUAKES EVOLVE SIMILARLY
+Jannes Münchmeyer1,2,∗, Ulf Leser2, Frederik Tilmann1,3
+1 Deutsches GeoForschungsZentrum GFZ, Potsdam, Germany
+2 Institut für Informatik, Humboldt-Universität zu Berlin, Berlin, Germany
+3 Institut für geologische Wissenschaften, Freie Universität Berlin, Berlin, Germany
+∗To whom correspondence should be addressed: munchmej@gfz-potsdam.de
+March 17, 2022
+ABSTRACT
+Ruptures of the largest earthquakes can last between a few seconds and several minutes. An early
+assessment of the ﬁnal earthquake size is essential for early warning systems. However, it is still
+unclear when in the rupture history this ﬁnal size can be predicted. Here we introduce a probabilistic
+view of rupture evolution - how likely is the event to become large - allowing for a clear and well-
+founded answer with implications for earthquake physics and early warning. We apply our approach
+to real time magnitude estimation based on either moment rate functions or broadband teleseismic P
+arrivals. In both cases, we ﬁnd strong and principled evidence against early rupture predictability
+because differentiation between differently sized ruptures only occurs once half of the rupture has
+been observed. Even then, it is impossible to foresee future asperities. Our results hint towards a
+universal initiation behavior for small and large ruptures.
+1
+Introduction
+It is a longstanding question at which time during an earthquake rupture its ﬁnal size can be constrained. Answering
+this question would have direct implications for early warning systems (Allen & Melgar, 2019) and would provide
+insights into the underlying physical processes. Accordingly, its formulation spanned a series of studies over the last
+decades. However, so far results have been contradictory - some argue for early predictability, others against.
+A common theory implying predictability is the preslip model (Ellsworth & Beroza, 1995), in which failure starts
+aseismically until the process reaches a critical size and becomes unstable. Here, the ﬁnal moment of the earthquake
+might be derivable at the event onset time from properties of the nucleation zone, i.e., its size or its magnitude of
+slip. Other models also suggest early predictability, but only after several seconds. For example, Melgar & Hayes
+(2017) argue that ruptures of large events propagate as self-healing pulses, and that pulse properties allow identiﬁcation
+of very large events after ∼15 s. Support for such theories has been provided by the analysis of, e.g., waveform
+onsets (Ellsworth & Beroza, 1995), moment rate functions (Danré et al., 2019), and early ground motion parameters
+(Colombelli et al., 2020).
+The opposing hypothesis, often termed cascade model (Ellsworth & Beroza, 1995), suggests a universal initiation
+behavior: small and large earthquakes start identically and are differentiated only after the peak moment release, which
+occurs approximately at half of the rupture duration. Rupture evolution is controlled by heterogeneous local conditions,
+such as the pre-event stress distribution or the presence of mechanical barriers. Studies supporting this theory also
+analyzed properties like moment rate functions (Meier et al., 2017), waveform onsets (Ide, 2019), or peak displacement
+(Trugman et al., 2019).
+While reaching contradicting conclusions, predictability studies often follow the same principle: analyzing correspon-
+dences between earthquake size and real time observables (Ellsworth & Beroza, 1995; Danré et al., 2019; Colombelli
+et al., 2020; Meier et al., 2017; Ide, 2019; Trugman et al., 2019). Earthquake size is commonly quantiﬁed by seismic
+moment/moment magnitude, as large, high quality catalogs thereof are openly available (Ekström et al., 2012). A
+arXiv:2203.08622v1  [physics.geo-ph]  16 Mar 2022
+
+--- Sayfa 2 ---
+A probabilistic view on rupture predictability
+Figure 1: Magnitude estimate development for three different predictability models: Gutenberg-Richter (GR) (not
+predictable during growth phase), skewed GR (total magnitude not point-predictable, but information gain with respect
+to prior already during growth phase of rupture) and Gaussian (predictable). For each model, we use the same
+hypothetical event with prototypical triangular moment rate functions. The prototypical source time function is meant
+to represent the ﬁrst order moment release history; for predictable models to be viable, second order features of the
+moment rate function would differ between smaller and larger events. Predictive distributions are visualized by their
+0.05, 0.2, 0.5, 0.8, 0.95 quantiles over time. The cumulative moment release is indicated by the dashed black line. a In
+the GR case, the prediction follows a GR distribution above the moment released so far. Only after the peak moment
+release, the prediction quickly transforms into a Gaussian, although with a decreasing GR portion that relates to the
+possibility of future asperities. b The skewed GR case behaves similarly to the GR case, but the distribution is skewed
+towards higher magnitudes, i.e., from early on, it is more likely for the event to become large. c For the Gaussian case,
+the magnitude can be determined early on with small error that decreases further over time. No quantitative x and y
+labels are provided to highlight the prototypical character of the ﬁgure. A cross section view of the three different
+options at ﬁxed time is shown in Figure S2a.
+common practice is calculating parametric ﬁts between magnitude and observables, and assessing at which time they
+become signiﬁcant using standard deviations (Melgar & Hayes, 2017; Danré et al., 2019; Colombelli et al., 2020; Meier
+et al., 2017; Olson & Allen, 2005; Noda & Ellsworth, 2016; Zollo et al., 2006). However, this point-estimator approach
+hides the residual distribution and thereby potentially obscures distinct modes of rupture predictability, especially when
+distributions are non-Gaussian (see Figure S1 for a toy example illustrating the importance of this restriction). Notably,
+exactly such distributions occur for real observables; examples can be found in Olson & Allen (2005, their Fig. 3,
+the observable is the dominant period of the initial 4 s of the P wave) or Noda & Ellsworth (2016, their Fig. 5, the
+observable is based on early P displacement waveform).
+2
+A probabilistic framework for rupture predictability
+We argue that a rigorous, probabilistic approach can overcome this issue. To this end, we interpret the magnitude M of
+an event as a random variable and introduce a stochastic process (Ot)t∈R, the observables at time t. t = 0 identiﬁes
+the event onset. The observables (Ot)t∈R can be any information, as long as Ot only describes the event until t, e.g.,
+waveforms up to (P travel time + t).
+Events with magnitude M1̸ = M2 differ at time t if the conditional distributions P(Ot|M1) and P(Ot|M2) differ.
+However, while describing P(Ot|M) for scalar Ot is feasible, it becomes intractable for higher dimensional Ot.
+Furthermore, for early warning the objective is estimating M from Ot and not vice versa. Therefore, we analyze
+P(M|Ot), directly investigating to what degree the observables constrain the magnitude. While this type of analysis
+has been conducted for peak ground displacement, where Meier et al. (2017) considered P(Ot|M) and Trugman et al.
+(2019) analyzed both P(Ot|M) and P(M|Ot), an analysis for higher dimensional observables is still missing. This
+leaves many promising observables unexplored, e.g., seismic waveforms.
+There are two distinct aspects of rupture predictability: (i) the future development of the current asperity and (ii) the
+probability of further asperities to rupture. Figure 1a shows an example of P(M|Ot) with no predictability in the
+2
+
+--- Sayfa 3 ---
+A probabilistic view on rupture predictability
+growing rupture, as suggested, e.g., by Meier et al. (2017). Before the peak moment release, the distribution equals a
+Gutenberg-Richter (GR) distribution with lower bound at the currently released moment, accounting for both aspects.
+After the peak, the distribution becomes Gaussian (i), with a decreasing GR component accounting for potential future
+asperities (ii). Figure 1b shows a skewed GR case: the magnitude cannot be pinpointed, but from early on the event is
+more likely to become large than the marginal GR distribution. Skewed GR distributions might occur, e.g., in slip pulse
+models (Melgar & Hayes, 2017), where pulse properties deﬁne the likelihood of the rupture to arrest soon. Figure 1c
+shows the predictable case: the magnitude can be pinpointed early and uncertainties decrease steadily, implying correct
+assessment of both aspects.
+The different evolutions of P(M|Ot) have consequences for early warning: a shifted tail for P(M|Ot) shifts the
+estimated distribution of ground shaking and possibly the warning decision. However, several previous results do not
+allow a clear distinction of the presented cases. For example, multiple studies (Ide, 2019; Abercrombie & Mori, 1994;
+Kilb & Gomberg, 1999; Mori & Kanamori, 1996) reported that for most large events, small events with similar onsets
+exist. While this rules out the predictable case, events might still differ strongly in their likelihood of becoming large.
+For practical analysis, P(M|Ot) needs to be derived from observed samples {(M i, Oi
+t)}i=1,...,n ∼iid P(M, Ot).
+As direct description is infeasible for high dimensional Ot, we propose to instead use a variational approximation
+Pθ(M|Ot) ≈P(M|Ot) where parameters θ are learned to ﬁt P(M|Ot) using samples {(M i, Oi
+t)}i=1,...,n (Gneiting
+& Raftery, 2007). Speciﬁcally, we suggest to parameterize Pθ(M|Ot) using neural networks with Gaussian mixture
+outputs (Bishop, 1994), because both neural networks and Gaussian mixtures (Figure S2b) have universal approximator
+properties, making them particularly well suited for our case (Cybenko, 1989; Bengio et al., 2017). This enables us to
+obtain probabilistic magnitude estimates, while not being restricted to single dimensional observables. Notably, this
+approach can be applied directly to any type of observables, simply by designing an appropriate neural network.
+3
+Predictions from moment rate functions
+We ﬁrst apply this framework to source time functions (STFs), also known as moment rate functions, a commonly
+used observable in predictability studies (Danré et al., 2019; Meier et al., 2017). For our analysis we use three STF
+databases: SCARDEC (3514 events, 5.4 ≤Mw ≤9.1) (Vallée & Douet, 2016) and the ones from USGS (Hayes, 2017)
+(190 events, 6.8 ≤Mw ≤9.1) and Ye et al. (2016) (119 events, 6.8 ≤Mw ≤9.1). The geographic and magnitude
+distributions for all three datasets are shown in Figure 2. The three STF databases were generated using two different
+methodologies. SCARDEC uses a point source approximation and conducts a constrained deconvolution of body
+waves. In contrast to SCARDEC, USGS and Ye et al. (2016) calculate ﬁnite fault solutions from both body and surface
+waves assuming constant rupture velocity within each event. As the spatial extent of the source is modelled, the STFs
+generally represent more high frequency details than the SCARDEC ones. On the other hand, the SCARDEC method is
+applicable to smaller events that can not be processed with the ﬁnite-fault inversion schemes. Further details on the
+methodologies of the STF datasets are provided in Text SA.
+As neural network model for the prediction of total moment magnitude based on (partial) source time functions, we use
+a simple multi-layer perceptron. As input we use ﬁve observables derived from the source time function at time t: (1)
+cumulative moment Mt; (2) current moment rate ˙Mt; (3) average moment rate 1
+t Mt; (4) peak moment rate maxτ≤t ˙Mτ;
+(5) current moment acceleration ¨
+Mt. We use features instead of full STFs to avoid the danger of overﬁtting due to
+the high dimensionality of time series but low numbers of training examples. Still, these features describe the STFs
+in sufﬁcient detail to represent the observables considered in most previous STF based predictability studies (Meier
+et al., 2017; Melgar & Hayes, 2019). We train the model on SCARDEC, as it is the largest of the datasets, with further
+results from models trained on the USGS datasets available in Figure S3. For training we use a ten fold cross validation
+scheme. We use the continuous ranked probability score as loss, as its optimization behaviour is more favorable in face
+of highly skewed underlying distributions than for log-likelihood. Further details on the model and training procedure
+are provided in Text SB.
+For qualitative insights into the predictions and as a basis for interpreting the average results, we visualize a few
+representative examples (Figure 3). In all cases, the sign of the moment acceleration largely deﬁnes the anticipated
+potential for growth: positive acceleration, i.e., the growth phase, indicates high growth potential, negative acceleration
+low potential. Furthermore, the higher the current moment release is, the higher the growth potential. This results from
+the STF’s smoothness: at high moment rates it will likely take longer to arrest than at low rates. Notably, the model
+does not predict future asperities within a multiple asperities rupture (Figure 3d, e); for times after the peak of the
+moment rate function has been passed, the model expects a steady decay. Once the moment rate approaches zero, the
+estimated further growth is low (e.g. Figure 3d at 15 s, 3e at 40 s). If moment release accelerates again, the model
+immediately expects another asperity to break and higher growth potential is inferred yet again. These effects lead to
+sudden changes of the PDF at local maxima and minima of the STF (e.g. Figure 3d at 20 s, 3e at 25 s).
+3
+
+--- Sayfa 4 ---
+A probabilistic view on rupture predictability
+Figure 2: Distribution of events and histograms for magnitude distribution for the three STF datasets. The events are
+color coded by their dataset. Ye et al is plotted on top of USGS, on top of SCARDEC. This might lead to few events not
+being visible due to overlaps.
+For a systematic analysis, we average P(M|Ot) by magnitude buckets (Figure 4a, c, e). For the datasets using ﬁnite
+fault solutions (Figure 4c, e), during the ﬁrst 2 s of the STF, the predicted distributions are mostly identical across
+buckets. Afterwards, the buckets split up over time: Mw = 6.5 to 7.0 at ∼2 s, Mw = 7.0 to 7.5 at ∼8 s, Mw = 7.5
+to 8.0 at ∼16 s, Mw = 8.0 to 8.5 at 25–40 s. These times match typical half-durations of events in these magnitude
+ranges (Gomberg et al., 2016).
+SCARDEC (Figure 4a) shows similar splitting over time, but exhibits an apparent skew in the early predictions: higher
+magnitude buckets exhibit higher likelihood for becoming large. Furthermore, lower bounds for the highest magnitude
+buckets (brown, purple), are higher than for the remaining buckets already after 1 s. Similarly, the SCARDEC examples
+in Figure 3b-d show high predictions within the ﬁrst 2 s and abruptly fall afterwards. We attribute this apparent
+predictability to artifacts of the SCARDEC processing, in particular uncertainties in onset timing and the point source
+approximation (A). Additionally, we trained the model with the much smaller USGS dataset. The results lack the
+apparent early predictability, consistent with this explanation (Figure S3).
+Predictions at a ﬁxed time t after onset describe both moment release until t and future development, with only the later
+being relevant for predictability. To isolate this aspect, we deﬁne P(M|O ¯
+M) = P(M|Ot ¯
+M ), where t ¯
+M = supt{M(t) ≤
+¯
+M} is the time when the cumulative moment release equals ¯
+M. When analyzing P(M|O ¯
+M), all three datasets exhibit
+the same trends (Figure 4b, d, f). All magnitude buckets with lower bounds at least ¯
+M + 0.5 show nearly identical
+predictions: a sharp increase in likelihood from ¯
+M to ∼¯
+M + 0.2 and an exponential tail. ¯
+M + 0.2 represents roughly
+twice the seismic moment of ¯
+M and, due to the symmetry of STFs (Meier et al., 2017), half the event duration. For
+buckets with lower bound equal to ¯
+M, peak likelihood occurs around ¯
+M, again with exponential tails. The decay is
+steeper for these buckets, as most events are already past the peak and substantial future growth can therefore only
+result from future asperities, but not from further growth of the current one. The results are independent of the faulting
+mechanism (Figures S4, S5, S6). The systematic analysis therefore conﬁrms the hypothesis that the ﬁnal magnitude
+4
+
+--- Sayfa 5 ---
+A probabilistic view on rupture predictability
+Figure 3: a Probability density functions (PDFs) calculated from the STF model just before onset, and at 2, 4, 6 and 8 s
+after onset. Colored ticks on the PDFs indicate 0.05, 0.2, 0.5, 0.8, 0.95 quantiles. b-f Example predictions from the STF
+model visualized by the 0.05, 0.2, 0.5, 0.8, 0.95 quantiles over time. b shows the same event as a. The lower right gives
+information on the event. The black dashed line shows the magnitude equivalent to the moment released so far, i.e., the
+trivial lower bound. The bottom plots show the STFs used for prediction. The annotation in the upper right indicates the
+STF database used.
+can only be assessed after the peak of the STF has been passed and that the rupture of further asperities cannot be
+anticipated.
+4
+Predictions from teleseismic P arrivals
+STFs have limited temporal resolution such that high frequency details indicative of future rupture development might
+be hidden. To resolve this issue, we apply our approach to teleseismic P arrival waveforms, which in contrast to STFs
+contain full spectral information up to ∼1 Hz. As neural network we adapted TEAM-LM (Münchmeyer et al., 2021)
+and apply it to a catalog of ∼35,000 events with nearly 750,000 manually labeled ﬁrst P arrivals (Figure S8).
+STFs have limited temporal resolution, giving only a low-pass ﬁltered view of the source process. Consequently,
+potential higher frequency details indicative of future rupture development might be hidden. To resolve this issue, we
+apply our approach to teleseismic P arrival waveforms, which in contrast to STFs contain full spectral information up to
+∼1 Hz, above which they will be hidden by attenuation. We collated a dataset of ∼35, 000 event with ∼750, 000
+manually labelled ﬁrst P arrivals. As neural network we adapted TEAM-LM (Münchmeyer et al., 2021). TEAM-LM
+consists of a combination of convolutional layers, a transformer network, and a mixture density output and predicts the
+event magnitude directly from the seismic waveforms at a ﬂexible set of input stations. Further details on the dataset
+and model are provided in appendix C.
+Compared to the STF model, predictions P(M|Ot) and P(M|O ¯
+M) show higher uncertainties and systematic under-
+estimation of the largest magnitudes at all times (Figure 4g). Higher uncertainties result from the fact that assessing
+magnitude from waveforms is harder than from STFs, whereas underestimation can be attributed to data sparsity
+(Münchmeyer et al., 2021). Due to the higher model uncertainties, all tails look rather like exponentially modiﬁed
+Gaussians than exponential distributions, as for the STF case. We note that the apparent lower uncertainty for the
+highest magnitude buckets compared to the lower magnitude buckets results from the number of samples in each bucket:
+with fewer samples available, the result gets less smooth but also less wide. Nonetheless, the general trends are highly
+5
+
+--- Sayfa 6 ---
+A probabilistic view on rupture predictability
+Figure 4: Average predicted PDFs based on STFs (a-f) and teleseismic waveforms (g-h) grouped by magnitude bin.
+Left column shows results at time t after onset (P(M|Ot)), right column after cumulative moment equals magnitude
+¯
+M (P(M|O ¯
+M)). The STF model has been trained on the SCARDEC dataset and evaluated on each STF dataset. See
+Figure S3 for STF results from a neural network trained with the USGS dataset. PDFs were truncated in visualization
+to avoid overlap between different times/base magnitudes. Black dotted lines in b, d, f, g indicate the current base
+magnitude. The apparent skew between buckets in panel b and prediction difference in g for ¯
+M = 6.0 likely results
+from SCARDEC processing artifacts (A). For determining t ¯
+M in h we used the SCARDEC dataset. See Figure S7 for
+plots with the other STF datasets. Events differ between panels g and h: h only includes those events present in both
+the teleseismic dataset and SCARDEC (∼3,500 events) and g all of the former (∼38,000 events).
+6
+
+--- Sayfa 7 ---
+A probabilistic view on rupture predictability
+similar to the results from the STF analysis before. Early predictions (t ≤2 s) are indistinguishable, except for the bin
+Mw = 6.0 to 6.5, where event durations are often < 4 s. Bins split over time, similar to the STF model, although with
+higher overlap in predictions between bins. Splits occur around 4 s for Mw = 6.5 to 7.0, 8 s Mw = 7.0 to 7.5, and 16
+to 25 s for both Mw = 7.5 to 8.0 and Mw = 8.0 to 8.5, again representing typical event half-durations.
+As for P(M|Ot), predictions for P(M|O ¯
+M) exhibit similar behaviour to the ones from the STF model (Figure 4h).
+While ¯
+M is considerably below the ﬁnal magnitude, the predictions are indistinguishable between the buckets. Splitting
+of buckets occurs slightly later than for the STF model, i.e., clear differences only become apparent once ¯
+M exceeds
+the upper bound of the bucket. This likely results from the higher uncertainties. We therefore argue, that assessment is
+likely still possible from the moment peak onward, again up to potential further asperities.
+5
+Comparison with previous results
+Our results ﬁnd no predictability from both STF and teleseismic waveforms. These observations seem contradictory to
+several previous result. We discuss potential reasons for some studies below. Melgar & Hayes (2019) found differences
+in moment acceleration for earthquakes of different size. As our STF model has access to the acceleration parameter
+investigated in this study, we would expect to be able to reproduce this effect. However, later analysis demonstrated that
+these results were caused by a sampling bias, which our study conﬁrms (Meier et al., 2020).
+Danré et al. (2019) analysed STFs as well, in this case by decomposing them into subevents, and also found predictability.
+Large events exhibited higher moment in early subevents and in addition showed higher complexity, i.e., had more
+subevents. We suspect that their different conclusion might also result from the SCARDEC processing, which
+hides small subevents within large earthquakes and thereby makes the ﬁrst identiﬁable subevent within a large event
+comparably larger. For a further description of artifacts in the SCARDEC dataset, we refer to Text SA.
+Melgar & Hayes (2017) analysed slip pulse behaviour and found a correlation between rise time and moment magnitude,
+making magnitude assessment possible after ∼15 s. While this conclusion would contradict our results, the signiﬁcance
+of the ﬁndings for events with Mw > 7.5 is unclear, given the low number of very large events and several intermediate
+events with high rise time. On the other hand, ∼15 s does not imply any further predictability than found in our study
+for events with Mw ≤7.5, due to their comparatively short duration. Furthermore, the study by Melgar & Hayes (2017)
+uses geodetic observations in contrast to the STFs and teleseismic waveforms used in our analysis. While teleseismic P
+arrivals should allow for good rupture tracking, similar to geodetic recordings, speciﬁc patterns of slip pulses might not
+be identiﬁable.
+Colombelli et al. (2020) found differences in the slope of early peak ground motion parameters at local distances
+between earthquakes of magnitude 4 to 9. In our analysis of teleseismic waves, this effect could be hidden by the
+attenuation of high frequency waveforms. Therefore, our results do neither conﬁrm nor contradict Colombelli et al.
+(2020). Similarly, while our study practically rules out predictability given STFs and teleseismic waveforms, it still
+leaves the option of approaches, where the tell-tale signals might only be observable in local waveforms, or require
+geodetic observations.
+6
+Conclusion
+We conclude that there are no signs of early rupture predictability in either STFs or broadband teleseismic P waveforms.
+Instead, our analysis indicates that the total moment of an event based on such data can only be estimated after the peak
+moment release. However, even then it is not possible to anticipate future asperities.
+While our analysis ﬁnds no early predictability, it highlights the feasibility of real time rupture tracking, at least using
+STFs and teleseismic waveforms. Transferring the methods to regional waveforms might therefore still signiﬁcantly
+beneﬁt early warning. Care has to be taken to counteract potentially biased estimations for the largest events, for which
+undersampling is hard to avoid (Münchmeyer et al., 2020).
+Data availability
+Moment rate datasets were obtained from the US Geological Survey (https://earthquake.usgs.gov/data/
+finitefault/), Linling Ye (slip models are supplement to Ye et al. (2016) and linked in the acknowledgements
+therein), and the SCARDEC project (http://scardec.projects.sismo.ipgp.fr/). We downloaded manual
+phase picks from the ISC (International Seismological Centre, 2021) and USGS (U.S. Geological Survey, 2017).
+Seismic waveforms were downloaded from the IRIS and GEOFON data centers. We use waveforms from the GE
+(GEOFON Data Centre, 1993), G (Institut De Physique Du Globe De Paris (IPGP) & Ecole Et Observatoire Des
+7
+
+--- Sayfa 8 ---
+A probabilistic view on rupture predictability
+Sciences De La Terre De Strasbourg (EOST), 1982), GT (Albuquerque Seismological Laboratory (ASL)/USGS, 1993),
+IC (Albuquerque Seismological Laboratory (ASL)/USGS, 1992), II (Scripps Institution Of Oceanography, 1986), and
+IU (Albuquerque Seismological Laboratory (ASL)/USGS, 1988) seismic networks.
+Acknowledgements
+Jannes Münchmeyer acknowledges the support of the Helmholtz Einstein International Berlin Research School in Data
+Science (HEIBRiDS). We thank Martin Vallée for the insightful discussion regarding the apparent early predictability
+in the SCARDEC dataset.
+References
+Abercrombie, R. E. & Mori, J., 1994. Local observations of the onset of a large earthquake: 28 June 1992 Landers,
+California, Bulletin of the Seismological Society of America, 84(3), 725–734.
+Albuquerque Seismological Laboratory (ASL)/USGS, 1988. Global seismograph network (gsn - iris/usgs).
+Albuquerque Seismological Laboratory (ASL)/USGS, 1992. New china digital seismograph network.
+Albuquerque Seismological Laboratory (ASL)/USGS, 1993. Global telemetered seismograph network (usaf/usgs).
+Allen, R. M. & Melgar, D., 2019. Earthquake Early Warning: Advances, Scientiﬁc Challenges, and Societal Needs,
+Annual Review of Earth and Planetary Sciences, 47(1), 361–388.
+Bengio, Y., Goodfellow, I., & Courville, A., 2017. Deep learning, vol. 1, MIT press Massachusetts, USA:.
+Bishop, C. M., 1994. Mixture density networks, Tech. rep., Aston University.
+Colombelli, S., Festa, G., & Zollo, A., 2020. Early rupture signals predict the ﬁnal earthquake size, Geophysical
+Journal International, 223(1), 692–706.
+Cybenko, G., 1989. Approximation by superpositions of a sigmoidal function, Mathematics of control, signals and
+systems, 2(4), 303–314.
+Danré, P., Yin, J., Lipovsky, B. P., & Denolle, M. A., 2019. Earthquakes Within Earthquakes: Patterns in Rupture
+Complexity, Geophysical Research Letters, 46(13), 7352–7360.
+Ekström, G., Nettles, M., & Dziewo´nski, A., 2012. The global CMT project 2004–2010: Centroid-moment tensors for
+13,017 earthquakes, Physics of the Earth and Planetary Interiors, 200-201, 1–9.
+Ellsworth, W. L. & Beroza, G. C., 1995. Seismic Evidence for an Earthquake Nucleation Phase, Science, 268(5212),
+851–855.
+GEOFON Data Centre, 1993. Geofon seismic network.
+Gneiting, T. & Raftery, A. E., 2007. Strictly Proper Scoring Rules, Prediction, and Estimation, Journal of the American
+Statistical Association, 102(477), 359–378.
+Gomberg, J., Wech, A., Creager, K., Obara, K., & Agnew, D., 2016. Reconsidering earthquake scaling, Geophysical
+Research Letters, 43(12), 6243–6251.
+Hayes, G. P., 2017. The ﬁnite, kinematic rupture properties of great-sized earthquakes since 1990, Earth and Planetary
+Science Letters, 468, 94–100.
+Ide, S., 2019. Frequent observations of identical onsets of large and small earthquakes, Nature, 573(7772), 112–116.
+Institut De Physique Du Globe De Paris (IPGP) & Ecole Et Observatoire Des Sciences De La Terre De Strasbourg
+(EOST), 1982. Geoscope, french global network of broad band seismic stations.
+International Seismological Centre, 2021. ISC bulletin.
+Kilb, D. & Gomberg, J., 1999. The initial subevent of the 1994 Northridge, California, earthquake: Is earthquake size
+predictable?, Journal of Seismology, 3(4), 409–420.
+Matheson, J. E. & Winkler, R. L., 1976. Scoring rules for continuous probability distributions, Management science,
+22(10), 1087–1096.
+Meier, M.-A., Ampuero, J. P., & Heaton, T. H., 2017. The hidden simplicity of subduction megathrust earthquakes,
+Science, 357(6357), 1277–1281.
+Meier, M.-A., Ampuero, J.-P., Cochran, E., & Page, M., 2020. Apparent earthquake rupture predictability, Geophysical
+Journal International, (ggaa610).
+8
+
+--- Sayfa 9 ---
+A probabilistic view on rupture predictability
+Melgar, D. & Hayes, G. P., 2017. Systematic Observations of the Slip Pulse Properties of Large Earthquake Ruptures,
+Geophysical Research Letters, 44(19), 9691–9698.
+Melgar, D. & Hayes, G. P., 2019. Characterizing large earthquakes before rupture is complete, Science Advances, 5(5),
+eaav2032.
+Mori, J. & Kanamori, H., 1996. Initial rupture of earthquakes in the 1995 Ridgecrest, California Sequence, Geophysical
+Research Letters, 23(18), 2437–2440.
+Münchmeyer, J., Bindi, D., Leser, U., & Tilmann, F., 2020. The transformer earthquake alerting model: A new versatile
+approach to earthquake early warning, Geophysical Journal International, (ggaa609).
+Münchmeyer, J., Bindi, D., Leser, U., & Tilmann, F., 2021. Earthquake magnitude and location estimation from real
+time seismic waveforms with a transformer network, Geophysical Journal International, (ggab139).
+Noda, S. & Ellsworth, W. L., 2016. Scaling relation between earthquake magnitude and the departure time from P wave
+similar growth, Geophysical Research Letters, 43(17), 9053–9060.
+Olson, E. L. & Allen, R. M., 2005. The deterministic nature of earthquake rupture, Nature, 438(7065), 212–215.
+Ormoneit, D. & Tresp, V., 1995. Improved Gaussian Mixture Density Estimates Using Bayesian Penalty Terms and
+Network Averaging, Neural information processing systems, p. 7.
+Scripps Institution Of Oceanography, 1986. Iris/ida seismic network.
+Trugman, D. T., Page, M. T., Minson, S. E., & Cochran, E. S., 2019. Peak Ground Displacement Saturates Exactly
+When Expected: Implications for Earthquake Early Warning, Journal of Geophysical Research: Solid Earth, 124(5),
+4642–4653.
+U.S. Geological Survey, 2017. Advanced national seismic system (anss) comprehensive catalog of earthquake events
+and products.
+Vallée, M. & Douet, V., 2016. A new database of source time functions (STFs) extracted from the SCARDEC method,
+Physics of the Earth and Planetary Interiors, 257, 149–157.
+Ye, L., Lay, T., Kanamori, H., & Rivera, L., 2016. Rupture characteristics of major and great (Mw ≥7.0) megathrust
+earthquakes from 1990 to 2015: 1. Source parameter scaling relationships, Journal of Geophysical Research: Solid
+Earth, 121(2), 826–844.
+Zollo, A., Lancieri, M., & Nielsen, S., 2006. Earthquake magnitude estimation from peak amplitudes of very early
+seismic signals on strong motion records, Geophysical Research Letters, 33(23).
+9
+
+--- Sayfa 10 ---
+A probabilistic view on rupture predictability
+A
+Apparent early predictability in SCARDEC
+To identify the source of the different behavior of the model between the STF datasets, we analyze the cumulative and
+current moment release at ﬁxed early times and after a ﬁxed moment release (Figure S11). For SCARDEC, cumulative
+and current moment release at early times differs between different magnitude bins, with higher magnitude events
+already exhibiting higher moment release. The same, even though with higher overlap between bins, is true for the
+current moment release at the time when magnitude 6 is reached. No difference between bins are visible at the times
+when magnitudes 6.5 and 7 are reached. These observations match the predictive results, where predicted magnitudes
+differed for early times and the time of reaching magnitude 6, but not for higher base magnitudes.
+Differently from SCARDEC, for the other two STF datasets no systematic difference in any of the observables
+between the magnitude bins is visible. This matches the predictive results, where predictions did not show systematic
+differences between buckets. Given these observations and the processing of SCARDEC, in particular the point source
+approximation, we attribute the difference in the early observables to a processing artifact rather than interpreting
+them to be physically based. In particular, the difference can be explained with uncertainties in the onset times for
+the SCARDEC STFs. SCARDEC onset times are deﬁned by the ﬁrst time the STF exceeds a few percent of the peak
+moment rate. This is necessary, as for an event with peak moment rate > 1020 Nm/s it will be impossible to identify
+the ﬁrst exceedance of a low threshold such as 1017 Nm/s due to model approximations, in particular the point source
+approximation. On the other hand, for an event with peak moment rate ∼1018 Nm/s, this ﬁrst exceedance is easy
+to determine. This introduces a systematic bias in the ﬁrst seconds Vallée & Douet (2016). This bias has also been
+analyzed quantitatively in prior publications Meier et al. (2020).
+As a further validation, we trained a model on the USGS dataset, which is the larger of the two ﬁnite fault solution based
+datasets. The results conﬁrm, that no signs of rupture determinism are visible (Figure S3). On both, the USGS data it
+was trained on and on the other two data sets, no systematic difference in the predictions between different magnitude
+buckets is observable until at least half of the time has passed or half of the moment has been released. Note that, due to
+the different marginal distribution of magnitudes in the USGS dataset compared to SCARDEC, early estimates are
+considerably higher than for the SCARDEC model. In addition, the smallest SCARDEC events are systematically
+overestimated. This behaviour is expected, as neural networks are usually unable to extrapolate.
+B
+STF model and training
+In this section, we provide details on the training of the STF model. We train the model using a continuous ranked
+probability score (CRPS). The CRPS is deﬁned as
+CRPS(F, x) = −
+Z ∞
+−∞
+(F(y) −1{y≥x})2dy
+(1)
+with F the cumulative distribution function of the predicted probability, x the observed value and 1 the indicator
+function, being 1 for y ≥x (in our case) and 0 otherwise. The CRPS measures the distance in probability mass between
+true and predicted cumulative distribution functions (Matheson & Winkler, 1976), and not only takes into account the
+prediction at the observed value as the more common log-likelihood. This is particularly useful for gradient-based
+optimisation in face of the highly skewed GR prior distribution. The CRPS of a Gaussian mixture has a closed form
+representation and is differentiable with respect to the mixture parameters, making it amendable to gradient based
+optimisation (Text SD).
+As model, we use a multi-layer perceptron with ﬁve hidden layers with 200 neurons each and ReLU activation. As input
+we use ﬁve observables derived from the source time function at time t: (1) cumulative moment Mt; (2) current moment
+rate ˙Mt; (3) average moment rate 1
+t Mt; (4) peak moment rate maxτ≤t ˙Mτ; (5) current moment acceleration ¨
+Mt. For
+improved learning behaviour, we log-transform features (1) to (4) and multiplied them by 0.1. As feature (5) can take neg-
+ative values as well, we transformed the feature with the function f(x) = 0.01 sign(x) max(0, log(|x|/(1015 Nm/s2))),
+i.e., we apply a signed and scaled log-transform. To mitigate slight differences in onset times we rebase the STF times
+such that the last sample with a moment rate below 1015 Nm is a t = 0.
+The network outputs mixture weights αi, mean values µi and standard deviations σi. The probability density function
+(PDF) of the mixture is f(x) = P
+i αiσ−1
+i
+ϕ( x−µi
+σi ), where ϕ denotes the PDF of a standard normal random variable.
+For the mixture weights we use softmax activation, for the mean values no activation function and for the standard
+deviation softplus activation. As we observed a mode collapse of the Gaussian mixture, i.e., all mixture components
+except one or two having mixture weights very close to zero, we introduced a Dirichlet prior on the mixture weights
+Ormoneit & Tresp (1995), forcing mixture weights away from zero. This regulariser takes the form −γ P
+i log αi. For
+positive γ this enforces that no mixture weight is close to zero. We use γ = 10−4.
+10
+
+--- Sayfa 11 ---
+A probabilistic view on rupture predictability
+We train the model using ten-fold cross validation with random splits. In each split we use eight folds for training,
+one fold for validation and the last one as test set. For each split we train ﬁve models and average the predictions in
+probability space. We use the Adam optimiser with learning rate 10−4 and a batch size of 128. We reduce the learning
+rate by a factor of 0.3 after 15 epochs without a reduction in validation loss. We train for 100 epochs and use from each
+ensemble member the model with lowest validation loss for evaluation.
+Münchmeyer et al. (2021) showed that neural network models suffer from data sparsity for large events, causing
+systematic underestimation of magnitudes. As a simple mitigation, they suggested upsampling these events in training,
+i.e., artiﬁcially increasing their occurrence. We follow this approach by upsampling events above magnitude 6 with the
+factor ρ(M) = λM−6, where we use λ = 2. As we analyse probabilistic predictions, we need to take the introduced
+skew on the distribution into account. For this, we analyse Bayes’ rule P(M|Ot) ∼P(Ot|M)P(M). The upsampling
+replaces P(M) by ˜P(M) = c1ρ(M)P(M). The model therefore estimates ˜P(M|Ot) = c2ρ(M)P(M|Ot), where c1
+and c2 are simply normalisation constants. Note that usually c1̸ = c2, as the normalisation constant P(Ot) will change
+with the upsampling as well. To get true estimates of P(M|Ot), one would need to rescale the predictions with 1/ρ(M).
+Notably, this scale factor is independent of Ot.
+For the results presented in this thesis we refrained from rescaling the predictions for several reasons. First, our
+upsampling rate of 2 per magnitude step is considerably weaker than the Gutenberg-Richter law with a tenfold decrease
+in event occurrence with each magnitude step. Therefore upsampling will not obscure Gutenberg-Richter tails. In
+fact, the lower decay rate with magnitude obtained by upsampling allows for better visual representation. Second,
+our key results compare predictions in different buckets. As each bucket is equivalently affected by the upsampling,
+their relative behaviour stays unchanged. However, we note that any quantitative analysis should take the effect of
+upsampling into account.
+C
+Teleseismic arrival dataset and model
+We downloaded all available manual phase picks for events with magnitudes above 5 from the ISC (International
+Seismological Centre, 2021) and USGS (U.S. Geological Survey, 2017). We matched the event references to the
+Global CMT catalog (Ekström et al., 2012) and discarded all events that could not be matched. The station and event
+distribution is visualised in Figure S8, alongside the magnitude and epicentral distance distributions. For all analysis,
+we used the moment magnitude from Global CMT as target value. We only use picks with phase label P and discarded
+all but the ﬁrst pick for each station and event. We only use picks within an epicentral distance below 97◦to avoid core
+phases. For consistency, we calculated expected ﬁrst P arrival times using the GCMT event onset times and the ak135
+velocity model. If a pick was not within 4 s of the ﬁrst predicted arrival, we discarded the pick. We use broadband
+waveforms from the (GE, GEOFON Data Centre, 1993), (G, Institut De Physique Du Globe De Paris (IPGP) & Ecole
+Et Observatoire Des Sciences De La Terre De Strasbourg (EOST), 1982), (GT, Albuquerque Seismological Laboratory
+(ASL)/USGS, 1993), (IC, Albuquerque Seismological Laboratory (ASL)/USGS, 1992), (II, Scripps Institution Of
+Oceanography, 1986) and (IU, Albuquerque Seismological Laboratory (ASL)/USGS, 1988) seismic networks that we
+downloaded from the GEOFON and IRIS FDSN webservices. We excluded all stations within 10 km of the coastline as
+they showed high levels of short-period noise. We do not enforce any further constraint on the signal to noise ratio, but
+note that the usage of manual picks provides an implicit constraint. All waveforms are resampled to 20 Hz sampling
+rate, ﬁltered between 0.025 Hz and 8 Hz and cut from 35 s before the phase pick to 90 s after the phase pick. We
+removed the instrument sensitivity, but did not restitute the instrument response as we observed acausal artefacts from
+restitution. We manually inspected the resulting data set and removed stations with timing errors. As sanity check, we
+applied our model to t = −0.5 s, i.e., 0.5 s before the annotated P arrivals. The results showed no signiﬁcant difference
+from the marginal distribution of magnitudes, indicating no or at least very few cases with severe timing errors or other
+knowledge leaks. The resulting catalog consists of 37,646 events with 747,824 manually labelled P arrivals from 307
+unique seismic stations.
+As neural network we adapted TEAM-LM Münchmeyer et al. (2021). Compared to the original publication, we
+introduced several modiﬁcations to TEAM-LM to ﬁt our application. First, as the traces are teleseismic, it was not
+possible to align the traces between stations by wall time. Instead, we align the traces by their P picks, such that the P
+pick is at the same sample for each station. Second, we now model real-time application through a sliding window
+instead of zero padding. To model the data available at time t, where t is relative to the P pick, we provide the model
+with the waveforms from t −30 s to t. This allows to (i) apply the model to times more than 30 s after the P arrival; (ii)
+give the model more information of the noise at early times; (iii) make the model less sensitive to pick inaccuracies.
+Third, we do not encode station positions. We experimented with encoding the positions relative to the event, but it
+became apparent that the station distribution in our dataset in many cases is indicative of the magnitude. However, at
+teleseismic distances, the locations generally tend to have lower impact on the waveform than at regional distances,
+11
+
+--- Sayfa 12 ---
+A probabilistic view on rupture predictability
+which is also visible for our results. In addition, we modiﬁed the mixture density output to be consistent with the one
+for the STF model, i.e., we added the Dirichlet regularization and switched to softplus for the sigma values.
+We train the model using 10 fold cross validation with random splits. In each split we use 8 folds for training, 1 fold
+for validation and the last one as test set. Due to the massively higher computing requirements for the TEAM-LM
+model compared to the STF model, we did not train an ensemble but only a single model for each split. We use the
+Adam optimiser with learning rate 10−4 and a batch size of 1024. We reduce the learning rate by a factor of 0.3 after 5
+epochs without a reduction in validation loss. We train for 100 epochs and use the model with lowest validation loss for
+evaluation. We clip gradients to a maximum norm of 1. We use at most 50 input stations. As for the STF model we
+use upsampling of large magnitude events and did not rescale the outputs. As Münchmeyer et al. (2021), we pretrain
+the feature extraction and the mixture density layers on single station magnitude estimation. As the extensive data
+augmentation incorporates stochasticity in the validation score, the validation set is evaluated ﬁve times with different
+augmentations after each epoch.
+D
+CRPS of Gaussian mixture
+Here we derive the closed form solution of the CRPS for a Gaussian mixture. The probability density function (PDF) of
+a Gaussian mixture is deﬁned as f(x) = P
+i αiσ−1
+i
+ϕ( x−µi
+σi ), where ϕ denotes the PDF of a standard normal random
+variable. Similarly we use Φ for the cumulative distribution function (CDF) of a standard normal random variable. For
+deriving the closed form solution, we use three identities. First, Gneiting and Raftery Gneiting & Raftery (2007) note
+that the CPRS (eq. 1) can be written as
+CRPS(F, x) = 1
+2EF |X −X′| −EF |X −x|
+(2)
+with X and X′ independent copies of random variables with CDF F, and EF |· | being the expectation of the absolute
+value. Note that this identity requires a ﬁnite ﬁrst moment of X, which for a ﬁnite Gaussian mixture is always true.
+Second, for two independent Gaussian random variables Z ∼N (µ, σ2) and Z′ ∼N (µ′, σ′2), the sum Z + Z′ is a
+Gaussian random variable with Z + Z′ ∼N (µ + µ′, σ2 + σ′2). Third, for a Gaussian random variable Z ∼N (µ, σ2)
+the expected absolute value has the following closed form solution:
+E|Z| = 2σ2ϕ
+µ
+σ
+
++ µ
+
+1 −2Φ
+
+−µ
+σ
+
+(3)
+Let X and X′ be the Gaussian mixtures and Zi, Z′
+i ∼N (µi, σ2
+i ) be the mixture components. We can now calculate
+the terms of (2). For the ﬁrst term we get:
+E|X −X′| =
+n
+X
+i=1
+n
+X
+j=1
+αiαjE|Zi −Z′
+j|
+(4)
+=
+n
+X
+i=1
+n
+X
+j=1
+αiαjE|Nij|
+(5)
+Here, Nij ∼N (µi −µj, σ2
+i + σ2
+j ), using the summation of independent Gaussian random variables. The expected
+value can be computed using (3).
+Similarly, for the second term of (2) we get
+E|X −x| =
+n
+X
+i=1
+αiE|Zi −x|
+(6)
+=
+n
+X
+i=1
+αiE|Yi|
+(7)
+with Yi ∼N (µi −x, σi). This again allows to calculate the term using (3). Therefore, the CRPS of the Gaussian
+mixture can be computed in closed form. Furthermore, the solution is differentiable in αi, µi and σi, which is required
+for neural network training. For αi differentiability is clear, as the CRPS only depends linearly on the mixture weights.
+For µi and σi, differentiability results from the differentiability of ϕ and Φ. While this does not hold true for σi = 0, our
+network architectures ensure σi > 0. Calculating the closed form has compute complexity in O(n2). As the number of
+mixture components is low (n < 25) and the calculation can trivially be vectorized, this does not pose a computational
+issue and computation times are negligible compared to the neural network computations.
+12
+
+--- Sayfa 13 ---
+A probabilistic view on rupture predictability
+Figure S1: Synthetic samples of an arbitrary scalar observable Ot and magnitude Mw assuming a linear connection with Gaussian
+error (a-c) or with exponentially modiﬁed Gaussian error (d-f), i.e., the sum of a Gaussian and an exponential random variable. The
+parameters of the modiﬁed Gaussian distribution were chosen such that its standard deviation is the same as in the ﬁrst case. For
+both cases large magnitude events cause large observables, but the contrary is only true for the Gaussian case, i.e., in the second
+case small events can cause large observables as well. a and d show scatter plots of Ot and Mw. b and e show histograms of Ot
+for Mw bins with log-scaled y axis. The observable distributions for different magnitudes are mostly distinct in the ﬁrst case, but
+overlap strongly for the second case. c and f show histograms of Mw for Ot bins which are normed to represent densities. The
+magnitude distributions for different observables are mostly distinct for the ﬁrst case, while for the second case, observables only
+give an upper bound on the magnitude. Mw samples were generated according to a Gutenberg-Richter distribution with b = 1. Ot
+samples were generated using the linear connection and random samples from the error distribution. Both models assume the same
+linear connection.
+Figure S2: a Possible shapes of P(M|Ot) for an ongoing event. The Gutenberg-Richter prior is rescaled to ﬁt the tail
+behavior of the other distributions. b Exemplary Gaussian mixture with mixture size 4, showing both the individual
+components and the resulting mixture PDF.
+13
+
+--- Sayfa 14 ---
+A probabilistic view on rupture predictability
+Figure S3: Results similar to Figure 4, but using the USGS STFs instead of the SCARDEC ones for model training.
+For details see the description of Figure 4. Note that the marginal distribution of magnitudes in the USGS dataset is
+considerably different from the SCARDEC dataset, i.e., it is missing smaller events. This is clearly reﬂected in the
+results, in particular in the overestimation of small SCARDEC events.
+14
+
+--- Sayfa 15 ---
+A probabilistic view on rupture predictability
+Figure S4: Average P(M|Ot) (a-d) and P(M|O ¯
+M) (e-h) by magnitude bin for the SCARDEC dataset. This ﬁgure displays the
+same results as shown in Figure 4a, b but with the analysis split by focal mechanism type. Focal mechanism types were derived from
+the Global CMT solution using the principal axis. If the n axis was within 30◦of the horizontal, the event was classiﬁed as “normal”
+(t axis more vertical than p axis) or “reverse” (p axis more vertical than t axis). If the n axis was within 30◦or the vertical axis, the
+event was classiﬁed as “strike-slip”. All remaining events were classiﬁed as “other”. PDFs were truncated to avoid overlap between
+different times/base magnitudes. Black dotted lines in e-h indicate the current base magnitude. For events shorter than the given time
+(a-d) or with ﬁnal magnitudes below the base magnitude (e-h), the estimation from the ﬁnal sample of the STF was used.
+15
+
+--- Sayfa 16 ---
+A probabilistic view on rupture predictability
+Figure S5: Average P(M|Ot) (a-d) and P(M|O ¯
+M) (e-h) by magnitude bin for the USGS dataset. This ﬁgure displays
+the same results as shown in Figure 4c, d but with the analysis split by focal mechanism type. Otherwise, see caption of
+Figure S4 for further explanations.
+16
+
+--- Sayfa 17 ---
+A probabilistic view on rupture predictability
+Figure S6: Average P(M|Ot) (a-d) and P(M|O ¯
+M) (e-h) by magnitude bin for the Ye et al dataset. This ﬁgure displays
+the same results as shown in Figure 4e, f but with the analysis split by focal mechanism type. The dataset contains no
+examples of reverse faulting, therefore the corresponding panels are left empty. Otherwise, see caption of Figure S4 for
+further explanations.
+17
+
+--- Sayfa 18 ---
+A probabilistic view on rupture predictability
+Figure S7: P(M|O ¯
+M) binned by magnitude using the three STF datasets for determining t ¯
+M in b. The ﬁgure is
+otherwise equivalent to Figure 4h; for more details of the ﬁgures format also see the caption of Figure 4. Note that the
+events shown differ between the panels, as only those events included in the respective STF datasets can be shown.
+18
+
+--- Sayfa 19 ---
+A probabilistic view on rupture predictability
+Figure S8: Distribution of stations and events and histograms for magnitude and epicentral distance distributions for
+teleseismic P arrival dataset. In the map, triangles denote stations and dots denote events. Events are color-coded by
+magnitude.
+19
+
+--- Sayfa 20 ---
+A probabilistic view on rupture predictability
+Figure S9: Results similar to Figure 3, but using the optimal SCARDEC STFs instead of the average ones for model
+training and evaluation on SCARDEC. For details see the description of Figure 3.
+20
+
+--- Sayfa 21 ---
+A probabilistic view on rupture predictability
+Figure S10: Results similar to Figure 4, but using the optimal SCARDEC STFs instead of the average ones for model
+training and evaluation on SCARDEC. For details see the description of Figure 4.
+21
+
+--- Sayfa 22 ---
+A probabilistic view on rupture predictability
+Figure S11: Comparative analysis of the early moment release for the three STF datasets binned by magnitude. Each
+row represents one STF dataset. The left column shows cumulative moment release at time t, the middle column current
+moment release at time t, the right column moment release at the time when a magnitude ¯
+M is reached. Notably, while
+all three measures differ between the magnitude buckets for SCARDEC, no such behavior is visible for the USGS or Ye
+et al datasets. This points at a processing artifact in SCARDEC rather than a physical explanation.
+22

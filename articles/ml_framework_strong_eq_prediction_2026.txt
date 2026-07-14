@@ -1,0 +1,1489 @@
+
+--- Sayfa 1 ---
+Vol.: (0123456789)
+J Seismol (2026) 30:12 
+https://doi.org/10.1007/s10950-026-10371-x
+RESEARCH
+A machine learning framework with parameter 
+optimization and regional clustering for strong earthquake 
+prediction
+Xuejian Wang · Zifa Wang · Zhaoyan Li · Kunbo Zhou · Zhaodong Wang · 
+Jianming Wang
+Received: 19 April 2025 / Accepted: 13 February 2026 / Published online: 20 February 2026 
+© The Author(s) 2026
+Abstract  Accurately predicting the timing, location, 
+and magnitude of earthquakes is a major global scien-
+tific challenge. While machine learning methods have 
+been widely used in seismic time series analysis and 
+outperform traditional statistical models, their pre-
+dictive capability for strong earthquakes (Mw ≥ 6.5) 
+remains limited. This study develops a new predic-
+tion method by constructing multi-timescale seismic 
+activity features and integrating them with machine 
+learning models.The novelty of this approach is a 
+parameterized framework based on a historical seis-
+mic window (T_history), forecast window (T_fore-
+cast), and magnitude threshold (M_threshold). It 
+transforms earthquake prediction into an optimization 
+problem, using machine learning to model the rela-
+tionship between these parameters and performance 
+metrics (e.g., AUC(Area Under the (ROC) Curve)), 
+and searches the parameter space to maximize AUC. 
+To improve spatial prediction, clustering algorithms 
+divide the study area into subregions with consist-
+ent seismic characteristics, and an optimization 
+algorithm determines the optimal time-magnitude 
+parameters for each subregion.Using earthquake 
+catalogs from Japan and New Zealand (1973–2024), 
+K-means +  + was selected to partition Japan into 4 
+and New Zealand into 3 subregions. With T_fore-
+cast set to 365 days and time-series cross-validation 
+applied to reduce overfitting, the method achieved 
+average AUC values of 0.75 and 0.81 for predict-
+ing strong earthquakes within one year in Japan and 
+New Zealand, respectively, outperforming existing 
+models.The main contribution is a flexible and exten-
+sible prediction framework that overcomes the limi-
+tations of fixed regions, time windows, and magni-
+tude thresholds. Future work will focus on extensible 
+Supplementary Information  The online version 
+contains supplementary material available at https://​doi.​
+org/​10.​1007/​s10950-​026-​10371-x.
+X. Wang · Z. Wang (*) · Z. Li · K. Zhou · Z. Wang · 
+J. Wang 
+Key Laboratory of Earthquake Engineering 
+and Engineering Vibration, Institute of Engineering 
+Mechanics, China Earthquake Administration and Key 
+Laboratory of Earthquake Disaster Mitigation, 
+Ministry of Emergency Management, 29 Xuefu 
+Road, Harbin 150080, Heilongjiang Province, 
+People’s Republic of China
+e-mail: zifa@iem.ac.cn
+X. Wang 
+e-mail: 1415381525@qq.com
+Z. Li 
+e-mail: hkjlizhaoyan@163.com
+K. Zhou 
+e-mail: 13668064622@163.com
+Z. Wang 
+e-mail: wzd9728@163.com
+J. Wang 
+e-mail: jwang780@gmail.com
+
+--- Sayfa 2 ---
+	
+J Seismol (2026) 30:12
+12  Page 2 of 20
+Vol:. (1234567890)
+improvements, overfitting control, and integrating 
+multi-source features to enhance generalization.
+Keywords  Machine Learning · Parameter 
+Optimization · Regional Clustering · Random Forest · 
+Earthquake Prediction
+1  Introduction
+Earthquake forecasting refers to the process of esti-
+mating future seismic parameters—such as time, 
+location, epicentral intensity, and magnitude—using 
+scientific methods and technological means. Its 
+objective is to provide a scientific basis for mitigating 
+earthquake-related disasters and enhancing prepared-
+ness, thereby assisting relevant authorities in taking 
+proactive measures.
+Earthquake prediction has long remained a major 
+challenge in geophysics and seismology. Numer-
+ous researchers have proposed various statistical and 
+physical models in an attempt to reveal the regu-
+larities of earthquake occurrence. For example, the 
+Epidemic-Type Aftershock Sequence (ETAS) model 
+(Ogata 1988; Helmstetter and Sornette 2003), which 
+describes the patterns of mainshocks and aftershocks, 
+has shown certain effectiveness in short-term fore-
+casting. ETAS is based on spatiotemporal clustering 
+assumptions and uses a non-homogeneous Poisson 
+process to model earthquake occurrence probabilities 
+(Utsu and Ogata 1995). On the other hand, physics-
+based models, such as those relying on Coulomb 
+stress transfer, attempt to explain earthquake trig-
+gering mechanisms from the perspective of fault 
+interactions and stress evolution (King et  al. 1994; 
+Stein 1999). Additionally, statistical learning models, 
+including the “Every Earthquake a Precursor Accord-
+ing to Scale” (EEPAS) model (Rhoades and Evison 
+2006) and the Pattern Informatics (PI) method (Nanjo 
+et al. 2006), have advanced mid- to long-term proba-
+bilistic earthquake forecasting from different angles.
+However, these models still exhibit clear limita-
+tions. ETAS-type models are constrained by statistical 
+laws and cannot predict seismic activities that devi-
+ate from these patterns; they also perform poorly in 
+tectonically complex regions or in long-term forecast-
+ing. It is worth noting that while the standard ETAS 
+model is primarily designed for short-term (hours to 
+days) forecasting, its underlying framework has been 
+extended to inform longer-term probabilistic seismic 
+hazard assessment (PSHA) and disaster-mitigation 
+strategies by incorporating temporal clustering effects 
+(e.g., Yaghmaei-Sabegh et al. 2017, 2022).
+While physics-based models offer clear mecha-
+nisms, they rely on many simplifying assumptions 
+and require high computational resources, resulting 
+in limited generalizability in practical prediction. 
+Traditional statistical methods are inefficient in han-
+dling high-dimensional and multi-source data and 
+struggle to capture nonlinear dynamic behaviors in 
+seismic systems. Thus, despite the variety of models 
+proposed, earthquake prediction remains a largely 
+unsolved scientific problem.
+In recent years, the rapid development of machine 
+learning has led to its increasing application in seis-
+mic research (Mousavi et al. 2020; Borate et al. 2023; 
+Lin et  al. 2023; Shan et  al. 2022; Seydoux et  al. 
+2020). Machine learning offers significant advantages 
+in data processing and nonlinear modeling, particu-
+larly with high-dimensional and complex data. Some 
+studies have demonstrated that machine learning out-
+performs traditional statistical methods; for instance, 
+the RECAST model, trained on large historical 
+earthquake catalogs, has surpassed ETAS in predic-
+tive performance (Dascher-Cousineau et  al. 2023). 
+Notably, significant progress has also been made in 
+the engineering applications of machine learning for 
+disaster management, where it has been successfully 
+employed for the real-time or near-real-time estima-
+tion of crucial parameters such as earthquake magni-
+tude, location, peak ground acceleration, peak ground 
+velocity, and response spectra (Liu et al. 2024; Shokr-
+gozar-Yatimdar and Chen 2025). These advances 
+primarily rely on multi-parameter features extracted 
+from large-scale seismic datasets and advanced deep 
+learning architectures, thereby offering new data-
+driven solutions for earthquake early warning and 
+engineering seismic design (Wang et  al. 2023; Xi 
+et al. 2024).
+Current research can be broadly categorized into 
+classification and regression tasks. In classification-
+based prediction, studies have combined support 
+vector regression (SVR) and hybrid neural networks 
+(HNN) with enhanced particle swarm optimization 
+(EPSO) to predict earthquakes above magnitude 
+5.0 in specific regions (Asim et  al. 2018). Other 
+approaches include using artificial neural networks 
+(ANN) for site classification (Yaghmaei-Sabegh & 
+
+--- Sayfa 3 ---
+J Seismol (2026) 30:12	
+Page 3 of 20  12
+Vol.: (0123456789)
+Tsang 2011), and applying support vector machines 
+(SVM), random forests (RF), and ANN on clustered 
+data to predict earthquakes above different magni-
+tude thresholds (Asim et al. 2020). A common trait 
+among these studies is that they only output a binary 
+judgment of earthquake occurrence without providing 
+specific numerical information such as magnitude, 
+time, or location. For regression tasks, which aim to 
+predict specific numerical parameters like magnitude, 
+time, depth, or location, techniques such as random 
+forest (RF), multilayer perceptron (MLP), and support 
+vector regression (SVR) have been used to predict 
+magnitude (Jain et al. 2021). Some studies employed 
+gated recurrent units (GRU) to predict depth, time, 
+and magnitude (Gonzalez et  al. 2021), while others 
+applied long short-term memory (LSTM) networks 
+to forecast future earthquake magnitudes (Berhich 
+et al. 2021). These regression-based studies generally 
+exhibit poor performance and low accuracy in pre-
+dicting specific values.
+Furthermore, some research utilizes machine 
+learning to analyze multi-source seismic data—such 
+as GPS, groundwater, and geomagnetic data—in an 
+attempt to predict earthquakes by identifying anoma-
+lous signals (Wang et al. 2020; Ruan et al. 2023; Pei 
+Huang et al. 2024; Schimmenti et al. 2024; Tsuchiya 
+et  al. 2024). However, such data are often difficult 
+to obtain and have limited spatiotemporal cover-
+age, which restricts the broader application of these 
+methods.
+In contrast, seismic activity indicators—such as 
+the b-value and a-value derived from earthquake cata-
+logs (Gutenberg and Richter 1944)—are relatively 
+accessible and have been commonly used in research 
+(Köhler et al. 2023; Herrmann et al. 2022; Girona and 
+Drymoni 2024; Shi et  al. 2018). However, existing 
+studies often fail to effectively utilize the spatiotem-
+poral information of these indicators across multiple 
+time scales and regional contexts.
+To address the above challenges, this study pro-
+poses a novel classification framework for earthquake 
+prediction based on multi-parameter optimization 
+and regional clustering. In addition to improving 
+classification performance, the framework provides 
+information on future occurrence time, location, 
+and magnitude, relying solely on earthquake catalog 
+data to systematically enhance classification predic-
+tion performance based on seismic activity data. The 
+innovativeness of this method is mainly reflected in 
+the following aspects:
+First, unlike previous studies that often relied on 
+physical intuition or empirical settings for key param-
+eters, this study transforms the selection of the histor-
+ical time window (T_history), forecast time window 
+(T_forecast), and magnitude threshold (M_thresh-
+old) into an optimizable three-dimensional param-
+eter search problem. A method combining random 
+search and greedy algorithms is employed to empiri-
+cally identify the best parameter combination in dif-
+ferent regions, thereby enhancing the model’s adapt-
+ability to regional specificities. Second, to capture 
+spatial heterogeneity in seismic activity, clustering 
+algorithms—including K-means +  +, DBSCAN, and 
+GMM—are introduced to objectively partition the 
+study area and identify tectonic subregions with con-
+sistent seismic characteristics. For each subregion, a 
+separate random forest classification model is estab-
+lished, improving regional prediction specificity and 
+mitigating the inadequacy of a single global model in 
+responding to local dynamics. Moreover, addressing 
+the extreme class imbalance in earthquake catalogs, 
+this study uses AUC as the core metric for model 
+optimization and evaluation, making it more suitable 
+for high-cost-of-miss scenarios in earthquake predic-
+tion. Time-series cross-validation is applied to ensure 
+model generalizability and avoid performance overes-
+timation due to overfitting.
+By analyzing seismic data from Japan and New 
+Zealand between 1973 and 2024, the model success-
+fully partitioned the study areas into 4 and 3 clustered 
+subregions, respectively, and achieved high classifi-
+cation prediction performance. In comparisons with 
+other models, the proposed model outperformed 
+existing approaches. This method offers new insights 
+and perspectives for earthquake prediction.
+2  Data
+In this study, we utilized earthquake records from 
+Japan and New Zealand collected by the United 
+States Geological Survey (USGS). Both countries are 
+located within the seismically active Pacific Ring of 
+Fire, providing a sufficient number of seismic events 
+to facilitate analysis of the mechanisms and spati-
+otemporal distribution characteristics of earthquakes 
+across different magnitudes.
+
+--- Sayfa 4 ---
+	
+J Seismol (2026) 30:12
+12  Page 4 of 20
+Vol:. (1234567890)
+The spatial distribution of the selected earthquakes 
+is shown in Fig.  1. To ensure the completeness of 
+the earthquake catalog, we applied a sliding window 
+approach to determine the completeness magnitude 
+(Mc). Each window contains 300 seismic events. We 
+used the Frequency-Magnitude Distribution (FMD) 
+and the maximum cutoff value method(Wiemer & 
+Wyss 2000). To avoid underestimation of the com-
+pleteness magnitude by the maximum cutoff value 
+method, only data above Mc + 0.2 were used for anal-
+ysis. The results are shown in Supplementary Fig-
+ures S1 and S2.
+It should be noted that earthquake records prior to 
+1973 lack a sufficient number of small earthquakes. 
+Therefore, data from 1900 to 1973 were primarily 
+used to augment the dataset for defining clustered 
+regions and were excluded from the training data-
+set. The training and testing data were selected from 
+the period between 1973 and 2024. Specifically, the 
+moment magnitude (Mw) was used throughout this 
+study.
+We adopted 16 activity indicators as features for 
+training data. These features were directly input into 
+the machine learning model for training. Clustering 
+partitions were based on longitude and latitude infor-
+mation from the earthquake catalog, which required 
+normalization. Training data were generated accord-
+ing to the partitions, meaning that 16 activity indi-
+cators were generated for each region. The random 
+forest model is insensitive to the scale and range of 
+feature values and thus did not require normaliza-
+tion. The features include b-value and a-value, seis-
+mic energy release, root energy of seismic activity, 
+latitude and longitude variance, epicenter density, 
+epicenter centroid, seismic frequency, maximum and 
+mean magnitude, energy-weighted epicenter centroid, 
+maximum magnitude deficit, and latitude–longitude 
+slope. Detailed calculation procedures are provided in 
+Supplementary Material S1.
+3  Method
+3.1  Regional partitioning
+First, we applied multiple clustering algorithms to 
+partition earthquake records from Japan and New 
+Zealand between 1900 and 2024 into subregions, 
+including K-means +  + (Arthur & Vassilvitskii 2006), 
+DBSCAN (Schubert et al. 2017), and Gaussian Mix-
+ture Models (GMM) (Bouman et  al. 1997). The 
+results are shown in Fig. 2.
+It is worth noting that the K-means +  + algorithm 
+relies on a single hyperparameter—the number of 
+clusters (k)—which simplifies the optimization pro-
+cess and avoids the additional complexity associated 
+with multiple hyperparameters required by other 
+clustering methods. Moreover, K-means +  + is an 
+Fig. 1   (a) Japan and (b) New Zealand Earthquake Catalog
+
+--- Sayfa 5 ---
+J Seismol (2026) 30:12	
+Page 5 of 20  12
+Vol.: (0123456789)
+improved version of K-means, enhancing cluster-
+ing quality by optimizing the selection of initial cen-
+troids. DBSCAN identifies clusters based on density 
+connectivity without requiring a pre-defined number 
+of clusters, while GMM assumes that the data gen-
+eration process follows a Gaussian mixture model and 
+uses maximum likelihood estimation (MLE) to esti-
+mate parameters, thus necessitating model selection 
+to determine the number of clusters.
+We employed grid search to select optimal param-
+eters by maximizing the Silhouette Score, which was 
+used as the criterion for selection. (See Section S2 
+of the electronic supplementary materials for defini-
+tions) However, since the K-means +  + algorithm 
+requires manually setting the number of clusters, we 
+aimed to minimize the number of partitions while 
+maintaining a high Silhouette Score.
+3.2  Training and optimization
+We constructed a dedicated objective function for 
+the earthquake prediction task. This objective func-
+tion incorporates three input parameters: the past time 
+window (T_history), the forecast time window (T_
+forecast), and the magnitude threshold (M_threshold).
+The past time window (T_history) refers to the size 
+of the time window used to compute the 16 features, 
+which is the parameter required for feature genera-
+tion. This window always precedes the forecast time 
+window (T_forecast). The forecast time window 
+(T_forecast) represents the time window used to com-
+pute binary classification labels, i.e., the length of the 
+future period to be predicted. The magnitude thresh-
+old (M_threshold) parameter defines the threshold 
+magnitude for binary classification of future seismic 
+events; events exceeding this magnitude are labeled 
+as 1 (occurrence).
+These parameters enable the generation of multi-
+scale time-series data, capturing seismic activ-
+ity across different temporal scales and magnitude 
+ranges, thereby providing a basis for predicting 
+whether future events will exceed the specified mag-
+nitude threshold. The objective function evaluates the 
+classification performance of the model under dif-
+ferent parameter combinations, using metrics such 
+as AUC and F1-score as output values to assess and 
+Fig. 2   (a) The K-means +  + algorithm was used to divide the 
+earthquake catalogs for Japan and New Zealand into six and 
+three sub-catalogs, respectively. Different colors represent dif-
+ferent regional catalogs, labeled in index order. (b) DBSCAN 
+clustering was applied to the earthquake data of Japan and 
+New Zealand, resulting in clusters of points and noise points.
+(c) GMM clustering was used to divide the earthquake data 
+of Japan and New Zealand into two clusters, with different 
+colored points representing different regions
+
+--- Sayfa 6 ---
+	
+J Seismol (2026) 30:12
+12  Page 6 of 20
+Vol:. (1234567890)
+optimize performance. (See Section S2 of the elec-
+tronic supplementary materials for definitions).
+The construction of this objective function is based 
+on a fundamental premise: seismic activity in a past 
+period can reflect the occurrence of earthquakes in a 
+future period. However, it is unknown how long the past 
+activity window should be to effectively reflect seis-
+mic occurrences in a future period, nor is the strength 
+of future earthquakes known in advance. Therefore, 
+we introduced the three aforementioned parameters to 
+explore this relationship.
+This approach requires minimizing the influence 
+of machine learning model parameters; hence, tradi-
+tional machine learning models with fewer param-
+eters, such as random forests, were selected. Addition-
+ally, extensive data preprocessing, such as addressing 
+class imbalance, was not performed, as the data in this 
+study dynamically changes based on the three input 
+parameters.
+We define the generated historical time series data 
+Dhistory as the set of earthquake events satisfying:
+where ti is the timestamp of an event, and mi its mag-
+nitude. To construct the seismic activity time series, 
+we applied a sliding window approach, creating over-
+lapping subsequences in the original time series. 
+This method preserves key information, including 
+event frequency, energy fluctuations, and magnitude 
+changes. For each of the six regions, we computed the 
+16 seismic activity indicators over a fixed time win-
+dow, forming time series with a 1-day sliding inter-
+val. This configuration ensures rapid responsiveness 
+to seismic events, high temporal resolution, and suf-
+ficient time granularity. As shown in Fig. 3, we detail 
+the variations in seismic activity features across dif-
+ferent time windows, aligning them with correspond-
+ing spatial regions.
+(1)
+Dhistory = {(ti, mi
+)
+|ti ∈Thistory
+}
+Fig. 3   Method flowchart: First, an initial point is obtained through random search, followed by calculating its objective value. A 
+greedy algorithm is then applied to search for an improved solution, maximizing the objective function value
+
+--- Sayfa 7 ---
+J Seismol (2026) 30:12	
+Page 7 of 20  12
+Vol.: (0123456789)
+In the forecast window Tforecast , we construct 
+the labeled dataset Dforecast based on the magnitude 
+threshold Mthreshold . This dataset is defined as follows:
+where yi = 1 indicates the occurrence of an event with 
+magnitude exceeding Mthreshold within the forecast 
+window, and yi = 0 denotes the absence of such an 
+event. This label yi is used to predict whether future 
+seismic events will reach the threshold magnitude.
+Based on this dataset, the objective function 
+aims to maximize the AUC value predicted by the 
+model. The random forest model is chosen because 
+it can automatically handle missing values, flex-
+ibly impute them, is robust to outliers, has a robust 
+ensemble structure, and has few hyperparameters, 
+simplifying the hyperparameter tuning process.
+The random forest model f휃 is optimized on 
+Dtrain , with Dtest reserved for evaluation. The objec-
+tive function L is thus defined as the AUC on Dtest:
+where AUC(f휃
+(Dtest
+)) is calculated by generating fea-
+tures within Thistory and labels based on Tforecast and 
+Mthreshold , thereby evaluating the model’s classifica-
+tion performance. The AUC metric serves as the opti-
+mization objective, enhancing prediction accuracy 
+across timescales and thresholds. AUC was selected 
+due to the imbalance of positive and negative samples 
+in earthquake prediction tasks. The F1 score may be 
+overly influenced by the precision of sparse positive 
+samples, potentially neglecting recall—a critical fac-
+tor in assessing the model’s performance on rare posi-
+tive cases.
+To prevent potential leakage of test set informa-
+tion in this optimization task, we employed time-
+series cross-validation. (See Section S2 of the elec-
+tronic supplementary materials for definitions) This 
+approach strictly ensures that future data are never 
+used in the model training process. The training set 
+window expands monotonically with each iterative 
+fold, forming a stepwise temporal window exten-
+sion mechanism.
+When the number of splits is set to K, the time-
+line T is divided into K + 1 consecutive intervals, 
+(2)
+Dforecast = {yi|yi = 1if∃(ti, mi
+) ∈Tforecastsuchthatmj ≥Mthreshold, yi = 0otherwise}
+(3)
+L
+(
+휃, Thistory, Tforecast, Mthreshold
+) = AUC(f휃
+(Dtest
+))
+generating K training-test pairs. This ensures that 
+the evaluation results possess temporal extrapola-
+tion validity. The average AUC metric across K 
+folds was used to demonstrate the comprehensive 
+performance of the model, effectively reducing the 
+impact of random fluctuations and reflecting robust-
+ness in predicting continuous future periods.
+In the optimization process for earthquake predic-
+tion tasks, directly finding a global optimum is chal-
+lenging. To address this, a random search strategy 
+is employed to sample initial solutions from differ-
+ent regions, aiming to achieve a high-quality start-
+ing point. (See Section S2 of the electronic supple-
+mentary materials for definitions) However, random 
+search alone may still be insufficient for ideal opti-
+mization. Thus, the initial points generated through 
+random search serve as the basis for further refine-
+ment, where a greedy algorithm is used to iteratively 
+improve solution quality. (See Section S2 of the elec-
+tronic supplementary materials for definitions).
+Random search samples points across the optimi-
+zation space to increase the likelihood of identifying 
+a promising initial solution. For the objective func-
+tion L, multiple random samples are taken within the 
+domain x1, x2, x3 ∈(Thistory, Tforecast, Mthreshold
+)
+ to find 
+a solution that maximizes L. The greedy algorithm 
+(Vince 2002) then selects the best local solution in 
+each step, refining the initial solution xrs to produce 
+an improved solution xg . This update is performed 
+iteratively, as follows:
+where N(xt
+) represents the neighborhood of xt , or the 
+set of solutions near the current solution. By continu-
+ally updating xt , this approach approximates the local 
+optimum xg . The final optimized solution xg can be 
+represented as:
+A key challenge is that the greedy algorithm tends 
+to perform local search, which may not lead to a 
+global optimum, particularly in complex spaces. In 
+(4)
+xt+1 = arg max
+x∈N(xt)
+L
+(5)
+xg = lim
+t→∞xt
+
+--- Sayfa 8 ---
+	
+J Seismol (2026) 30:12
+12  Page 8 of 20
+Vol:. (1234567890)
+contrast, advanced methods such as Bayesian opti-
+mization enable global exploration but often show 
+limited convergence effectiveness in earthquake pre-
+diction tasks (Frazier 2018). Bayesian optimization 
+relies on uncertainty estimation and prior selection, 
+which can be challenging to model accurately in the 
+noisy, nonlinear context of earthquake prediction, 
+resulting in solutions that often remain suboptimal.
+Thus, optimizing the initial solution xrs obtained 
+from random search through a greedy algorithm is a 
+practical approach. Although it does not guarantee a 
+global optimum, this method can further refine the 
+initial solution in a locally optimal region, making it 
+as close as possible to the true optimum. Addition-
+ally, the diverse initial solutions from random search 
+enhance the starting point quality for the greedy algo-
+rithm, reducing the risk of getting trapped in local 
+optima and improving optimization efficiency.
+4  Results
+4.1  Clustering partitions for Japan and New Zealand
+We employed grid search to select optimal parame-
+ters by maximizing the Silhouette Score. The param-
+eter combinations, Silhouette Scores, and specific 
+clustering results for the two algorithms are presented 
+in Fig. 2 and Table 1.
+For the K-means +  + algorithm, the highest Silhou-
+ette Score was achieved with 1 cluster (i.e., no parti-
+tioning), while the score decreased gradually from 1 
+to 4 clusters and dropped significantly beyond 4 clus-
+ters. Considering that smaller partitions may lead to 
+better prediction performance, we set the number of 
+clusters for Japan to 4 and for New Zealand to 3 in the 
+K-means +  + algorithm.
+Analysis of the results (as shown in Table 1 and 
+Fig.  2) indicates that both DBSCAN and GMM 
+algorithms were ineffective in partitioning the entire 
+earthquake catalogs of Japan and New Zealand, 
+whereas K-means +  + proved to be simple and effec-
+tive. Table 1 compares the best results obtained from 
+various clustering algorithms. Based on comprehen-
+sive evaluation, K-means +  + was identified as the 
+most effective method. The four partitions for Japan 
+align well with its actual geological context: Region 
+0 corresponds to the junction area of the Pacific Plate, 
+Philippine Sea Plate, and Eurasian Plate; Region 1 
+represents the seismic belt formed by the Philippine 
+Sea Plate and Eurasian Plate; Region 2 corresponds 
+to the seismic belt formed by the Philippine Sea Plate 
+and Pacific Plate; and Region 3 represents the seismic 
+belt formed by the Eurasian Plate and Pacific Plate.
+For Japan, the DBSCAN algorithm excluded some 
+so-called noise points, while GMM broadly divided 
+the data into two large regions, which were too coarse 
+for prediction tasks. For New Zealand, the DBSCAN 
+algorithm also ignored some noise points, whereas 
+the GMM algorithm produced the same three-region 
+partition as the K-means +  + algorithm.
+The selection of k = 4 for Japan and k = 3 for New 
+Zealand in the K-means +  + algorithm represents a 
+balance between two objectives: maintaining a rela-
+tively high Silhouette Score (indicating well-defined 
+clusters) and creating smaller, spatially finer parti-
+tions for the binary classification prediction task. As 
+shown in Supplementary Figs. S3 and S4, the Silhou-
+ette Scores for both regions exhibit a gradual decline, 
+yet at the selected k values remain at an acceptable 
+level while also providing a smaller partition scale. 
+This ensures meaningful cluster separation while 
+avoiding the sharper decline in the score observed 
+when the number of partitions increases further.
+Table 1   Parameter settings 
+and scores of two clustering 
+algorithms
+Algorithm
+Covariance_type
+n_compo-
+nents
+eps
+min_samples
+Best Score
+DBSCAN_Japan
+/
+/
+0.3
+5
+0.232
+GMM_Japan
+diag
+2
+/
+/
+0.597
+Kmeans +  + _Japan
+/
+/
+/
+/
+0.468
+DBSCAN_Nzl
+/
+/
+0.5
+15
+0.403
+GMM_Nzl
+spherical
+3
+/
+/
+0.566
+Kmeans +  + _Nzl
+/
+/
+/
+/
+0.534
+
+--- Sayfa 9 ---
+J Seismol (2026) 30:12	
+Page 9 of 20  12
+Vol.: (0123456789)
+4.2  Prediction results
+We first divided the seismic events into training set 
+D_train and testing set D_test at an 8:2 ratio (Yadav 
+and Shukla 2016). The training set was exclusively 
+used to train the random forest model f_θ, ensur-
+ing that the model was never exposed to the test set. 
+To prevent overfitting, all evaluation metrics were 
+computed on the test set using time-series cross-val-
+idation. Additionally, the number of random forest 
+parameters was designed not to exceed the size of the 
+smallest training subset. The final settings included 
+up to 300 trees with a maximum depth of 8 per tree to 
+mitigate both overfitting and underfitting.
+After obtaining the optimal parameter combina-
+tion, this study also conducted a test comparison on 
+the optimization of the random forest hyperparameter 
+n_estimators, as shown in supplementary material 
+tables S1 and S2.
+The forecast time window (T_forecast) was fixed 
+at 365 days (one year) to ensure meaningful predic-
+tion horizons. The magnitude threshold (M_thresh-
+old) was varied within the range [5.0, 7.5], and the 
+past time window length (T_history) was explored 
+within [100, 2048] days.
+This study first focused on the optimal perfor-
+mance of the model within each subregion. The 
+results for the best-performing parameter combina-
+tions on the test set are detailed in Figs. 4, 5, 6, 7, 8, 
+9 and 10 and Table 2. Model prediction performance 
+was rigorously evaluated using AUC, ROC curves, 
+and precision-recall curves to ensure a comprehen-
+sive assessment.
+As shown in Table  2, AUC values were com-
+puted for Japan and New Zealand using three dif-
+ferent clustering methods. The final AUC value for 
+each region was obtained by averaging the results 
+from threefold cross-validation to prevent overfit-
+ting. The rationale for this approach is as follows: 
+Given the nature of our forecasting task—predicting 
+rare, high-magnitude events—setting aside a single, 
+contiguous time period as a traditional "independ-
+ent test set" poses a significant challenge. Due to 
+the elevated magnitude threshold and its regional 
+variation, a single hold-out period may contain no 
+events exceeding the threshold in certain regions, 
+rendering a conventional test-based evaluation inef-
+fective or statistically unreliable. Therefore, we 
+adopted a strategy where the available chronologi-
+cal data was repeatedly partitioned into sequential 
+training and validation folds. The validation folds 
+Fig. 4   (a) ROC curve of Japan subregion 0; (b) P-R curve of Japan subregion 0
+
+--- Sayfa 10 ---
+	
+J Seismol (2026) 30:12
+12  Page 10 of 20
+Vol:. (1234567890)
+strictly follow the training folds in time, simulating 
+a realistic forecasting scenario. While the term "test 
+set" could be used to describe these out-of-time 
+validation folds within the cross-validation loop, we 
+acknowledge that, in this context, they functionally 
+serve as validation sets for hyperparameter tuning 
+and performance estimation. The final reported per-
+formance metric (e.g., the average AUC in Table 2) 
+is the average across all validation folds. This 
+method provides a more robust and stable estimate 
+Fig. 5   (a) ROC curve of Japan subregion 1; (b) P-R curve of Japan subregion 1
+Fig. 6   (a) ROC curve of Japan subregion 2; (b) P-R curve of Japan subregion 2
+
+--- Sayfa 11 ---
+J Seismol (2026) 30:12	
+Page 11 of 20  12
+Vol.: (0123456789)
+of model generalizability across different time seg-
+ments than a single hold-out test, and is particularly 
+suited for evaluating the proposed methodological 
+framework’s capability on this long-term, imbal-
+anced prediction task.
+The average AUC values for regions clustered 
+using K-means +  + were approximately 0.75 and 0.81 
+for both Japan and New Zealand, while the average 
+AUC for Japan region 1 was only 0.63. This may 
+be attributed to the significantly greater complexity 
+Fig. 7   (a) ROC curve of Japan subregion 3; (b) P-R curve of Japan subregion 3
+Fig. 8   (a) ROC curve for sub region 0 in New Zealand; (b) P-R curve of New Zealand subregion 0
+
+--- Sayfa 12 ---
+	
+J Seismol (2026) 30:12
+12  Page 12 of 20
+Vol:. (1234567890)
+of the Ryukyu Trench compared to regions like the 
+Japan Trench (Arai et  al. 2016), primarily due to 
+intricate geological structures and irregular seismic 
+sequences, as well as relatively insufficient monitor-
+ing networks in the area (Wirth et al. 2022).
+The results under DBSCAN clustering showed 
+poorer optimization performance for the entire 
+regions of Japan and New Zealand, likely because 
+seismic activity and regional tectonics vary sig-
+nificantly across areas, making a single magnitude 
+Fig. 9   (a) ROC curve for sub region 1 in New Zealand; (b) P-R curve of New Zealand subregion 1
+Fig. 10   (a) ROC curve for sub region 2 in New Zealand; (b) P-R curve of New Zealand subregion 2
+
+--- Sayfa 13 ---
+J Seismol (2026) 30:12	
+Page 13 of 20  12
+Vol.: (0123456789)
+threshold and time window insufficient to represent 
+the entire region. The GMM clustering results were 
+slightly inferior to those of K-means +  +, indicating 
+that different partitioning methods indeed yield dif-
+ferent outcomes.
+Figures 4, 5, 6, 7, 8, 9, 10 and 11 display the ROC 
+curves and precision-recall (P-R) curves for the best 
+AUC values in the two regions, providing intuitive 
+visualizations of method performance. Figures  4, 5, 
+6 and 7 present the results for the four subregions of 
+Japan. Among them, AP (Average Precision) is an 
+evaluation metric for the performance of binary clas-
+sification models. It is defined as the weighted aver-
+age of precision values at different recall thresholds. 
+Specifically, the AP value is derived by calculating 
+the area under the precision-recall curve. First, sam-
+ples are ranked according to the predicted probability 
+scores of the model, and each sample is sequentially 
+Table 2   The best parameter combinations and their evaluation 
+indicators in different regions
+Algorithm
+Area
+T_history(days) M_threshold
+AUC​
+K-means +  +  JP_0
+1507.03
+6.59
+0.75
+JP_1
+1013.22
+6.66
+0.63
+JP_2
+2006.69
+6.94
+0.78
+JP_3
+888.21
+7.44
+0.85
+NZL_0
+1058.38
+7.28
+0.85
+NZL_1
+978.85
+5.87
+0.78
+NZL_2
+1529.87
+5.44
+0.80
+DBSCAN
+JP
+1379.8
+7.08
+0.68
+NZL
+162.5
+6.06
+0.66
+GMM
+JP_0
+1205.64
+6.37
+0.65
+JP_1
+1475.77
+7.13
+0.67
+NZL_0
+1402.6
+5.47
+0.67
+NZL_1
+859.62
+7.19
+0.71
+NZL_2
+1574.37
+5.03
+0.73
+Fig. 11   The parameter combinations and the distribution of objective function values obtained for the Japan region through random 
+search and optimization algorithms
+
+--- Sayfa 14 ---
+	
+J Seismol (2026) 30:12
+12  Page 14 of 20
+Vol:. (1234567890)
+considered as the positive class threshold to compute 
+the corresponding precision and recall, thereby plot-
+ting the PR curve. Subsequently, the area under this 
+curve is integrated using the trapezoidal rule or inter-
+polation methods (typically the 11-point interpolation 
+method), and the resulting area is the AP value. A 
+higher AP value indicates better overall performance 
+of the model in balancing accurate identification of 
+positive classes and avoiding missed detections.
+Figure  4 shows the results for Subregion 0 of 
+Japan. The ROC curve indicates an average AUC of 
+0.75, which is moderately good for a binary classifi-
+cation task in earthquake prediction and significantly 
+higher than the random guess baseline of 0.5. The 
+P-R curve shows an AP value of 0.552, higher than 
+the random classifier baseline of 0.361, indicating 
+that the model has learned relevant features.
+Figure  5 presents the results for Subregion 1 of 
+Japan. The ROC curve shows an average AUC of 
+0.63, which is moderate for a task with a magnitude 
+threshold of 6.66. While it exceeds the random guess 
+baseline of 0.5, the improvement is limited. The 
+P-R curve shows an AP value of 0.537, significantly 
+higher than the random classifier baseline of 0.309, 
+representing a notable improvement.
+Figure  6 displays the results for Subregion 2 of 
+Japan. The ROC curve shows an average AUC of 
+0.78, which is relatively good for a task with a mag-
+nitude threshold of 6.94 and significantly higher than 
+the random guess baseline of 0.5. The P-R curve 
+shows an AP value of 0.582, substantially higher 
+than the random classifier baseline of 0.127, indicat-
+ing a significant improvement and suggesting that the 
+dataset with a magnitude threshold of 6.94 is highly 
+imbalanced.
+Figure  7 shows the results for Subregion 3 of 
+Japan. The ROC curve shows an average AUC of 
+0.85, which is excellent for a classification task with a 
+magnitude threshold of 7.44 and significantly higher 
+than the random guess baseline of 0.5. The P-R curve 
+shows an AP value of 0.530, substantially higher than 
+the random classifier baseline of 0.123.
+Figures 8, 9 and 10 present the results for the three 
+subregions of New Zealand. Both the ROC and P-R 
+curves indicate that the model outperforms random 
+classification, demonstrating the applicability of the 
+method to the New Zealand region.
+In addition to the best results, Figs.  11 and 12 
+visualize the distributions of parameter combi-
+nations and their corresponding objective func-
+tion values obtained through random search and 
+optimization algorithms for the four subregions 
+of Japan and three subregions of New Zealand. 
+The best AUC values for the two regions under 
+K-means +  + in Table  2 correspond to the maxi-
+mum values in Figs. 3 and 4.
+For Japan, the highest scores for Subregion 0 were 
+observed when T_history was in the range [1250, 
+1500] days and M_threshold in [6.5, 7.0]. For Sub-
+region 1, the best performance was concentrated 
+in T_history ∈ [1300, 1500] days and M_thresh-
+old ∈ [6.7, 7.5]. For Subregion 2, the highest scores 
+Fig. 12   The parameter combinations and the distribution of objective function values obtained for the New zealand region through 
+random search and optimization algorithms
+
+--- Sayfa 15 ---
+J Seismol (2026) 30:12	
+Page 15 of 20  12
+Vol.: (0123456789)
+were achieved with T_history ∈ [1800, 2000] days 
+and M_threshold ∈ [6.5, 7.5]. For Subregion 3, the 
+optimal range was T_history ∈ [750, 900] days and 
+M_threshold ∈ [7.0, 7.5].
+In summary, the statistically optimized results 
+show that the best-performing parameter combina-
+tions vary across subregions. This is due to differ-
+ences in actual seismic activity and tectonic struc-
+tures, which lead to variations in earthquake catalog 
+records, resulting in divergent statistical optimization 
+outcomes. The results for the three subregions of New 
+Zealand also differ, with variations in seismic activity 
+and tectonic factors leading to differences in recorded 
+earthquake catalogs and ultimately causing deviations 
+in statistical optimization.
+4.3  Comparison results
+Currently, AI-based earthquake prediction methods 
+lack representative seismic datasets and appropriate 
+baseline methods, hindering researchers’ ability to 
+compare their approaches and results (Banna et  al. 
+2020). To evaluate our work, we adapted a study con-
+ducting seismic classification prediction in the same 
+region of Japan (Berhich et  al. 2023) by modifying 
+the magnitude threshold to 5 for parameter optimi-
+zation and comparing the resulting AUC values. As 
+shown in Table 3, that study also divided Japan into 
+three regions and used accuracy to evaluate the spa-
+tial distribution of earthquakes above magnitude 5. 
+Due to differences in region numbering, the results 
+were reindexed to align with the numbering used in 
+this study. The comparison revealed that our model 
+achieved higher accuracy in predicting earthquakes 
+above magnitude 5 in Region 0 and Region 3, while 
+performance in Region 1 was comparable. Addition-
+ally, we reported the accuracy corresponding to the 
+best AUC values obtained in our study, which demon-
+strated partial performance in predicting some major 
+earthquakes.
+We also compared our results with a study predict-
+ing seismic events across the entire region of Japan 
+(Zhang and Wang 2023). As shown in Table 4, that 
+study evaluated precision and recall for predicting 
+earthquakes above magnitude 4 occurring between 
+March 2020 and May 2021. However, our data con-
+struction approach was not suitable for direct com-
+parison using this methodology, as earthquakes above 
+magnitude 4 occur frequently in Japan. Instead, we 
+compared the average precision and recall values for 
+predicting larger earthquakes in each subregion over 
+the test set (approximately 10 years). The results indi-
+cate that our method achieved higher recall for larger 
+magnitude thresholds and longer prediction periods, 
+though with slightly lower precision.
+4.4  Feature importance analysis
+To improve model interpretability, we conducted a 
+feature importance analysis using the Random For-
+est’s built-in method. The results, ranked by impor-
+tance, are summarized in Fig. 13, 14.
+Within Japan, the distribution of feature importance 
+shows high differentiation: Region 0 is dominated by the 
+a-value (weight 0.586), Region 1 has the highest weight 
+for Centroid_Lon (0.700), Region 2 primarily relies on 
+max_magnitude (0.251) and Lat_Lon_Slope (0.240), 
+while Region 3 centers on mean_magnitude (0.634) 
+and the b-value (0.237).The New Zealand regions simi-
+larly display distinct zonal characteristics: Region 0 is 
+primarily characterized by Root_Energy (0.359) and 
+Centroid_Lat (0.239), Region 1 is dominated by Lat_
+Lon_Slope (0.293) and Energy (0.256), and Region 2 is 
+mainly determined by Long_Variance (0.352), Magni-
+tude_Deficit (0.318), and Density (0.301).
+Table 3   Comparison with other studies on the accuracy of 
+predicting earthquakes with magnitudes greater than 5 in 
+Japan’s zoning
+Region 0
+Region 1
+Region 3
+(Berhich, et al 2023)
+0.56
+0.92
+0.51
+M_threshold ≥ 5
+0.67
+0.89
+0.78
+M_threshold
+0.42(≥ 6.6)
+0.47(≥ 6.7)
+0.44(≥ 7.5)
+Table 4   Comparison with other earthquake prediction preci-
+sion and recall in Japan
+Time
+M_threshold Precision Recall
+(March 2020–May 2021)
+ ≥ 4
+64.54%
+51.83%
+(January 2014–January 
+2024)
+ ≥ 6.6
+41.69%
+75.52%
+
+--- Sayfa 16 ---
+	
+J Seismol (2026) 30:12
+12  Page 16 of 20
+Vol:. (1234567890)
+Fig. 13   Ranking of the Importance of Characteristics in Four Sub Regions of Japan
+Fig. 14   Ranking of the importance of characteristics in four sub regions of New Zealand
+
+--- Sayfa 17 ---
+J Seismol (2026) 30:12	
+Page 17 of 20  12
+Vol.: (0123456789)
+These results demonstrate that different tectonic 
+units possess unique feature response patterns. This 
+variation likely reflects the complex interaction 
+between regional seismic activity statistics and tec-
+tonic backgrounds. Future research could integrate 
+more detailed information, such as regional tectonic 
+faults, to conduct further related studies.
+5  Discussions
+In this study, we employed a combined approach of 
+clustering algorithms, random forests, and optimiza-
+tion methods to uncover underlying mechanisms in 
+seismic activity data.
+Earthquake 
+prediction 
+research 
+encompasses 
+diverse time scales, ranging from short-term predic-
+tions (hours to days) to decadal-scale forecasts aimed 
+at long-term hazard risk assessment (Kanamori 
+2003). We defined the prediction window as one 
+year (365 days). This fixed time frame is particularly 
+useful for accurately assessing risks in catastrophe 
+insurance, optimizing premium pricing, and prepar-
+ing claim reserves. For national disaster risk reduc-
+tion and mitigation planning, this method can inform 
+resource allocation and the determination of seis-
+mic coefficients, ultimately improving post-disaster 
+response efficiency.
+It is instructive to explicitly compare our machine-
+learning-based framework with existing short-term 
+forecasting approaches, particularly the widely used 
+Epidemic-Type Aftershock Sequence (ETAS) mod-
+els. Both approaches aim to leverage statistical pat-
+terns in historical seismicity to forecast future activ-
+ity. The core similarity lies in their reliance on the 
+self-exciting nature of seismicity, where past events 
+influence future probabilities. However, fundamental 
+differences exist in model assumptions and temporal 
+applicability. Standard ETAS models are paramet-
+ric, explicitly built on specific triggering laws (e.g., 
+Omori-Utsu) and designed primarily for short-term 
+forecasting (hours to weeks) within sequences, focus-
+ing on the evolution of aftershock rates. In contrast, 
+our data-driven, non-parametric framework does 
+not assume a specific functional form for triggering. 
+It is designed for longer-term (year-scale) forecast-
+ing by learning complex, high-dimensional patterns 
+from a broader set of seismic activity indicators. This 
+distinction positions our method as complementary 
+to ETAS models: while ETAS excels at modeling 
+detailed short-term sequence evolution, our approach 
+targets the identification of regions with enhanced 
+probability of significant events over a longer, fixed 
+future window, aligning more closely with appli-
+cations in probabilistic seismic hazard assessment 
+(PSHA) that incorporate time-dependent clustering 
+effects over extended periods (e.g., Šipčić et al. 2022; 
+Shokrgozar-Yatimdar et al. 2025).
+This study is based on a hypothesis in earthquake 
+prediction that past seismic activity patterns can, to 
+some extent, reflect future earthquake occurrences 
+(Utsu 2002; Kanamori 1981). However, a long-stand-
+ing challenge has been how to quantify this "memory 
+effect"—specifically, determining the length of the 
+historical time window (T_history) that can effec-
+tively predict a given future window (T_forecast), 
+and how to identify the optimal magnitude thresh-
+old (M_threshold). Previous studies often fixed these 
+parameters based on physical intuition or empirical 
+experience (Mousavi and Beroza 2023; Asim et  al. 
+2020; Qin et al. 2022). In contrast, a core contribu-
+tion of this study is the systematic use of a method 
+combining random search and greedy algorithms to 
+empirically explore the combinatorial relationships of 
+these three key parameters, thereby identifying opti-
+mal prediction configurations for different regions.
+In terms of model selection, although deep learn-
+ing models (e.g., DNN, CNN, RNN) show strong 
+potential in sequence prediction tasks (Mousavi and 
+Beroza 2023), their performance heavily depends on 
+large amounts of data and meticulous hyperparameter 
+tuning. Given the limited size of earthquake catalogs 
+and our emphasis on model robustness, we selected 
+the random forest model, which has fewer hyperpa-
+rameters and lower requirements for data preprocess-
+ing. This model has proven highly effective for clas-
+sification tasks in the geosciences (Kong et al. 2019).
+Regarding performance evaluation, we faced 
+inherent trade-offs among metrics. Due to dataset 
+imbalance, we chose AUC as the core optimization 
+objective. AUC provides an overall measure of model 
+performance across all possible classification thresh-
+olds, which is crucial in scenarios where positive 
+samples (large earthquakes) are extremely rare and 
+misclassification costs are high. In contrast, thresh-
+old-dependent metrics such as F1-score are more 
+contingent on specific choices, while Accuracy can be 
+severely misleading with imbalanced data.
+
+--- Sayfa 18 ---
+	
+J Seismol (2026) 30:12
+12  Page 18 of 20
+Vol:. (1234567890)
+Although our dataset focuses on prediction within 
+a one-year timeframe and does not provide detailed 
+information on the effects of different time ranges 
+across subregions, we believe our optimization frame-
+work and analytical approach can be effectively 
+applied to a wide variety of scenarios involving fixed 
+magnitude thresholds, time windows, and spatial 
+regions. Throughout this process, overfitting must 
+be effectively prevented, and extrapolation via time-
+series cross-validation is an effective method.
+We employed time-series cross-validation to strictly 
+prevent overfitting, which is a recommended approach 
+for assessing the generalization ability of temporal 
+models (Vamsikrishna et al. 2024). The results clearly 
+show significant differences in the optimal parameters 
+for different subregions. We speculate that these differ-
+ences stem from varying earthquake preparation mech-
+anisms across tectonic units (Lu and Cao 2021).
+Currently, this study relies solely on earthquake 
+catalog data. Significant future improvements could be 
+achieved by integrating multi-source geophysical data. 
+For example, many studies have shown that surface 
+observation data, such as crustal deformation (GPS/
+GNSS) and changes in the geomagnetic field, have the 
+potential to reveal pre-seismic physical processes (Shah 
+2022). Our machine learning framework is highly exten-
+sible and can accommodate these new feature dimen-
+sions, which will be a focus of future work. Simultane-
+ously, exploring more advanced optimization algorithms 
+and regularization techniques to approach global optimal 
+solutions will also be a key direction for future research.
+This method uses a data-driven approach to objec-
+tively determine the optimal prediction parameters 
+(T_history, M_threshold) for different tectonic regions, 
+enhancing the regional adaptability of the forecasting 
+model. The output results can be used to identify areas 
+with enhanced seismic activity within the next year, pro-
+viding auxiliary reference for seismic trend consultations 
+and the delineation of key monitoring areas. Since only 
+earthquake catalogs are used, this method can be imple-
+mented in any region with earthquake catalog records.
+6  Conclusion
+In this study, we proposed a novel approach for binary 
+earthquake prediction by constructing an objective 
+optimization function incorporating three parameters: 
+the past time window (T_history), the magnitude 
+threshold (M_threshold), and the forecast time 
+window (T_forecast). Clustering algorithms were 
+employed to determine subregions, and a random for-
+est model was used to optimize the objective function 
+value. The following conclusions were drawn:
+(1)	 The entire methodological framework is based on 
+a core hypothesis that seismic activity in a past 
+period can reflect the intensity of future earth-
+quake occurrences. Different tectonic regions and 
+seismic activities lead to entirely distinct optimal 
+parameters and optimization outcomes.
+(2)	 Among the three clustering methods tested—
+K-means +  +, 
+DBSCAN, 
+and 
+GMM—the 
+K-means +  + algorithm yielded the best perfor-
+mance. The partitioning results for Japan were gen-
+erally consistent with the distribution of major fault 
+zones.
+(3)	 Comparative analysis with existing studies demon-
+strated that the proposed method performs effec-
+tively in predicting highly imbalanced datasets 
+involving earthquakes above magnitude 6.5 or even 
+larger. The method proved applicable across differ-
+ent regions, as validated by results from both Japan 
+and New Zealand. For subregions with suboptimal 
+performance, future work should involve more 
+advanced optimization algorithms and broader, 
+more reasonable parameter ranges. While this 
+study relied on 16 features derived from earthquake 
+catalogs—such as seismic energy and spatial char-
+acteristics—future improvements could incorpo-
+rate multi-source data for enhanced prediction.
+Acknowledgements  We would like to thank USGS online 
+database for the recorded data. The data used was obtained 
+from USGS (United States Geological Survey, 1879). Our 
+deepest gratitude goes to the anonymous reviewers for their 
+careful work and thoughtful suggestions that have helped 
+improve this paper substantially.
+Author contribution  X.W: Responsible for the entire paper 
+writing, idea development, experimental design, and method 
+formulation; the primary contributor. Z.W: Responsible for 
+providing research guidance for the first author, as well as 
+the environment, experimental conditions, and financial sup-
+port. Z.L: Responsible for financial support. K.Z: Responsi-
+ble for helping with figure drawing and data collection. Z.W: 
+Responsible for helping with figure drawing and data collec-
+tion. J.W: Responsible for helping with figure drawing and data 
+collection.
+
+--- Sayfa 19 ---
+J Seismol (2026) 30:12	
+Page 19 of 20  12
+Vol.: (0123456789)
+Funding  This work was supported by, the National Key 
+Research and Development Program of China (Grant Number 
+2023YFC3805203), the National Natural Science Foundation 
+of China (Grant Number 52378544, 52378543), and the Scien-
+tific Research Fund of the Institute of Engineering Mechanics, 
+China Earthquake Administration (Grant Number 2023A01).
+Data availability  No datasets were generated or analysed 
+during the current study.
+Declarations 
+Competing interests  The authors declare no competing inter-
+ests.
+Open Access  This article is licensed under a Creative Com-
+mons Attribution-NonCommercial-NoDerivatives 4.0 Interna-
+tional License, which permits any non-commercial use, shar-
+ing, distribution and reproduction in any medium or format, as 
+long as you give appropriate credit to the original author(s) and 
+the source, provide a link to the Creative Commons licence, 
+and indicate if you modified the licensed material. You do 
+not have permission under this licence to share adapted mate-
+rial derived from this article or parts of it. The images or other 
+third party material in this article are included in the article’s 
+Creative Commons licence, unless indicated otherwise in a 
+credit line to the material. If material is not included in the arti-
+cle’s Creative Commons licence and your intended use is not 
+permitted by statutory regulation or exceeds the permitted use, 
+you will need to obtain permission directly from the copyright 
+holder. To view a copy of this licence, visit http://creativecom-
+mons.org/licenses/by-nc-nd/4.0/.
+References
+Arai R, Takahashi T, Kodaira S, Kaiho Y, Nakanishi A, Fujie 
+G, Kaneda Y (2016) Structure of the tsunamigenic plate 
+boundary and low-frequency earthquakes in the southern 
+Ryukyu Trench. Nat Commun 7(1):12255
+Arthur, D., & Vassilvitskii, S. (2006). k-means++: The advan-
+tages of careful seeding. Technical Report, Stanford 
+University.
+Asim KM, Idris A, Iqbal T, Martínez-Álvarez F (2018) Earth-
+quake prediction model using support vector regressor 
+and hybrid neural networks. PLoS ONE 13(7):e0199004
+Asim KM, Moustafa SS, Niaz IA, Elawadi EA, Iqbal T, Martínez-
+Álvarez F (2020) Seismicity analysis and machine learning 
+models for short-term low magnitude seismic activity predic-
+tions in Cyprus. Soil Dyn Earthq Eng 130:105932
+Banna MH, Taher KA, Kaiser MS, Mahmud M, Rahman MA, 
+Hosen ASMS, Cho G-H (2020) Application of artificial 
+intelligence in predicting earthquakes: state-of-the-art and 
+future challenges. IEEE Access 8:192880–192923
+Berhich A, Belouadha FZ, Kabbaj MI (2021) LSTM-based 
+earthquake prediction: enhanced time feature and data 
+representation. Int J High Perform Syst Archit 10(1):1–11
+Berhich A, Belouadha FZ, Kabbaj MI (2023) An attention-
+based LSTM network for large earthquake prediction. Soil 
+Dyn Earthq Eng 165:107663
+Borate P, Rivière J, Marone C, Mali A, Kifer D, Shokouhi P 
+(2023) Using a physics-informed neural network and fault 
+zone acoustic monitoring to predict lab earthquakes. Nat 
+Commun 14:3693
+Bouman, C. A., Shapiro, M., Cook, G. W., Atkins, C. B., & 
+Cheng, H. (1997). CLUSTER: An unsupervised algorithm 
+for modeling Gaussian mixtures [Technical report]. Pur-
+due University.
+Dascher-Cousineau K, Shchur O, Brodsky EE, Günnemann S 
+(2023) Using deep learning for flexible and scalable earth-
+quake forecasting. Geophys Res Lett 50:e2023GL103909
+Frazier, P. I. (2018). A tutorial on Bayesian optimization. arXiv 
+preprint. https://​arxiv.​org/​abs/​1807.​02811 
+Girona T, Drymoni K (2024) Abnormal low-magnitude seismic-
+ity preceding large-magnitude earthquakes. Nat Commun 
+15:7429
+Gonzalez, J., Yu, W., & Telesca, L. (2022). Gated Recurrent 
+Units Based Recurrent Neural Network for Forecasting 
+the Characteristics of the Next Earthquake. Cybernetics 
+and Systems, 53(2), 209–222. https://​doi.​org/​10.​1080/​
+01969​722.​2021.​19816​37
+Gutenberg B, Richter CF (1944) Frequency of earthquakes in 
+California. Bull Seismol Soc Am 34(4):4–188
+Helmstetter, A., and D. Sornette (2003). Importance of direct 
+and indirect triggered seismicity in the ETAS model of 
+seismicity, Geophys. Res. Lett., 30, https://​doi.​org/​10.​
+1029/​2003G​L0176​70.
+Herrmann M, Piegari E, Marzocchi W (2022) Revealing the 
+spatiotemporal complexity of the magnitude distribution 
+and b-value during an earthquake sequence. Nat Commun 
+13:5087
+Huang P, Lv W, Huang R, Luo Q, Yang Y (2024) Earthquake 
+precursors: a review of key factors influencing radon con-
+centration. J Environ Radioact 271:107310
+Jain R, Nayyar A, Arora S, Gupta A (2021) A comprehensive 
+analysis and prediction of earthquake magnitude based on 
+position and depth parameters using machine and deep learn-
+ing models. Multimed Tools Appl 80(18):28419–28438
+Kanamori H (1981) The nature of seismicity patterns before 
+large earthquakes. Earthq Prediction: Int Rev 4:1–19
+Kanamori H (2003) Earthquake prediction: an overview. Int 
+Geophys 81:1205–1216
+King GC, Stein RS, Lin J (1994) Static stress changes and 
+the triggering of earthquakes. Bull Seismol Soc Am 
+84(3):935–953
+Köhler, J., Li, W., Faber, J., Rümpker, G., & Srivastava, N. 
+(2023). Testing the potential of deep learning in earth-
+quake forecasting. arXiv preprint. https://​arxiv.​org/​abs/​
+2307.​01812
+Kong Q, Trugman DT, Ross ZE, Bianco MJ, Meade BJ, Gerst-
+oft P (2019) Machine learning in seismology: turning data 
+into insights. Seismol Res Lett 90(1):3–14
+Lin J-T, Melgar D, Sahakian VJ, Thomas AM, Searcy J (2023) 
+Real-time fault tracking and ground motion prediction for 
+large earthquakes with HR-GNSS and deep learning. J 
+Geophys Res Solid Earth 128:e2023JB027255
+
+--- Sayfa 20 ---
+	
+J Seismol (2026) 30:12
+12  Page 20 of 20
+Vol:. (1234567890)
+Liu Y, Zhao Q, Wang Y (2024) Peak ground acceleration pre-
+diction for on-site earthquake early warning with deep 
+learning. Sci Rep 14(1):5485
+Lu K, Cao Z (2021) New understanding on the principle of 
+earthquake. Int J Mod Phys B 35(01):2150013
+Mousavi SM, Beroza GC (2023) Machine learning in 
+earthquake seismology. Annu Rev Earth Planet Sci 
+51(1):105–129
+Mousavi SM, Ellsworth WL, Zhu W, Chuang LY, Beroza GC 
+(2020) Earthquake transformer—an attentive deep-learn-
+ing model for simultaneous earthquake detection and 
+phase picking. Nat Commun 11(1):3952
+Nanjo KZ, Rundle JB, Holliday JR, Turcotte DL (2006) Pattern 
+informatics and its application for optimal forecasting of 
+large earthquakes in Japan. In Computational Earthquake 
+Physics: Simulations, Analysis and Infrastructure, Part II. 
+Basel: Birkhäuser Basel, pp 2417–2432
+Ogata Y (1988) Statistical models for earthquake occurrences 
+and residual analysis for point processes. Am Stat Assoc 
+83(401):9–27
+Qin Y, Chen T, Ma X, Chen X (2022) Forecasting induced 
+seismicity in Oklahoma using machine learning methods. 
+Sci Rep 12(1):9319
+Rhoades DA, Evison FF (2006) The EEPAS forecasting model 
+and the probability of moderate-to-large earthquakes in 
+central Japan. Tectonophysics 417(1–2):119–130
+Ruan Q, Yuan X, Liu H et al (2023) Study on co-seismic iono-
+spheric disturbance of Alaska earthquake on July 29, 2021 
+based on GPS TEC. Sci Rep 13:10679
+Schimmenti VM, Petrillo G, Rosso A, Landes FP (2024) 
+Assessing the predictive power of GPS-based ground 
+deformation data for aftershock forecasting. Seismol Res 
+Lett 95:3243–3249
+Schubert E, Sander J, Ester M, Kriegel HP, Xu X (2017) 
+DBSCAN revisited, revisited: why and how you should 
+(still) use DBSCAN. ACM Transactions on Database Sys-
+tems (TODS) 42(3):1–21
+Seydoux L, Balestriero R, Poli P, de Hoop M, Campillo M, 
+Baraniuk R (2020) Clustering earthquake signals and 
+background noises in continuous seismic data with unsu-
+pervised deep learning. Nat Commun 11(1):3972
+Shah M (2022) Earthquake ionospheric and atmospheric anoma-
+lies from GNSS TEC and other satellites. In Computers in 
+Earth and environmental sciences. Elsevier, pp 387–399
+Shan W, Zhang M, Wang M, Chen H, Zhang R, Yang G, Tang Y, 
+Teng Y, Chen J (2022) EPM–DCNN: earthquake prediction 
+models using deep convolutional neural networks. Bull Seis-
+mol Soc Am 112:2933–2945
+Shi HX et al (2018) Decrease in b value prior to the Wenchuan 
+earthquake (Ms8.0). Chin J Geophys 61(5):1874–1882
+Shokrgozar-Yatimdar E, Chen P (2025) Explainable deep learn-
+ing for real-time prediction of uniform hazard spectral accel-
+eration for on-site earthquake early warning. Geophys J Int 
+243(2):ggaf345
+Shokrgozar-Yatimdar E, Yaghmaei-Sabegh S, Shoaeifar P, Chen 
+P (2025) Smoothing-based aftershock probabilistic seismic 
+hazard assessment using the spatiotemporal ETAS model. 
+Bull Seismol Soc Am 115(1):349–365
+Šipčić N, Kohrangi M, Papadopoulos AN, Marzocchi W, Baz-
+zurro P (2022) The effect of seismic sequences in proba-
+bilistic seismic hazard analysis. Bull Seismol Soc Am 
+112(3):1694–1709
+Stein RS (1999) The role of stress transfer in earthquake occur-
+rence. Nature 402(6762):605–609
+Tsuchiya M, Nagahama H, Muto J, Hirano M, Yasuoka Y (2024) 
+Detection of atmospheric radon concentration anomalies and 
+their potential for earthquake prediction using Random For-
+est analysis. Sci Rep 14:11626
+Utsu T, Ogata Y (1995) The centenary ofthe Omori formula fora 
+decay law of aftershock activity. J Phys Earth 43(1):1–33
+Utsu T (2002) Statistical features of seismicity. In International 
+Geophysics. Academic Press, Vol 81, pp 719–732
+Vamsikrishna A, Gijo EV (2024, June) New techniques to per-
+form cross-validation for time series models. In operations 
+research forum. Cham: Springer International Publishing, 
+Vol. 5, No. 2, p 51
+Vince A (2002) A framework for the greedy algorithm. Dis-
+crete Appl Math 121(1–3):247–260
+Wang Q, Xu X, Jiang Z et al (2020) A possible precursor prior 
+to the Lushan earthquake from GPS observations in the 
+southern Longmenshan. Sci Rep 10:20833
+Wang Y, Li X, Wang Z, Liu J (2023) Deep learning for mag-
+nitude prediction in earthquake early warning. Gondwana 
+Res 123:164–173
+Wiemer S, Wyss M (2000) Minimum magnitude of complete-
+ness in earthquake catalogs: examples from Alaska, the 
+western United States, and Japan. Bull Seismol Soc Am 
+90(4):859–869
+Wirth EA, Sahakian VJ, Wallace LM, Melnick D (2022) The 
+occurrence and hazards of great subduction zone earth-
+quakes. Nat Rev Earth Environ 3(2):125–140
+Xi Z, Wei SS, Zhu W, Beroza GC, Jie Y, Saloor N (2024) 
+Deep learning for deep earthquakes: insights from OBS 
+observations of the Tonga subduction zone. Geophys J Int 
+238(2):1073–1088
+Yadav S, Shukla S (2016, February) Analysis of k-fold cross-
+validation over hold-out validation on colossal datasets for 
+quality classification. In 2016 IEEE 6th International con-
+ference on advanced computing (IACC). IEEE, pp 78–83
+Yaghmaei-Sabegh S, Tsang HH (2011) A new site classifica-
+tion approach based on neural networks. Soil Dyn Earth-
+quake Eng 31(7):974–981
+Yaghmaei-Sabegh S, Shoaeifar P, Shoaeifar N (2017) Proba-
+bilistic seismic-hazard analysis including earthquake clus-
+ters. Bull Seismol Soc Am 107(5):2367–2379
+Yaghmaei-Sabegh S, Shokrgozar-Yatimdar E, Shoaeifar P 
+(2022) Temporal clustering PSHA based on smoothing: a 
+case study in the New Madrid seismic zone of the central 
+USA. J Seismol 26(1):119–135
+Zhang Z, Wang Y (2023) A spatiotemporal model for global 
+earthquake prediction based on convolutional LSTM. 
+IEEE Trans Geosci Remote Sens 61:1–12
+Publisher’s Note  Springer Nature remains neutral with regard 
+to jurisdictional claims in published maps and institutional 
+affiliations.

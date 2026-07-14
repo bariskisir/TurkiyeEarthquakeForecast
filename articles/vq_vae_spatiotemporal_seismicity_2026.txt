@@ -1,0 +1,904 @@
+
+--- Sayfa 1 ---
+USING SEISMIC STATISTICAL FEATURES AND VQ-VAE TO
+IMPROVE SPATIOTEMPORAL SEISMICITY PREDICTABILITY
+Wei Quan, Denise Gorse
+Department of Computer Science
+University College London
+{d.gorse, wei.quan}@cs.ucl.ac.uk
+ABSTRACT
+In this paper we build upon a previous study in which we demonstrated, using XGBoost and
+earthquake catalogue data from Japan and Chile, that a set of 60 seismic statistical features (SSFs)
+had much greater predictive value than a set of 428 generic time series features from the tsfresh
+package. We here extend this previous work in two key ways, focusing on data from Japan as a
+large dataset is necessary in order to allow for the training of a deep learning (autoencoder) model.
+First, we move from whole-region prediction (considering, for each candidate event, the likelihood
+of an event M ≥5.0 anywhere in the region in the next 15 days) to localised predictions in which
+both the region of feature computation and the region of prediction are restricted to a circle of radius
+24 km around the candidate event, and we show that performance remains excellent, similar to our
+previous whole-region study for the same area. Second, we here couple this proven set of SSFs, based
+on one-dimensional (catalogue) data, with a novel feature based on two-dimensional seismic maps,
+obtained by training a VQ-VAE model to reproduce such maps as output and identifying a measure
+of its error in doing so with a localised build-up of crustal stress. We show that while localised
+prediction based on SSFs can be effective alone, with test AUC values as high as those obtained
+in the case of Japan in our previous whole-region study, the inclusion of the new natively-spatial
+VQ-VAE-derived feature, top-ranked by SHAP analysis, can enhance performance and additionally
+appears to near-wholly replace the traditionally-computed b-value in terms of feature usage.
+Keywords Seismology · Seismic statistical features · Spatiotemporal prediction · Deep learning · VQ-VAE
+1
+Introduction
+The effective prediction of earthquakes (ideally providing tight constraints on both probable location and probable time)
+has been a long-sought goal, but the problem presents challenges so severe that some have doubted that it will ever be
+achievable [1]. In substantial part the challenge is due to the impossibility, for the foreseeable future, of making direct
+measurements of crustal stress at the depths at which earthquakes are initiated. Thus, proxies of building seismic stress
+have been sought, ideally ones sufficiently strongly related to subsequent fault movement that they could allow for the
+forecasting of future seismicity. Predominant among these ‘seismic statistical features’ (SSFs) has been the b-value, the
+slope parameter derived from the Gutenberg-Richter law [2],
+log10N(M) = a −bM,
+(1)
+where N(M) is the number of earthquakes with a magnitude greater than or equal to M, and a and b are constants. The
+b-value, the relative frequency of small to large earthquakes, takes a global average value of around 1.0 (1.02 ± 0.03),
+but can vary from 0.3 to 2.5 or greater [3] with a localised drop in the b-value often asserted to be predictive of an
+imminent large seismic event. There have been a number of ‘labquake’ studies, for example [4], that strongly support
+this use of the b-value as a measure of the build-up of stress on a fault, and many studies also of the behaviour of
+the b-value in the lead-up to a major seismic event, for example [5], [6]. However, these latter studies, outside of a
+arXiv:2606.10069v2  [cs.LG]  11 Jun 2026
+
+--- Sayfa 2 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+laboratory setting, have not been unambiguous in their conclusions. Earthquakes are not always preceded by localised
+drops in the b-value, and localised drops in the b-value are not always followed closely by a seismic event, as pointed
+out in [7] and [8], which are equivocal about the value of b, and in [9] and [5], which are sceptical. There could be
+many confounding factors that might influence the utility of the feature. Most importantly, the b-value appears best used
+to assess the build-up of stress associated with a specific fault system, as in the Foreshock Traffic Light System (FTLS)
+of Gulia and Wiemer [10], [11], not as a means to attempt to predict seismic activity more widely. This last explains
+why the b-value is not usually ranked highly in region-wide studies such as [12], [13], [14], [15].
+This lack of apparent utility of the b-value was notable also in our own previous work [16], upon which this current
+paper builds, where for the Japanese dataset b appeared nowhere among the top 20 features obtained by SHAP analysis.
+However, as discussed in Section 4.3, we noted that when prediction was restricted to progressively smaller circular
+regions centred on a preceding event of interest the situation was very different, with smaller prediction radii boosting
+the SHAP value ranking of b. In fact this phenomenon, in line with the successful localised usage of the b-value in the
+FTLS system [10], [11], was so notable that it led to the construction of a novel and effective feature, a b-value analogue
+we name VQ-VAE-b, derived from deep learning. This new feature, derived from an assessment of the difficulty faced
+by a VQ-VAE autoencoder in reconstructing magnitude-stratified spatiotemporal maps of seismicity, will be shown to
+be the overall most effective feature in the prediction of seismicity.
+Even so, we do not study the potential utility of the b-value or its novel analogue alone. It is only one of a large class
+of SSFs that can be derived from earthquake catalogue data. There has been sufficient work done in whole-region
+earthquake prediction based on machine learning, discussed in Section 3.2.1 and including our own previous work [16],
+to indicate the potential value of many of these others, as well as some single-feature studies of the z-value [17], [18], a
+measure of seismic rate change introduced by Habermann [19] and included in our SSF set. We note that these z-value
+studies have shown similar conflicting results as many single-feature b-value studies, which is probably not surprising.
+Earthquake prediction in a broad context is extraordinarily difficult, and if the problem is ever to be solved it is unlikely
+to be via the observation of the behaviour of any single feature. Additionally, from the perspective of machine learning,
+which is our perspective, it makes most sense to include all potentially relevant information in the feature set, and let
+the model decide what it can make use of; human intuition often introduces bias.
+In summary, our paper will:
+• Demonstrate, using the seismic statistical features whose value was evidenced in our previous work [16], that
+SSF-based prediction can be used in a spatiotemporal context, specifically asking whether an event of interest
+will be followed by a future event of a certain magnitude (here, an earthquake of magnitude M ≥5.0 within
+15 days), within a certain distance (here, a circle of radius R).
+• Propose a novel feature generated by the use of a VQ-VAE deep learning model, a b-value analogue that in a
+different way measures the build-up of localised crustal stress that may lead to an earthquake.
+The paper will be organised as follow. Following this Introduction section, in Section 2 we briefly review some
+necessary background in terms of the two basic components of our model, seismic statistical features (SSFs) in Section
+2.1 and VQ-VAE in Section 2.2. We then move on in Section 3 to first consider previous papers that apply VQ-VAE
+in any branch of seismology (Section 3.1), then review SSF-based earthquake prediction in Section 3.2. There, we
+consider region-wide (Section 3.2.1), geographically restricted (Section 3.2.2), and in Section 3.2.3 those types of
+more localised prediction that are closest to the work of this paper. Section 4 explains our methodology, considering in
+Section 4.1 the specific means by which spatiotemporal prediction is enabled (temporary circles of prediction that can
+open and close anywhere rather than a fixed grid as in the work reviewed in Section 3.2.3), and our dataset (Section
+4.2). Finally, Sections 4.3, 4.4, and 4.5 of the methodology section present the motivation for and means of use of a
+VQ-VAE model to construct a novel b-value analogue feature. Our results are presented in Section 5, comprising the
+predictive performance of the two variants of our model, with and without the new VQ-VAE feature (Section 5.1), a case
+study of the March 2022 Fukushima earthquake (Section 5.2), and in Section 5.4 an assessment of model performance
+on a declustered dataset, showing that the model’s good performance is not due to over-reliance on the prediction of
+aftershocks. Finally, in Section 6, we review our main findings in this paper and make some suggestions for future work.
+Before moving on, a note about our use of the word ‘prediction’ and our framing of the problem as one of earthquake
+prediction. In order to discover whether some feature or features (b, the new b-value analogue, or more likely some
+combination of these with others from the SSF feature set), may have a use as a meaningful proxy for subsurface
+processes leading to an earthquake, it is necessary to frame a specific hypothesis that can be disproven, using a dataset
+large enough to allow for statistical rigour. Otherwise results will remain anecdotal, the topic of debates that cannot be
+easily resolved. It is problematic to see how the hypothesis to be tested could be other than whether these features could
+allow a future seismic event to be predicted from them. However, this does not mean we are attempting operational
+earthquake prediction, which we consider premature, using these methods, at this time.
+2
+
+--- Sayfa 3 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+2
+Background
+2.1
+Seismic statistical features
+Seismic statistical features (SSFs) are, generically, any quantities that can be calculated from earthquake catalogue time
+series, which list event ID, time, magnitude, epicentral location (latitude and longitude), and hypocentral depth. All of
+the better-known SSFs, used in the vast majority of works in this field, use only time and magnitude in their computation,
+and time usually only as a means to determine which events succeed or precede others, or to answer simple questions
+such as ‘what was the largest magnitude event experienced in the last seven days?’ or ‘over how many days did the
+last N (where N is typically 50 or 100) events occur?’ There are clearly uses that can be made of other catalogue
+information: for example, Picozzi et al. [20] studying preparatory behaviours in the years preceding the 2009 Mw
+6.3 L’Aquila earthquake, make successful use of a 3D hypocentral volume feature requiring all of latitude, longitude,
+and depth, and Hu et al. [21] use lunar date, on the basis of past works suggesting tidal effects may be associated
+with earthquake nucleation. But for the SSF component of this work we will follow the classic path of calculating
+statistical features based on an unevenly spaced temporal sequence of earthquake magnitudes, with a time-window,
+where relevant, of the last N events, and hence we will review here only the type of SSFs that are relevant to this
+approach. (Noting that we will in this work however calculate these SSF features based only on the last N events within
+a given radius R of each successive event in the catalogue, and will make predictions also for only an equally restricted
+region surrounding that event; this will be explained in more detail in Section 4, and is a significant difference from the
+way that these traditional SSFs have been used in previous works.)
+The first and still most influential set of SSFs were those six proposed by Ma et al. in 1999 [22], with two further
+features added by Panakkat and Adeli in 2007 [23]. We will refer to this set of eight indicators, which includes the
+Gutenberg-Richter b-values discussed in the Introduction, as the MPA set, and these are listed in Table 1.
+Table 1: Ma / Panakkat & Adeli (MPA) seismic statistical features. The first six were proposed by Ma et al. in [22]; the
+remaining two were added by Panakkat and Adeli in [23].
+Name
+Description
+b
+b-value in Gutenberg-Richter (GR) law, calculated over last N events
+η
+deviation from GR law during last N events
+Mdef
+magnitude deficit (difference between max observed earthquake magnitude during last N events, and
+max expected from GR law)
+T
+time during which last N seismic events occurred
+Mmean
+mean magnitude of last N seismic events
+dE1/2
+seismic energy release
+µ
+mean time between last N characteristic events
+c
+coefficient of variation of the mean time between last N characteristic events
+A different set of seven features was proposed by Reyes et al in 2013 [24] [25]; five of the seven are measures of change
+in the b-value during the last N events, combined with x6, the maximum earthquake magnitude during the last seven
+days, and x7, the probability, according to the Gutenberg-Richter (GR) law, of an earthquake with magnitude greater
+than or equal to a specified magnitude during the time within which the last N events occurred.
+Many other SSFs of this same category (based on the last N events, only magnitude and temporal properties of the
+catalogue sequence considered) have been considered and widely used. These include the GR a-value (intercept
+parameter, measuring the level of seismic activity in the region studied), probabilistic recurrence times (TrecM) [26]
+(the time between two earthquakes of magnitude greater than or equal to a specified magnitude M). It has been
+additionally proposed to measure the rate of seismic energy release (dE1/2) [27], and measures of changes in the rate
+of seismicity (Habermann’s z-value [28] and the β-measure of Matthews and Reasenberg [29]).
+These commonly used SSFs, of which the most complete set assembled was the list of features originally proposed by
+Asim et al. in 2018 [30] [31], can, following [30], be usefully divided into features that do (referred to as parametric,
+Table 2, and potentially sensitive to issues of catalogue completeness, as will be discussed in Section Methodology) and
+do not (referred to as non-parametric, Table 3) depend on the Gutenberg-Richter a- and b-values. (We note a small
+difference between our usage and that of [30] in that we include a and b themselves in the parametric feature set.)
+It is this widely-used set of SSFs, comprising the sum of those features in Tables 1 and 2, a set that we previously used
+in [16] to demonstrate that SSFs have a predictive value substantially beyond that of generic time series features, that
+we will incorporate in our proposed spatiotemporal model, alongside a novel feature derived from the operation of a
+3
+
+--- Sayfa 4 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Table 2: Parametric seismic statistical features (27 in total), as used and defined in [31].
+Feature(s)
+Description and / or source
+b, η, Mdef
+Ma et al. [22]
+x7
+Reyes et al. [24], in this case measuring probability of occurrence
+of an earthquake with M ≥6
+a
+y-intercept from GR law [32] (level of seismic activity)
+σb
+standard deviation of b value, as used in [33]
+Trec
+probabilistic recurrence time [26], for M in {4.0, 4.1, 4.2, ... , 6.0}
+Table 3: Non-parametric seismic statistical features (six in total), as used and defined in [31].
+Feature(s)
+Description and / or source
+T, Mmean, dE1/2
+Ma et al. [22]
+x6
+Reyes et al. [24]
+z
+seismic rate change (method of Habermann) [19]
+β
+seismic rate change (method of Matthews & Reasenberg) [29]
+deep learning model (VQ-VAE autoencoder) whose construction is explained in Section 4. Our previous work had a
+total of 60 SSF features because, following [30], we calculated all parametric features using both the method of least
+squares and the method of maximum likelihood to obtain a and b. Our work to be presented here uses fewer features
+(only 33) because the 27 parametric features are now calculated in only one way, using the method of van der Elst [34]
+[35] to obtain the b-value and maximum likelihood to obtain the a-value, in line with current seismological practice.
+We note that there are many other possible SSFs of the category considered here. For example, Novick and Last [36]
+assembled a set of 94 features (though some undefined), and Hu et al. [21] used a very large set of 282 seismic features,
+largely distinct, aside from a, b, T, and dE1/2, from the ‘classical’ sets of SSFs. These alternatives are of interest but
+they do not have the long history of use of the more common indicators. Since our purpose here is to explore the way
+that a restricted feature computation distance (to allow the value of the GR b-value to be exploited) and a restricted
+prediction distance (to match the spatial scope of the feature computation and also to potentially be of more practical
+utility) affect SSF-based prediction, and considering that we will also add a wholly novel feature unrelated to SSFs, we
+prefer to use a feature set for which there is significant prior art.
+2.2
+VQ-VAE
+Introduced by van den Oord et al. [37], the Vector Quantised Variational Autoencoder (VQ-VAE) is a powerful deep
+learning architecture designed to compress complex, high-dimensional data into a simplified, compact format. While
+standard autoencoders map data into a smooth, continuous space, a VQ-VAE forces the data into a discrete ‘codebook’,
+which is a fixed collection of distinct learned patterns. In a standard machine learning context, these distinct codes are
+typically extracted as compressed features to be used for purposes such as data classification or clustering, or used for
+time series sequence generation. In contrast, we do not use these codes for feature extraction or for prediction. The
+value of the discrete codebook structure for our work is that it acts as a natural way to categorise different regional
+seismic patterns. By forcing the model to downsample our catalogue-converted map data into a small set of fixed codes,
+it can learn to recognise and group recurring macro-scale seismic behaviours, but as noted above we do not make direct
+use of these codes. Instead, we evaluate how well the model can reconstruct our regional seismicity maps to see where
+the seismic activity deviates from normal patterns, which helps us track local stress build-up. The specific way this is
+done is explained in detail in Section 4.3.1.
+3
+Related work
+We will begin in Section 3.1 by discussing papers that have used VQ-VAE models for seismological applications; as
+will be seen, to our knowledge there is only one past work that has addressed issues of seismicity prediction, and that
+is within the context of laboratory experiments. Section 3.2 will then review uses of the other key component of our
+proposed prediction model, seismic statistical features (SSFs) derived from earthquake catalogue data, for making
+regional (Section 3.2.1) or more geographically focused (Section 3.2.2) assessments of seismicity. Finally, within the
+SSF section of the review, we will in Section 3.2.3 consider more advanced versions of the latter, in which deep learning
+(DL) models are used to integrate information gathered over a wider geographical area in order to improve prediction
+4
+
+--- Sayfa 5 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+for a more focused one, as these models have elements in common with our proposed use of a novel feature derived
+from a VQ-VAE model.
+3.1
+Uses of VQ-VAE in geoscience
+Given that VQ-VAE has proven extremely useful in data compression within many application areas, and given that
+many applications within Earth science are highly data-intensive, it is not surprising to see that the popularity of this
+type of encoder model within geoscience applications has been increasing. However, VQ-VAE has so far been almost
+exclusively applied in the fields of subsurface imaging and geomodelling. In the case of seismic imaging applications,
+for example, Shi et al. [38] and Yuan et al. [39] used VQ-VAE as a component in a model for automatic horizon picking.
+Turning to subsurface modelling, Harsuko et al. [40] recently showed how VQ-VAE can be used to create more accurate
+velocity models, while the paper of Misra et al. [41], which benchmarks a number of data compression models for
+the task of reparametrising a geomodel of approximately 60,000 grid cells, provides an especially strong argument in
+favour of VQ-VAE in complex geological modelling scenarios, achieving both high compression ratios (of up to 1250:1
+for the VQ-VAE2 model) and high-quality data reconstruction. To our knowledge, however, the only application of
+VQ-VAE to the study of earthquake precursory activity is Wang et al. [42], which uses VQ-VAE as part of a model
+to effectively predict future fault friction in a laboratory context, though it should be noted that in this work it is the
+codebook content that is used as a source of information about precursory activity—as emphasised in Section 2.2, this
+is very different to the use we make of VQ-VAE in our current work, in which it is, in contrast, the reconstruction error
+that is used as the basis for a new predictive feature.
+3.2
+SSF-based prediction of seismicity
+This section will not consider prediction based on single features such as the Gutenberg-Richter b-value [2] or the
+Habermann seismic rate change z [19] since, as discussed in the Introduction, this type of assessment has been
+controversial outside of notable success areas such as the FTLS system of Gulia and Wiemer [10] [11], aimed to
+determine whether a given event is a mainshock or precursor of a larger event to come. Additionally, as also discussed
+in the Introduction, it would seem unlikely that earthquake prediction in a broad context (as opposed to a specific task
+such as that addressed by the FTLS), should that ever be achievable, could be done on the basis of one or two features,
+and that from a machine learning point of view it is anyhow advisable to offer a range of features to a model, without
+pre-judgement. Thus we will here consider machine learning models that use a range of SSFs, with up to 282 such
+features [21]. The typical framing of the problem is to ask if, based on features computed from recent seismic history,
+there will be an event of a certain magnitude in a certain region during a certain future period of time. (For example, to
+ask if, based on the last N = 50 catalogued events, there will be a magnitude M ≥5.0 event anywhere in Southern
+California at some time within the next 15 days, with target 1 if this is so, 0 otherwise.) However, some formulations of
+the SSF-based earthquake prediction problem, such as those in [13] and [36], can interestingly differ in the way the
+problem is framed yet still be considered to belong to the same family.
+As discussed both in [15] and in our previous work [16], there has been a substantial past problem with data leakage
+in SSF-based prediction work. This has been due to a belief that once the feature vectors have been computed via a
+moving window of N events that the (feature, target) pairs can then be shuffled before dividing the full dataset into
+train, validation, and test sets; this unfortunately leads to data leakage as many of the examples used in training will
+have information in common with examples assigned to the test set. None of the papers to be discussed below fall
+into this category (though one has the less serious data leakage issue of not leaving a gap between train and test sets).
+However, it should not be assumed that omission from the set of papers discussed here necessarily implies data leakage.
+It should be noted that this will be a short and selective review with a focus on papers that provide feature rankings, and
+especially on the ranking of the b-value; a more substantial review of SSF-based ML earthquake prediction models can
+be found in [15], with additional more recent works discussed by us in [16].
+3.2.1
+Regional seismicity prediction using SSFs
+This subsection will consider works for which the objective is to predict whether or not there will be an event of a
+certain magnitude during a certain period of time in a region defined by national boundaries, or one as large as such.
+This is the classic framework for SSF-based prediction. While it might be criticised as of uncertain practical utility if
+the region was very large, even if the predictions for it were very reliable, region-wide prediction at a national scale
+has been a useful arena in which to test the predictive value of a variety of seismic statistical features. One caveat,
+however (which is applicable also to some works discussed in Section 3.2.2): features with demonstrated local value, in
+particular the b-value, may not show this same value in studies conducted over larger regions, as will be seen.
+5
+
+--- Sayfa 6 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Last et al. [13] makes predictions for Israel and its neighbouring countries from a mix of classic and novel SSFs,
+expanded to a total of 94 seismicity indicators in Novick and Last [36], which makes predictions for California, Japan,
+and Israel. These papers eliminate all possibility of data leakage, though framing the prediction problem somewhat
+differently, asking, for a given region, whether an event of magnitude greater than the median of maximum yearly
+magnitudes will occur in the following year. The earlier paper [13] achieves its best test result (an AUC of 0.698) using
+a multi-objective info-fuzzy network, a type of decision tree algorithm. It ranks the 26 SSF features used in terms of
+information gain ratio and finds the b-value to be low-ranked, lowest within the set of six classical SSFs considered and
+14th overall. However, the region considered is large and the low ranking is in line with expectations for this scenario.
+The later paper [36] compares test results for a wide variety of models for its three regions, with the best results (AUCs
+in excess of 0.80) being for the Japanese earthquake catalogue dataset, using logistic regression with a previous use of
+decision trees to select features, with XGBoost providing the best result. The Japanese dataset was by far the largest
+and most complete, and this is near-certainly why the results for this region were the best. It is for the same reason of
+dataset size and completeness that we have chosen to focus on catalogue data from Japan in this paper.
+A previous work co-authored by one of us [15] used the 60 SSFs proposed in [30] and used in [31], with strict controls
+to prevent data leakage. As in the case of [13] and [36] a variety of ML models were trialled, the most effective in this
+case being CatBoost. Despite the exclusion of any possible data leakage, results for the prediction of M ≥5.0 events
+within the next 15 days, using an N = 50 feature computation window, were excellent for Chile and Southern California
+(test AUCs of 0.8287 and 0.8822, respectively). However, the model did not perform as well for the Hindukush region,
+where a test AUC of 0.5103 was obtained. As in the work of [36] it appears catalogue completeness and dataset size
+here have a large influence on the quality of the results: the region with the best-predicted events, Southern California,
+had an Mc (the magnitude above which it can be considered all events were observed) of 2.6 and a total of 33,544
+examples after events with M < Mc have been removed, while the Hindukush region had an Mc of 4.0 and a resulting
+total of only 4,351 events available for training, validation, and testing. These results provide further evidence of the
+importance of using a large dataset with a low Mc. Regarding the b-value, the SHAP ranking here was very low for
+Chile and Southern California, and it was not selected at all in the case of the Hindukush model. The dominant category
+of selected feature, for all three regions, was the probabilistic recurrence times of Wiemer and Wyss [26]. These features
+have not been heavily used in SSF-based prediction, but appear to have considerable potential value.
+The same strict control over data leakage was exercised in our previous work [16], where we also used the same set
+of SSFs as in [15], those originating in [30]. However, in contrast to [15], this work focused not on trying to obtain
+the best possible result (and so did not explore many alternate ML models, choosing instead to use XGBoost) but on
+demonstrating the value of SSFs in relation to generic time series features from the tsfresh package [43], a category of
+experiment that had not been previously carried out. For both of our study regions of Japan and Chile test AUCs of over
+0.80 were obtained using the SSF feature set, while prediction from the tsfresh feature set was not substantially better
+than random. These results provide a strong foundation for our use of this SSF feature set as a key component in the
+proposed model of this paper, though using a different means of computation for a subset of the features, explained in
+Section 4, which reduces the total number of SSFs from 60 to 33 now. In relation to feature rankings, the most striking
+observation was how different these were in the two studied areas. For Japan, recurrence times dominate the top 20 of
+the 39/60 features used by the model, with no appearance of b, a result in line with the previously-discussed results [15]
+(including the heavy use of recurrence times). However, for Chile, b is here second-ranked out of the 18/60 features
+used by the model. Some reasons for these differences between the two regions are suggested in [16]; however, the high
+ranking of b at a regional scale in the case of Chile remains a current topic of investigation.
+3.2.2
+Prediction in geographically restricted areas using SSFs
+Here the study area is less than an entire country or region, the traditional framework for SSF-based prediction, but is
+usually not small, and can be motivated, for example, by a wish to divide the region into seismogenic zones having
+distinct geological characteristics. However, having applied this restriction the work then progresses in exactly the same
+way as whole-region prediction, gathering data from the entire sub-region and defining the problem as being that of
+predicting whether an earthquake of a certain magnitude will occur anywhere at all in that sub-region. Thus, while
+there may be a training benefit in avoiding mixing examples from areas in which seismicity has fundamentally different
+origins, this approach would not usually, even if the predictions were sufficiently accurate, lead to any future possibility
+of an actionable alerting system due to the large size of the regions. Additionally, it will be noted that areas of the
+typical sizes used in these works are likely to be still too large for b to be useful as a measure of stress build-up.
+The 2013 investigation by Martínez-Álvarez et al. [12] into the best set of SSFs (from out of the sets introduced by Ma
+et al. [22], Panakkat and Adeli [23], and Reyes et al. [24]) for earthquake prediction in Chile and the Iberian Peninsula
+is of particular interest because of its conclusions regarding the b-value in smaller-than-national regions. The paper
+displayed superior data handling, though with the flaw of omitting an event gap of at least the length of the N = 50
+feature computation window between the train and test sets (no validation sets were used); we do not consider this likely
+6
+
+--- Sayfa 7 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+to have impinged on its broad conclusions. It considered four Chilean regions, with cells varying from 0.5◦× 0.5◦to
+1◦× 1◦around the cities of Talca, Santiago, Pichilemu and Valparaíso, and the two most seismic zones of the Iberian
+peninsula (the Alborán Sea and West Azores-Gibraltar Fault, with cells around 1◦× 1◦). However, it should be noted
+that these are larger areas than those we will consider here, ranging from around 3,025 to around 12,100 square km as
+opposed to our circular feature calculation and prediction areas of around 1,810 square km. We believe it is likely that
+the substantial size of most of the areas used in [12] is the reason why the b-value was very low-ranked (joint 10th, the
+lowest possible ranking), for all Chilean and Iberian regions.
+3.2.3
+Spatiotemporal prediction with SSFs and spatial data fusion
+In this subsection we discuss models that make a localised prediction of seismic activity but use information gathered
+across a range of spatial scales, sometimes multimodally, in order to inform this prediction. All of these models
+necessarily use deep learning (DL) in some way. However, only one model uses SSF features in addition to those
+extracted using DL from spatial maps, that of Hu et al. [21], and is thus comparable to the work we present here, with
+its combination of SSF features and the VQ-VAE-derived b-value analogue. We will discuss this model later but first set
+the scene by briefly reviewing that set of works that do not use auxiliary seismic feature inputs.
+Considering those works that use only gridded maps of earthquake occurrence as input, the model of Wang et al. [44]
+has been notably influential. In this paper, which focused on earthquake prediction for mainland China, the study area
+was divided into nine large cells, with the intention being to predict, using an LSTM model with two-dimensional input
+feeding into a subsequent dense network with softmax applied to the outputs, whether a given cell would experience an
+earthquake of magnitude M > 4.5 during the next month based on the 3 × 3 binary patterns associated with previous
+months. The proposed two-dimensional model was demonstrated to be superior to a one-dimensional one, and in
+addition it was shown that if prediction is restricted to sets of cells covering the same fault zone, the performance for
+those sets of cells is superior to whole-area prediction. Performance was measured in terms of true positive accuracy
+(TPA) and true negative accuracy (TNA), with (TPA, TNA) for whole-area prediction of (68.56%, 81.31%), boosted
+to (77.07%, 93.49%) for subset regions focused on specific fault zones. However, these figures dropped considerably
+when prediction was for the next two weeks rather than the next month, with whole area prediction (TPA, TNA) now
+(60.83%, 77.38%) and values for fault zone focused prediction now (69.28%, 94.09%).
+Following the same approach as Wang et al. [44], Do˘gan and Demir [45] compared the use of an LSTM and structural
+RNN (SRNN) for China and Turkey, with the same 3 × 3 grid of approximately 15◦× 7◦cells used for China as in
+[44], a 3 × 3 grid of smaller (but still large, around 7◦× 3◦) cells for Turkey, and input and target encoding as in [44].
+They found that the SRNN model performed better than the LSTM proposed in [44], with a test F1 score of 0.77 vs.
+0.75 for China, and 0.69 vs. 0.62 for Turkey. However, a division of the China data area into a 5 × 5 grid, as opposed to
+a 3 × 3 one, substantially reduced the effectiveness of the model, for the SRNN variant reducing the F1 score from
+0.77 to 0.54. Sonthalia et al. [46] reimplemented the model of Wang et al. [44] for three different regional datasets:
+Java (2 × 2 grid, target ‘will there be any M ≥4.0 events in a given cell in the next month?’), Sumatra (3 × 3 grid,
+M ≥4.0) and Sulawesi (3 × 3 grid, M ≥4.5). It was observed that the use of softmax in [44] enforces a choice as
+to which cell will experience event(s) of the specified magnitude, while it is possible, especially for large cells in a
+strongly seismic area, that more than one cell in any given month will experience such events; for this reason softmax
+was in this work replaced by a sigmoid activation function. High test F1 scores were obtained, in excess of 0.82, but it is
+noted in the paper that the correct predictions are mostly of smaller events, with for Sumatra a test F1 score of 0.90 for
+4.0 ≤M < 5.0 but only 0.29 for 5.0 ≤M ≤7.9. Overall, it appears that models with only a gridded representation of
+seismic activity as input may be limited in their predictive ability, especially when the prediction time horizon is shorter,
+the grid cells are smaller, or when the events considered are larger.
+The only model in the literature of which we are aware that is comparable to ours in its intention to use both map data
+and catalogue-derived SSF features is that of Hu et al. [21]. The spatial data here goes beyond a map of earthquake
+occurrences to include also two geological maps, one of the lithology in its study area and one of the fault systems. It
+divides its study region of China into 120 cells of size 4◦× 4◦, larger than the circular regions we use (with a radius
+of approximately 0.22◦) but smaller than those used by Wang et al. It uses 282 SSFs, the largest number used in any
+single work to our knowledge, though this number derives in large part from a use of multiple temporal scales (for
+example, the b-value contributes 14 features, computed separately for the preceding year, each month of the preceding
+year, and the last 100 events). This range of temporal scales is likely related to its intention (similarly to [13] and [36])
+to make a prediction for the following year. Predictions are made for the occurrences of earthquakes of magnitudes
+0 ≤M < 5, 5 ≤M < 6, and M ≥7. The test macro F1 score of 0.4421 is statistically significantly better than a
+wide range of competitor models also implemented by the authors (the second-best, a transformer model, achieving
+only a value of 0.3438), though as expected prediction is best for the more numerous smaller events, with test F1
+score of 0.8748 for 0 ≤M < 5 declining to a value of 0.2222 for M ≥7. Transfer learning to the contiguous and
+western USA shows that the model is applicable outside its original training context, and performance for a 1◦× 1◦cell
+7
+
+--- Sayfa 8 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+size for this region, while not reported in the same detail as for the 4◦× 4◦cell size, at least for the smallest events
+0 ≤M < 5 remains excellent, with a test accuracy of 97.35%. Most importantly from the point of view of our own
+work in this paper, ablation experiments in [21] showed that removing either the map data (of the described three types)
+or the SSF data substantially harmed the model, demonstrating that these were working synergistically to achieve the
+model’s superior results. We consider the results of [21] to be aligned with and supportive of our discovery in this paper,
+presented in Section 5, that a map-derived analogue of the Gutenberg-Richter b-value can usefully add to information
+from one-dimensional catalogue data, including providing insights not present in the classical b-value itself.
+4
+Methodology
+4.1
+Localised computation of seismic statistical features
+We here use a form of spatiotemporal seismicity prediction that differs from works such as that of Wang et al. [44] and
+Hu et al. [21], discussed in the preceding Section 3.2.3, in that the localised regions within which predictions are made
+are not fixed grid cells, but circular regions of radius R centred on the epicentre of a past seismic event, that open at the
+time the event occurs and stay open until either at least one following event greater than or equal to a certain magnitude
+has occurred within that region, or until a certain period of time has elapsed. In line with our previous work [16] and
+much other work using SSFs we attempt to predict events M ≥5, as this range references nontrivial seismic events
+without being restricted to ones so rare that effective prediction, on grounds of a lack of data, becomes unfeasible.
+Again in line with our previous work [16] and wide usage within the SSF-based prediction literature, we select the
+temporal horizon for prediction to be 15 days. We choose the size of the prediction region to be radius R = 24 km, with
+SSFs in this case computed only using the last N = 50 events that have occurred within that region (thus ensuring the
+spatial scale of feature computation matches the spatial scale of the prediction target). It should be noted that instances
+in which 50 preceding events cannot be gathered cause that example to be excluded from all of the train, validation, and
+test sets, as such events do not allow for reliable computation of the SSF features.
+However, and importantly, we go beyond these locally-computed SSFs as features for localised prediction, merging them
+with a novel feature generated via the use of a VQ-VAE model. Our framework for this combination of traditional SSFs
+with deep learning-based spatial anomaly features via a dual-feature pipeline is shown in Fig. 1. While the first branch
+extracts localised SSFs computed as outlined above, the parallel deep learning branch processes magnitude-stratified
+seismicity maps through a VQ-VAE model to derive latent anomaly features represented by reconstruction errors. These
+complementary feature sets are concatenated and filtered through BorutaShap [47] feature selection to isolate the most
+robust predictive variables. Finally, the optimised feature subset is fed into a hyperparameter-tuned XGBoost classifier
+trained under a 5-fold time series cross validation strategy to assess future seismicity from seismic events (M ≥5.0)
+15 days in the future. As with the choice of prediction magnitude range and time horizon, the basic machine learning
+elements of the model are in common with our previous work [16], which also justifies these design choices; the
+intention here was to focus on the value of changing from a whole-region to a spatiotemporal framework that includes a
+novel spatially-driven feature, and thus it was not advantageous to also change, for example, our prediction model to
+something other than XGBoost [48], or to measure feature importances differently.
+The one element of the SSF branch of the pipeline we do differently in this work relates to the computation of those
+features deemed ‘parametric’ (those that use the Gutenberg-Richter a- and/or b-values, as listed in Table 2). In [16]
+we followed [30] and all previous work that has used these features in computing each such feature using both the
+method of maximum likelihood and the method of least squares to derive the a and/or b-values, giving 54 parametric
+features and a total of 60 features overall. However, though from a machine learning point of view it was interesting to
+explore this choice of computation methods, allowing the model to decide via BorutaShap feature selection what to
+make use of, the seismological community has critiqued these methods as overly sensitive to an accurate assessment
+of the magnitude of completeness Mc (the magnitude above which all seismic events within a given region can be
+assumed to have been detected and recorded within its catalogue). Following now-standard seismological practice, we
+compute the b-value using the method proposed by van der Elst [35] in 2021, which requires only a loose assessment of
+Mc, and compute the a-value by the method of maximum likelihood [49] because new methods of computing a-value
+produced unstable results. This has the effect of reducing the number of parametric features from 54 to 27 and our total
+number of available SSF features from 60 to 33.
+4.2
+Dataset
+We adopt an event-based spatiotemporal framework where each sample in the raw dataset corresponds to a single
+earthquake event drawn from the Japan catalogue downloaded from Japan Meteorological Agency. The full raw
+catalogue is summarised in Table 4, later filtered, for the purpose of computation of the SSF features, using a magnitude
+of completeness of Mc = 0.7, with events of smaller magnitudes being discarded.
+8
+
+--- Sayfa 9 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Figure 1: Complete modelling pipeline.
+Table 4: Japan dataset summary
+Coordinates
+Catalogue period
+Number of events
+22.0°– 48.0° N, 122.0°– 154.0° E
+01/04/2012 – 31/03/2022
+2,433,624
+The dataset is split temporally into training, validation, and test. The exact splits and numbers of samples in each subset
+are shown in Table 5. The one-month gaps between adjacent data subsets serve two purposes. They minimise the
+possibility of any aftershock sequence active at the boundary contributing both training and validation labels—a leakage
+path that is easy to overlook when working with clustered seismicity—and they ensure that the 15-day prediction
+horizon of the last training-period event does not overlap with the first validation-period event. The same logic applies
+to the validation and test periods. Without such a buffer, the temporal independence of the splits would be compromised.
+For a given event in the catalogue, we generate a binary label indicating whether at least one earthquake of magnitude
+M ≥5.0 occurs within a defined spatiotemporal neighbourhood of that event over the subsequent fifteen days. A
+9
+
+--- Sayfa 10 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Table 5: Dataset split
+Region
+Catalogue period
+Training period
+Validation period
+Test period
+Japan
+01/04/2012–31/03/2022
+≤31/03/2018
+01/05/2018–31/03/2020
+01/05/2020–31/03/2022
+Number of events
+1,409,930
+740,141
+225,019
+295,352
+minimum of 50 past neighbours is required for the event to be retained as a valid example in the dataset, so that the
+statistical features are computed over a sample large enough to be stable.
+4.3
+From one-dimensional temporal features to a two-dimensional latent map
+The SSFs are computed from one-dimensional catalogue data within the spatiotemporal framework, but they are, by
+nature, themselves only temporal features and do not intrinsically encode the geometric and spatial distribution of
+earthquakes in Japan, nor do they capture how that distribution evolves between successive events. Therefore, to
+complement the SSFs, we want to include natively spatial features that add maximally-independent predictive value to
+the existing SSF set. In preliminary experiments, we noticed that the b-value’s feature ranking position, consistently
+lower than widespread seismological opinion would expect (though higher than for whole-region prediction for Japan),
+improved as the spatial neighbourhood was tightened from 24km to 12km and 3km. However, the smaller spatial
+neighbourhoods could not be used as the amount of data in these cases was not sufficient to obtain a high AUC score.
+This revealed the b-value as a highly localised feature whose predictive value is underutilised within the standard feature
+generation framework, even when prediction is done at an R = 24 km scale (0.22◦, much smaller than the grid cell
+sizes used in the work described in Section 3.2.3). Therefore, this paper explores deep learning techniques to find a new
+way to approximate b-value as a b-value analogue to see if its predictive power can be exploited without computing
+it analytically as in the SSFs set. We design a new data preprocessing step in the deep learning feature branch to
+transform the one-dimensional raw time series input into a two-dimensional seismicity map input. In the training
+process, the aim is for VQ-VAE to learn an unsupervised magnitude-frequency-distribution dynamically, representing
+the aforementioned b-value analogue, so that it can be used alongside SSFs as an additional macro-regime signal.
+4.3.1
+A new type of VQ-VAE input preprocessing: magnitude-stratified channel encodings
+In this preprocessing step, we encode the underlying magnitude-frequency information in the input itself by binning
+earthquakes into three magnitude channels—micro (M < 2.0), small (2.0 ≤M < 3.5), and moderate (M ≥3.5)—and
+using the log-transformed event count per bin as the pixel intensity. The relative intensities across the three channels
+at any given pixel then encode the local magnitude-frequency state directly: a pixel bright in the micro channel but
+dim in the others indicates a creeping, high-b regime, while a pixel dense across all three channels indicates a lower-b,
+locked regime. The encoding mechanism is illustrated by the example in Fig. 2. The convolutional encoder is free to
+learn whichever combination of these intensities is most reconstructable, and the reconstruction error—we explicitly
+weight by raw event counts during training—becomes a measure of how well the current spatial b-value analogue field
+conforms to patterns the model has previously seen in the training set. The bin boundaries are not optimised but set to
+physically meaningful magnitude boundaries based on our prediction threshold of M ≥5.0.
+4.3.2
+Spatiotemporal map construction
+The study region is bounded by latitudes 22.0° – 48.0° N and longitudes 122.0° – 154.0° E, enclosing the Japanese
+archipelago and the main subduction zones. The region is discretised into a 160 × 160 grid, producing a spatial
+resolution of approximately 18 km per cell. This size ensures individual cells fit inside our 24km prediction radius, to
+provide enough initial input resolution for the encoder’s three downsampling stages, explained in Section 4.4. Time
+is discretised by a sliding window of length 15 days advanced in 6-hour steps, with each window producing one
+three-channel seismicity map in which each channel is log transformed using ln(1 + count), where the count is the
+number of earthquake events that occurred within the corresponding spatial cell during that window. The 6-hour overlap
+between consecutive maps is chosen to allow the model to observe gradual changes in the magnitude distribution rather
+than only transitions. The window length of 15 days is chosen because the b-value signal depends on the accumulation
+of micro-seismicity, which requires several days of accumulation before a stable magnitude-frequency shape emerges
+per pixel. Here we choose to set it at 15 days because it matches our prediction horizon and showed the best validation
+performance compared to 3- and 30-day alternatives. The resulting tensor has shape T × 3 × 160 × 160, where T is the
+number of windows spanning the full study period.
+To account for the fact that the absolute rate of seismicity in Japan undergoes a multi-year shift over the 2012-2022
+period, such that a model trained on static early statistics will perceive later windows as anomalous purely by virtue of
+10
+
+--- Sayfa 11 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Figure 2: Sample seismicity map
+this drift, we address this by computing a 365-day trailing rolling z-score per channel, so that the seismicity input map
+in each window is normalised relative to the preceding year of activity rather than to the full training-period mean. The
+resulting normalised tensor encodes relative rather than absolute counts and is the input passed to the VQ-VAE.
+4.4
+The VQ-VAE model
+The VQ-VAE model consists of a convolutional encoder, a discrete codebook, and a convolutional decoder, with
+architecture shown in Fig. 3. Three downsampling stages reduce the 160 × 160 spatial input to a 20 × 20 grid of
+64-dimensional latent vectors, each of which is replaced by the nearest of 128 entries in a learned codebook before the
+decoder reconstructs the three-channel seismicity map. The three-stage downsampling is chosen so that each latent cell
+corresponds to a physical region of roughly 144 × 144 km, a scale comparable to the historical rupture lengths of major
+fault segments along the Nankai Trough [50] and the Japan Trench; this aligns the receptive field of the latent code
+with the spatial extent of the geological processes the model is intended to characterise. The codebook size, 128, is
+11
+
+--- Sayfa 12 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+deliberately modest, reflecting our expectation that the number of distinguishable macro-seismic regimes in the region
+is not massive as usually seen in the standard computer vision domain.
+Figure 3: VQ-VAE pipeline.
+4.4.1
+Quantisation
+For the quantisation component of the VQ-VAE model, we used exponential moving-average updates to the codebook
+entries, with a commitment loss weight of 0.25 constraining the encoder outputs to their assigned codebook vectors.
+A dead-code reset mechanism replaces individual codebook embedding vectors that go unused for thirty consecutive
+epochs with random copies of recent active encoder outputs with added noise, preventing codebook collapse without
+disturbing the active portion of the codebook.
+4.4.2
+Loss function and regularisation
+The reconstruction loss in VQ-VAE is a weighted mean-squared error in the normalised space, with per-pixel weights of
+1 + log(1 + xraw),
+(2)
+where xraw is the un-normalised event count serving as the weight multiplier to the normalised error. This forces
+the model to concentrate loss on pixels that contain seismic activity and prevents an abundance of empty cells from
+dominating the gradient. Two regularising augmentations are also applied during training to prevent overfitting: small
+random spatial shifts of up to two pixels, simulating translation along the fault plane since fault ruptures are not usually
+at the exact same spots, and additive Gaussian noise injected into 15% of active pixels, which discourages exact
+memorisation of recurring patterns. Adam optimisation is applied with an initial learning rate of 10−4 and an adaptive
+learning-rate scheduler; early stopping is applied with a patience of 20 epochs on the validation reconstruction loss.
+4.5
+VQ-VAE feature extraction
+The VQ-VAE model is trained exclusively on maps whose timestamps fall within the training period, and the model
+weights are then frozen for all subsequent steps. When features are extracted for earthquake events in the validation
+and test set, the trained VQ-VAE model with weights frozen from the training period is applied to seismicity maps
+from those later periods without any further parameter update. This convention is essential to prevent data leakage. The
+rolling z-score normalisation is consistent with this rule because it depends only on the trailing year of data, strictly in
+the past and only in the training period and therefore introduces no future dependence.
+For each earthquake event retained in the dataset, its timestamp is matched to the corresponding 15-day seismicity map
+immediately preceding it. The pre-trained, frozen VQ-VAE model executes a forward pass on this specific multi-channel
+seismicity map to generate a normalised reconstruction map, and a spatial reconstruction error map is then derived by
+calculating the squared difference between the normalised input and the reconstruction, scaled by the log-transformed
+raw event-count weights. To capture localised preparatory signals, the geographic coordinates of an event are mapped
+to its exact grid cell on the error map. We extract both the mean and maximum reconstruction errors across three
+channels for each cell. These two values are log-transformed using the same log(1 + x) formulation to stabilise feature
+variance. We then construct a dynamic delta feature (∆recon_error) by subtracting the historical 30-day trailing average
+of the mean reconstruction error within that specific spatial cell from its current value. While the local spatial patch
+isolates structural anomalies in the immediate vicinity of the impending epicentre, the 30-day delta in theory should
+show the sudden spike from the longer-term regional baselines.
+12
+
+--- Sayfa 13 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+5
+Results
+5.1
+Spatiotemporal seismicity prediction
+The first step in evaluating the model was to consider the effectiveness of the proposed spatiotemporal model for the task
+of classifying whether a seismic event of magnitude M ≥5.0 would occur within a localised circular neighbourhood of
+radius 24 km during a future temporal horizon of 15 days, both with and without the novel b-value analogue (VQ-VAE-b)
+feature. It was found that with a test set of 291,845 examples, the AUC for the model without the new feature was 0.88,
+and with it was improved to 0.90, with ROC curves shown in Figure 4.
+Considering the test set performance of the SSF-only spatiotemporal model, which was within regions of diameter
+48 km (0.44◦, much smaller than the grid sizes in the models discussed in Section 3.2.3), it was in fact slightly higher
+than the test set AUC of 0.85 reported for the whole of Japan in our previous work [16]. Taking into account that the
+test sets in these two works covered slightly different time periods, that of [16] was smaller (137,936 examples), and
+that we here compute the SSFs somewhat differently (as explained in Section 4.1), this rough equality in performance is
+still a notable result. While we do not as yet attempt any form of operational earthquake prediction, considering it to be
+premature, the ability to issue a warning at an actionable geographic scale rather than country-wide would surely be a
+necessary component of such a system.
+Turning to the SSF + VQ-VAE-b model, it might appear from Figure 4 that the benefit of the new feature is not large.
+However, the next section will show, for the example of the March 2022 Fukushima earthquake, that the VQ-VAE-b
+feature appears much better able to localise a build-up of seismic stress than the classical Gutenberg-Richter b-value,
+and additionally, in the feature importance analysis of Section 5.3, to be able to largely replace the use of the classical
+b-value (including its standard deviation) within the prediction model.
+Figure 4: Test period ROC curves comparing the SSF-only and SSF + VQ-VAE-b dual-feature model
+5.2
+Investigation: the March 2022 Fukushima earthquake
+To examine the mechanism of operation of the VQ-VAE-b feature, a diagnostic spatial mapping analysis, shown in
+Figure 5 and 6, was performed on the 15-day window immediately preceding the March 2022 M = 7.4 Fukushima
+earthquake, a major destructive event, occurring near a plate boundary, within the unseen test set.
+13
+
+--- Sayfa 14 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Figure 5: Spatial diagnostic analysis of the 15-day window preceding the March 2022 M7.4 Fukushima earthquake,
+showing the distributions of the classical SSF b-value (top) and the VQ-VAE-b raw reconstruction error (bottom).
+14
+
+--- Sayfa 15 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+Figure 6: Correlation analysis between classical SSF b-value and VQ-VAE-b raw reconstruction error
+The spatial distribution of the classical analytical b-value across the Japanese grid network during this time window is
+visibly noisy, providing only a weak localised signal, as can be seen in Figure 5 (top). Conversely, VQ-VAE-b develops
+a highly focused, intense spatial anomaly that peaks in close proximity to the geographical coordinates of the impending
+mainshock epicentre, as demonstrated by the spatiotemporal map in the same Figure 5 (bottom).
+To evaluate the relationship between the two variants of the b-value feature, an event-by-event Pearson correlation
+analysis was conducted over the entire test period, as well as within the 15-days preceding the M = 7.4 Fukushima
+event. The statistical analysis pairs the classical b-value (SSFs) against the event-matched VQ-VAE-b reconstruction
+error for each individual earthquake event. Across the full test set, the global Pearson correlation coefficient is
+R = −0.0339 with a statistical significance of p = 4.16 × 10−75. This negative correlation remains consistent and
+becomes more pronounced during the 15 days preceding the Fukushima event, for which, over a total of N = 5,942
+events, there is a correlation of R = −0.0727 (p = 1.98 × 10−8). This relationship is visually captured in the scatter
+plot in Figure 6, which maps every seismic event during this precursory window. The data forms a distinct upward
+column, showing that the largest spikes in VQ-VAE reconstruction error are tightly concentrated where the classical
+b-value drops into a low, high-stress range between 0.5 and 1.0. Outside of this critical zone, where the b-value is larger
+than 1.0, the VQ-VAE reconstruction error values remain uniformly low and flat, confirming that the VQ-VAE-b feature
+specifically reacts to highly localised intense tectonic stress build-up.
+This persistent negative relationship between the classical and analogue (VQ-VAE reconstruction error) b-values would
+appear to align well with the underlying physics of fault deformation. Seismologically, a localised drop in the classical
+b-value indicates a highly stressed, locked tectonic phase characterised by a decreasing ratio of small-to-large events.
+When the VQ-VAE model encounters these anomalous magnitude-frequency distributions, the localised reconstruction
+error spikes accordingly. While the exceptionally low p-values referenced earlier demonstrate that this negative
+correlation between the classical b-value and reconstruction error is statistically real and robust, the low magnitude of
+the R coefficients reveals that the relationship is weakly linear. Some relationship would be expected given that they are
+fundamentally addressing the same anomaly in the magnitude-frequency distribution. However, the very different ways
+in which they do this, with the VQ-VAE model processing seismicity through non-linear spatial filters across multiple
+magnitude channels, mean that the relationship can be only a weak one. Finally, we note that the weakness of the
+relationship in fact adds value to the combined feature set, as the VQ-VAE component can provide largely independent
+predictive value to the downstream ensemble, as will be seen in the following section examining feature importances.
+15
+
+--- Sayfa 16 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+5.3
+Feature importance
+To better understand the performance of the XGBoost classifier, SHAP analysis was conducted on the test set. Figure 7
+shows the feature rankings sorted by their mean absolute SHAP values, which quantify each variable’s average impact
+on the model’s output.
+Figure 7: Test set feature importance ranking for the dual-feature (SSFs + VQ-VAE-b) model.
+The SHAP value-based feature importance ranking reveals that VQ-VAE-b feature (learned mean reconstruction error
+vqvae_recon_mean) emerges as the most valuable predictive variable within the dual-feature model, with the second
+most important classical parameter being the Benioff strain energy release (dE1/2).
+It is clear from Figure 7 that the analytically calculated Gutenberg-Richter b-value along with its standard deviation
+(stdev_b) have negligible direct model impact, with SHAP values near zero. In effect, it appears that the new VQ-VAE-
+b has largely overtaken the role of b in the combined feature set. This is in line with the observation in Figure 5 (classical
+b, top; VQ-VAE-b, bottom) that the latter is far better at highlighting an area of potentially concerning stress build-up.
+This may be because while our 24 km is much smaller than grid sizes typically used in more localised prediction, it
+is still too large to make use of the classical b-value in that it may aggregate earthquakes from multiple distinct fault
+systems. However, as was noted in Section 4.3, this issue cannot be easily addressed by shrinking the radius of the
+prediction area, as this leads to not enough data to build a reliable model. Thus, with data availability as it currently
+is (noting also that the Japan dataset is unusually large and complete) it would appear that the new b-value analogue
+VQ-VAE-b is a better option for detecting localised stress build-up than the classical, Gutenberg-Richter b-value.
+By bypassing direct localised line-fitting computation and instead training the convolutional filters of a VQ-VAE
+to minimise a count-weighted reconstruction error over magnitude-stratified spatial arrays, VQ-VAE-b maps these
+magnitude-frequency distributions natively across different fault zones. This variable thus serves as a robust spatial
+proxy for localised stress macro-states, successfully capturing fault-specific anomalies without incurring the temporal
+lag and sparsity penalties that damage the fixed-window analytical way of computing the b-value.
+5.4
+Evaluation on declustered test set
+We have also tested both versions of our spatiotemporal model on a declustered test set. Since a major mainshock
+naturally generates an intense localised cluster of aftershock events that are statistically easier to predict than mainshocks,
+an evaluation of the model without declustering can achieve artificially inflated AUC metrics by simply predicting
+the easier aftershock sequences. After declustering using the Gardner-Knopoff algorithm [51], the original test set is
+reduced to 141,109 mainshock examples. The resulting ROC curves are shown in Figure 8, where it will be seen, after
+comparison to Figure 4 that though there is an expected drop in performance for this mainshock-only dataset (reflecting
+16
+
+--- Sayfa 17 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+the difficulty of capturing genuine precursory signals compared to aftershock sequences), performance is still very good
+for both the SSF-only and VQ-VAE-b-augmented spatiotemporal models.
+Figure 8: Declustered test period ROC curves
+6
+Conclusion
+In this work, we investigated the value of both traditional seismic statistical features (SSFs), such as the Gutenberg-
+Richter b-value, and a novel feature derived from a deep learning model for localised seismicity prediction. The regions
+of feature computation and prediction were restricted to a circle of radius 24 km (0.22◦) around each seismic event in the
+catalogue, and we made predictions of future seismicity during the following 15 days within that same circular region.
+We kept as many elements as possible in common with our previous study of whole-region prediction using the same
+set of traditional SSFs, including the study area of Japan (due to its unusually large and complete earthquake catalogue),
+the prediction horizon of 15 days, and the specific question of asking if there would be an event of magnitude M ≥5.0
+during that future time. Notably, we discovered that this severe spatial restriction—reducing a question about the
+whole of Japan to one about small, temporary, circular prediction zones—could be answered as well as in our previous
+whole-region study. (With the caveat that the dataset used here was somewhat larger.) This is a very encouraging result
+since, though we consider attempts to use a model such as our current one for the operational earthquake prediction to
+be premature, it seems certain that any such forecasts would need to be made with a sufficient degree of geographic
+specificity in order to have practical value.
+The proposed new VQ-VAE-b feature, the error associated with a VQ-VAE model trained to reconstruct two-dimensional
+magnitude-stratified seismic maps, emerged from an observation during early development work with the spatiotemporal
+SSF-driven model that the usage of the Gutenberg-Richter b-value increased as the prediction radius was decreased. This
+was an observation of great interest to us given the amount of work investigating the use of the b-value for forecasting
+future seismicity at local scales, for example in the FTLS system of Gulia and Wiemer. However, our model requires
+100,000s of examples for training, validation, and testing, and we found that the test performance also decreased as the
+radius of the prediction and data gathering circles decreased because of data sparsity. Even with a catalogue as complete
+as that of Japan, we were unable to shrink these zones below a 24 km radius, as we require N ≥50 past events in order
+to compute classical SSFs like the b-value. Hence we looked for some other way to measure the localised build-up
+17
+
+--- Sayfa 18 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+of stress, a b-value analogue, that could make better use of the data we had. The new VQ-VAE-b feature does indeed
+appear to be able to better localise stress build-up and to boost prediction performance. While at our current scale of
+24 km prediction circles the increase in performance was modest (a test AUC of 0.90 as opposed to 0.88), it was even
+so very notable that the VQ-VAE-b feature essentially displaced the use of the classical Gutenberg-Richter b-value in
+terms of feature usage.
+Moving forward, we intend to investigate whether the new VQ-VAE-b feature could enable effective prediction at
+smaller than 24 km scales. This will require an adaptation of the current VQ-VAE architecture, adding further layers
+to enable it to use smaller cells (less than 18 × 18 km) within the seismicity map while allowing each latent cell to
+correspond to the same physical region of 144 × 144 km. We also intend to investigate the best combination of radii for
+gathering information for the calculation of SSF features and for making predictions of potential future seismicity, since
+our current choice to make these radii the same may not be ideal. If it then emerged, for example, that the prediction
+radius of 24 km could be decreased while the data-collection radius stayed the same, this might be another way to boost
+performance within smaller seismicity prediction zones.
+References
+[1] Robert J Geller. Earthquake prediction: a critical review. Geophysical Journal International, 131(3):425–450,
+1997.
+[2] Beno Gutenberg and Carl F Richter. Earthquake magnitude, intensity, energy, and acceleration: (second paper).
+Bulletin of the Seismological Society of America, 46(2):105–145, 1956.
+[3] Zuhair H El-Isa and David W Eaton. Spatiotemporal variations in the b-value of earthquake magnitude–frequency
+distributions: Classification and causes. Tectonophysics, 615:1–11, 2014.
+[4] J Rivière, Z Lv, PA Johnson, and C Marone. Evolution of b-value during the seismic cycle: Insights from
+laboratory experiments on simulated faults. Earth and Planetary Science Letters, 482:407–413, 2018.
+[5] Anna Maria Lombardi. Anomalies and transient variations of b-value in Italy during the major earthquake
+sequences: what truth is there to this? Geophysical Journal International, 232(3):1545–1555, 2023.
+[6] I Spassiani, M Taroni, M Murru, and G Falcone. Real time Gutenberg–Richter b-value estimation for an ongoing
+seismic sequence: an application to the 2022 marche offshore earthquake sequence (ML 5.7 central Italy).
+Geophysical Journal International, 234(2):1326–1331, 03 2023.
+[7] Cataldo Godano, Anna Tramelli, Giuseppe Petrillo, and Vincenzo Convertito. Testing the predictive power of b
+value for Italian seismicity. Seismica, 3(1), 2024.
+[8] Anna Maria Lombardi. A statistical framework for detection of b-value anomalies in Italy. Geophysical Journal
+International, 237(2):729–740, 2024.
+[9] Marcus Herrmann and Warner Marzocchi. Inconsistencies and lurking pitfalls in the magnitude–frequency
+distribution of high-resolution earthquake catalogs. Seismological Research Letters, 92(2A):909–922, 2021.
+[10] Laura Gulia and Stefan Wiemer. Real-time discrimination of earthquake foreshocks and aftershocks. Nature,
+574(7777):193–199, 2019.
+[11] Laura Gulia, Stefan Wiemer, Emanuele Biondini, Bogdan Enescu, and Gianfranco Vannucci. Improving the
+foreshock traffic light systems for real-time discrimination between foreshocks and aftershocks. Seismological
+Research Letters, 95(6):3579–3592, 2024.
+[12] Francisco Martínez-Álvarez, Jorge Reyes, A Morales-Esteban, and Cristina Rubio-Escudero. Determining the
+best set of seismicity indicators to predict earthquakes. Two case studies: Chile and the Iberian Peninsula.
+Knowledge-Based Systems, 50:198–210, 2013.
+[13] Mark Last, Nitzan Rabinowitz, and Gideon Leonard. Predicting the maximum earthquake magnitude from seismic
+data in Israel and its neighboring countries. PLOS One, 11(1):e0146101, 2016.
+[14] Lei Zhang, Langchun Si, Haipeng Yang, Yuanzhi Hu, and Jianfeng Qiu. Precursory pattern based feature extraction
+techniques for earthquake prediction. IEEE Access, 7:30991–31001, 2019.
+[15] Yang Zhao and Denise Gorse. Earthquake prediction from seismic indicators using tree-based ensemble learning.
+Natural Hazards, pages 1–27, 2024.
+[16] Wei Quan and Denise Gorse. Investigating the predictive power of seismic statistical features using ensemble
+learning. PLoS One, 21(2):e0342765, 2026.
+[17] Bertalan Bodri. A neural-network model for earthquake occurrence. Journal of Geodynamics, 32(3):289–310,
+2001.
+18
+
+--- Sayfa 19 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+[18] Emil Iliev Oynakov and Emil Aleksandrov Botev. Spatial and time variations of seismicity before strong
+earthquakes in the southern part of the Balkans. Annals of Geophysics, 64(4):SE433–SE433, 2021.
+[19] RE Habermann. Precursory seismic quiescence: past, present, and future. Pure and Applied Geophysics,
+126(2):279–318, 1988.
+[20] Matteo Picozzi, Antonio G Iaccarino, Daniele Spallarossa, and Dino Bindi. On catching the preparatory phase of
+damaging earthquakes: an example from central Italy. Scientific Reports, 13(1):14403, 2023.
+[21] Yumeng Hu, Qi Zhang, Hengshu Zhu, Baoshan Wang, Hui Xiong, and Haitao Wang. Scalable intermediate-term
+earthquake forecasting with multimodal fusion neural networks. Scientific Reports, 15(1):9748, 2025.
+[22] L Ma, L Zhu, and Y Shi. Attempts at using seismicity indicators for the prediction of large earthquakes by Genetic
+Algorithm-Neural Network method. Proceedings of Asia-Pacific economic cooperation for earthquake simulation,
+Brisbane Australia, 31:483–489, 1999.
+[23] Ashif Panakkat and Hojjat Adeli. Neural network models for earthquake magnitude prediction using multiple
+seismicity indicators. International Journal of Neural Systems, 17(01):13–33, 2007.
+[24] Jorge Reyes, Antonio Morales-Esteban, and Francisco Martínez-Álvarez. Neural networks to predict earthquakes
+in Chile. Applied Soft Computing, 13(2):1314–1328, 2013.
+[25] A Morales-Esteban, F Martínez-Álvarez, and J Reyes. Earthquake prediction in seismogenic areas of the Iberian
+Peninsula based on computational intelligence. Tectonophysics, 593:121–134, 2013.
+[26] Stefan Wiemer and Max Wyss. Mapping the frequency-magnitude distribution in asperities: An improved
+technique to calculate recurrence times? Journal of Geophysical Research: Solid Earth, 102(B7):15115–15128,
+1997.
+[27] Steven C Jaumé and Lynn R Sykes.
+Evolving towards a critical point: A review of accelerating seismic
+moment/energy release prior to large and great earthquakes. Seismicity patterns, their statistical significance and
+physical meaning, pages 279–305, 1999.
+[28] Max Wyss and Ray Edward Habermann. Precursory seismic quiescence. Pure and Applied Geophysics, 126(2):319–
+332, 1988.
+[29] Mark V Matthews and Paul A Reasenberg. Statistical methods for investigating quiescence and other temporal
+seismicity patterns. Pure and Applied Geophysics, 126(2):357–372, 1988.
+[30] Khawaja M Asim, Adnan Idris, Talat Iqbal, and Francisco Martínez-Álvarez. Seismic indicators based earthquake
+predictor system using Genetic Programming and AdaBoost classification. Soil Dynamics and Earthquake
+Engineering, 111:1–7, 2018.
+[31] Khawaja M Asim, Adnan Idris, Talat Iqbal, and Francisco Martínez-Álvarez. Earthquake prediction model using
+support vector regressor and hybrid neural networks. PLOS One, 13(7):e0199004, 2018.
+[32] Beno Gutenberg and Charles F Richter. Frequency of earthquakes in California. Bulletin of the Seismological
+society of America, 34(4):185–188, 1944.
+[33] Ahmad Zamani, Mohammad Reza Sorbi, and Ali Akbar Safavi. Application of neural network and ANFIS model
+for earthquake occurrence in Iran. Earth Science Informatics, 6(2):71–85, 2013.
+[34] Nicholas J van der Elst and Morgan T Page. a-positive: A robust estimator of the earthquake rate in incomplete or
+saturated catalogs. Journal of Geophysical Research: Solid Earth, 128(10):e2023JB027089, 2023.
+[35] Nicholas J van der Elst. b-positive: A robust estimator of aftershock magnitude distribution in transiently
+incomplete catalogs. Journal of Geophysical Research: Solid Earth, 126(2):e2020JB021027, 2021.
+[36] Deborah Novick and Mark Last. Using machine learning models for earthquake magnitude prediction in California,
+Japan, and Israel. In International Symposium on Cyber Security, Cryptology, and Machine Learning, pages
+151–169, 2023.
+[37] Aaron Van Den Oord, Oriol Vinyals, et al. Neural discrete representation learning. Advances in neural information
+processing systems, 30, 2017.
+[38] Yunzhi Shi, Xinming Wu, and Sergey Fomel. Waveform embedding: Automatic horizon picking with unsupervised
+deep learning. Geophysics, 85(4):WA67–WA76, 2020.
+[39] Cheng Yuan, Mingjun Su, Changkuan Ni, Xingye Liu, Yunze Xu, and Xiangli Cui. Horizon auto-picking with
+quantitative uncertainty evaluation by using a modified vq-vae framework. Journal of Geophysics and Engineering,
+19(4):788–806, 2022.
+19
+
+--- Sayfa 20 ---
+Using Seismic Statistical Features and VQ-VAE to Improve Spatiotemporal Seismicity Predictability
+[40] Randy Harsuko, Shijun Cheng, and Tariq Alkhalifah. Propagating the prior from shallow to deep with a pre-
+trained velocity-model generative transformer network. Journal of Geophysical Research: Machine Learning and
+Computation, 2(1):e2024JH000408, 2025.
+[41] Siddharth Misra, Yusuf Falola, Polina Churilova, Rui Liu, Chung-Kan Huang, and Jose F Delgado. Deep learning
+assisted extremely low-dimensional representation of subsurface earth. Available at SSRN 4196705, 2022.
+[42] Kun Wang, Christopher W Johnson, Kane C Bennett, and Paul A Johnson. Predicting future laboratory fault
+friction through deep learning transformer models. Geophysical Research Letters, 49(19):e2022GL098233, 2022.
+[43] Maximilian Christ, Nils Braun, Julius Neuffer, and Andreas W. Kempa-Liehr. Time Series FeatuRe Extraction on
+basis of Scalable Hypothesis tests (tsfresh – a Python package). Neurocomputing, 307:72–77, 2018.
+[44] Qianlong Wang, Yifan Guo, Lixing Yu, and Pan Li. Earthquake prediction based on spatio-temporal data mining:
+an LSTM network approach. IEEE Transactions on Emerging Topics in Computing, 8(1):148–158, 2017.
+[45] Aydın Do˘gan and Engin Demir. Structural recurrent neural network models for earthquake prediction. Neural
+Computing and Applications, 34(13):11049–11062, 2022.
+[46] Ankit Sonthalia, Sumanta Pasari, and Sonu Devi. Earthquake prediction using long short term memory on
+spatio-temporally segmented data. In 2023 Third International Conference on Artificial Intelligence and Smart
+Energy (ICAIS), pages 1378–1382. IEEE, 2023.
+[47] Scott M Lundberg and Su-In Lee. A unified approach to interpreting model predictions. Advances in Neural
+Information Processing Systems, 30, 2017.
+[48] Tianqi Chen and Carlos Guestrin. XGBoost: A scalable tree boosting system. In Proceedings of the 22nd ACM
+SIGKDD International Conference on Knowledge Discovery and Data Mining, pages 785–794, 2016.
+[49] Tokuji Utsu. A method for determining the value of b in a formula log n = bm showing the magnitude-frequency
+relation for earthquakes. Geophysical Bulletin of the Hokkaido University, 13:99–103, 2 1965.
+[50] Masataka Ando. Source mechanisms and tectonic significance of historical earthquakes along the Nankai Trough,
+Japan. Tectonophysics, 27(2):119–140, 1975.
+[51] J. K. Gardner and L. Knopoff. Is the sequence of earthquakes in Southern California, with aftershocks removed,
+Poissonian? Bulletin of the Seismological Society of America, 64(5):1363–1367, 10 1974.
+20

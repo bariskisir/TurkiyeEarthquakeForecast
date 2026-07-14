@@ -1,0 +1,1214 @@
+
+--- Sayfa 1 ---
+RESEARCH
+Transportation Infrastructure Geotechnology (2026) 13:95
+https://doi.org/10.1007/s40515-026-00869-9
+Abstract
+Engineers must assess soil susceptibility to liquefaction, yet conventional evalu­
+ations are time‑consuming, costly, and affected by field-testing variability and 
+semi‑empirical tools that introduce uncertainty. This study clarifies the importance 
+of key parameters and proposes a streamlined machine‑learning approach using 
+ensemble methods. A comprehensive reference dataset was compiled and used to 
+train reliable machine‑learning models. Feature importance was examined with lo­
+gistic regression and random forest, after which the data were split into training 
+and test sets, predictors were scaled, and hyperparame0ters were tuned with Grid­
+SearchCV. Advanced models were then fitted, followed by ensemble approaches, 
+including AdaBoost and voting classifiers. Based on feature importance results, the 
+most influential features across all methods continue to be the Standard Penetration 
+Test-derived parameters. The trained models were assessed, in which the AdaBoost 
+provided the most accurate estimations by achieving precision, recall, F1_score, 
+Jaccard index, and accuracy of 88%, 88%, 88%, 79%, and 88%, respectively. The 
+Voting Classifier demonstrated superior performance over the AdaBoost Classifier 
+in terms of lower false negative values and higher true positive values, which could 
+be considered as a better predictor for high-risk cases.
+Keywords  Liquefaction · Ensemble methods · Machine learning · Vulnerability 
+assessment · Feature importance
+1  Introduction
+Soil liquefaction has been the subject of extensive studies by geotechnical engineers 
+in recent decades. This phenomenon arises when soil experiences a significant reduc­
+tion in its stiffness and strength in response to externally applied cyclic loads, such as 
+Received: 1 February 2026 / Accepted: 31 March 2026 / Published online: 7 April 2026
+© The Author(s) 2026
+Assessment of SPT-based Liquefaction Potential using 
+Ensemble Learning and Feature Importance Approaches
+Arsham Moayedi Far1 · Arman Moayedi Far2 · Masoud Zare3 · 
+Marlene Villeneuve1 · Joel Bensing4 · Gabriele Chiaro5
+Extended author information available on the last page of the article
+1 3
+
+--- Sayfa 2 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+shaking during an earthquake. As a result, the soil can behave more like a liquid than 
+a solid, thereby inducing damage to structures built on it or in the vicinity (Bray et al. 
+2017). Predicting soil liquefaction triggering can be challenging due to the existence 
+of many influential factors that need to be considered in the evaluation of the soil 
+liquefaction resistance and seismic load (Seed and Idris, 1971; Youd and Idriss 2001).
+To predict the likelihood of liquefaction based on the cyclic stress approach, vari­
+ous in-situ geotechnical investigation techniques have been employed, including 
+Cone Penetration Testing (CPT), Standard Penetration Testing (SPT), Dynamic Cone 
+Penetration Testing (DPT), and measurements of shear wave velocity (VS) (Youd and 
+Idriss 2001). The evaluation of liquefaction susceptibility involves comparing the 
+Cyclic Stress Ratio (CSR) to the Cyclic Resistance Ratio (CRR), as described in detail 
+by Boulanger and Idriss (2014).
+CSR can be obtained using Eq. 1 (Seed and Idriss 1971):
+	
+CSR = 0.65
+(σ v
+σ ′v
+) (amax
+g
+)
+rd
+(1)
+in which σ v, σ ′
+v, represents the total and effective vertical overburden stresses, 
+respectively. In addition, amax and g stands for peak horizontal acceleration and 
+acceleration of gravity. rd is a stress reduction factor to account for soils deformabil­
+ity with depth. The earthquake-induced CSR is typically determined for a reference 
+earthquake of moment magnitude Mw =7.5 and a reference overburden pressure of 
+1 atm or approximately 100 kPa (Idriss and Boulanger 2008):
+	
+CSR(M=7.5,σ ′
+v=1) = 0.65
+(σ v
+σ ′v
+) (amax
+g
+)
+rd
+(
+1
+MSF
+) ( 1
+Kσ
+)
+
+(2)
+where MSF and Kσ stand for the magnitude scaling factor and the overburden correc­
+tion factor, respectively.
+The SPT provides the number of blows (NSPT) required to penetrate the ground 
+to assess the soil resistance. The raw NSPT values are then corrected for a ham­
+mer energy efficiency of 60% and finally normalized for an overburden pressure of 
+approximately 100 kPa (Youd and Idriss 2001):
+	
+N1 (60) = NSP T × CN × CE × CB × CR × Cs
+(3)
+where CN, CE, CB, CR, Cs are correction factors for overburden stress, hammer 
+energy ratio, borehole diameter, rod lengths, and sampler size. Subsequently, for soil 
+with fines, it is adjusted to an equivalent clean sand value using the following two 
+equations (Idriss and Boulanger 2008, 2010):
+	
+N1(60)cs = N1(60) + ∆N 1(60)
+(4)
+	
+∆N 1(60) = exp (1.63 +
+9.7
+FC + 0.01 −
+(
+15.7
+FC + 0.01
+)2
+)
+(5)
+1 3
+95 
+Page 2 of 21
+
+--- Sayfa 3 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+where FC is the fines content in percentage. Afterwards, CRR is calculated using 
+Eq. 6 (Idriss and Boulanger 2008):
+	
+CRR(M=7.5,σ ′v=1) = exp((N 1)60cs
+14.1
++
+((N 1)60cs
+126
+)2
+−
+((N 1)60cs
+23.6
+)3
++
+((N 1)60cs
+25.4
+)4
+−2.8) (6)
+Finally, the factor of safety (FS) against liquefaction can be derived from the ratio 
+between CRR and CSR (Idriss and Boulanger 2008):
+	
+FSLiq = CRR(M=7.5,σ ′
+v=1)
+CSR(M=7.5,σ ′
+v=1) 
+(7)
+It is evident that FSLiq is influenced by various parameters associated with soil resis­
+tance and seismic demand assessment, as the empirical derivation of CRR and CSR 
+introduces sensitivity to the assumptions and simplifications inherent in their estima­
+tion. Cubrinovski and Ntritsos (2023) observed that following the 2010–2011 Can­
+terbury (New Zealand) earthquakes, while simplified methods, primarily based on a 
+pseudo-static approach using FS against liquefaction triggering, generally provided 
+reasonable predictions of liquefaction manifestation and the overall extent of damage, 
+there were numerous cases where these methods produced results inconsistent with 
+field observations. Cubrinovski et al. (2019) identified the primary reason for these 
+mispredictions as the failure of simplified analyses to account for dynamic interac­
+tions and system response effects, which are critical in accurately assessing liquefac­
+tion potential. While conducting additional tests is suggested by some researchers, 
+acquiring undisturbed field samples for this purpose can be complex and expensive 
+(Seed et al. 1982). Additionally, replicating in-situ stress conditions and scale effects 
+combined are among other challenges for laboratory-based approaches. These limita­
+tions may provide an opportunity for using advanced methods in support of the more 
+traditional geotechnical procedures, such as machine learning-based approaches, to 
+integrate diverse datasets, model complex interactions, and improve prediction accu­
+racy by learning from field and laboratory data to achieve higher accuracy in lique­
+faction assessments.
+The use of artificial neural network (ANN) and multiple linear regression (MLR) 
+has shown promising outcomes in predicting both detachability and the liquefaction 
+potential index (DLPI), as proposed by Egbueri et al. (2023). Furthermore, recent 
+research by Aytaş et al. (2023) has highlighted the correlation between soil char­
+acteristics, earthquake parameters, and liquefaction risk, suggesting it as a practi­
+cal indicator for assessing liquefaction potential. In recent years, Machine Learning 
+(ML) has gained considerable attention as a multidisciplinary subfield of Artificial 
+Intelligence to analyze complex datasets and discover previously unknown relation­
+ships for the purpose of soil liquefaction prediction (Idriss and Boulanger 2008). 
+Machine Learning (ML) techniques can be useful in predicting soil liquefaction as 
+they offer a flexible and accurate approach to this problem. Extensive datasets can be 
+analyzed using ML algorithms to identify patterns and relationships that traditional 
+methods may miss, leading to improved accuracy in predicting soil liquefaction and 
+associated potential damage to surrounding structures. Various ML approaches such 
+1 3
+Page 3 of 21 
+95
+
+--- Sayfa 4 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+as artificial neural networks, support vector machines, relevance vector machines, 
+adaptive neuro fuzzy inference systems, XGBoost, and decision trees have been used 
+for regression and data classification in soil liquefaction research (Samui 2007; Gan­
+domi et al. 2013; Moayedi Far and Zare 2025). However, individual algorithms may 
+provide poor performance indexes, leading researchers to employ hybrid or ensemble 
+models to enhance prediction accuracy.
+Both ensemble and hybrid models employ the concept of information fusion, but 
+they differ in their approach (Kazienko et al. 2013). Ensemble classifiers use multiple 
+homogeneous, weak models (Kajdanowicz et al. 2010) and combine them using vari­
+ous merging methods at the individual output level. Fixed methods like majority vot­
+ing and trained combiners like decision templates fall under this category (Kuncheva 
+2004). On the other hand, hybrid models mix completely different heterogeneous 
+machine learning techniques (Corchado et al. 2010). Both approaches significantly 
+improve the quality of reasoning and solutions’ adaptivity. Hence, ensemble and 
+hybrid models are employed in several real-world problems, including civil engi­
+neering. An ensemble approach was recently used by Ghani et al. (2024), which pro­
+vided promising results in the prediction of liquefaction potential index (LPI) as a 
+continuous variable. Khatti et al. (2024) introduced an optimal performance model 
+for predicting the liquefaction potential using 170 results of cone penetration test­
+ing, using two baselines, thirty tree-based, thirty SVC-based, and fifteen NN-based 
+models.
+One of the challenges in machine learning (ML)-based prediction is obtaining 
+access to a reliable dataset. A database compiled and published by Cetin et al. (2018) 
+has been used by various researchers for liquefaction assessment. This database was 
+also employed in the current investigation. The considered dataset is developed based 
+on documentation of the field performance of previous case histories of liquefaction 
+for sites in the USA, Japan, Argentina, China, and the Philippines investigated by 
+Cetin et al. (2018). Each of the considered cases consists of 16 variables describing 
+various characteristics of the earthquake and the site that may have influenced the 
+occurrence of soil liquefaction. These variables include critical depth (H), critical 
+depth upper bound (H1), critical depth lower bound (H2), water table depth (Zw), 
+unit weight above ground water table ( γ dry), unit weight below ground water table, 
+( γ sat), vertical total stress ( σ v), vertical effective stress ( σ ′
+v), peak horizontal 
+acceleration (amax), moment magnitude (Mw), Cyclic Stress Ratio (CSR), normalized 
+CSR ( σ ′
+v =1 atm, Mw = 7.5), fines content (FC), corrected SPT blow count values 
+(N1(60)), and fines-corrected SPT blow count values (N1(60)cs).
+Taking advantage of the above-mentioned extensive database, this study focuses 
+on using ensemble and classification methods to predict liquefaction occurrence and 
+understand their predictive capability. The structure of this paper is as follows: Sect.  
+2 details the dataset and methodologies employed, encompassing the dataset, fea­
+ture importance, machine learning (ML) and ensemble algorithms, cross-validation 
+techniques, hyperparameter tuning procedures, and evaluation metrics. Section  3 
+explains the results and provides a comprehensive discussion of the findings by com­
+paring the performance of the various models, including the presentation of the con­
+fusion matrices. Lastly, Sect.  4 offers a summary of the conclusions drawn from the 
+study.
+1 3
+95 
+Page 4 of 21
+
+--- Sayfa 5 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+The findings not only offer novel insights into the application of ensemble methods 
+through the classification concept for liquefaction prediction but also represent a sig­
+nificant step toward the application of feature importance in this context. This study 
+addressed a gap in liquefaction prediction, where a systematic use of feature‑impor­
+tance analysis has not received sufficient attention. By identifying and differentiat­
+ing the most critical factors, the approach enables the exclusion of less influential 
+variables from further analysis, thereby streamlining the prediction process. This pri­
+oritization may have the potential to reduce both time and cost associated with lique­
+faction assessments, ensuring a more efficient allocation of resources while enabling 
+a more accurate preliminary assessment of liquefaction potential.
+2  Dataset and Methodology
+2.1  Dataset
+In the current investigation, the previously mentioned comprehensive dataset pub­
+lished by Cetin et al. (2018), consisting of seismic soil liquefaction case histories 
+shaken by different intensity and magnitude earthquake events, is considered. The 
+database is composed of 113 liquefaction, 95 non-liquefaction, and 2 marginal liq­
+uefaction case histories identified based on observed field performance at sites in 
+the USA, Japan, Argentina, China, and the Philippines investigated by Cetin et al. 
+(2018). A detailed presentation of the borehole data, maps, laboratory data, corrected 
+N1(60) and CSR graphs, a summary page including surface manifestation, location of 
+the site, and expert comments, is given, and detailed interpretations are also sum­
+marized in Cetin et al. (2018). All 208 cases were considered for subsequent training 
+steps, and the 2 marginal liquefaction cases were excluded, as there was no clear 
+assessment of their classification occurrence to be used for labeling data. Each of 
+the considered cases includes 16 variables describing various characteristics of the 
+earthquake and the site that may have influenced the occurrence of soil liquefaction. 
+The mean values and range of the considered variables from the dataset are tabulated 
+in Table 1 along with a visual representation presented in Fig. 1. In addition, the 
+distributions of variables are presented in histogram plots in Fig. 2, which were used 
+to identify the parameters with high or low variation based on the range of values 
+and their frequency. In addition, visual interpretation gives us an understanding of 
+whether the variables are skewed right or left. For instance most of the variables 
+(H2, H1, H, Zw, σ v, σ ′
+v, amax, CSR( σ ′
+v,Mw), FC, N1(60), CSR( σ ′
+v=1 atm, Mw = 7.5), 
+N1(60,CS)) are skewed right.
+2.2  Feature Importance
+The evaluation of feature importance constitutes a systematic process aimed at rank­
+ing and quantifying the influence of individual features on model predictions and 
+overall performance. In the realm of machine learning, the objective extends beyond 
+merely achieving accurate predictions; it also entails developing a comprehensive 
+understanding of the underlying problem under investigation. Researchers in specific 
+1 3
+Page 5 of 21 
+95
+
+--- Sayfa 6 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+Table 1  Input and output parameters
+Category
+Parameter
+Symbol
+Unit
+(min-max)
+Mean
+Input
+Critical depth
+H
+ft
+(3.5-47.6)
+16.9
+m
+(1.1-14.5)
+5.1
+Critical depth upper bound
+H2
+ft
+(5.9-62.3)
+22.5
+m
+(1.8-19)
+6.9
+Critical depth lower bound
+H1
+ft
+(1-42.7)
+11.3
+m
+(0.3-13)
+3.5
+Water depth
+Zw
+ft
+(0-25.1)
+6.9
+m
+(0-7.6)
+2.1
+Unit weight above ground 
+water table
+γdry  
+pcf
+(60-125)
+107.5
+kN/m³
+(9.4-19.6)
+16.9
+Unit weight below ground 
+water table
+γsat 
+pcf
+(90-135)
+121.2
+kN/m³
+(14.1-21.2)
+19.05
+Vertical total stress
+σv 
+psf
+(369-5708)
+1972.0
+kPa
+(17.7-273.2)
+94.4
+Vertical effective stress
+σ′
+v  
+psf
+(216-3816)
+1349.8
+kPa
+(10.3-182.7)
+64.6
+Peak horizontal acceleration
+amax
+g
+(0.05-0.70)
+0.29
+Magnitude
+Mw
+-
+(5.9-8.3)
+7.0
+Cyclic stress ratio
+CSR(σ′
+v,Mw) -
+(0.05-0.63)
+0.25
+Fines content
+FC
+%
+(0-91)
+15.1
+Corrected SPT blowcount 
+value
+N1(60)
+-
+(2.2-65.5)
+16.7
+Normalized CSR (σ'v=1 atm, 
+Mw =7.5)
+CSR(σ′
+v
+=1atm, 
+Mw=7.5)
+-
+(0.03-0.5)
+0.18
+Fines-corrected SPT blow­
+count value
+N1(60,CS)
+-
+(5-66.5)
+18.2
+Output
+Liquefaction occurrence
+-
+-
+(0,1)
+-
+Fig. 1  Visual representation of 
+considered variables
+ 
+1 3
+95 
+Page 6 of 21
+
+--- Sayfa 7 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+application domains exhibit a heightened interest in identifying features that signifi­
+cantly impact predictions. Numerous methodologies exist for identifying and priori­
+tizing key features, which can be categorized based on the constraints they impose 
+on learning algorithms, as described by Zien et al. (2009). This categorization offers 
+a structured framework for selecting the most appropriate method for discerning fea­
+ture importance in each context. To this end, techniques such as correlation analysis, 
+various regression methods including Logistic Regression, Random Forest Classifier, 
+and Mutual Information have been utilized to assess the correlation of each parameter 
+with the occurrence of liquefaction.
+2.2.1  Logistic Regression for Binary Classification
+Logistic regression serves as a prevalent technique for binary classification, where it 
+predicts the likelihood of a binary outcome based on various continuous predictors 
+(Hosmer et al. 2013). The magnitude of the coefficients obtained from this model 
+Fig. 2  Histogram plots of the considered parameters
+ 
+1 3
+Page 7 of 21 
+95
+
+--- Sayfa 8 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+provides insight into the importance of each feature; larger absolute values indicate 
+a more pronounced effect on the binary target variable. Given that all features in the 
+dataset and the target are binary, logistic regression effectively captures this relation­
+ship, offering coefficients that interpretably show the impact of each feature on the 
+log-odds of the outcome being 1 (Fig. 3).
+2.2.2  Random Forest Classifier
+Random Forests are adept at handling continuous features in classification, utiliz­
+ing an ensemble of decision trees built on bootstrap samples of the data (Svetnik et 
+al. 2003), which minimizes overfitting. They offer feature importance rankings by 
+assessing how well each feature decreases node impurity, providing insights into 
+which variables most significantly impact the prediction. Feature importance results 
+according to the Random Forest Classifier are shown in Fig. 4.
+2.2.3  Mutual Information
+Mutual Information (MI) serves as a measure of the information one variable (fea­
+ture) conveys about another (target), making it invaluable for binary classification 
+with continuous features. As a non-parametric method, MI adeptly captures both lin­
+ear and non-linear associations without assuming any specific distribution, which 
+Fig. 3  Importance of variables using Logistic Regression
+ 
+1 3
+95 
+Page 8 of 21
+
+--- Sayfa 9 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+is particularly useful when dealing with complex, non-linear relationships between 
+predictors and a binary outcome.
+MI is a statistical measure that serves to evaluate the degree of independence 
+between random variables, offering two significant advantages (Vergara and Estévez 
+2014). Firstly, it is capable of capturing all types of relationships, whether linear or 
+nonlinear, between variables (Cover 1999). Secondly, it remains unchanged under 
+various invertible and differentiable transformations in the feature space, such as 
+translations, rotations, or any mapping that maintains the sequence of the elements 
+within feature vectors (Kullback and Leibler 1951). The importance of variables 
+obtained using Mutual Information is presented in Fig. 5.
+2.2.4  Results of Feature Importance Analyses and Discussions
+As mentioned earlier, the results of the importance of variables assessed by using the 
+different methods were reported in Figs. 3, 4 and 5. To provide a clearer overview 
+of the recent investigation, the results of the analyses are presented by ranking each 
+variable according to their effectiveness in the prediction across different methodolo­
+gies. The feature importance analysis from the Random Forest, Logistic Regression, 
+and Mutual Information methods highlights several key insights:
+	
+●
+The most influential features across all methods continue to be the parameters 
+derived from the Standard Penetration Test (SPT), N1(60)cs and N1(60). Specifically, 
+Fig. 4  Importance of variables using Random Forest Classifier
+ 
+1 3
+Page 9 of 21 
+95
+
+--- Sayfa 10 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+N1(60)cs, which is the fines-corrected version of the NSPT blow count, consistently 
+ranks among the top features, indicating its critical role in predicting liquefaction. 
+Similarly, N1(60), though slightly less influential, remains a strong predictor due to 
+its direct correlation with soil resistance. This underscores the significance of soil 
+resistance characteristics in liquefaction prediction.
+	
+●
+In terms of the Random Forest method, the CSR variants, particularly 
+CSR(σv′=1, Mw=7.5), show considerable importance, suggesting that when combined 
+with other factors, these variables provide substantial predictive power. However, 
+in Logistic Regression and Mutual Information, while CSR variants are still im­
+portant, their significance is slightly less pronounced compared to the Random 
+Forest method, indicating a method-dependent sensitivity to these features.
+	
+●
+The feature amax (maximum horizontal acceleration or peak ground acceleration) 
+is especially important, in Logistic Regression, where it ranks third, highlighting 
+its predictive capability for liquefaction occurrence over the moment magnitude 
+(Mw). This shift confirms that the dynamic response of the ground at a specific 
+site, as captured by amax, might be a better indicator in some contexts than the 
+earthquake magnitude.
+	
+●
+Features like γdry and γsat, which represent the unit weights of dry soils above the 
+groundwater table and the saturated soil below the groundwater table, respective­
+ly, show varying levels of importance across the methods. In the Random Forest 
+and Logistic Regression, these features are less influential, while in Mutual Infor­
+mation, γsat has a slightly higher importance, suggesting that the method of analy­
+sis impacts how these soil properties are interpreted in the context of liquefaction.
+	
+●
+With FC (Fines Content) ranking low, indicating that while it affects soil behav­
+ior, its isolated influence on liquefaction prediction is limited. However, its ef­
+Fig. 5  Importance of variables using Mutual Information
+ 
+1 3
+95 
+Page 10 of 21
+
+--- Sayfa 11 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+fect is implicitly captured in the fines-corrected NSPT values, which explains why 
+N1(60)cs outperforms N1(60).
+	
+●
+The analysis also reaffirms that the correction of N1(60) to N1(60)cs enhances predic­
+tive capability, as this adjustment accounts for fines content, thereby improving 
+the accuracy of SPT data in liquefaction prediction.
+The feature importance analysis highlights the inherent complexity of liquefaction 
+prediction, emphasizing the necessity of a comprehensive understanding of the 
+interplay among multiple factors rather than focusing on isolated variables. SPT-
+derived parameters emerge as the most influential contributors, particularly when 
+corrected for fines content, underscoring the criticality of contextual and conditional 
+adjustments. While the direct influence of fines content appears relatively modest, 
+its incorporation into corrected SPT values demonstrates its indirect but essential 
+role in refining predictive accuracy. Moreover, the results indicate that the CSR is an 
+influential variable; however, its predictive strength could have been increased if it 
+was combined with the CRR. This combination, as also emphasized in the literature 
+(Seed and Idriss 1971), provides a robust predictor of liquefaction by accounting for 
+both applied stress and material resistance. This again shows that integrating these 
+interdependent parameters could lead to a better prediction through using a more 
+representative parameter instead of relying on isolated options.
+2.3  Machine Learning (ML) Algorithms
+In recent years, the use of machine learning (ML) algorithms has gained popularity 
+in various scientific fields. These algorithms establish accurate relationships between 
+input and output variables based on prior experience gained through a training 
+process.
+This study employed a labeled dataset to train five different ML algorithms for 
+predicting liquefaction occurrence. The algorithms used include (1) support vector 
+machine, (2) stochastic gradient descent, (3) multi-layer perceptron neural network, 
+(4) K neighbors, and (5) decision tree, which were implemented in Python using the 
+scikit-learn toolbox. These algorithms have demonstrated effectiveness in providing 
+solutions to civil engineering issues (e.g., Alishvandi et al. 2024) which make them 
+an ideal choice for this study to be fed into ensemble approaches. Because the fun­
+damentals of the employed machine‑learning algorithms have been widely covered 
+in the literature, the following sections briefly describe only the ensemble methods, 
+cross‑validation, and hyperparameter‑tuning procedures, and the evaluation metrics.
+2.4  Ensemble Methods
+Ensemble methods involve combining multiple individual techniques to improve 
+overall performance. This type of technique is beneficial as it allows for a more accu­
+rate and robust prediction by combining different models or techniques (Dixit 2017). 
+However, it should be noted that ensemble methods can be computationally expen­
+sive and require more resources. In this research, two ensemble models were tested, 
+and their results will be discussed in the following sections. In the current investiga­
+1 3
+Page 11 of 21 
+95
+
+--- Sayfa 12 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+tion, two ensemble models were used, and their performances will be assessed in the 
+following parts.
+2.4.1  Adaptive Boosting Classifier (AdaBoost)
+The adaptive boosting algorithm, commonly known as AdaBoost, was proposed by 
+Freund and Schapire in 1997 as an iterative method for constructing a “strong” clas­
+sifier. AdaBoost adaptively adjusts the errors of weak classifiers obtained from mul­
+tiple learners. The main concept behind the AdaBoost is to employ various weak 
+classifiers and subsequently combine them into a stronger classifier. To achieve this, 
+the data distribution is modified, and the weight of each sample is adjusted based on 
+its correct classification and overall classification accuracy. The updated dataset with 
+modified weights is then sent to the next classifier in the sequence for further training. 
+Finally, the classifiers generated by each training iteration are combined to create the 
+final decision classifier. The AdaBoost classifier has several advantages, including its 
+ability to eliminate unnecessary training data features and prioritize critical training 
+data. Furthermore, AdaBoost is a simple and effective technique for enhancing weak 
+classification algorithms, which can improve data classification abilities by reducing 
+both bias and variance through continuous training (Wu et al. 2020). In the present 
+study, the Decision Tree Classifier was chosen as the base estimator for AdaBoost.
+2.4.2  Voting Classifier (VC)
+Employing a voting classifier consists of adopting a number of base ML classifi­
+ers, each of which is fit to the considered dataset. Consequently, the final prediction 
+is obtained by averaging predictions made by the base learners (Pedregosa et al. 
+2011). Considering this approach can be beneficial in cases where algorithms are 
+performing well, as it can help to reduce individual weaknesses and provide a more 
+robust estimation (Kilimci 2022). To achieve a more precise prediction of liquefac­
+tion occurrence, the VC was employed with its default values using all five of the 
+aforementioned ML techniques.
+2.5  Cross-validation and Hyperparameter Tuning
+In order to assess the efficacy of machine learning algorithms, it is customary to 
+set aside a portion of the input data as a test dataset, denoted as X_test and Y_test. 
+In the present study, the scikit-learn recommended approach of train_test_split was 
+employed to partition the original dataset into train (80%) and test (20%) subsets. 
+However, manually selecting hyperparameters can sometimes result in suboptimal 
+performance of the designated estimators and lead to overfitting on the test dataset. 
+To address this issue, Cross-Validation (CV) is often used, wherein the training set is 
+divided into k parts. The model is trained using k-1 of the folds, while the remaining 
+part is utilized for evaluation purposes (Pedregosa et al. 2011). The workflow adopted 
+in this study is depicted in Fig. 6.
+Determining the optimal values for hyperparameters is not feasible through man­
+ual methods or by learning from estimators. However, it is possible to perform a 
+1 3
+95 
+Page 12 of 21
+
+--- Sayfa 13 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+search within the hyperparameter space to obtain the best cross-validation score. 
+To accomplish this, a range of allowable parameters can be defined, and the Grid­
+SearchCV function provided by scikit-learn can be utilized to partition the training 
+set into K-fold CV and conduct a search over the range of predefined parameter 
+values. This results in an exhaustive search where a wide range of possible com­
+binations are evaluated until the predefined parameters are optimized, and the best 
+cross-validation score is attained (Pedregosa et al. 2011). In this study, a scoring of 
+‘f1’ and CV set to 10 were considered to implement GridSearchCV. The search space 
+and optimal hyperparameters for the considered algorithms are presented in Table 2.
+2.6  Evaluation Metrics
+Commonly used metrics for evaluating the robustness and effectiveness of algorithms 
+include Accuracy, Precision, Recall, and F1 score. True positive (TP) denotes when 
+the predicted class value is 1, and the actual class value is also 1. True negative (TN) 
+is observed when the predicted class value is 0, and the actual class value is also 0. 
+False negatives (FN) and false positives (FP) arise when the predicted class disagrees 
+with the actual class. Accuracy is a crucial measure and is determined by the ratio 
+of the total correctly predicted observations to the total number of observations. The 
+formulas used to calculate Precision, Recall, Accuracy, and F1 score are as follows:
+	
+Accuracy =
+TP + TN
+TN + TP + FP + FN 
+(8)
+	
+Precision =
+TP
+TP + FP 
+(9)
+Fig. 6  The considered workflow 
+for the current investigation
+ 
+1 3
+Page 13 of 21 
+95
+
+--- Sayfa 14 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+	
+Recall =
+TP
+TP + FP 
+(10)
+	
+F1_score = 2 × Pr ecison × Recall
+Pr ecison + Recall
+ 
+(11)
+3  Results and Discussions
+In this study, ensemble methods, namely AdaBoost and voting classifiers, were uti­
+lized to improve the performance of previously trained ML methods. The evaluation 
+was conducted using a published dataset consisting of previous liquefaction and non-
+liquefaction cases, with 16 variables describing various characteristics of the earth­
+quake occurrence and geotechnical characteristics of the site. The dataset was split 
+into training and testing datasets, with 80% and 20%, respectively. The hyperparam­
+eters for each algorithm were then configured using GridSearchCV to achieve better 
+prediction performance and avoid overfitting. Table 3 provides information on the 
+improvements in performance metrics of the trained algorithms resulting from hyper­
+parameter tuning. The results indicate that tuning the hyperparameters improved the 
+Algorithm
+Hyperparameters and considered 
+range
+Optimal Values
+SVC
+kernel = [linear, poly, rbf, sig­
+moid], decision_function_shape 
+= [ovo, ovr]
+kernel = rbf, 
+decision_func­
+tion_shape = ovo
+SGDC
+penalty = [l1, l2, elasticnet, 
+None], loss = [hinge, squared_
+hinge, perceptron, squared_
+error, huber, epsilon_insensitive, 
+squared_epsilon_insensitive], 
+max_iter = [250, 500, 750, 
+1000, 1250, 1500, 1750, 2000]
+penalty = None, 
+loss = percep­
+tron, max_iter 
+= 750
+NN-MLPC
+hidden_layer_sizes = [100, 150, 
+200, 250, 300, 350, 400, 450, 
+500], activation = [identity, 
+logistic, tanh, relu], solver = 
+[lbfgs, sgd, adam], learning_rate 
+= [constant, invscaling, adap­
+tive], max_iter = [150, 200, 250, 
+300, 350, 400]
+hidden_layer_
+sizes = 400, 
+activation = 
+logistic, solver = 
+lbfgs, learning_
+rate = constant, 
+max_iter = 350
+KNN
+Weights = [uniform, distance], 
+leaf_size = [10, 15, 20, 25, 30, 
+35, 40, 45, 50, 55, 60], algo­
+rithm = [auto, ball_tree, kd_tree, 
+brute], n_neighbors = [2, 3, 4, 5, 
+6, 7 ,8, 9]
+weights = uni­
+form, leaf_size = 
+10, algorithm = 
+auton_neighbors 
+= 8
+DT
+Criterion = [gini, entropy], 
+min_samples_split = [2, 3, 4, 5, 
+6, 7 ,8, 9, 10, 11, 12], splitter = 
+[best, random]
+criterion = gini, 
+min_samples_
+split = 5, splitter 
+= random
+Table 2  The search space and 
+optimal hyperparameters for the 
+considered model
+ 
+1 3
+95 
+Page 14 of 21
+
+--- Sayfa 15 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+precision, recall, F1_score, Jaccard, and accuracy of the models by 4.2%, 4.2%, 
+4.4%, 5.8%, and 4.2%, respectively. In other words, Jaccard was the most signifi­
+cantly affected metric, while precision and recall were the least affected ones.
+This study employed accuracy, precision, recall, F1_score, and Jaccard indexes to 
+compare the performance of individually trained models and ensembles. Since we want 
+to obtain a balanced view of performance metrics across both classes, macro averaging 
+was applied. Macro averaging in the context of binary classification involves calculat­
+ing the performance metrics (e.g., precision, recall, F1-score) for each class (positive 
+and negative) independently and then averaging these metrics. Accordingly, Table 4 
+presents the comparison of various ML algorithms. The results indicate that AdaBoost 
+outperformed the others with a precision, recall, F1_score, Jaccard index, and accu­
+racy of 88%, 88%, 88%, 79%, and 88%, respectively. SVC, SGD, and NN_MLPC 
+followed with accuracies of 86%, 83%, and 83%, respectively. However, the DT clas­
+sifier had the poorest performance with an accuracy of 69% in predicting liquefaction 
+due to an earthquake. K_Neighbors and Voting Classifiers obtained an accuracy value 
+of 81% each. Confusion matrices in Fig. 7 facilitate a straightforward comparison of 
+values, including True Positives, False Positives, True Negatives, and False Negatives. 
+According to the results, the ensemble methods provide favorable adaptability for 
+predicting liquefaction occurrence due to an earthquake.
+According to Fig. 7, the Voting classifier provided a lower False Negative (FN) 
+of 1 than the AdaBoost Classifier of 2. The same advantage is shown for Voting­
+Classifier over AdaBoost for TruePositive values (20 > 19). Besides, a more detailed 
+Table 3  Improving the performance of the trained algorithms affected by hyperparameter tuning
+Algorithms Before Tuning
+After Tuning
+Precision Recall F1_
+score
+Jaccard Accuracy Precision Recall
+F1_
+score
+Jac­
+card
+Accu­
+racy
+SVC
+86%
+86%
+86%
+75%
+86%
+86%
+86%
+86%
+75%
+86%
+SGD
+74%
+74%
+73%
+58%
+74%
+84%
+83%
+83%
+71%
+83%
+NN_ 
+MLPC
+83%
+83%
+83%
+71%
+83%
+83%
+83%
+83%
+71%
+83%
+K_Neigh­
+bors
+72%
+71%
+71%
+55%
+71%
+82%
+81%
+81%
+68%
+81%
+DT
+67%
+67%
+67%
+50%
+67%
+69%
+69%
+69%
+52%
+69%
+Mean percentage of improvement
++4.4%
++4.2% +4.4% +5.6% +4.2
+Algorithms
+Precision Recall
+F1_score Jaccard 
+index
+Accu­
+racy
+SVC
+86%
+86%
+86%
+75%
+86%
+Stochastic Gradi­
+ent Descent
+84%
+83%
+83%
+71%
+83%
+NN_ MLPC
+83%
+83%
+83%
+71%
+83%
+K_Neighbors
+82%
+81%
+81%
+68%
+81%
+Decision Tree
+69%
+69%
+69%
+52%
+69%
+AdaBoost 
+Classifier
+88%
+88%
+88%
+79%
+88%
+Voting Classifier
+87%
+86%
+86%
+75%
+86%
+Table 4  Comparison of various 
+employed models
+ 
+1 3
+Page 15 of 21 
+95
+
+--- Sayfa 16 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+report on performance indexes is reported in Table 5 to make a better comparison 
+between these two approaches. As it is shown, VotitnClassifier also has a better 
+Recall for liquifaction occurrence (event = 1) (0.95) compared to AdaBoost (0.9). In 
+other words, while AdaBoost has a better overall performance, the VotingClassifier 
+provided better prediction in recognising the occurrence of liquifaction (event = 1). 
+This is because in high-risk areas, the primary concern is to minimize false negatives 
+(FN) and maximize the Recall because missing a prediction of liquefaction can have 
+Methods
+Items
+Precision
+Recall
+F1_score
+VotingClassifir
+Event = 0
+0.94
+0.76
+0.84
+Event = 1
+0.80
+0.95
+0.87
+Macro avg.
+0.87
+0.86
+0.86
+Weighted avg.
+0.87
+0.86
+0.86
+AdaBoostClassifier
+Event = 0
+0.90
+0.86
+0.88
+Event = 1
+0.86
+0.90
+0.88
+Macro avg.
+0.88
+0.88
+0.88
+Weighted avg.
+0.88
+0.88
+0.88
+Table 5  Detailed report 
+on performance indexes 
+for VotingClissifier and 
+AdaBoostClassifier
+ 
+Fig. 7  Confusion matrices of emplloyed models
+ 
+1 3
+95 
+Page 16 of 21
+
+--- Sayfa 17 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+severe consequences. Therefore, a voting classifier with the lower FN rate and higher 
+Recall would be a more reliable predictor for cases with a higher risk of liquifaction 
+ensuring that liquefaction events are not missed. On the other hand, in lower-risk 
+areas, the impact of false positives (FP) and true negatives (TN) becomes more sig­
+nificant to correctly identify instances where liquefaction does not occur. Therefore, 
+AdaBoost seems to be a more capable predictor for recognizing the cases where 
+liquifaction is not going to happen, with better FalsePositive (FP) and TrueNegative 
+(TN) compared to the voting classifier.
+Compared with the individual algorithms, the Voting classifier achieves the high­
+est true positives (TP = 20) and the lowest true negatives (TN = 1). AdaBoost attains 
+TP = 19, matching SVC, SGD, and K-Neighbors and it has the highest FN among all 
+methods. Among the individual algorithms, the SVM shows a better performance by 
+having less FP and higher FN.
+4  Limitations and Suggestions
+The current investigation has been conducted based on the provided dataset by Cetin 
+et al. (2018). Consequently, the learned functions and feature importance results 
+reflect the statistical properties of the provided records.
+The employed machine‑learning approaches were tuned using a range of accept­
+able values for the hyperparameter search space, as listed in Table 2. The models 
+were therefore optimized within these bounds. Expanding the search space would 
+significantly increase training time and cost.
+Expanding access to a broader and more diverse dataset is essential for advanc­
+ing predictive models for liquefaction. By incorporating data from a wider range of 
+cases, geographic regions, and soil types, future research can facilitate the develop­
+ment of models that are more universally applicable. Utilizing globally distributed 
+datasets will enable the creation of more robust and accurate machine learning mod­
+els tailored for liquefaction prediction.
+Moreover, while this study has utilized various machine learning algorithms, there 
+is significant potential in exploring alternative approaches, such as metaheuristic 
+methods. These techniques could offer innovative solutions and uncover new insights 
+into data patterns, enhancing the predictive capabilities of liquefaction models from 
+different perspectives.
+Future research should also prioritize hyperparameter optimization for each 
+machine learning model. A detailed exploration of the hyperparameter space could 
+illuminate the sensitivity of models to specific configurations, ultimately improving 
+prediction accuracy and ensuring greater model reliability.
+5  Conclusion
+This study aimed to evaluate the ability of seven algorithms (including ML and 
+ensemble) to predict liquefaction accurately. Additionally, the study investigated the 
+impact of each considered parameter on the occurrence of liquefaction using fea­
+1 3
+Page 17 of 21 
+95
+
+--- Sayfa 18 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+ture importance analysis. To achieve more precise predictions from algorithms, the 
+hyperparameters of the ML algorithms were tuned, and the models were retrained. 
+AdaBoost and voting classifiers were finally employed to propose models that are 
+more adaptable to unseen data and have better performance by leveraging the pre­
+viously trained algorithms. The predictions were subsequently evaluated and com­
+pared. Based on the results obtained, the brief conclusions are as follows:
+1.	 Corrected blow counts consistently exhibit high importance.
+2.	 The GridSearchCV function was an effective tool for hyperparameter tuning, 
+leading to improved performance of ML algorithms.
+3.	 AdaBoost outperformed the other ML methods.
+4.	 Ensemble methods were effective in improving the predictions using weak 
+learners.
+The following detailed conclusions can also be drawn:
+1.	 Across all methods, corrected blow counts N1(60)cs and N1(60) consistently exhibit 
+high importance, highlighting their critical role in predicting outcomes in this 
+study.
+2.	 CSR parameters (e.g., CSR(σv′, Mw) and its variations) are ranked among the most 
+influential features, emphasizing the importance of cyclic stress conditions in the 
+analysis.
+3.	 While parameters like amax, Mw, and FC are moderately important, in contrast, 
+variables such as water depth, soil unit weights, and critical depth bounds have 
+minimal influence, indicating their limited predictive relevance in this context.
+4.	 Tuning improved the precision, recall, F1_score, Jaccard, and accuracy of mod­
+els by 4.4%, 4.2%, 4.4%, 5.6%, and 4.2%, respectively. Jaccard was the most 
+significantly affected metric, while precision and recall were the least affected 
+ones.
+5.	 SVC performed considerably better than the other individual ML methods, with 
+a precision, recall, F1_score, Jaccard index, and accuracy of 86%, 86%, 86%, 
+75%, and 86%, respectively.
+6.	 AdaBoost outperformed the other ML methods, with a precision, recall, F1_score, 
+Jaccard index, and accuracy of 88%, 88%, 88%, 79%, and 88%, respectively.
+7.	 SGD and NN_MLPC had roughly a similar prediction performance, with an 
+accuracy of 83%.
+8.	 DT classifier had the poorest performance in predicting liquefaction occurrence, 
+with an accuracy of 69%, while KNN and Voting classifiers provided estimations 
+with accuracy of 81% and 86%, respectively.
+9.	 Ensemble methods were effective in improving the predictions using weak learn­
+ers, with AdaBoost and Voting Classifier achieving an accuracy of 88% and 86%, 
+respectively.
+10.	The Voting Classifier demonstrated superior performance over the AdaBoost 
+Classifier in terms of lower False Negative (FN) values (1 vs. 2) and higher True 
+Positive values (20 vs. 19).
+1 3
+95 
+Page 18 of 21
+
+--- Sayfa 19 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+11.	 Furthermore, detailed performance metrics reveal that the Voting Classifier 
+exhibited better Recall for liquefaction occurrences (event = 1) (0.95) compared 
+to AdaBoost (0.9). Thus, while AdaBoost showcased better overall performance, 
+the Voting Classifier proved to be more adept at recognizing instances of liq­
+uefaction, particularly crucial in high-risk areas where minimizing false nega­
+tives (FN) and maximizing Recall is paramount. Conversely, in lower-risk areas, 
+AdaBoost’s superior False Positive (FP) and True Negative (TN) rates make it a 
+more reliable predictor for identifying instances where liquefaction is less likely 
+to occur.
+Acknowledgements  An instance of GPT-4 was used within Academic AI and Grammarly for language 
+enhancement to ensure clarity and readability of the manuscript. After using this tool, the authors reviewed 
+and edited the content as required and assumed full responsibility for the content of the publication.
+Author contributions  Ars.M.-F.: Conceptualization, Development of methodology, Creation of mod­
+els, Programming, Formal Analysis, interpretation of the results, Writing – Original Draft, reviewed the 
+manuscript, Arm.M.-F.: Conceptualization, Creation of models, Programming, Writing – Original Draft, 
+M.Z.: Conceptualization, Supervision, Interpretation of the results, Reviewed the manuscript, Writing 
+– Review & Editing, M.V.: Conceptualization, Supervision, Interpretation of the results, Reviewed the 
+manuscript, Writing – Review & Editing, J.B.: Interpretation of the results, Reviewed the manuscript, 
+Writing – Review & Editing, G.C.: Supervision, Reviewed the manuscript, Interpretation of the results, 
+Writing – Review & Editing.
+Funding  Open access funding provided by Montanuniversität Leoben. No funding was received for con­
+ducting this study.
+Data Availability  Data sharing does not apply to this article as no datasets were generated during the cur­
+rent study.
+Declarations
+Competing interests  The authors declare no competing interests.
+Open Access  This article is licensed under a Creative Commons Attribution 4.0 International License, 
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long 
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative 
+Commons licence, and indicate if changes were made. The images or other third party material in this 
+article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line 
+to the material. If material is not included in the article’s Creative Commons licence and your intended use 
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission 
+directly from the copyright holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​n​s​.​o​r​g​/​l​i​c​e​n​
+s​e​s​/​b​y​/​4​.​0​/​.​
+References
+Alishvandi, A., Karimi, J., Damari, S., Moayedi Far, A., Setodeh Pour, M., Ahmadi, M.: Estimating the 
+compressive strength of plastic concrete samples using machine learning algorithms. Asian J. Civil 
+Eng. 25(2), 1503–1516 (2024)
+Aytaş, Z., Alpaslan, N., Özçep, F.: Evaluation of liquefaction potential by standard penetration test and 
+shear wave velocity methods: A case study. Nat. Hazards. 118(3), 2377–2417 (2023). ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​
+/​1​0​.​1​0​0​7​/​s​1​1​0​6​9​-​0​2​3​-​0​6​0​9​3​-​9​
+1 3
+Page 19 of 21 
+95
+
+--- Sayfa 20 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+Boulanger, R.W., Idriss, I.M.: CPT and SPT based liquefaction triggering procedures. Department of Civil 
+and Environmental Engineering, University of California at Davis (2014)
+Bray, J.D., Markham, C.S., Cubrinovski, M.: Liquefaction assessments at shallow foundation building 
+sites in the Central Business District of Christchurch, New Zealand. Soil Dyn. Earthq. Eng. 92, 
+153–164 (2017)
+Cetin, K.O., Seed, R.B., Kayen, R.E., Moss, R.E., Bilge, H.T., Ilgac, M., Chowdhury, K.: Dataset on SPT-
+based seismic soil liquefaction. Data Brief. 20, 544–548 (2018)
+Corchado, E., Abraham, A., de Carvalho, A.: Hybrid intelligent algorithms and applications. Inf. Sci. 
+180(14), 2633–2634 (2010)
+Cover, T.M.: Elements of information theory. Wiley (1999)
+Cubrinovski, M., Ntritsos, N.: 8th Ishihara lecture: Holistic evaluation of liquefaction response. Soil Dyn. 
+Earthq. Eng. 168, 107777 (2023)
+Cubrinovski, M., Rhodes, A., Ntritsos, N., Van Ballegooy, S.: System response of liquefiable deposits. Soil 
+Dyn. Earthq. Eng. 124, 212–229 (2019)
+Dixit, A.: Ensemble machine learning: A beginner’s guide. Packt Publishing Ltd. (2017)
+Egbueri, J.C., Igwe, O., Omeka, M.E., Agbasi, J.C.: Development of MLR and variedly optimized ANN 
+models for forecasting the detachability and liquefaction potential index of erodible soils. Geosyst. 
+Geoenvironment. 2(1), 100104 (2023)
+Freund, Y., Schapire, R.E.: A decision-theoretic generalization of on-line learning and an application to 
+boosting. J. Comput. Syst. Sci. 55(1), 119–139 (1997)
+Gandomi, A.H., Fridline, M.M., Roke, D.A.: Decision tree approach for soil liquefaction assessment. Sci. 
+World J. 2013, 1–13 (2013)
+Ghani, S., Sapkota, S.C., Singh, R.K., Bardhan, A., Asteris, P.G.: Modelling and validation of liquefaction 
+potential index of fine-grained soils using ensemble learning paradigms. Soil Dyn. Earthq. Eng. 177, 
+108399 (2024)
+Hosmer, D.W. Jr., Lemeshow, S., Sturdivant, R.X.: Applied logistic regression. Wiley (2013)
+Idriss, I.M., Boulanger, R.W.: Soil liquefaction during earthquakes. Earthquake Engineering Research 
+Institute (2008)
+Idriss, I.M., Boulanger, R.W.: SPT-based liquefaction triggering procedures. Rep. UCD/CGM. –10, 2, 
+4–13 (2010)
+Kajdanowicz, T., Kazienko, P., Kraszewski, J.: Boosting algorithm with sequence-loss cost function for 
+structured prediction. Int. Conf. Hybrid. Artif. Intell. Syst. 573, 580 (2010)
+Kazienko, P., Lughofer, E., Trawiński, B.: Hybrid and ensemble methods in machine learning J. UCS 
+special issue. J. Univers. Comput. Sci. 19(4), 457–461 (2013)
+Khatti, J., Fissha, Y., Grover, K.S., Ikeda, H., Toriya, H., Adachi, T., Kawamura, Y.: Cone penetration test-
+based assessment of liquefaction potential using machine and hybrid learning approaches. Multiscale 
+Multidisciplinary Model. Experiments Des. 7(4), 3841–3864 (2024)
+Kilimci, Z.H.: Ensemble regression-based gold price (XAU/USD) prediction. J. Emerg. Comput. Technol. 
+2(1), 7–12 (2022)
+Kullback, S., Leibler, R.: On information and sufficiency. Annals Math. Stat. 22(1), 79–86 (1951)
+Kuncheva, L.I.: Combining pattern classifiers: Methods and algorithms. John Wiley & Sons (2004). 
+https://doi.org/10.1002/0471660264
+Moayedi Far, A., Zare, M.: Ensemble-based soil liquefaction assessment: Leveraging CPT data for 
+enhanced predictions. Civil Eng. Des. 7(1), 23–35 (2025)
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Duchesnay, E.: Scikit-
+learn: Machine learning in Python. J. Mach. Learn. Res. 12, 2825–2830 (2011)
+Samui, P.: Seismic liquefaction potential assessment by using relevance vector machine. Earthq. Eng. Eng. 
+Vib. 6(4), 331–336 (2007)
+Seed, H.B., Idriss, I.M.: Simplified procedure for evaluating soil liquefaction potential. J. Soil. Mech. 
+Found. Div. 97(9), 1249–1273 (1971)
+Seed, H.B., Singh, S., Chan, C.K., Vilela, T.F.: Considerations in the undisturbed sampling of sands. J. 
+Geotech. Eng. Div. 108(2), 265–283 (1982)
+Svetnik, V., Liaw, A., Tong, C., Culberson, J.C., Sheridan, R.P., Feuston, B.P.: Random forest: a classifica­
+tion and regression tool for compound classification and QSAR modeling. J. Chem. Inf. Comput. Sci. 
+43(6), 1947–1958 (2003)
+Vergara, J.R., Estévez, P.A.: A review of feature selection methods based on mutual information. Neural 
+Comput. Appl. 24(1), 175–186 (2014)
+1 3
+95 
+Page 20 of 21
+
+--- Sayfa 21 ---
+Transportation Infrastructure Geotechnology (2026) 13:95
+Wu, Y., Ke, Y., Chen, Z., Liang, S., Zhao, H., Hong, H.: Application of alternating decision tree with 
+AdaBoost and bagging ensembles for landslide susceptibility mapping. Catena. 187, 104396 (2020)
+Youd, T.L., Idriss, I.M.: Liquefaction resistance of soils: Summary report from the 1996 NCEER and 1998 
+NCEER/NSF workshops on evaluation of liquefaction resistance of soils. J. Geotech. GeoEnviron. 
+Eng. 127(4), 297–313 (2001)
+Zien, A., Krämer, N., Sonnenburg, S., Rätsch, G.: The feature importance ranking measure, pp. 694–709. 
+Machine Learning and Knowledge Discovery in Databases (2009)
+Publisher’s Note  Springer Nature remains neutral with regard to jurisdictional claims in published maps 
+and institutional affiliations.
+Authors and Affiliations
+Arsham Moayedi Far1 · Arman Moayedi Far2 · Masoud Zare3 · 
+Marlene Villeneuve1 · Joel Bensing4 · Gabriele Chiaro5
+	
+ Arsham Moayedi Far
+arsham.moayedi-far@unileoben.ac.at
+Arman Moayedi Far
+armanmoayedifar@edu.ikiu.ac.ir
+Masoud Zare
+mzare@teamues.com
+Marlene Villeneuve
+marlene.villeneuve@unileoben.ac.at
+Joel Bensing
+joel.bensing@unileoben.ac.at
+Gabriele Chiaro
+gabriele.chiaro@canterbury.ac.nz
+1	
+Chair of Subsurface Engineering, Technical University of Leoben, Leoben, Austria
+2	
+Mining Engineering Department, Imam Khomeini International University, Qazvin, Islamic 
+Republic of Iran
+3	
+Universal Engineering Sciences (UES), Norcross, GA, USA
+4	
+Chair of Energy Geosciences, Technical University of Leoben, Leoben, Austria
+5	
+Civil and Environmental Engineering, University of Canterbury, Christchurch, New 
+Zealand
+1 3
+Page 21 of 21 
+95

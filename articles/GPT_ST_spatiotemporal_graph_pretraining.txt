@@ -1,0 +1,1723 @@
+
+--- Sayfa 1 ---
+Fano-Andreev effect in a T-shaped Double Quantum Dot in the Coulomb-blockade
+regime
+A. Gonz´alez I.,1 A. M. Calle,2 M. Pacheco,1 E. C. Siqueira,3 and Pedro A. Orellana1
+1Departamento de F´ısica, Universidad T´ecnica Federico Santa Mar´ıa, Casilla 110 V, Valpara´ıso, Chile
+2Departamento de F´ısica, Universidad Cat´olica del Norte, Antofagasta, Chile
+3Departamento Acadˆemico de F´ısica, Universidade Tecnol´ogica Federal do Paran´a, Brazil
+We studied the effects of superconducting quantum correlations in a system consisting of two
+quantum dots, two normal leads, and a superconductor. Using the non-equilibrium Green’s functions
+method, we analyzed the transmission, density of states, and differential conductance of electrons
+between the normal leads. We found that the superconducting correlations resulted in Fano-Andreev
+interference, which is characterized by two anti-resonance line shapes in all of these quantities. This
+behavior was observed in both equilibrium and non-equilibrium regimes and persisted even when
+Coulomb correlations were taken into account using the Hubbard-I approximation.
+It is worth
+noting that the robustness of this behavior against these conditions has not been studied previously
+in the literature.
+I.
+INTRODUCTION
+The investigation of hybrid structures, where normal
+conductors are connected to superconductors, has gar-
+nered significant interest due to their potential for appli-
+cations in electronics, spintronics, and quantum informa-
+tion processing [1]. When a normal metal is connected
+to a superconductor lead, the superconducting order can
+leak into the normal metal. This causes pairing corre-
+lations and a superconducting gap due to the proximity
+effect[2]. The mechanism responsible for the proximity
+effect is known as Andreev reflection[3]. In this process,
+an electron is reflected as a hole at the interface between
+the leads.
+The missing charge in the normal lead ap-
+pears as a Cooper pair within the superconductor. Since
+the electrons in the superconductor side and the hole in
+the normal lead are correlated, these are represented by
+bound states.
+In effect, the two charges coming from
+the normal lead cannot penetrate deep into the super-
+conductor side being absorbed into the superconductor
+condensate.
+In hybrid systems composed of quantum
+dots (QDs), these bound states, called Andreev bound
+states (ABS), appear as resonances in the QD transmis-
+sion spectrum, with energies within the superconductor
+gap. The presence of ABSs is the key ingredient to many
+different features exhibited by QD-based systems[4–16].
+The ABSs modify the so-called Fano effect[17, 18], a well-
+known phenomenon resulting from quantum interference
+between discrete and continuum states.
+In QDs-based
+systems, the Fano effect signature is an asymmetric res-
+onance pattern arising in the transmission spectrum of
+the QD or double quantum dots (DQDs). Several au-
+thors have studied the effect of quantum decoherence on
+Fano lineshapes. To this end, they introduced a normal
+floating lead directly coupled to the double quantum dot
+(DQD). Their findings show that the floating lead cou-
+pled to the lateral QD plays a crucial role in destroying
+the Fano lineshape. [19, 20]. Other authors have stud-
+ied T-shaped QDs structure coupled to two normal or
+ferromagnetic leads left and right and a superconducting
+lead [21–26]. In particular, A. M. Calle et al. [27] have
+shown that, in a non-interacting T-shaped double quan-
+tum dot coupled to two normal metals, the transmission
+between the normal leads (ET) exhibits Fano resonances
+due to the appearance of ABSs in the non-interacting
+DQD, due to the presence of the superconducting lead
+(Fano-Andreev effect). By using a mean-field treatment
+of Coulomb correlations, E. C. Siqueira et al.. [28] have
+shown complementary patterns of resonances between
+AR and ET transmittance when a superconductor lead
+is coupled to a QD, which itself is coupled to two ferro-
+magnetic leads. The effect was shown to be a result of
+the interplay between the ABSs and the spin polarization
+provided by the ferromagnets. When the charging energy
+is much larger than the thermal energy of the charge car-
+riers and the QD is only weakly coupled to the leads,
+Coulomb correlations become increasingly significant at
+low temperatures. This is known as the Coulomb block-
+ade regime, where the number of electrons in the dot is
+fixed. Sequential tunneling is suppressed, and transport
+is only possible when the energy of the state |Ni > | is
+aligned with the chemical potential of the leads. As a
+result, the linear conductance through the quantum dot
+shows a series of peaks that correspond to the degener-
+acy regions (Coulomb peaks). These peaks are separated
+by regions of low conductance. However, when the tem-
+perature is lowered, the coupling of the electron within
+the QD to the electrons of the leads gives rise to vir-
+tual quantum states within the QD, which allows for an
+additional transport channel through the QD. This man-
+ifests as a narrow resonance peak in the transmission
+spectrum of the QD, called Kondo resonance. On the
+other hand, when one of the leads is a superconductor in
+a three-terminal system, it is possible to probe the inter-
+play between the Fano effect, ET transmission, and ABS
+states. The interplay between ABS and Kondo effect in
+hybrid superconductor nanostructures has been exten-
+sively studied[14, 29, 30]. For the T-shape DQDs struc-
+ture, A. M. Calle et al..[31] found that the Kondo reso-
+nance modifies the ABS resonances. However,in systems
+composed of DQDs, the interplay among the Coulomb
+arXiv:2311.04445v2  [cond-mat.mes-hall]  28 Nov 2023
+
+--- Sayfa 2 ---
+2
+correlation within an intermediate range of values, Fano
+effect and ABS states, has not been studied in depth
+in the literature despite the potential for original effects
+that may be obtained in these systems.
+In this work, we investigate the electronic transport
+properties of a T-shaped DQD system.
+Fig.
+1 shows
+the scheme, where the central QD, QDa, is connected
+to the normal leads while the other QD, QDb, is cou-
+pled to a superconductor lead (S).In our analysis, we
+focus on the Coulomb blockade regime, with identi-
+cal values for the onsite Coulomb interaction parame-
+ters in both quantum dots (QDs), namely Ua = Ub.
+To obtain our results, we use the equation-of-motion
+(EOM) method to calculate the relevant Green’s func-
+tions. The intradot Coulomb correlation is considered in
+the Hubbard-I approximation, which provides a reliable
+description of the Coulomb blockade regime. We inves-
+tigate in the non-equilibrium regime and at zero tem-
+perature, the impact of the Coulomb interaction (U),
+inter-dot coupling and coupling between QD and leads
+on the Fano-Andreev effect,in both molecular and inter-
+ferometric regimes. To study these effects, we employ the
+non-equilibrium Green’s function formalism.
+This paper is organized as follows:
+in Sec.
+II, we
+present the model and formulation for the system dis-
+played in Fig. 1, in Sec. III, the numerical results are
+presented and discussed.
+Finally, a summary and the
+main conclusions are presented in Sec. IV.
+II.
+MODEL AND FORMULATION
+In Fig. 1, the T-shape double quantum-dot system is
+illustrated. It consists of a central quantum dot, QDa,
+coupled to the two normal leads, L1 and L2, and a side
+QDb, connected to a superconductor S. The Hamiltonian
+of the system is given by:
+H = H1 + H2 + HS + HDQD + HT .
+(1)
+The first and the second terms are the Hamiltonians
+for the normal leads at the left (1) and right (2) sides of
+QDa. These are modeled by Eqs. (2) and (3):
+H1 =
+X
+k
+X
+σ
+ϵ1kσc†
+1kσc1kσ,
+(2)
+and
+H2 =
+X
+k
+X
+σ
+ϵ2kσc†
+2kσc2kσ,
+(3)
+where c†
+αkσ (cαkσ) is the electron creation (annihilation)
+operator of an electron with spin σ and energy ϵkσ in the
+α electrode.
+The second term stands for the BCS Hamiltonian[32]
+of the superconducting (S) lead and reads:
+QDa
+QDb
+L1
+L2
+t12
+Γ1
+Γ2
+ΓS
+S
+εa
+εb
+FIG. 1. The T-shape double QD system studied in this work.
+It is composed of two quantum dots in which the QDa is
+coupled to two normal metals L1 and L2, with the coupling
+strength being determined by the parameters Γ1 and Γ2. The
+second quantum dot, QDb, is coupled to the superconductor
+S, with the coupling strength being modeled by the parameter
+ΓS.
+The coupling between the QDs is modeled by the t12
+parameter.
+HS =
+X
+k
+X
+σ
+ϵkSc†
+kSσckSσ+
+X
+k
+(∆∗ckS↓c−kS↑+∆c†
+−kS↑c†
+kS↓),
+(4)
+where c†
+kSσ (ckSσ) is the electron creation (annihilation)
+operator of an electron with spin σ and energy ϵkS in the
+superconducting electrode, and ∆denotes pair potential,
+whose absolute value gives the superconducting energy
+gap.
+The HDQD term is given by Eq. (5) and takes into
+account the coupling between the QDs, modeled by the
+variable t12 = t, and the Coulomb interaction at each
+QD, whose strength is modeled by Um, m = a, b. The
+QDs are assumed to have a single spin degenerated level,
+whose value is determined by ϵdm,σ, m = a, b.
+
+--- Sayfa 3 ---
+3
+HDQD =
+X
+m=a,b,σ
+ϵdm,σd†
+m,σdm,σ
++
+X
+σ
+t
+
+d†
+aσdbσ + d†
+aσdbσ
+
++
+X
+m=a,b
+Umnmσnm¯σ
+(5)
+A.
+Green’s functions
+In order to obtain the transport properties for the sys-
+tem modeled by Eq. (1), we have used the well-known
+non-equilibrium Green’s function approach[33, 34] along
+with the equation-of-motion method. This formalism has
+been extensively applied to nanostructured systems. The
+presence of the superconductor has been taken into ac-
+count by expressing Green’s functions within the Nambu
+space. In this way, Green’s functions are represented by
+4×4 matrices resulting from the tensor product between
+spin and electron-hole subspaces. By using this formal-
+ism, we have obtained a system of coupled Dyson equa-
+tions for the retarded Green’s functions matrices Gr
+aa and
+Gr
+bb, for QDa and QDb, respectively:
+Gr
+aa = Gro
+aa + Gr
+aat†
+abGro
+bbtabGro
+aa,
+(6)
+and
+Gr
+bb = Gro
+bb + Gr
+bbt†
+abGro
+aatabGro
+bb,
+(7)
+with
+Gro
+aa = gr
+aa(1 −Σr
+Lgr
+aa)−1,
+(8)
+and
+Gro
+bb = gr
+bb(1 −Σr
+Sgr
+bb)−1.
+(9)
+In Eqs. (6) to (9), gr
+aa and gr
+bb are the QDa and QDb
+Green’s functions, respectively, when the QDs are iso-
+lated from the leads; tab describes the tunneling between
+QDa and QDb. The coupling to the normal and super-
+conducting leads are modeled by retarded/advanced self-
+energies Σr
+L = Σr
+1 + Σr
+2 and Σr
+S, respectively.
+The self-energy for the coupling to the normal leads
+(L1 and L2) is given by Eq. (10):
+Σr,a
+L = ∓i
+2(Γ1 + Γ2)
+
+
+1 0 0 0
+0 1 0 0
+0 0 1 0
+0 0 0 1
+
+,
+(10)
+where Γi = Γi↑+ Γi↓and Γiσ = 2π|ti|2Ni, (i = 1, 2)
+being the coupling strength, with ti being amplitude for
+an electron with spin σ of QDa to be transferred to the
+lead Li; Ni is the density of states at Fermi level for the
+normal lead, Li.
+Since we have assumed both normal
+leads as non-magnetic, the density of states is the same
+for both spins.
+The retarded/advanced self-energy of the supercon-
+ductor is given by Eq. (11):
+Σr,a
+S
+= ∓i
+2ρS(ϵ)ΓS
+
+
+1
+−∆
+ϵ
+0
+0
+−∆
+ϵ
+1
+0
+0
+0
+0
+1
+∆
+ϵ
+0
+0
+∆
+ϵ
+1
+
+
+.
+(11)
+In Eq. (11), ΓS = 2π|ts|2Ns is the coupling strength
+between the superconductor lead and QDb, defined in
+terms of the amplitude of tunneling |ts| and the normal
+density of states of Ns. The ∆appearing in some of the
+matrix elements stands for the energy gap of the super-
+conductor and accounts for the electron-hole coupling.
+The energy gap plays a central role in this model and
+also modifies the self-energy through ρS, the dimension-
+less modified BCS density of states, whose expression is
+given by:
+ρS(ϵ) = |ϵ|θ(|ϵ| −∆)
+√
+ϵ2 −∆2
+−iϵθ(∆−|ϵ|)
+√
+∆2 −ϵ2 ,
+(12)
+with the imaginary part accounting for the Andreev
+bound states (ABS), within the superconductor gap.
+The presence of electronic correlations associates the
+QD energy levels with the electronic occupations, which,
+in turn, depend on external parameters like gate and bias
+voltages. As a result, Eqs. (6) and (7) must be solved in a
+self-consistent way, together with the occupations of the
+QDs. Such occupations are obtained from the diagonal
+matrix elements of the “lesser” Green’s function matrix,
+which is obtained through the Keldysh equation. For the
+QDa, the expression reads:
+G<
+aa = Gr
+aa(ω)Σ<
+T aGa
+aa(ω),
+(13)
+with
+Σ<
+T a = Σ<
+L(ϵ) + t†
+abGro
+bbΣ<
+S (ϵ)Gao
+bb tab.
+(14)
+The expression for QDb can be obtained by exchang-
+ing the indices a and b.
+In Eq.
+(13), Σ<
+T a repre-
+sents the “lesser” self-energy, which is expressed in terms
+of the self-energies of the leads:
+Σ<
+L
+= Σ<
+1 + Σ<
+2
+and Σ<
+S .
+Assuming that the leads are in equilibrium
+with well-defined chemical potential and temperature,
+the self-energies of the leads can be obtained using the
+fluctuation-dissipation theorem:
+Σ<
+i
+= Fi [Σa
+i −Σr
+i ],
+where the Fermi matrix Fi is given by
+Fi = i
+
+
+fi
+0
+0
+0
+0
+¯fi
+0
+0
+0
+0 fi
+0
+0
+0
+0
+¯fi
+
+,
+(15)
+
+--- Sayfa 4 ---
+4
+with fi = f(ϵ −eVi) and ¯fi = f(ϵ + eVi) (i = 1, 2, S)
+being the Fermi functions for electrons and holes, re-
+spectively. Since the superconductor is assumed to be
+grounded, fi = f(ϵ) for i = s.
+B.
+Transmittance and current
+The presence of Coulomb correlations leads to a self-
+consistent problem when solving Eqs. (6) and (7), since
+the dependency on the occupations wraps the Green’s
+functions to the occupancies of the QDs.
+Within the
+equation-of-motion approach used in this work, this re-
+sults in an infinite set of equations with Green’s functions
+of increasing order of complexity. In order to obtain a
+closed set of equations, one needs to resort to some ap-
+proximation on the Coulomb correlations. In this work,
+we have used the so-called Hubbard-I approximation[35],
+which allows us to derive a simple expression for the elec-
+trical current in terms of the different transmission am-
+plitudes that contribute to the electronic transport for
+this system. In fact, the current Ij, flowing in the lead
+Lj (j = 1, 2), is given by the following expression:
+Ij = e
+ℏ
+Z
+dϵ [Gr
+aa(ϵ)Σ<
+j (ϵ) + G<
+aa(ϵ)Σa
+j (ϵ)
++ H.c.](11+33),
+j = 1, 2.
+(16)
+where 11 + 33 stands for the sum of the 11 and 33 ma-
+trix elements of the current matrix. By substituting the
+Green’s functions and self-energies into Eq. (16), one ob-
+tains the main expression for the electric current flowing
+in the lead L1, written in terms of the transmittances:
+I1 = e
+h
+Z
+[T DAR
+11
+(f1−¯f1)+T ET
+12 (f1−f2)+T CAR
+12
+(f1−¯f2)
++ T QP
+1S (f1 −fS)]dϵ,
+(17)
+The first term in Eqs. (17) , T DAR
+11
+, corresponds to di-
+rect Andreev reflection transmittances through the paths
+(L1 −QDa −QDb −S), i.e., an electron of L1 is reflected
+by S into a hole of L1. The second term, T ET
+12 , repre-
+sents electron tunneling (ET) between the normal leads
+via (L1 −QDa −QDb −L2) path. The next term, T CAR
+11
+,
+account for the transmittances of crossed Andreev reflec-
+tion through the path ((L1, L2) −QDa −QDb −S), i.e.,
+an electron of L1 is reflected by S into a hole of L2. Fi-
+nally, the last term, T QP
+11 , corresponds to quasiparticles
+tunneling through the (L1 −QDa −QDb −S) path.
+The amplitudes can be expressed in terms of Green’s
+functions, which are given as follows:
+T DAR
+11
+= Γ2
+1(|Gr
+aa,14|2 + |Gr
+aa,12|2 + |Gr
+aa,34|2 + |Gr
+aa,32|2)
+T CAR
+12
+= Γ1Γ2(|Gr
+aa,14|2 + |Gr
+aa,12|2 + |Gr
+aa,34|2 + |Gr
+aa,32|2)
+T ET
+12
+= Γ1Γ2(|Gr
+aa,33|2 + |Gr
+aa,31|2 + |Gr
+aa,13|2 + |Gr
+aa,11|2)
+T QP
+1S
+= ¯ρΓ1ΓS{Y −
+21|Gr
+aa,12|2 + X+
+34|Gr
+aa,13|2 + Y +
+43|Gr
+aa,14|2
++ X−
+12|Gr
+aa,11|2 −Z+
+34Gr
+aa,13[Gr
+aa,14]∗−[Z+
+34]∗[Gr
+aa,13]∗Gr
+aa,14
+−Z−
+12Gr
+aa,11[Gr
+aa,12]∗−[Z−
+12]∗[Gr
+aa,11]∗Gr
+aa,12
++ Y −
+21|Gr
+aa,32|2 + X+
+34|Gr
+aa,33|2 + Y +
+43|Gr
+aa,34|2
++ X−
+32|Gr
+aa,31|2 −Z+
+34Gr
+aa,33[Gr
+aa,34]∗
+−[Z+
+34]∗[Gr
+aa,33]∗Gr
+aa,34 −Z−
+12Gr
+aa,31[Gr
+aa,32]∗
+−[Z−
+12]∗[Gr
+aa,31]∗Gr
+aa,32}
+(18)
+where
+X±
+ij ≡t2[|Gro
+bb,ii|2 + |Gro
+bb,ij|2 ± ∆
+ϵ (Gro
+bb,ii[Gro
+bb,ij]∗+ Gro
+bb,ij[Gro
+bb,ii]∗),
+Y ±
+ij ≡t2[|Gro
+bb,ii|2 + |Gro
+bb,ji|2 ± ∆
+ϵ (Gro
+bb,ii[Gro
+bb,ji]∗+ Gro
+bb,ji[Gro
+bb,ii]∗)],
+Z±
+ij ≡t2[Gro
+bb,ij[Gro
+bb,jj]∗+ [Gro
+bb,ij]∗Gro
+bb,ii
+± ∆
+ϵ (|Gro
+bb,ij|2 + [Gro
+bb,jj]∗Gro
+bb,ii)],
+(19)
+(The current flowing and transmittances in L2 can be
+obtained by interchanging the indexes 1 and 2 in the
+above equation).
+C.
+Self-consistent calculations
+Regarding the occupations of the QDs, they are deter-
+mined by the “lesser” Green’s function. In the case of
+normal leads with no polarization, the average occupa-
+tion number remains independent of spin. This allows us
+to set, for each QD, ⟨ni,σ⟩= ⟨ni⟩where i = a, b. These
+occupation numbers are obtained by solving the following
+self-consistent system of integral equations:
+⟨na↑⟩= −i
+Z
+dϵ
+2π G<
+aa,11[ϵ, ⟨na↑⟩, ⟨na↓⟩, ⟨nb↑⟩, ⟨nb↓⟩],
+(20a)
+⟨na↓⟩= −i
+Z
+dϵ
+2π G<
+aa,33[ϵ, ⟨na↑⟩, ⟨na↓⟩, ⟨nb↑⟩, ⟨nb↓⟩],
+(20b)
+⟨nb↑⟩= −i
+Z
+dϵ
+2π G<
+bb,11[ϵ, ⟨na↑⟩, ⟨na↓⟩, ⟨nb↑⟩, ⟨nb↓⟩],
+(20c)
+⟨nb↓⟩= −i
+Z
+dϵ
+2π G<
+bb,33[ϵ, ⟨na↑⟩, ⟨na↓⟩, ⟨nb↑⟩, ⟨nb↓⟩].
+(20d)
+
+--- Sayfa 5 ---
+5
+In the electron-hole symmetry point, i.e., when ϵd =
+−U/2, the occupation is independent of bias voltage and
+equal to 1/2 (na,σ = nb,σ = 0.5, with σ =↑, ↓). In this
+way, the exact expression for (dI/dV )ET and (dI/dV )AR
+in function of bias voltage can be calculated analytically,
+and is equal to:
+dIET
+dV
+= 2(4G A −2F BΓ2
+S + 1
+4CΓ4
+S)
+(K)
+(21)
+and
+dIAR
+dV
+= 4t4 Γ2
+S
+(K)
+(22)
+where
+K = 4D A −2(−t4Γ2
+L + G F B
+−F(t2 −Γ2
+L)B)Γ2
+S + 1
+4E CΓ4
+S
+(23)
+with
+A =
+
+(¯gr
+1,12)2 −t22 + (¯gr
+1,12)2ΓL
+B = (¯gr
+1,12)2 −t2 + Γ2
+L
+C = (¯gr
+1,12)2 + Γ2
+L
+D = [(¯gr
+1,11)2 −t2]2 + (¯gr
+1,11)2 Γ2
+L
+E = (¯gr
+1,11)2 + Γ2
+L
+F = ¯gr
+1,11¯gr
+1,12
+G = (¯gr
+1,11)2
+(24)
+while ¯gr
+1,11 and ¯gr
+1,12 are the components 11 and 12 of the
+inverse Green function of QD1 isolated in the Hubbard-I
+approximation, evaluated in the bias voltage V , i.e.:
+¯gr
+i,11 = ((V −ϵd −U)(V −ϵd))
+(V −ϵd + U(n1 −1))
+(25)
+¯gr
+i,12 = ((V + ϵd + U)(V + ϵd))
+(V + ϵd −U(n1 −1))
+(26)
+(27)
+The analysis of these curves is complemented by the
+local density of states of the QDs, ρa and ρb, defined
+according to:
+ρ(ϵ)i = −1
+π Im(Gr
+ii,11 + Gr
+ii,33),
+i = a, b.
+(28)
+III.
+RESULTS AND DISCUSSION
+In what follows, we consider Γ1 as the energy unit.
+We assume that the QDs levels are spin degenerate and
+that the intradot Coulomb interaction is the same in both
+QDs, i.e., Ua = Ub = U. We denoted r as the ratio of
+leads coupling ΓS/Γ1 through which we control the effi-
+ciency of the proximity effect, as well as the interdot tun-
+neling as t. Also, we set the gate voltage for each QD in
+the electron-hole symmetry point, i.e., ϵa = ϵb = −U/2.
+In our work, we focus on the non-equilibrium regime, and
+the analysis of the results is split into two parts: inter-
+ferometric regime (when t < Γ1 ) and molecular regime
+(when t ≥Γ1 ). In our analysis, we present the results for
+the differential conductance ET ( (dI/dV )ET
+12
+) and the
+differential conductance AR (dI/dV )DAR
+12
+in terms of the
+bias voltage applied to the leads, which we will refer to for
+simplicity as (dI/dV )ET and (dI/dV )DAR, respectively.
+The chemical potential of the normal leads are set with
+opposite bias voltage, i.e. µ1 = −µ2 = eV , while the su-
+perconductor is kept grounded, µS = 0. With the normal
+leads with opposite bias voltage, (dI/dV )CAR
+12
+(or ICAR
+12
+)
+and (dI/dV )CAR
+21
+(or ICAR
+21
+) are zero since they are pro-
+portional to the factor (f1−¯f2) and (f2−¯f1), respectively,
+which are identically zero. It is worth saying that we are
+assuming that |eV | < ∆, and therefore the contribution
+of the quasiparticle current IQP and transmittance T QP
+is zero within the energy range we are considering. Fi-
+nally, it is important to note that our calculations were
+obtained out of the Kondo regime.
+A.
+Interferometric regime
+We begin the analysis of non-equilibrium regime by fo-
+cusing on the interdot tunneling effects on (dI/dV )ET
+and (dI/dV )AR, within the interferometric regime (t ≤
+Γ1). For clarity’s sake, we start by focusing on the non-
+interacting regime (U = 0). In this case, the behavior of
+(dI/dV )ET and (dI/dV )AR as functions of t and V , are
+shown in the contour plots of Figs. 2(a) and 2(c), respec-
+tively. For t = 0, the QDa is decoupled from QDb −S
+part of the system and, as a result,(dI/dV )ET exhibits
+a well-known Lorentzian shape, while the (dI/dV )AR re-
+mains equal to zero. As t increases, the superconduct-
+ing correlations start to leak into QDa, and the Andreev
+bound states (ABSs) emerge as two resonances equidis-
+tant from V = 0. At the same bias voltage values, two
+equidistant deeps appear in the (dI/dV )AR curves. The
+correspondence between these two lineshapes can be bet-
+ter observed in Figs. 2(b) and 2(d) where cuts of the con-
+tour plots for t = 0.05 (A1 and A2 lines) and and t = 0.5
+(B1 and B2 lines) are shown. It is also worth noting that
+the central peak at V = 0 is preserved in (dI/dV )ET
+curves, as a manifestation of electron-hole symmetry of
+the ABSs on the QDs spectra. As t increases, the hy-
+bridization between the discrete ABSs with the contin-
+uum states, stemming from the normal leads, causes the
+lineshapes to broaden. This interpretation is based on
+the fact that the differential conductance curves follow
+the behavior of the local density of states of the QDs for
+zero bias voltage, as shown in Fig. 3. The very same
+
+--- Sayfa 6 ---
+6
+FIG. 2. Left panel: Contour plot of (dI/dV )ET and (dI/dV )AR in terms of t and V , figures a) and c), respectively ; Right
+panel:(dI/dV )ET and (dI/dV )AR in terms of the energy when t = 0.05 (black solid line) or t = 0.5(red dashed line), figures
+b) and d), respectively. Their location at the contour plot are indicated by the horizontal lines labeled by A1 and A2 for
+t = 0.05 and by B1 and B2 for t = 0.5 , respectively. Other parameters are chosen as U = 0, kBT = 0Γ1, Γ1 = Γ2 = ΓS and
+ϵa = ϵb = −U/2
+FIG. 3.
+Left panel: Contour plot of ρa and ρb in terms of t and ϵ, figures a) and c), respectively ; Right panel:ρa and ρb in
+terms of the energy when t = 0.05(black solid line) or t = 0.5(red dashed line), figures b) and d), respectively. Their location
+at the contour plot is indicated by the horizontal lines labeled by A1 and A2 for t = 0.05 and by B1 and B2 for t = 0.5,
+respectively. Other parameters are chosen as U = 0, kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2
+behavior can be observed from the contour plots for ρa
+and ρb, at zero bias voltage, as shown in Figs. 3(a) and
+3(c), respectively.
+A more detailed lineshape can be seen in the cuts for
+t = 0.05 (A1 and A2 lines) and t = 0.5 (B1 and B2 lines)
+which readily show the same behavior observed in the
+transmission curves.
+In Fig. 4, the differential conductance (dI/dV )ET and
+(dI/dV )AR are shown for U = 2.
+The other parame-
+ters remain the same as the ones used in Figs. 2 and
+3. The main difference, in this case, is the splitting of
+the peaks due to the Coulomb correlation. In fact, for
+
+--- Sayfa 7 ---
+7
+FIG. 4.
+Left panel: Contour plot of (dI/dV )ET and (dI/dV )AR in terms of t and V , figures a) and c), respectively ; Right
+panel:(dI/dV )ET and (dI/dV )AR in terms of the bias voltage V, when t = 0.05 (solid line) or t = 0.5(dashed line), figures b)
+and d), respectively. Their location at the contour plot is indicated by the horizontal lines labeled by A1 and A2 for t = 0.05 and
+by B1 and B2 for t = 0.5, respectively. Other parameters are chosen as U = 2, kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2
+FIG. 5.
+Left panel: Contour plot of ρa and ρb, at zero bias voltage, in terms of t and ϵ, figures a) and c), respectively
+; Right panel:ρa(ϵ) and ρb(ϵ) in terms of the energy when t = 0.05(solid line) or t = 0.5(dashed line), figures b) and d),
+respectively.Their location at the contour plot are indicated by the horizontal lines labeled by A1 and A2 for t = 0.05 and by
+B1 and B2 for t = 0.5, respectively. Other parameters are chosen as U = 2, kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2
+t = 0.05, one observes two Lorentzian peaks as evident
+from the cut A1, shown in Fig. 4(b). The ABSs are also
+evident at this small value of t as anti-resonances super-
+imposed to the peaks in spite of the presence of Coulomb
+correlations. As t is increased, the broadening of peaks
+increases, as evident from the contour plots of Figs. 4(a)
+and 4(c) and the corresponding cuts shown Figs. 4(b)
+and 4(d). In contrast to the broadening of the peaks,
+their location is fixed by the Coulomb interaction with
+the two Lorentzian peaks located at ±U/2, which is also
+the center of symmetry of the ABSs. Similar behavior
+is observed for the local density of states for zero bias
+voltage, as shown in Fig. 5. This figure shows in the left
+panel the contour plot of ρa and ρb as a function of ϵ and
+
+--- Sayfa 8 ---
+8
+4
+2
+0
+2
+4
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 0.02
+a)
+0
+= 0
+2
+1
+0
+1
+2
+0.0
+0.1
+0.2
+(dI/dV)AR(e2/h)
+b)
+4
+2
+0
+2
+4
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 0.50
+c)
+2
+1
+0
+1
+2
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+d)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 1.00
+e)
+2
+1
+0
+1
+2
+e V(
+1)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+f)
+FIG. 6. The differential conductance (dI/dV )ET (solid black line) and (dI/dV )AR (dashed red line) as a function of the bias
+voltage V for a) r = 0.02, b) r = 0.50 and c) r = 1. The dashed line in the left panel corresponds to the (dI/dV )ET for ∆= 0,
+i.e. for a system with three normal contacts. Other parameters are chosen as: ∆= 5Γ1, U = 2Γ1, t = 0.2Γ1, kBT = 0Γ1,
+Γ1 = Γ2 and ϵa = ϵb = −U/2
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 0
+a)
+0
+= 0
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+b)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 2
+c)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+d)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 4
+e)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+f)
+FIG. 7. In the left panel, the differential conductance (dI/dV )ET (black solid line ) as a function of the bias voltage V and in
+the right panel (dI/dV )DAR (red solid line ) as a function of the bias voltage V when U = 0 for a) and b), U = 2 for c) and
+d), and U = 4 for e) and f). The dashed line in the left panel corresponds to the (dI/dV )ET for ∆= 0, i.e., for a system with
+three normal contacts. Other parameters are chosen as t = 0.2Γ1 , ∆= 5Γ1 , kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2.
+t [Figs 5 (a) and 5(c), respectively] and shows in the right
+panel the curves of ρa(ϵ) and ρb(ϵ) in terms of the energy
+[Figs. 5 (b) and 5 (d), respectively], when t = 0.05 (solid
+line) or t = 0.5 (dashed line). Their location at the con-
+tour plot is indicated by the horizontal lines labeled by
+A1 and A2 for t = 0.05 and B1 and B2 for t = 0.5. As
+we can see in figures 5 a) and 5 c), ρa takes the form
+of two Lorentzian curves centered at ϵ = ±U/2 when
+t = 0, while ρb equals zero. However, when t = 0.05 , we
+observe the appearance of two pairs of narrow deeps in
+ρa [see lines A1, in Figs. 5(a) and 5(b)] revealing ABS
+leakage in the density of states of QDa , expressed in the
+two pairs of sharp resonances in ρb [see lines A2 , in Figs.
+5(c) and 5(d)]. However, as the value of t increases, for
+
+--- Sayfa 9 ---
+9
+example, when t = 0.5 the deeps in the ρa [see lines B1,
+in Figs. 5 (a) and 5 (b)], and the resonances in ρb [see
+lines B2, in Figs. 5 (c) and 5 (d))] become progressively
+wider.
+In Fig. (6) we study the role of the superconductor
+on (dI/dV )ET by varying the coupling ratio, r = ΓS/Γ1,
+and ∆, the superconductor gap. While r measures the
+coupling strength between QDb and S, ∆carries the in-
+formation of the superconductor correlations. The dif-
+ferential conductance (dI/dV )ET and (dI/dV )AR, as a
+function of bias voltage, are shown in the left and right
+panel of the Fig. (6), respectively, for r changing from
+0.02 to 1.0. For ∆= 0, the blue-dotted lines represent
+(dI/dV )ET . In the first place, we can note when r = 0.02,
+i.e., when the DQD can be considered decoupled from
+the third lead, the difference conductance ET shows two
+deep Fano antiresonances, which reveals the existence of
+quantum interference due to the effect of the additional
+channel opened by the second QD coupled to the system.
+As the value of r increases, the Fano antiresonances in
+the differential conductance ET disappear when the third
+lead is normal (∆= 0), due to the hybridization of the
+discrete state of QDb with the continuum spectrum of S
+in its normal state. On the contrary, when ∆̸ = 0 and
+r̸ = 0, the lead S becomes a superconductor and the en-
+ergy gap is revealed at the Fermi level with the presence
+of the ABSs, and two pairs of Fano antiresonances ap-
+pear in the differential conductance ET, corresponding to
+the Fano resonances appearing in the differential conduc-
+tance AR for the same value of V , which is a clear man-
+ifestation of quantum interference. For example, when
+r = 0.02, the coupling to S is too small, and (dI/dV )ET
+exhibits the Fano anti-resonance pattern.
+In contrast,
+for r ≥0.50, the ABSs become pronounced enough to
+change the shape of (dI/dV )ET ; this can be seen from
+the (dI/dV )AR shown by the red curves in Fig. 6. As
+in the non-interacting case, the resonances of (dI/dV )AR
+correspond to two anti-resonances in (dI/dV )ET curves,
+equidistant from ±U/2 with a central peak located at
+±U/2. In contrast to the normal state, this effect is ro-
+bust concerning the increase of r, being preserved for all
+values of r. Actually, the main effect of r, in this case,
+is to displace the ABSs in the bias axis. Despite similar
+effects pointed out in the literature[20, 27, 31], here it is
+clear that such an interference pattern is robust against
+the Coulomb correlations, which, in general, have a detri-
+mental effect on Andreev interference.
+Finally, Fig. 7 displays in the left panel the electron-
+tunneling differential conductance((dI/dV )ET ) (black
+solid line) and in the right panel the Andreev differential
+conductance ((dI/dV )AR) (red solid line) for different
+values of intra-dot Coulomb interaction U. The dashed
+line in the left panel also corresponds to the (dI/dV )ET
+for ∆= 0, i.e., for a system with three normal contacts.
+We can see in Fig.
+7 that when t = 0.2, U = 0 and
+∆= 0, the differential conductance ET has the form of a
+Lorenzian centered on the zero bias voltage and does not
+present anti-resonances. On the contrary, when U = 0
+and ∆̸ = 0, the differential conductance ET shows two
+Fano antiresonances, which coincide with the two reso-
+nances in the differential conductance AR. Conversely,
+when U̸ = 0 and ∆̸ = 0, the two antiresonances in the
+differential conductance ET and the two resonances in
+the differential conductance AR are subdivided on either
+side of the zero-bias with the symmetry point located
+at ±U/2, by the effect of the Coulomb interaction. The
+separation between the resonances in the differential con-
+ductance ET and AR grows as U increases.
+One way to better comprehend the tunneling mecha-
+nism in different transmission processes is to analyze the
+differential conductance (dI/dV )ET . It can be expressed
+as a convolution of two Breit-Wigner and two Fano line
+shapes, as shown in Figure 8a.
+dIET
+dV
+≈| ˜V1 + q|2
+| ˜V1|2 + 1
+
+1
+ϵ2
+1 + 1 +
+1
+ϵ2
+2 + 1
+
+| ˜V2|2
+| ˜V2|2 + 1
+,
+(29)
+where ˜V1 = (||V | −U/2| −ΓS/4)/η with η = t2/(ΓS),
+˜V2 = |V |/(ΓL1/2) , ϵ1 =
+|V |−ϵd
+(ΓL1/2),ϵ2 =
+|V |−(ϵd+U)
+(ΓL1/2)
+and
+q = qr + i qi.
+The complex Fano parameter, q, and
+the coupling value, ΓL1, are relevant to understanding
+the differential conductance. Based on the above equa-
+tion, the conductance has two resonances at V
+= ϵd
+and V
+= ϵd + U.
+Each resonance has two dips at
+V = ϵd±ΓS/4 and V = (ϵd+U)±ΓS/4, with ϵd = −U/2.
+Additionally, a single antiresonance appears at V = 0.
+The interference of electrons through different tunnel-
+ing paths, including Andreev bound-states, explains the
+Fano effect observed in our results. Due to the presence
+of Andreev bound states, the electron suffers a change in
+its phase, and this is reflected in a complex q-parameter
+as we see in Eq.(29). In addition, the Andreev differen-
+tial conductance, (dI/dV )AR, can be expressed as two
+Breit-Wigner line shapes (shown in Figure 8b).
+dIAR
+dV
+≈
+
+1
+ϵ2
+3 + 1 +
+1
+ϵ2
+4 + 1
+
+,
+(30)
+where ϵ3 = |V −ϵd|−ΓS/4
+(t2/ΓS)
+and ϵ4 = |V −(ϵd+U)|−ΓS/4
+(t2/ΓS)
+. The
+above equation shows that the Andreev differential con-
+ductance has four resonances at V
+= ϵd ± ΓS/4 and
+V = (ϵd + U) ± ΓS/4, with ϵd = −U/2, which coin-
+cide exactly with the dips of the differential conductance
+ET mentioned above.
+From the fits, we can conclude
+that the Fano-Andreev effect is robust in the presence of
+Coulomb interaction. Additionally, in the interferomet-
+ric regime, Andreev transmission is a resonant tunneling
+process through Andreev-bound states, which causes the
+Fano effect in normal transmission.
+B.
+Molecular regime
+In this subsection, we analyze the molecular regime.
+The contour plots in Fig. 9 a-c display the behavior of
+
+--- Sayfa 10 ---
+10
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+a)
+Fitting
+(dI/dV)ET
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+b)
+Fitting
+(dI/dV)AR
+FIG. 8. a) The differential conductance (dI/dV )ET (black solid line ) and the fitting (red dashed line) as a function of the
+bias voltage V when t = 0.2. b) The differential conductance (dI/dV )AR (black solid line ) and the fitting (red dashed line)
+as a function of the bias voltage V when t = 0.2. Other parameters are chosen as ∆= 5Γ1 , kBT = 0Γ1, Γ1 = Γ2 = ΓS and
+ϵa = ϵb = −U/2.
+FIG. 9. Left panel: Contour plot of (dI/dV )ET and (dI/dV )AR in terms of t and V , figures a) and c), respectively ; Right
+panel:(dI/dV )ET and (dI/dV )AR in terms of the bias voltage when t = 0.7 (solid line) or t = 2(dashed line), figures b) and d),
+respectively. Their location at the contour plot are indicated by the horizontal lines labeled by A1 and A2 for t = 0.7 and by
+B1 and B2 for t = 2.0, respectively. Other parameters are chosen as U = 2, kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2
+(dI/dV )ET and (dI/dV )AR as functions of t and V , in
+the range 0.5Γ1 ≤t ≤2.5Γ1, are shown in the contour
+plots of Figs. 9(a) and 9(c), respectively. The other pa-
+rameters remain the same as the ones used in Figs. 4
+and 5. This figure displays the progressive vanishing of
+the antiresonances in the differential conductance ET as
+t increases.
+As seen in the black solid line in Fig.
+9
+a or line A1 in 9 b, when t = 0.7, the antiresonances
+in the differential conductance ET have almost disap-
+peared. Therefore, we can consider that this value of t
+is the threshold value that defines the transition between
+the interferometric and molecular regimes. On the other
+hand, when t > 0.7, specifically at t = 2 (see line B1 in
+Fig. 9 a, or red dashed line in Fig. 9 b), the differential
+
+--- Sayfa 11 ---
+11
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 0.02
+a)
+0
+= 0
+0
+3×10
+4
+6×10
+4
+(dI/dV)AR(e2/h)
+b)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 0.50
+c)
+0.00
+0.15
+0.30
+(dI/dV)AR(e2/h)
+d)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+r = 1.00
+e)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+f)
+FIG. 10. In the left panel, the differential conductance (dI/dV )ET (black solid line) as a function of the bias voltage V and in
+the right panel (dI/dV )AR (red solid line ) as a function of the bias voltage V when r = 1 for a) and b), r = 2 for c) and d), and
+r = 4 for e) and f). The blue dashed line in the left panel corresponds to the (dI/dV )ET for ∆= 0, i.e., for a system with three
+normal contacts. Other parameters are chosen as t = 2Γ1 , ∆= 5Γ1 , U = 2Γ1, kBT = 0Γ1, Γ1 = Γ2 and ϵa = ϵb = −U/2.
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 0
+a)
+0
+= 0
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+b)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 2
+c)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+d)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+2.0
+(dI/dV)ET(e2/h)
+U = 4
+e)
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+(dI/dV)AR(e2/h)
+f)
+FIG. 11. In the Left panel, the differential conductance (dI/dV )ET (black solid line ) as a function of the bias voltage V and in
+the right panel (dI/dV )DAR (red solid line ) as a function of the bias voltage V when U = 0 for a) and b), U = 2 for c) and d),
+and U = 4 for e) and f). The blue dashed line in the left panel corresponds to the (dI/dV )ET for ∆= 0, i.e., for a system with
+three normal contacts. Other parameters are chosen as t = 2Γ1 , ∆= 5Γ1 , kBT = 0Γ1, Γ1 = Γ2 = ΓS and ϵa = ϵb = −U/2.
+conductance ET becomes zero at ±U/2, with two asym-
+metrically located resonances around this point: two lat-
+eral resonances moving away from the eV = 0, and two
+central resonances approaching each other towards the
+point of zero bias voltage. On the other hand, the dif-
+ferential conductance AR exhibits similar behavior. At
+t = 0.7 (indicated by the black solid line on Fig. 9d or
+line A2 on Fig. 9c), the double peak structure has almost
+vanished only to reappear again for t > 1 (as shown by
+the red dashed line in Fig. 9d or line B2 in Fig. 9c).
+However, now the resonances in the differential Andreev
+conductance align closely with those in the differential
+ET conductance (as seen in line B2 in Fig. 9c).
+Now, we study the effect of the coupling ratio, r, on
+
+--- Sayfa 12 ---
+12
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.5
+1.0
+1.5
+(dI/dV)ET(e2/h)
+Fitting
+(dI/dV)ET
+4
+2
+0
+2
+4
+e V(
+1)
+0.0
+0.4
+0.8
+(dI/dV)AR(e2/h)
+Fitting
+(dI/dV)AR
+FIG. 12. a) The differential conductance (dI/dV )ET (black solid line ) and the fitting (red dashed line) as a function of the
+bias voltage V when t = 2. b) The differential conductance (dI/dV )AR (black solid line ) and the fitting (red dashed line) as
+a function of the bias voltage V when t = 0.2. Other parameters are chosen as ∆= 5Γ1 , kBT = 0Γ1, Γ1 = Γ2 = ΓS and
+ϵa = ϵb = −U/2.
+the differential conductance ET and AR in the molecular
+regime (t ≥Γ1). Fig. 10 displays in the left panel the
+electron-tunneling differential conductance((dI/dV )ET )
+(black solid line), and in the right panel, the Andreev
+differential conductance ((dI/dV )) (red solid line), for
+different values of rate coupling r for ∆= 5. The blue
+dashed line in the left panel also corresponds to the
+(dI/dV )ET for ∆= 0, i.e., for a system with three nor-
+mal contacts.
+In the first place, we can note that by
+changing r from 0.05 to 1, the shape of the differential
+conductance curve ET does not change significantly when
+the lead S is in its normal state (∆= 0) or when it is in
+its superconducting state (∆̸ = 0). The only noticeable
+effect on the differential conductance of the presence of
+lead S in its superconducting state is the decrease in the
+height of the resonances and the progressive splitting of
+the lateral peaks. On the other hand, the differential con-
+ductance AR presents two resonances on each side of the
+zero bias voltage, asymmetrically located around ±U/2,
+which are located approximately around the same bias
+voltage values as the resonances in the differential con-
+ductance ET, and these resonances turn out to be visible
+even for small values of r. However, it is possible to ap-
+preciate a remarkable reduction in the height of the AR
+differential conductance resonances when we are in the
+molecular regime for the interferometric regime (see Fig.
+10 b, d, and f).
+Fig. 11 displays in the left panel the electron-tunneling
+differential conductance ET (black solid line) and in the
+right panel the Andreev differential conductance (red
+solid line), in the molecular regime, for different values of
+intra-dot Coulomb interaction U. The blue dashed line
+in the left panel also corresponds to the (dI/dV )ET for
+∆= 0, i.e., for a system with three normal contacts. We
+can see in Fig. 11 that when t = 2, U = 0, in contrast to
+the interferometric regime, the differential conductance
+ET and AR have the form of two Lorenzian curves, lo-
+calized close to ±t with the center of symmetry located
+at zero bias voltage, irrespective of whether the lead S is
+in its normal state (∆= 0) or its superconducting state
+(∆̸ = 0), and unlike in the interferometric case, there are
+no antiresonances present in (dI/dV )ET when (∆̸ = 0).
+On the other hand, when U is non-zero, whether ∆= 0
+or ∆̸ = 0, the resonances in (dI/dV )ET and (dI/dV )AR
+are doubled, and are located approximately around the
+bias voltage ϵd and ϵd + U, by the effect of the Coulomb
+interaction. The separation between the resonances in
+the differential conductance ET and AR grows as U in-
+creases.
+The differential conductance (dI/dV )ET can be repre-
+sented by combining two Breit-Wigner and two Fano line
+shapes, in the range 0.7 ≤t ≤2 and r ≤1, as shown in
+Figure 12a.
+dIET
+dV
+≈
+ϵ2
+1
+ϵ2
+1 + 1
+
+1
+ω2
+1 + 1 +
+1
+ω2
+2 + 1
+
+ϵ2
+2
+ϵ2
+2 + 1
+(31)
+where ω1 = ||V | −γ1|/η1, ω2 = (||V | −γ2|)/η2, ϵ1 =
+||V | −U/2|/(Γ1/2), ϵ2 = |V |/Γ1. Where γi = (−ϵd ∓
+t/2−U/2+(1/2)
+√
+t2 + U 2) with i = 1, 2 ( in the molecu-
+lar limit ((t/ΓL1) > 1) and at the electron-hole symmetry
+point) and on other hand,η1 and η2 are fitting parame-
+ters. Note that from the above expression, the differen-
+tial conductance vanishes at V = ±U/2 and V = 0. The
+q-parameter in molecular regimes is real, unlike in inter-
+ferometric regimes. Besides, the differential conductance
+
+--- Sayfa 13 ---
+13
+shows resonances at V ≈±γ1 and V ≈±(γ2). Addi-
+tionally, it is interesting to note that by making a taylor
+approximation with respect to t/U , the values of γ1 and
+γ2 become γ1 = U 2/(4t) and γ2 = t + U 2/(4t) , respec-
+tively.
+That is, when t >> U the central peaks tend
+to approach V = 0, and the lateral peaks tend to lie at
+V = t.
+In addition, the equation for (dI/dV )AR may be writ-
+ten as the superposition of two Breit-Wigner and one
+Fano line shapes. [Fig. 12(b)]:
+dIAR
+dV
+≈
+ξ2
+ξ2 + 1(
+1
+ν2
+1 + 1 +
+1
+ν2
+2 + 1)
+(32)
+where ν1 = ||V | −γ1|/(¯ξ1) , ν2 = (||V | −γ2|)/(¯ξ2), and
+ξ = |V |/(¯ξ3). Here, as before,γi = (−ϵd ∓t/2 −U/2 +
+(1/2)
+√
+t2 + U 2) with i = 1, 2 ( in the molecular limit
+((t/ΓL1) > 1) and at the electron-hole symmetry point)
+and on other hand,¯ξ1,¯ξ2 and ¯ξ3 are fitting parameters.
+The fitting presented above offers a reasonable under-
+standing of the shape of the Andreev differential conduc-
+tance shown in Figure 11. The Andreev states undergo a
+split caused by t and as a result of this tunneling coupling,
+the Andreev bound states acquire widths that manifest
+in the Andreev differential conductance.
+IV.
+SUMMARY
+We have investigated the electronic transport proper-
+ties of a T-shaped double quantum dot (DQD) system in
+the Coulomb blockade regime under non-equilibrium con-
+ditions. We employed a non-equilibrium Green’s func-
+tion calculation method and the equation of motion ap-
+proach using the Hubbard-I approximation to do this.
+Our results suggest superconducting interference effects
+on transport between normal leads, which can be identi-
+fied as Fano-like anti-resonances in the QD transmission
+spectrum.
+We have identified two distinct regimes, the interfero-
+metric and molecular regimes. In both regimes, the dif-
+ferential conductance (ET) can be expressed as a convo-
+lution of Fano and Breit Wigner lines shape. However,
+in the interferometric regime, the Fano line shapes are
+centered on the energies of the Andreev bound states
+with a finite complex q-parameter, while in the molec-
+ular regime, the q-parameter takes real values. On the
+other hand, the Andreev reflection exhibits maxima that
+correspond to the Andreev bound states. Therefore, we
+can conclude that the interference effect is robust against
+Coulomb correlations and can be experimentally probed
+under non-equilibrium conditions.
+ACKNOWLEDGEMENTS
+This work has been partially supported by Universidad
+Santa Mar´ıa Grant USM-DGIIP PI-LI 1925 and 1919 and
+FONDECYT Grant 1201876.
+[1] Leo P. Kouwenhoven, Gerd Sch¨on, and Lydia L. Sohn.
+Introduction to Mesoscopic Electron Transport. Springer
+Netherlands, 1997.
+[2] A. I. Buzdin.
+Proximity effects in superconductor-
+ferromagnet heterostructures. Rev. Mod. Phys., 77:935–
+976, 2005.
+[3] A F Andreev. Thermal conductivity of the intermediate
+state of superconductors. Zh. Eksperim. i Teor. Fiz., 46,
+1964.
+[4] Qing-feng Sun, Jian Wang, and Tsung-han Lin. Reso-
+nant andreev reflection in a normal-metal–quantum-dot–
+superconductor system. Phys. Rev. B, 59:3831–3840, Feb
+1999.
+[5] SUN Qing-Feng ZHU Yu and LIN Tsung-Han.
+Ef-
+fect of intra-dot coulomb interaction on andreev reflec-
+tion in normal-metal/quantum-dot/superconductor sys-
+tem. Communications in Theoretical Physics, 36(01):101,
+2001.
+[6] Xiao-Qi Wang, Shu-Feng Zhang, Yu Han, and Wei-Jiang
+Gong. Fano-andreev effect in a parallel double quantum
+dot structure. Phys. Rev. B, 100, 2019.
+[7] J. Gramich, A. Baumgartner, and C. Sch¨onenberger. An-
+dreev bound states probed in three-terminal quantum
+dots. Phys. Rev. B, 96:195418, Nov 2017.
+[8] Jean-Damien Pillet, Charis Quay, Pascal Morfin, Cristina
+Bena, Alfredo Yeyati, and Philippe Joyez.
+Andreev
+bound states in supercurrent-carrying carbon nanotubes
+revealed. Nature Physics, 6:695, 05 2010.
+[9] Ajay Chamoli,
+Tanuj and.
+Andreev bound states
+in superconductor-quantum dot josephson junction at
+infinite-u limit. 2020.
+[10] Travis Dirks, Taylor Hughes, Siddhartha Lal, Bruno
+Uchoa, Yung-Fu Chen, Cesar Chialvo, Paul Goldbart,
+and Nadya Mason.
+Transport through andreev bound
+states in a graphene quantum dot. Nature Physics, 7, 05
+2010.
+[11] Rosario Fazio and Roberto Raimondi. Resonant andreev
+tunneling in strongly interacting quantum dots.
+Phys.
+Rev. Lett., 80:2913–2916, Mar 1998.
+[12] Jan Bara´nski, Tomasz Zienkiewicz, Magdalena Bara´nska,
+and Konrad Kapcia. Anomalous fano resonance in double
+quantum dot system coupled to superconductor. Scien-
+tific Reports, 10:2881, 02 2020.
+[13] Jan Bara´nski and T. Doma´nski. Fano-type interference
+in quantum dots coupled between metallic and supercon-
+ducting leads. Phys. Rev. B, 84:195424, Nov 2011.
+[14] T. Doma´nski, A. Donabidowicz, and K. I. Wysoki´nski.
+Influence of pair coherence on charge tunneling through a
+
+--- Sayfa 14 ---
+14
+quantum dot connected to a superconducting lead. Phys.
+Rev. B, 76:104514, Sep 2007.
+[15] Grzegorz G´orski and Krzysztof Kucab. Transport prop-
+erties of proximitized double quantum dots.
+Phys-
+ica E: Low-dimensional Systems and Nanostructures,
+126:114459, 02 2021.
+[16] T. Doma´nski, I. Weymann, M. Bara´nska, and G. G´orski.
+Constructive influence of the induced electron pairing on
+the kondo state. Scientific Reports, 2016.
+[17] U. Fano. Effects of configuration interaction on inten-
+sities and phase shifts. Phys. Rev., 124:1866–1878, Dec
+1961.
+[18] Andrey E. Miroshnichenko, Sergej Flach, and Yuri S.
+Kivshar. Fano resonances in nanoscale structures. Rev.
+Mod. Phys., 82:2257–2298, Aug 2010.
+[19] Gao Wen-Zhu, Gong Wei-Jiang, Zheng Yi-Song, Liu Yu,
+and L¨u Tian-Quan. Fano effect in t-shaped double quan-
+tum dot structure with decoherence effect. Communica-
+tions in Theoretical Physics, 49(3):771, mar 2008.
+[20] J. Bara´nski and T. Doma´nski. Decoherence effect on fano
+line shapes in double quantum dots coupled between nor-
+mal and superconducting leads. Phys. Rev. B, 85:205451,
+May 2012.
+[21] Grzegorz Micha lek, Bogdan Bu lka, Marcin Urbaniak,
+Tomasz Domanski, and K. Wysokinski. Andreev spec-
+troscopy in three-terminal hybrid nanostructure.
+Acta
+Physica Polonica Series a, 127:293, 02 2015.
+[22] Grzegorz Micha lek, Tomasz Domanski, and K. Wysokin-
+ski. Cooper pair splitting efficiency in the hybrid three-
+terminal quantum dot. Journal of Superconductivity and
+Novel Magnetism, 30, 01 2017.
+[23] Yu Zhu, Qing-feng Sun, and Tsung-han Lin.
+Andreev
+reflection through a quantum dot coupled with two ferro-
+magnets and a superconductor. Phys. Rev. B, 65:024516,
+Dec 2001.
+[24] Grzegorz Micha lek, Tomasz Domanski, Bogdan Bu lka,
+and K. Wysokinski.
+Novel non-local effects in three-
+terminal hybrid devices with quantum dot.
+Scientific
+Reports, 5, 05 2015.
+[25] E. C. Siqueira and G. G. Cabrera. Andreev tunneling
+through a double quantum-dot system coupled to a fer-
+romagnet and a superconductor: Effects of mean-field
+electronic correlations.
+Phys. Rev. B, 81:094526, Mar
+2010.
+[26] Ezequiel
+Siqueira,
+P.
+Orellana,
+Antonio
+Seridonio,
+R. Cestari, M. Figueira, and Guillermo Cabrera. Interfer-
+ence effects induced by andreev bound states in a hybrid
+nanostructure composed by a quantum dot coupled to
+ferromagnetic and superconductor leads. 09 2014.
+[27] A M Calle, M Pacheco, G B Martins, V M Apel, G A
+Lara, and P A Orellana.
+Fano–andreev effect in a t-
+shape double quantum dot in the kondo regime. Journal
+of Physics: Condensed Matter, 29(13):135301, feb 2017.
+[28] E.C.
+Siqueira,
+P.A.
+Orellana,
+R.C.
+Cestari,
+M.S.
+Figueira, and G.G. Cabrera.
+Fano effect and andreev
+bound states in a hybrid superconductor–ferromagnetic
+nanostructure.
+Physics Letters A, 379(39):2524–2529,
+2015.
+[29] Grzegorz
+Micha lek,
+Bogdan
+R.
+Bu lka,
+Tadeusz
+Doma´nski, and Karol I. Wysoki´nski.
+Interplay be-
+tween direct and crossed andreev reflections in hybrid
+nanostructures. Phys. Rev. B, 88:155425, Oct 2013.
+[30] Sachin
+Verma
+and
+Ajay
+Singh.
+Non-equilibrium
+thermoelectric transport across normal metal–quantum
+dot–superconductor hybrid system within the coulomb
+blockade regime. Journal of Physics: Condensed Matter,
+34(15):155601, feb 2022.
+[31] A M Calle, M Pacheco, G B Martins, V M Apel, G A
+Lara, and P A Orellana.
+Fano–andreev effect in a t-
+shape double quantum dot in the kondo regime. Journal
+of Physics: Condensed Matter, 29(13):135301, feb 2017.
+[32] J. Bardeen, L. N. Cooper, and J. R. Schrieffer. Micro-
+scopic theory of superconductivity. Phys. Rev., 106:162–
+164, Apr 1957.
+[33] Hartmut Haug and A. P. Jauho. Quantum kinetics in
+transport and optics of semiconductors. 2004.
+[34] J. Rammer and H. Smith.
+Quantum field-theoretical
+methods in transport theory of metals. Rev. Mod. Phys.,
+58:323–359, Apr 1986.
+[35] J Hubbard. Electron correlations in narrow energy bands.
+Proc. Roy. Soc. (London), Ser. A.

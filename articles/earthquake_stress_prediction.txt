@@ -1,0 +1,1640 @@
+
+--- Sayfa 1 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation
+with Collaborative Noise Priors
+Yuheng Zhang∗
+Department of Electronic Engineering,
+BNRist, Tsinghua University
+Beijing, China
+yuheng-z22@mails.tsinghua.edu.cn
+Yuan Yuan∗
+Department of Electronic Engineering,
+BNRist, Tsinghua University
+Beijing, China
+y-yuan20@mails.tsinghua.edu.cn
+Jingtao Ding
+Department of Electronic Engineering,
+BNRist, Tsinghua University
+Beijing, China
+dingjt15@tsinghua.org.cn
+Jian Yuan
+Department of Electronic Engineering,
+BNRist, Tsinghua University
+Beijing, China
+jyuan@tsinghua.edu.cn
+Yong Li†
+Department of Electronic Engineering,
+BNRist, Tsinghua University
+Beijing, China
+liyong07@tsinghua.edu.cn
+Abstract
+With global urbanization, the focus on sustainable cities has largely
+grown, driving research into equity, resilience, and urban planning,
+which often relies on mobility data. The rise of web-based apps
+and mobile devices has provided valuable user data for mobility-
+related research. However, real-world mobility data is costly and
+raises privacy concerns. To protect privacy while retaining key
+features of real-world movement, the demand for synthetic data
+has steadily increased. Recent advances in diffusion models have
+shown great potential for mobility trajectory generation due to
+their ability to model randomness and uncertainty. However, ex-
+isting approaches often directly apply identically distributed (i.i.d.)
+noise sampling from image generation techniques, which fail to
+account for the spatiotemporal correlations and social interactions
+that shape urban mobility patterns. In this paper, we propose CoD-
+iffMob, a diffusion model for urban mobility generation with col-
+laborative noise priors, we emphasize the critical role of noise
+in diffusion models for generating mobility data. By leveraging
+both individual movement characteristics and population-wide dy-
+namics, we construct novel collaborative noise priors that provide
+richer and more informative guidance throughout the generation
+process. Extensive experiments demonstrate the superiority of our
+method, with generated data accurately capturing both individ-
+ual preferences and collective patterns, achieving an improvement
+of over 32%. Furthermore, it can effectively replace web-derived
+mobility data to better support downstream applications, while
+safeguarding user privacy and fostering a more secure and ethical
+web. This highlights its tremendous potential for applications in
+sustainable city-related research. The code and data are available
+at https://github.com/tsinghua-fib-lab/CoDiffMob.
+∗Equal contribution.
+†Corresponding author.
+This work is licensed under a Creative Commons Attribution 4.0 International License.
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+© 2025 Copyright held by the owner/author(s).
+ACM ISBN 979-8-4007-1274-6/25/04
+https://doi.org/10.1145/3696410.3714516
+CCS Concepts
+• Computing methodologies →Modeling methodologies; Model-
+ing and simulation; Model development and analysis.
+Keywords
+Sustainable cities, urban mobility, diffusion models
+ACM Reference Format:
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li. 2025.
+Noise Matters: Diffusion Model-based Urban Mobility Generation with
+Collaborative Noise Priors. In Proceedings of the ACM Web Conference 2025
+(WWW ’25), April 28-May 2, 2025, Sydney, NSW, Australia. ACM, New York,
+NY, USA, 12 pages. https://doi.org/10.1145/3696410.3714516
+1
+Introduction
+The UN Sustainable Development Goals [25] articulate a vision for
+developing inclusive, safe, resilient, and sustainable cities, high-
+lighting the importance of affordability, efficiency in public trans-
+portation, and sustainable land use management. Research in these
+areas typically depends on city-level mobility data as an essential
+foundation [37, 58, 60, 64]. The widespread adoption of web-based
+applications and mobile devices has greatly expanded the capacity
+to collect user mobility data [10, 56] while increasing the demand
+for utilizing and analyzing these data to further optimize web-
+related applications, such as location and service recommendation.
+However, direct usage of these real-world mobility data often raises
+serious privacy concerns [28, 57], and their collection is typically
+associated with high costs. For the good of urban residents and
+sustainable development of web applications, there is a growing
+demand for generating synthetic urban mobility data [19, 31, 53, 54]
+that not only preserves the key characteristics of real-world move-
+ment for the utility of user-centric web services and urban decision-
+making [6, 51, 61] but also ensures that user privacy is well pro-
+tected.
+Diffusion models [12, 21, 36, 39, 52] have shown great promise in
+mobility trajectory modeling due to their ability to capture the ran-
+domness and uncertainty of urban mobility [2, 55, 66]. Meanwhile,
+their step-by-step denoising process allows for the learning of com-
+plex distributions, aligning naturally with the intricacies of human
+behaviors. Despite this progress, most diffusion model-based ap-
+proaches [66] apply noise in a simplistic manner, often mirroring
+arXiv:2412.05000v2  [cs.LG]  13 Feb 2025
+
+--- Sayfa 2 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+techniques from image generation where noise is independently
+and identically distributed (i.i.d.) across points in the trajectory. We
+argue that this i.i.d. noise sampling, as commonly used in models
+like DDPM [12] and DDIM [36], is inadequate for urban mobility
+generation. As the origin of the generative process, noise plays
+a crucial role, significantly impacting the realism and quality of
+the output [8, 27, 42, 59]. As illustrated in Figure 1, our analysis
+demonstrates a strong correlation between the initial noise and
+the final generated trajectory. The naive assumption of i.i.d. noise
+disregards the complex dependencies between trajectory points,
+leading to suboptimal outcomes in the generated mobility data.
+To address this, we propose leveraging more informative noise
+priors, which provide richer guidance to the denoising process. To
+construct effective noise priors, it is essential to capture the under-
+lying characteristics of urban mobility. However, it is not trivial due
+to two key challenges: (1) Movement transitions exhibit intricate
+spatiotemporal correlations, which cannot be easily defined by sim-
+ple rules or equations, and (2) Movement behaviors in the urban
+environment are not independent; individual behaviors are deeply
+interconnected with broader social and environmental dynamics.
+Addressing these complexities is crucial for developing effective
+noise priors.
+In this work, we propose CoDiffMob, a Diffusion-based method
+for Mobility Generation with Collaborative Noise Priors. The core idea
+is to integrate both individual preferences and collective patterns
+into the noise prior. Specifically, we employ a two-stage collabora-
+tive mechanism to construct noise priors. First, we utilize collective
+movement patterns to sample location transition sequences with a
+collaborative rule-based method. Then, the sequences are mapped
+to noise space and fused with white noise to build collaborative
+noise priors. This allows the generation process to be guided more
+effectively by these richer, more informative noise priors that em-
+bed the interactions between individual behaviors and population
+dynamics. As a result, the generated urban mobility not only cap-
+tures individual movement characteristics but also aligns collective
+flows with broader population dynamics, enabling realistic mobility
+generation from both individual and collective perspectives.
+We summarize our main contributions as follows:
+• To the best of our knowledge, we are the first to highlight the
+critical role of noise sampling for urban mobility generation.
+• We propose CoDiffMob, a novel diffusion model with collabo-
+rative noise priors that effectively incorporate spatiotemporal
+prior knowledge, capturing both individual movement behaviors
+and broader population dynamics.
+• Extensive experiments show the superior performance of CoDiff-
+Mob in generating urban mobility data, capturing both individual
+and collective patterns, with an average improvement of over 32%.
+The generated data ensures privacy protection and can effectively
+replace real-world data to enhance downstream tasks.
+2
+Preliminaries and Problem Statement
+2.1
+Urban Mobility
+Urban mobility refers to how people move within cities, typically
+characterized by individual trajectories and collective flows.
+Definition 1: (Individual Trajectory). The individual trajec-
+tory of a person is defined as a sequence of spatiotemporal points
+visited within a day, denoted as 𝒙= {𝑥1,𝑥2, ...,𝑥𝑛}, where each
+point 𝑥𝑖is defined as 𝑥𝑖= (𝑙𝑖,𝑡𝑖), with 𝑡𝑖representing the times-
+tamp and 𝑙𝑖representing a specific geographic coordinate.
+Definition 2: (Collective Flow). The collective flows of a mobil-
+ity dataset X are defined as a matrix F X ∈R𝑁×𝑁, where 𝑁is the
+number of locations and each row of the matrix F X
+𝑙𝑖
+represents the
+population count traveling from 𝑙𝑖to other locations, as obtained
+from the dataset.
+2.2
+Diffusion Model for Mobility Generation
+The diffusion probabilistic model is an increasingly prominent gen-
+erative framework, celebrated for its effectiveness across various
+generation tasks [4, 29]. It typically comprises two core processes:
+the forward process, which progressively disrupts the data 𝒙0 by
+adding Gaussian noise:
+𝑞(𝒙1:𝐾| 𝒙0) = Î𝐾
+𝑘=1 𝑞(𝒙𝑘| 𝒙𝑘−1),
+𝑞(𝒙𝑘| 𝒙𝑘−1) = N (𝒙𝑘;
+√︁
+1 −𝛽𝑘𝒙𝑘−1, 𝛽𝑘𝑰),
+(1)
+where the parameter 𝛽𝑘∈(0, 1) and increases as k increases, to
+back-propagate the gradient of the calculation, a reparameterization
+trick is adopted and 𝒙𝑘can also be given by:
+𝒙𝑘= √𝛼𝑘· 𝒙0 + √1 −𝛼𝑘· 𝒛,
+where 𝒛∼N (0, 𝑰) and 𝛼𝑘= Î𝑘
+𝑖=1(1 −𝛽𝑖).
+(2)
+The denoising process gradually recovers the original trajectory
+from the noisy data 𝒙𝐾∼N (0, 𝑰), ultimately producing trajectory
+data that conforms to the real distribution [12, 36]:
+𝒙𝑘−1 = √𝛼𝑘−1(
+𝒙𝑘−√1−𝛼𝑘𝜖(𝑘)
+𝜃
+(𝒙𝑘)
+√𝛼𝑘
+)
++
+√︃
+1 −𝛼𝑘−1 −𝜎2
+𝑘· 𝜖(𝑘)
+𝜃
+(𝒙𝑘) + 𝜎𝑘𝜖𝑘,
+where 𝜖𝑘∼N (0, 𝑰) and 𝜎𝑘=
+√︃
+(1−𝛼𝑘/𝛼𝑘−1) (1−𝛼𝑘−1)
+1−𝛼𝑘
+,
+(3)
+here 𝜖𝜃is a trained neural network to predict the noise added to the
+real data. By repeating this process, we can derive the approximate
+true data 𝒙0 from the Gaussian noise 𝒙𝐾.
+Given the real-world trajectory dataset X = {𝒙1, 𝒙2, ..., 𝒙𝑛},
+the objective of mobility generation task is to learn a generative
+model 𝑮𝜃that can generate synthetic mobility trajectories Y =
+{𝒚1,𝒚2, ...,𝒚𝑛}. By training a denoiser 𝜖𝜃based on dataset X, syn-
+thetic trajectories can be sampled by the denoising process shown
+in Equation 3, we introduce the DDIM [36] sampling method by
+setting the noise parameter 𝜎𝑘to 0 to speedup the sampling process:
+𝒚= DDIM𝜃(𝒛)
+where 𝒛∼N (0, 𝑰).
+(4)
+Under this setting, the stochastic nature of the denoising gen-
+eration process is eliminated, and the noise and the generated
+trajectory are one-to-one correspondence.
+3
+Analysis and Motivation
+In this section, we analyze the relationship between the noise and
+the trajectory data generated from it by the diffusion model. As
+illustrated in section 2.2, in DDIM, each generated trajectory corre-
+sponds to a unique noise. Here, we obtain the noise corresponding
+
+--- Sayfa 3 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation with Collaborative Noise Priors
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+i.i.d. Noise
+Location Points of Trajectories
+…
+…
+Noises Obtained from Real Trajectories 
+(a) Noise obtained from real trajectories with different mobility patterns.
+3
+2
+1
+0
+1
+2
+3
+4
+Moving Direction (rad)
+3
+2
+1
+0
+1
+2
+3
+Noise Space Direction (rad)
+R2=0.9552
+0
+10
+20
+30
+40
+50
+60
+Travel Distance (km)
+0
+1
+2
+3
+4
+5
+6
+Noise Space Distance
+R2=0.2813
+(b) Correlation in the spatial domain.
+0
+5
+10
+15
+20
+Time (hour)
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+Variance of Noises
+0.0
+0.1
+0.1
+0.2
+0.2
+0.3
+0.3
+0.4
+Move Probility of People
+(c) Correlation in the temporal domain.
+Figure 1: Correlations between noise and trajectories. (a) shows the t-SNE plot of the noise corresponding to the trajectories. (b)
+and (c) illustrate the correlations between the noise and trajectories from the spatial and temporal domain.
+to the real-world trajectories by reversing the denoising process
+shown in equation 3. We conduct an in-depth analysis of the cor-
+relation between trajectory data 𝒙0 and noise 𝒙𝐾, the results are
+shown below:
+3.1
+From Noise to Movement Semantics
+To directly observe the relationship between the characteristics of
+trajectories and the location of their corresponding noise in noise
+space, we perform t-SNE [44] on this noise to facilitate visualization.
+Figure 1a shows the visualization results. The blue dots in the
+background represent randomly sampled data points from an i.i.d
+Gaussian distribution. The dots with other different colors denote
+the noise obtained from real trajectories with varying movement
+patterns.
+We find that the noise location in the noise space differs based on
+the movement patterns of the trajectory: the three red dots on the
+right correspond to three trajectories from the same person, whose
+movement radius is within 2 km with only three distinct locations.
+The two green dots at the bottom left represent two trajectories
+with similar movement patterns, where people travel horizontally
+across the entire city and return within a day. The orange dots
+at the top point to another travel habit, where the person makes
+extensive movements throughout the day, visiting multiple areas
+across the city. These results indicate a strong correlation between
+the initial noise and the final generated trajectory data.
+3.2
+From Noise to Spatio-Temporal Patterns
+3.2.1
+Spatial Domain. For a single real trajectory 𝒙0 and the cor-
+responding noise 𝒙𝐾, the sequence of its visited locations {𝑙1,𝑙2, ...,𝑙𝑛}
+corresponds to a series of points {𝑝1, 𝑝2, ..., 𝑝𝑛} in the noise space.
+For two consecutive locations in time, if 𝑙𝑖−1 ≠𝑙𝑖, we consider that
+the individual has moved with a 2D vector ®𝑚= 𝑙𝑖−𝑙𝑖−1. In this case,
+we record the moving direction arctan (𝑚𝑦,𝑚𝑥) and travel distance
+∥®𝑚∥of this movement in the real world, as well as the relative posi-
+tion information between the points 𝑝𝑖−1 and 𝑝𝑖in the noise space.
+We conduct a linear regression analysis on the recorded movement
+features in the real world and their corresponding relative positions
+in the noise space. The regression results are shown in Figure 1b.
+The results indicate a strong correlation between the real-world
+moving direction and the relative direction of points in noise space,
+with 𝑅2 = 0.9552. This suggests that in the generated trajectory,
+the direction of each movement is largely determined by the cor-
+responding direction in the initial noise sequence. This may be
+because the distribution of moving directions in the real trajec-
+tory dataset is relatively uniform, leading the generation model to
+forego encoding the distribution of moving directions and instead
+
+--- Sayfa 4 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+directly correlate them with the moving directions in the initial
+noise sequence.
+For travel distance, 𝑅2 = 0.2813, which indicates a correlation co-
+efficient of more than 0.5, showing that there is a certain correlation
+between the distances in real trajectory points and the distances
+between corresponding points in the noise space, although not as
+strong as in moving direction. This is because the travel distances in
+the real data largely follow a specific power-law distribution, which
+the generative model captures and uses to generate trajectory data.
+3.2.2
+Temporal Domain. We analyze the relationship between
+the probability of people in the entire trajectory dataset X engaging
+in movement at specific times and the overall variance of the corre-
+sponding noise sequences at those times. The moving probability
+of users at time 𝑡is defined as:
+𝑃𝑡
+𝑚𝑜𝑣𝑒=
+Í
+𝒙∈𝜒
+Í
+𝑡𝑖=𝑡I(𝑙𝑖≠𝑙𝑖+1)
+|X|
+.
+(5)
+Figure 1c presents the visualization of the relationship between
+variance and moving probability. The horizontal axis represents
+different times of the day. The yellow line shows the overall moving
+probability of users at different times, while the blue line repre-
+sents the overall noise variance at corresponding times. The overall
+moving probability of people largely reflects the temporal patterns
+of collective mobility within the city: before dawn, most people
+remain stationary at home, and after sunrise, various travel activi-
+ties commence, with three distinct peaks in the morning, midday,
+and evening. After nightfall, mobility settles back into calm. We
+surprisingly find that the noise variance follows this same rhythmic
+pattern, the magnitude of the noise variance changes following the
+variations in crowd movement probabilities.
+4
+Method
+In this section, we elaborate on the proposed urban mobility gener-
+ation method, CoDiffMob. We train a diffusion model to capture
+individual movement characteristics and employ a two-stage col-
+laborative mechanism to construct noise priors that incorporate
+collective movement information, thereby bridging the influence
+of population dynamics and individual behaviors.
+4.1
+The Overall Workflow
+The overall workflow of CoDiffMob is shown in Figure 2, our model
+generates urban mobility through a diffusion denoising process
+with collaborative noise priors:
+𝒛𝑃= Collab𝑛(Collab𝜋(F, P), 𝒛),
+𝒙0 = DDIM𝜃(𝒛𝑃)
+where 𝒛∼N (0, 𝑰),
+(6)
+where the noise prior 𝒛𝑃is constructed through a two-stage col-
+laborative mechanism, collaborative transition sampling through
+policy 𝜋, and collaborative noise fusion with i.i.d noise 𝒛𝒊.𝒊.𝒅..
+Following [66], we apply a UNet-based diffusion denoiser to
+generate individual trajectory from 𝒛𝑝. During the network’s com-
+putation, the noised trajectory is represented as a 𝑇× 𝐶vector,
+where 𝑇is the length of the trajectory, and 𝐶is the dimensionality
+of the location information at each moment (for latitude and lon-
+gitude, 𝐶= 2). During the upsampling and downsampling stages
+of the UNet, the model leverages one-dimensional convolutional
+neural networks to model the spatiotemporal correlations between
+trajectory points. Additionally, an attention mechanism is applied to
+the features after downsampling to capture relationships between
+the data in the latent space.
+4.2
+Collaborative Noise Priors
+To accurately model urban mobility, a collaborative approach that
+integrates both individual behavior and collective movement is
+essential. We focus on the noise in the diffusion denoising process
+and introduce a two-stage collaborative mechanism to construct
+noise priors for mobility generation.
+As shown in Figure 2, a rule-based collaborative strategy is first
+employed to sample individual location transition sequences in-
+formed by the patterns of collective flows. Subsequently, the transi-
+tion sequences are mapped to the noise space, resulting in infor-
+mative noise that encapsulates collective movement patterns. This
+noise is then fused with i.i.d noise to produce the final noise prior.
+The detailed process is as follows:
+4.2.1
+Collaborative Transition Sampling. The diffusion model
+generates urban mobility in the form of individual trajectories,
+and the noise priors must be constructed in a similar form. In this
+process, we first need to convert the collective movement infor-
+mation represented by the flows F into individual location tran-
+sition sequences. The exploration and preferential return (EPR)
+model [14, 35] is a widely used rule-based model to simulate in-
+dividual movement. Building upon this, we design an individual-
+collective collaborative simulation approach, integrating flow infor-
+mation into the sampling process of individual location transitions.
+In the EPR model, each individual’s actions fall into four cate-
+gories: stay, home return, preferential return, and explore, represent-
+ing four distinct behaviors: staying in the same location, returning
+home, revisiting previously visited locations, and exploring new
+places. The original EPR model chooses new places based on the dis-
+tribution of travel distance [14], which makes it hard to accurately
+describe the collective movement patterns. We design a collabora-
+tive model to combine individual and collective patterns. During
+the sampling process, the model first determines an individual’s
+home location 𝑙1 based on the population P and then simulates the
+individual’s behavior using a collaborative strategy as follows:
+𝜋(𝑙𝑖| 𝑙<𝑖,𝑡𝑖) = Collab(𝜋𝐼(𝑙𝑖| 𝑙<𝑖,𝑡𝑖), 𝜋𝐹(𝑙𝑖| eF𝑙𝑖−1)).
+(7)
+The collaborative strategy combines the individual behavior of
+preferential return and the exploration with collective movement
+patterns. When an individual chooses to explore new locations, the
+strategy 𝜋follows the flow-based policy 𝜋𝐹(𝑙𝑖| eF𝑙𝑖−1) and select
+target location based on the distribution of collective movements
+eF𝑙𝑖−1, which is computed from flow F𝑙𝑖−1. Otherwise, the strategy
+follows the individual policy 𝜋𝐼(𝑙𝑖| 𝑙<𝑖,𝑡𝑖) given by the original EPR
+model and chooses the next location based on historical preference.
+4.2.2
+Collaborative Noise Fusion. Currently, the majority of
+diffusion models for mobility generation tasks are trained on in-
+dividual trajectories and use i.i.d. Gaussian noise during the sam-
+pling process. While this approach performs good in generating
+individual trajectories, it fails to capture the patterns of collective
+movement. The sampling method based on EPR and flow F , as
+
+--- Sayfa 5 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation with Collaborative Noise Priors
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Map to Noise Space
+Collaborative Sampling
+Alignment
+Denoising Step  × K
+Diffusion Denoiser
+Informative Noise
+i.i.d. Noise
+Rhythmic BatchNorm
+Noise Prior
+Generated Trajectories
+Generated Flows
+Population
+Collective Flows
+Noise Space Transition
+…
+…
+…
+Collaborative Location Transition
+Home Position
+…
+…
+Figure 2: The overall workflow of mobility generation with collaborative noise priors.
+introduced earlier, can incorporate collective information into indi-
+vidual location transitions 𝒙F . However, rule-based models often
+fail to model individual behavior effectively. To address this, we
+fuse both of the information within the noise space to construct
+noise priors for mobility generation with the diffusion model.
+As indicated in section 3, by applying the reverse DDIM process
+on the location transition sequence, we can obtain the informative
+noise 𝒛F corresponding to 𝒙F . Direct usage of the noise 𝒛F itself
+leads to poor performance on modeling individual behaviors. To
+achieve collaborative modeling of both individual behavior and
+collective movement, we fuse 𝒛F with Gaussian noise 𝒛𝒊.𝒊.𝒅. to
+obtain the collaborative noise prior 𝒛𝑃for mobility generation:
+𝒛𝒊.𝒊.𝒅. ∼N (0, 𝑰),
+𝒛F = Inverse-DDIM𝜃(𝒙F),
+𝒛𝑝= 𝒛𝒊.𝒊.𝒅. + 𝒛F.
+(8)
+4.2.3
+Rhythmic Noise BatchNorm. In addition to incorporating
+collective transition patterns in the spatial domain, we also model
+the rhythmic information of crowd activity into the noise prior by
+controlling the noise variance. During the trajectory generation
+process, we organize the input data in batches. We apply batch
+normalization based on the rhythmic information to this data:
+𝜇𝑡= 1
+𝐵
+Í𝐵
+𝑖=1 𝒛𝑖,𝑡
+𝑝,
+𝜎𝑡=
+√︃
+1
+𝐵
+Í𝐵
+𝑖=1(𝒛𝑖,𝑡
+𝑝−𝜇𝑡)2,
+𝒛𝑡𝑝=
+𝒛𝑡
+𝑝−𝜇𝑡
+𝜎𝑡
+× R𝑡
+where R𝑡∝𝑃𝑡𝑚𝑜𝑣𝑒and 𝑡= 1, . . . ,𝑇.
+(9)
+The variance of the noise at each time step 𝑡is normalized to
+be proportional to the crowd moving probability calculated by
+Equation 5 at the corresponding time, as shown in Figure 1c.
+4.3
+Training and Inference
+During the training process of the diffusion model, noise based
+on i.i.d. Gaussian distribution is added to the input trajectories
+using a uniformly sampled noise level 𝑘. The model takes the noisy
+trajectory and conditions that include the noise level and the start-
+ing point of the trajectory as inputs. Based on this information,
+the model predicts the noise added to the trajectory, enabling the
+gradual denoising process to restore the individual trajectory from
+pure noise, details can be found in Appendix A.2. The inference
+process is divided into two stages, the collaborative noise prior sam-
+pling and the individual trajectory generation. Details are shown
+in Algorithm 1:
+Algorithm 1 Mobility Generation with Collaborative Noise Priors
+1: Require EPR model parameters {𝑛𝜔, 𝛽1, 𝛽2, 𝑃, 𝜌,𝛾}, collective
+flows F , population distribution P, trajectory time interval 𝑡,
+number of trajectory points 𝑛, collaborative sampling strategy
+𝜋, trajectory length 𝑇, diffusion denoiser 𝜖𝜽, denoising step 𝐾
+2: Collaborative Noise Priors Sampling
+3: Initialize home point (𝑙1,𝑡1) based on P
+4: for 𝑖= 2, . . . ,𝑛do
+5:
+𝑡𝑖= 𝑡𝑖−1 + 𝑡
+6:
+𝑙𝑖= 𝜋(𝑙<𝑖,𝑡𝑖| 𝑛𝜔, 𝛽1, 𝛽2, 𝑃, 𝜌,𝛾, F )
+7: 𝒙F = {(𝑙1,𝑡1), (𝑙2,𝑡2), ..., (𝑙𝑛,𝑡𝑛)}
+8: informative noise 𝒛F = Inverse-DDIM (𝒙F)
+9: noise prior 𝒛𝑝= Rhythmic BN (𝒛𝒊.𝒊.𝒅. + 𝒛F)
+10: Individual Trajectory Generation
+11: Initialize 𝒙𝐾= 𝒛𝑝
+12: for 𝑘= 𝐾, . . . , 1 do
+13:
+𝜖𝑘= 𝜖𝜃(𝒙𝑘,𝑘| 𝑙1)
+14:
+𝒙𝑘−1 = √𝛼𝑘−1( 𝒙𝑘−√1−𝛼𝑘𝜖𝑘
+√𝛼𝑘
+) +
+√︃
+1 −𝛼𝑘−1 −𝜎2
+𝑘· 𝜖𝑘
+15: Execute trajectory sequence using output 𝒙0
+5
+Experiments
+We conduct comprehensive experiments to validate the effective-
+ness of CoDiffMob to answer the following four research questions:
+
+--- Sayfa 6 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+Table 1: Performance comparison of different generation models, where bold denotes best results and underline denotes the
+second best results.
+Dataset
+ISP
+MME
+Metrics
+Trajectory
+Flow
+Diversity
+Trajectory
+Flow
+Diversity
+Radius
+Distance
+Duration
+DailyLoc
+CPC
+MAPE
+Radius
+Distance
+Duration
+DailyLoc
+CPC
+MAPE
+TimeGEO
+0.3171
+0.2984
+0.0526
+0.2877
+0.2133
+0.8637
+0.1498
+0.3678
+0.4807
+0.0891
+0.2512
+0.3248
+0.8274
+0.1682
+PateGail
+0.1979
+0.1826
+0.1867
+0.2933
+0.0714
+0.9827
+0.0984
+0.1824
+0.1673
+0.1376
+0.2883
+0.1548
+0.9136
+0.1136
+MoveSim
+0.2313
+0.2623
+0.2861
+0.4289
+0.0932
+0.9983
+0.0492
+0.1936
+0.2219
+0.2084
+0.3746
+0.1739
+0.8873
+0.0492
+VOLUNTEER
+0.4435
+0.4716
+0.4245
+0.5155
+0.0044
+1.0088
+0.0839
+0.3826
+0.3911
+0.3512
+0.4558
+0.0927
+0.9512
+0.0928
+TrajGDM
+0.2977
+0.2393
+0.2443
+0.4121
+0.0070
+1.0022
+0.1271
+0.3123
+0.2577
+0.2875
+0.3961
+0.0526
+0.9813
+0.1474
+DiffTraj
+0.0519
+0.1662
+0.0895
+0.1617
+0.3992
+0.8331
+0.0028
+0.1028
+0.1242
+0.0949
+0.2657
+0.4198
+0.7727
+0.0053
+CoDiffMob
+0.0183
+0.1203
+0.0245
+0.1558
+0.6842
+0.6361
+0.0046
+0.0519
+0.0970
+0.0796
+0.1729
+0.6067
+0.6731
+0.0089
+(a) Observed Flows
+CPC = 0.3992
+CPC = 0.6842
+(b) CoDiffMob
+(c) DiffTraj
+CPC = 0.3992
+Figure 3: Visualization of the observed flows and generated flows on ISP dataset.
+• RQ1: Can CoDiffMob generate realistic urban mobility data that
+captures both individual behaviors and collective movement pat-
+terns?
+• RQ2: Are there risks of exposing users’ privacy in the generated
+mobility data?
+• RQ3: Can the generated mobility data effectively support down-
+stream tasks in the same way as real-world data?
+• RQ4: How do different parts of our proposed method contribute
+to the final performance?
+5.1
+Experimental Setup
+5.1.1
+Datasets. We use two real-world mobility datasets (ISP and
+MME) to evaluate the performance of CoDiffMob, which are col-
+lected from Shanghai and Nanchang through web-based applica-
+tions, the details of the datasets can be found in Appendix B.1.
+5.1.2
+Metrics. We use metrics from two aspects: For individual
+trajectories, we evaluate the generated trajectories in terms of Dis-
+tance, Radius, Duration, and DailyLoc [7, 17]. For generated flows,
+we calculate Common Part of Commuters (CPC) [34] and MAPE
+between the real and generated population flows. Furthermore,
+we introduce a Diversity metric, to validate the diversity of the
+model’s generated results. Details of the calculation can be found
+in Appendix B.2.
+5.1.3
+Baselines. We compare the performance of CoDiffMob
+with six state-of-the-art baselines for mobility generation includ-
+ing TimeGEO [14], PateGail [46], MoveSim [7], VOLUNTEER
+[20],TrajGDM [2], and DiffTraj [66]. Details about these methods
+can be found in Appendix B.3.
+5.2
+Overall Performance (RQ1)
+The overall performance of CoDiffMob compared to baselines is
+shown in Table 1. Based on the experimental results, we draw the
+following conclusions:
+• CoDiffMob outperforms baselines in mobility trajectory
+generation. On the spatial scale, data generated by our model
+can more closely match the distribution of travel distances and
+radius with the two real-world mobility datasets, achieving an
+average improvement of over 40%. On the temporal scale, our
+model can more effectively capture daily activity patterns, the
+performance in terms of location duration time and the number
+of locations visited per day both outperform the best baseline
+method with an average improvement of over 31%.
+• CoDiffMob achieves significant improvements over base-
+lines in reproducing collective patterns. Baseline methods
+struggle to effectively capture the population dynamics. Whether
+evaluating flow similarity or relative error in transition probabil-
+ities, the collective features generated by baseline methods show
+considerable deviation from real data, The CPC metric is gener-
+ally below 0.4, while the MAPE metric is predominantly above
+0.8. Our model can successfully capture collective movements
+through the collaborative noise prior, achieving CPC greater
+than 0.6 and MAPE less than 0.7 on both datasets, the average
+improvement is more than 35%.
+
+--- Sayfa 7 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation with Collaborative Noise Priors
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+0.0
+0.2
+0.4
+0.6
+0.8
+Overlapping Ratio
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+CDF
+Top1
+Top3
+Top5
+(a) ISP Dataset
+0.0
+0.2
+0.4
+0.6
+0.8
+Overlapping Ratio
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+CDF
+Top1
+Top3
+Top5
+(b) MME Dataset
+Figure 4: Evaluation results of uniqueness testing.
+• The impact of introducing prior knowledge on the diversity
+of generated results remains within an acceptable range.
+While incorporating collaborative noise priors reduces the di-
+versity of the generated outputs, our model’s performance on
+diversity metrics is only slightly behind DiffTraj. Additionally, it
+still significantly outperforms other autoregressive generation
+methods in terms of diversity.
+Figure 3 shows the visualization of collective flows from the real
+data and generated data. We can observe that the flows generated
+by our method are more similar to the real ones. The image on the
+right shows the result generated by the best baseline, Difftraj. As
+can be seen, without the noise priors providing flow information,
+the model is only able to learn individual movement patterns.
+5.3
+User Privacy Protection (RQ2)
+Directly utilizing user data collected from web-based applications
+and services often leads to serious privacy issues and our approach
+contributes to protecting the privacy of web users through data
+generation. To verify that the data generated by our method does
+not compromise user privacy, we perform experiments from differ-
+ent aspects including Uniqueness Testing and Membership Inference
+Attacks on the generated mobility data:
+5.3.1
+Uniqueness Testing. We select trajectories from the gener-
+ated data by random and compare them with real trajectories from
+the training dataset. The overlapping ratio is defined as the propor-
+tion of identical locations relative to the overall trajectory length.
+After that, we identify the real trajectory that is the most similar to
+the generated one. We then calculate the distribution of the overlap-
+ping ratio and select the top 1, 3, and 5 real trajectories that exhibit
+the greatest similarity to each generated trajectory. Figure 4 shows
+the empirical cumulative distribution. On both datasets, more than
+90% of the generated trajectories fail to find any real trajectories
+with an overlapping ratio exceeding 40%, which demonstrates that
+our method learns to generate entirely novel trajectories, but not
+merely replicating existing ones.
+5.3.2
+Membership Inference Attacks. This attack aims to de-
+termine whether the given samples are part of the training dataset.
+We follow the experimental setup outlined in [18] and [33]. To mit-
+igate the impact of classification methods, we employ three widely
+used classification algorithms: Random Forest (RF), Support Vector
+Machine (SVM), and Logistic Regression (LR) to conduct the attack.
+Positive samples correspond to trajectories in the training data, and
+negative samples do not. The metric used to evaluate the attack
+ISP
+MME
+0.45
+0.50
+0.55
+0.60
+Attack Success Rate
+LR
+SVM
+RF
+Figure 5: Success ratio of membership inference attack using
+different classification algorithms.
+0%
+25%
+50%
+75%
+Percentage of Real Trajectories
+0.0
+0.1
+0.2
+0.3
+Accuracy
+Real
+Real + DiffTraj
+Real + CoDiffMob
+(a) Transformer
+0%
+25%
+50%
+75%
+Percentage of Real Trajectories
+0.0
+0.1
+0.2
+0.3
+Accuracy
+Real
+Real + DiffTraj
+Real + CoDiffMob
+(b) LSTM
+Figure 6: Mobility prediction based on generated trajectories.
+is the success rate, which represents the percentage of success-
+ful trials in correctly identifying whether a sample belongs to the
+training dataset [18, 33]. Figure 5 presents the results of the attack.
+The attack success rate is consistently below 0.6 on both datasets,
+indicating that the attacker struggles to determine whether trajec-
+tories are present in the training data based on the generated data.
+These findings highlight the robustness of our framework against
+membership inference attacks.
+5.4
+Utility of the Generated Data (RQ3)
+Without compromising user privacy, CoDiffMob can better model
+urban mobility patterns, and the generated mobility data provide
+stronger support for downstream tasks [49, 50, 65]. We conduct
+experiments on the common downstream task of mobility predic-
+tion using synthetic data. We employ both LSTM-based [5] and
+Transformer-based [45] models for mobility prediction. The train-
+ing set consists of a mixture of synthetic and real data, while the
+test set comprises a separate set of real trajectory data. We set dif-
+ferent training set mix ratios and compare the downstream task
+performance under three settings: using only real data, using real
+data combined with the best baseline-generated data, and using
+real data combined with data generated by our model.
+Figure 6 presents the experimental results based on the two mod-
+els. The horizontal axis represents the proportion of real-world
+trajectory data in the training set, while the vertical axis shows the
+accuracy of mobility prediction. As can be seen, the inclusion of
+synthetic data improves downstream task performance across dif-
+ferent data mix ratios. Additionally, compared to the data generated
+by the best baseline, DiffTraj, the data generated by CoDiffMob
+leads to more significant improvements in downstream task per-
+formance, indicating that our model generates trajectory data with
+characteristics more closely resembling those of the real dataset.
+
+--- Sayfa 8 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+Table 2: Results of the ablation study on ISP dataset.
+Trajectory
+Flow
+Radius
+Distance
+Duration
+DailyLoc
+CPC
+MAPE
+w/o Noise Prior
+0.0673
+0.1661
+0.0461
+0.1635
+0.3416
+0.8489
+w/o Noise Fusion
+0.2843
+0.1616
+0.0561
+0.4433
+0.7165
+0.5351
+CoDiffMob
+0.0183
+0.1203
+0.0245
+0.1558
+0.6842
+0.6361
+5.5
+Ablation Study (RQ4)
+To assess the importance of the design in CoDiffMob, we perform an
+ablation study on both datasets, specifically by removing noise prior
+and the noise fusion process from the model framework. Without
+noise priors, the model generates trajectories based on initial noise
+sampled from an i.i.d Gaussian distribution. Conversely, without
+noise fusion, the model’s generation process is informed only by the
+collaborative transition sampling process, leading to a deficiency
+in modeling individual behaviors.
+Table 2 presents the experimental results, showing a significant
+performance drop in flow-related metrics when the model operates
+without noise priors. The model without noise fusion performs best
+on flow-related metrics but exhibits a substantial discrepancy from
+the real data in terms of modeling individual movement behaviors,
+such as the distribution of individual activity radius and the number
+of daily visited locations. By combining informative noise based
+on the collaborative sampling process with white noise, our model
+can capture both individual movement characteristics and crowd
+movement behaviors.
+6
+Related Works
+6.1
+Noise Prior in Video and Image Generation
+Diffusion models [23, 48] have made significant progress in video
+generation tasks, but ensuring high-quality frame-to-frame consis-
+tency remains a core challenge [3]. Recent studies [8, 26, 32, 59]
+have addressed this by enhancing content coherence through strate-
+gic noise manipulation during the diffusion process. For example,
+PYoCo [8] proposes a novel noise sampling method preserving cor-
+relations between frames, and TRIP [59] alters the noise targets
+predicted by the model during the training process. For image gen-
+eration, Narek et al. [43] preserves the structural information of
+images through noise priors, enabling style control based on the
+original image structure. However, unlike video and image data,
+which primarily focuses on temporal consistency and content in-
+formation, human mobility data presents more complex patterns
+and higher levels of stochasticity [22]. Designing effective noise
+priors for such data remains an open research challenge, but it
+holds immense potential. This paper pioneers the exploration of
+noise priors in the context of urban mobility generation.
+6.2
+Mobility Generation
+Urban mobility trajectory generation methods can broadly be di-
+vided into two categories: non-generative and generative approaches.
+Non-generative methods, such as Markov-based models [1, 14, 35]
+and simulation techniques [7, 13], rely heavily on historical data,
+predefined rules, or statistical models to synthesize mobility pat-
+terns. However, their reliance on fixed assumptions limits their
+ability to capture the complexity and variability inherent in hu-
+man mobility dynamics. Generative approaches, on the other hand,
+leverage generative AI techniques [9, 12, 16] to model and create
+synthetic human trajectories with greater complexity and diversity.
+Early generative efforts, such as Generative Adversarial Networks
+(GANs) [9], Generative Adversarial Imitation Learning (GAIL) [11],
+and Variational Autoencoders (VAEs) [16], pushed the field forward
+but often struggled with training stability and model collapse. Re-
+cent advancements have introduced diffusion models [12, 36, 38] for
+trajectory generation [2, 66], representing a promising new direc-
+tion in generative modeling. Diffusion-based models offer greater
+flexibility and diversity, enabling more accurate and nuanced hu-
+man mobility simulations. We followed the common approach in
+diffusion research of using UNet [30] to model data correlations, em-
+ploying CNN and attention mechanisms to capture the spatiotem-
+poral associations in trajectory data. Additionally, we innovatively
+informed the generation of individual trajectories by incorporating
+collective movement patterns in the form of noise priors.
+7
+Discussion and Conclusion
+Supported by vast amounts of user data from the web, data-driven
+AI methods have significantly enhanced web applications and ser-
+vices, such as personalized recommendations, leading to substantial
+improvements in user experience. However, it is crucial to ensure
+that user privacy is protected throughout the process to maintain
+an efficient, secure, and ethical web environment.
+We address this challenge from the perspective of data gener-
+ation. CoDiffMob focuses on generating high-quality synthetic
+individual mobility trajectory data. An essential question here is
+how reliable our proposed deep model is in generating synthetic
+data while safeguarding privacy. Because empirical studies have
+shown the potential for identifying individuals through the unique-
+ness of their mobility trajectories [41, 47]. Comprehensive privacy
+evaluations in our work confirm that our model does not leak user
+privacy, contributing to more secure web services.
+From a practical standpoint, aligning with the UN SDGs for sus-
+tainable city development, numerous efforts have been dedicated
+to promoting equitable and sustainable urban planning [40, 62,
+63]. These efforts address land use planning [62], road infrastruc-
+ture [63], and public transportation management [40], focusing
+on urban sustainability, transportation resilience, and equitable
+access to green spaces—factors directly impacting the well-being of
+city residents. However, existing research often explores optimiza-
+tion algorithms without a robust simulation of users’ movements,
+which may lead to a disconnect between theoretical objectives and
+residents’ actual movement needs. Our approach, by generating
+high-quality urban mobility data, provides a powerful tool for ad-
+vanced urban decision-making [61]. It supports more informed
+planning and optimization, enabling the design of more resilient,
+sustainable, and equitable urban environments.
+Acknowledgments
+This work was supported in part by the National Key Research and
+Development Program of China under grant 2023YFB2904804, the
+National Nature Science Foundation of China under 62476152 and
+U24B20180, and Beijing National Research Center for Information
+Science and Technology (BNRist).
+
+--- Sayfa 9 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation with Collaborative Noise Priors
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+References
+[1] Vincent Bindschaedler and Reza Shokri. 2016. Synthesizing plausible privacy-
+preserving location traces. In 2016 IEEE Symposium on Security and Privacy
+(SP). IEEE, 546–563.
+[2] Chen Chu, Hengcai Zhang, Peixiao Wang, and Feng Lu. 2024. Simulating hu-
+man mobility with a trajectory generation framework based on diffusion model.
+International Journal of Geographical Information Science 38, 5 (2024), 847–878.
+[3] Florinel-Alin Croitoru, Vlad Hondru, Radu Tudor Ionescu, and Mubarak Shah.
+2023.
+Diffusion models in vision: A survey.
+IEEE Transactions on Pattern
+Analysis and Machine Intelligence 45, 9 (2023), 10850–10869.
+[4] Prafulla Dhariwal and Alexander Nichol. 2021. Diffusion models beat gans on
+image synthesis. Advances in neural information processing systems 34 (2021),
+8780–8794.
+[5] Umberto Fattore, Marco Liebsch, Bouziane Brik, and Adlen Ksentini. 2020.
+AutoMEC: LSTM-based user mobility prediction for service management in
+distributed MEC resources. In Proceedings of the 23rd International ACM
+Conference on Modeling, Analysis and Simulation of Wireless and Mobile
+Systems. 155–159.
+[6] Huifang Feng, Fengshan Bai, and Youji Xu. 2019. Identification of critical roads in
+urban transportation network based on GPS trajectory data. Physica A: Statistical
+Mechanics and its Applications 535 (2019), 122337.
+[7] Jie Feng, Zeyu Yang, Fengli Xu, Haisu Yu, Mudan Wang, and Yong Li. 2020.
+Learning to simulate human mobility. In Proceedings of the 26th ACM SIGKDD
+international conference on knowledge discovery & data mining. 3426–3433.
+[8] Songwei Ge, Seungjun Nah, Guilin Liu, Tyler Poon, Andrew Tao, Bryan Catanzaro,
+David Jacobs, Jia-Bin Huang, Ming-Yu Liu, and Yogesh Balaji. 2023. Preserve
+your own correlation: A noise prior for video diffusion models. In Proceedings
+of the IEEE/CVF International Conference on Computer Vision. 22930–22941.
+[9] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley,
+Sherjil Ozair, Aaron Courville, and Yoshua Bengio. 2020. Generative adversarial
+networks. Commun. ACM 63, 11 (2020), 139–144.
+[10] Andrea Hess, Karin Anna Hummel, Wilfried N Gansterer, and Günter Haring.
+2015. Data-driven human mobility modeling: a survey and engineering guidance
+for mobile networking. ACM Computing Surveys (CSUR) 48, 3 (2015), 1–39.
+[11] Jonathan Ho and Stefano Ermon. 2016. Generative adversarial imitation learning.
+Advances in neural information processing systems 29 (2016).
+[12] Jonathan Ho, Ajay Jain, and Pieter Abbeel. 2020. Denoising diffusion probabilistic
+models. Advances in neural information processing systems 33 (2020), 6840–
+6851.
+[13] Sibren Isaacman, Richard Becker, Ramón Cáceres, Margaret Martonosi, James
+Rowland, Alexander Varshavsky, and Walter Willinger. 2012. Human mobil-
+ity modeling at metropolitan scales. In Proceedings of the 10th international
+conference on Mobile systems, applications, and services. 239–252.
+[14] Shan Jiang, Yingxiang Yang, Siddharth Gupta, Daniele Veneziano, Shounak
+Athavale, and Marta C González. 2016. The TimeGeo modeling framework
+for urban mobility without travel surveys. Proceedings of the National Academy
+of Sciences 113, 37 (2016), E5370–E5378.
+[15] Tero Karras, Miika Aittala, Timo Aila, and Samuli Laine. 2022. Elucidating the
+Design Space of Diffusion-Based Generative Models. arXiv:2206.00364 [cs.CV]
+https://arxiv.org/abs/2206.00364
+[16] Diederik P Kingma. 2013. Auto-encoding variational bayes. arXiv preprint
+arXiv:1312.6114 (2013).
+[17] Yong Li, Yuan Yuan, Jingtao Ding, and Depeng Jin. 2023. Learning the complexity
+of urban mobility with deep generative collaboration network. (2023).
+[18] Zinan Lin, Alankar Jain, Chen Wang, Giulia Fanti, and Vyas Sekar. 2020. Using
+GANs for Sharing Networked Time Series Data: Challenges, Initial Promise, and
+Open Questions. In Proceedings of the ACM Internet Measurement Conference
+(IMC ’20). ACM, 464–483. https://doi.org/10.1145/3419394.3423643
+[19] Kang Liu, Xin Jin, Shifen Cheng, Song Gao, Ling Yin, and Feng Lu. 2024. Act2Loc:
+a synthetic trajectory generation method by combining machine learning and
+mechanistic models. International Journal of Geographical Information Science
+38, 3 (2024), 407–431.
+[20] Qingyue Long, Huandong Wang, Tong Li, Lisi Huang, Kun Wang, Qiong Wu,
+Guangyu Li, Yanping Liang, Li Yu, and Yong Li. 2023. Practical synthetic human
+trajectories generation based on variational point processes. In Proceedings of
+the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining.
+4561–4571.
+[21] Qingyue Long, Yuan Yuan, and Yong Li. 2024. A Universal Model for Human
+Mobility Prediction. arXiv preprint arXiv:2412.15294 (2024).
+[22] Massimiliano Luca, Gianni Barlacchi, Bruno Lepri, and Luca Pappalardo. 2021. A
+survey on deep learning for human mobility. ACM Computing Surveys (CSUR)
+55, 1 (2021), 1–44.
+[23] Zhengxiong Luo, Dayou Chen, Yingya Zhang, Yan Huang, Liang Wang, Yu-
+jun Shen, Deli Zhao, Jingren Zhou, and Tieniu Tan. 2023. Videofusion: De-
+composed diffusion models for high-quality video generation. arXiv preprint
+arXiv:2303.08320 (2023).
+[24] Frank J Massey Jr. 1951. The Kolmogorov-Smirnov test for goodness of fit. Journal
+of the American statistical Association 46, 253 (1951), 68–78.
+[25] United Nations Department of Economic and Social Affairs. 2024. The Sustainable
+Development Goals Report 2024 (2024 ed.). United Nations. https://www.un-
+ilibrary.org/content/books/9789213589755
+[26] Haonan Qiu, Menghan Xia, Yong Zhang, Yingqing He, Xintao Wang, Ying Shan,
+and Ziwei Liu. 2023. Freenoise: Tuning-free longer video diffusion via noise
+rescheduling. arXiv preprint arXiv:2310.15169 (2023).
+[27] Haonan Qiu, Menghan Xia, Yong Zhang, Yingqing He, Xintao Wang, Ying Shan,
+and Ziwei Liu. 2024. FreeNoise: Tuning-Free Longer Video Diffusion via Noise
+Rescheduling. arXiv:2310.15169 [cs.CV] https://arxiv.org/abs/2310.15169
+[28] Jinmeng Rao, Song Gao, Yuhao Kang, and Qunying Huang. 2020. LSTM-TrajGAN:
+A deep learning approach to trajectory privacy protection.
+arXiv preprint
+arXiv:2006.10521 (2020).
+[29] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn
+Ommer. 2022. High-resolution image synthesis with latent diffusion models.
+In Proceedings of the IEEE/CVF conference on computer vision and pattern
+recognition. 10684–10695.
+[30] Olaf Ronneberger, Philipp Fischer, and Thomas Brox. 2015. U-net: Convolutional
+networks for biomedical image segmentation. In Medical image computing and
+computer-assisted intervention–MICCAI 2015: 18th international conference,
+Munich, Germany, October 5-9, 2015, proceedings, part III 18. Springer, 234–241.
+[31] Chenyang Shao, Fengli Xu, Bingbing Fan, Jingtao Ding, Yuan Yuan, Meng Wang,
+and Yong Li. 2024. Beyond imitation: Generating human mobility from context-
+aware reasoning with large language models. arXiv preprint arXiv:2402.09836
+(2024).
+[32] Zhi Sheng, Yuan Yuan, Jingtao Ding, and Yong Li. 2025. Unveiling the Power of
+Noise Priors: Enhancing Diffusion Models for Mobile Traffic Prediction. arXiv
+preprint arXiv:2501.13794 (2025).
+[33] Reza Shokri, Marco Stronati, Congzheng Song, and Vitaly Shmatikov. 2017.
+Membership Inference Attacks Against Machine Learning Models. In 2017 IEEE
+Symposium on Security and Privacy (SP). 3–18. https://doi.org/10.1109/SP.2017.
+41
+[34] Filippo Simini, Gianni Barlacchi, Massimilano Luca, and Luca Pappalardo. 2021.
+A deep gravity model for mobility flows generation. Nature communications 12,
+1 (2021), 6576.
+[35] Chaoming Song, Tal Koren, Pu Wang, and Albert-László Barabási. 2010. Modelling
+the scaling properties of human mobility. Nature physics 6, 10 (2010), 818–823.
+[36] Jiaming Song, Chenlin Meng, and Stefano Ermon. 2020. Denoising diffusion
+implicit models. arXiv preprint arXiv:2010.02502 (2020).
+[37] Xuan Song, Hiroshi Kanasugi, and Ryosuke Shibasaki. 2016. Deeptransport:
+Prediction and simulation of human mobility and transportation mode at a
+citywide level. In Proceedings of the twenty-fifth international joint conference
+on artificial intelligence. 2618–2624.
+[38] Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma, Abhishek Kumar, Stefano
+Ermon, and Ben Poole. 2020. Score-based generative modeling through stochastic
+differential equations. arXiv preprint arXiv:2011.13456 (2020).
+[39] Yang Song, Jascha Sohl-Dickstein, Diederik P. Kingma, Abhishek Kumar, Stefano
+Ermon, and Ben Poole. 2021. Score-Based Generative Modeling through Stochas-
+tic Differential Equations. arXiv:2011.13456 [cs.LG] https://arxiv.org/abs/2011.
+13456
+[40] Hongyuan Su, Yu Zheng, Jingtao Ding, Depeng Jin, and Yong Li. 2024. Met-
+roGNN: Metro Network Expansion with Reinforcement Learning. In Companion
+Proceedings of the ACM on Web Conference 2024. 650–653.
+[41] Zhen Tu, Kai Zhao, Fengli Xu, Yong Li, Li Su, and Depeng Jin. 2019. Protecting
+Trajectory From Semantic Attack Considering 𝑘-Anonymity, 𝑙-Diversity, and 𝑡
+-Closeness. IEEE Transactions on Network and Service Management 16, 1 (2019),
+264–278. https://doi.org/10.1109/TNSM.2018.2877790
+[42] Narek Tumanyan, Michal Geyer, Shai Bagon, and Tali Dekel. 2022.
+Plug-
+and-Play Diffusion Features for Text-Driven Image-to-Image Translation.
+arXiv:2211.12572 [cs.CV] https://arxiv.org/abs/2211.12572
+[43] Narek Tumanyan, Michal Geyer, Shai Bagon, and Tali Dekel. 2023. Plug-and-play
+diffusion features for text-driven image-to-image translation. In Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 1921–
+1930.
+[44] Laurens Van der Maaten and Geoffrey Hinton. 2008. Visualizing data using t-SNE.
+Journal of machine learning research 9, 11 (2008).
+[45] A Vaswani. 2017. Attention is all you need. Advances in Neural Information
+Processing Systems (2017).
+[46] Huandong Wang, Changzheng Gao, Yuchen Wu, Depeng Jin, Lina Yao, and
+Yong Li. 2023. PateGail: a privacy-preserving mobility trajectory generator
+with imitation learning. In Proceedings of the AAAI Conference on Artificial
+Intelligence, Vol. 37. 14539–14547.
+[47] Fengli Xu, Zhen Tu, Yong Li, Pengyu Zhang, Xiaoming Fu, and Depeng Jin.
+2017. Trajectory recovery from ash: User privacy is not preserved in aggregated
+mobility data. In Proceedings of the 26th international conference on world wide
+web. 1241–1250.
+[48] Ruihan Yang, Prakhar Srivastava, and Stephan Mandt. 2023. Diffusion probabilis-
+tic modeling for video generation. Entropy 25, 10 (2023), 1469.
+
+--- Sayfa 10 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+[49] Zhongchao Yi, Zhengyang Zhou, Qihe Huang, Yanjiang Chen, Liheng Yu, Xu
+Wang, and Yang Wang. 2024. Get Rid of Isolation: A Continuous Multi-task
+Spatio-Temporal Learning Framework. In The Thirty-eighth Annual Conference
+on Neural Information Processing Systems.
+[50] Yuan Yuan, Jingtao Ding, Jie Feng, Depeng Jin, and Yong Li. 2024. Unist: A
+prompt-empowered universal model for urban spatio-temporal prediction. In
+Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and
+Data Mining. 4095–4106.
+[51] Yuan Yuan, Jingtao Ding, Chonghua Han, Depeng Jin, and Yong Li. 2024. A
+Foundation Model for Unified Urban Spatio-Temporal Flow Prediction. arXiv
+preprint arXiv:2411.12972 (2024).
+[52] Yuan Yuan, Jingtao Ding, Chenyang Shao, Depeng Jin, and Yong Li. 2023. Spatio-
+temporal diffusion point processes. In Proceedings of the 29th ACM SIGKDD
+Conference on Knowledge Discovery and Data Mining. 3173–3184.
+[53] Yuan Yuan, Jingtao Ding, Huandong Wang, and Depeng Jin. 2024. Generating
+Daily Activities with Need Dynamics. ACM Transactions on Intelligent Systems
+and Technology 15, 2 (2024), 1–28.
+[54] Yuan Yuan, Jingtao Ding, Huandong Wang, Depeng Jin, and Yong Li. 2022. Activ-
+ity trajectory generation via modeling spatiotemporal dynamics. In Proceedings
+of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data
+Mining. 4752–4762.
+[55] Yuan Yuan, Chonghua Han, Jingtao Ding, Depeng Jin, and Yong Li. 2024. Urbandit:
+A foundation model for open-world urban spatio-temporal learning.
+arXiv
+preprint arXiv:2411.12164 (2024).
+[56] Yuan Yuan, Huandong Wang, Jingtao Ding, Depeng Jin, and Yong Li. 2023.
+Learning to simulate daily activities via modeling dynamic human needs. In
+Proceedings of the ACM Web Conference 2023. 906–916.
+[57] Jing Zhang, Qihan Huang, Yirui Huang, Qian Ding, and Pei-Wei Tsai. 2023. DP-
+TrajGAN: A privacy-aware trajectory generation model with differential privacy.
+Future Generation Computer Systems 142 (2023), 25–40.
+[58] Yunke Zhang, Yuming Lin, Guanjie Zheng, Yu Liu, Nicholas Sukiennik, Fengli
+Xu, Yongjun Xu, Feng Lu, Qi Wang, Yuan Lai, et al. 2025. MetaCity: Data-driven
+sustainable development of complex cities. The Innovation (2025).
+[59] Zhongwei Zhang, Fuchen Long, Yingwei Pan, Zhaofan Qiu, Ting Yao, Yang Cao,
+and Tao Mei. 2024. TRIP: Temporal Residual Learning with Image Noise Prior for
+Image-to-Video Diffusion Models. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition. 8671–8681.
+[60] Yu Zheng, Licia Capra, Ouri Wolfson, and Hai Yang. 2014. Urban computing:
+concepts, methodologies, and applications. ACM Transactions on Intelligent
+Systems and Technology (TIST) 5, 3 (2014), 1–55.
+[61] Yu Zheng, Qianyue Hao, Jingwei Wang, Changzheng Gao, Jinwei Chen, Depeng
+Jin, and Yong Li. 2024. A Survey of Machine Learning for Urban Decision Making:
+Applications in Planning, Transportation, and Healthcare. Comput. Surveys
+(2024).
+[62] Yu Zheng, Yuming Lin, Liang Zhao, Tinghai Wu, Depeng Jin, and Yong Li. 2023.
+Spatial planning of urban communities via deep reinforcement learning. Nature
+Computational Science 3, 9 (2023), 748–762.
+[63] Yu Zheng, Hongyuan Su, Jingtao Ding, Depeng Jin, and Yong Li. 2023. Road
+planning for slums via deep reinforcement learning. In Proceedings of the 29th
+ACM SIGKDD Conference on Knowledge Discovery and Data Mining. 5695–
+5706.
+[64] Yu Zheng, Lizhu Zhang, Xing Xie, and Wei-Ying Ma. 2009. Mining interesting
+locations and travel sequences from GPS trajectories. In Proceedings of the 18th
+international conference on World wide web. 791–800.
+[65] Zhengyang Zhou, Qihe Huang, Binwu Wang, Jianpeng Hou, Kuo Yang, Yuxuan
+Liang, and Yang Wang. 2024. ComS2T: A complementary spatiotemporal learn-
+ing system for data-adaptive model evolution. arXiv preprint arXiv:2403.01738
+(2024).
+[66] Yuanshao Zhu, Yongchao Ye, Shiyao Zhang, Xiangyu Zhao, and James Yu. 2023.
+Difftraj: Generating gps trajectory with diffusion probabilistic model. Advances
+in Neural Information Processing Systems 36 (2023), 65168–65188.
+A
+Methodology Details
+A.1
+Diffusion Denoiser
+Following [66], we apply a UNet-based diffusion denoiser to gener-
+ate individual trajectories from Gaussian noise. During the network
+computation, the noised trajectory is represented as a 𝑇×𝐶matrix,
+where 𝑇denotes the length of the trajectory and 𝐶represents the
+number of dimensions for the location information at each time
+step (e.g., 𝐶= 2 for latitude and longitude). In the upsampling and
+downsampling stages of the UNet architecture, one-dimensional
+convolutional neural networks (CNNs) are employed to model the
+spatiotemporal correlations between trajectory points. Additionally,
+an attention mechanism is applied to the features after downsam-
+pling, allowing the model to capture complex relationships within
+the latent space. The hyper-parameters used to build the model are
+shown in Table 3.
+Table 3: Hyper-parameters of the diffusion denoiser.
+Parameter
+Value
+Input Channel Size
+2
+Output Channel Size
+2
+Trajectory Length
+48
+Num Freq Bands
+64
+Hidden Dim
+128
+Num Initial Channel
+128
+Channel Mult
+[1, 2, 2, 2]
+Channel Mult Emb
+4
+Channels Per Head
+64
+Num Blocks
+2
+Batch Size
+1024
+Guidance Scale
+3
+A.2
+Training Details
+Diffusion model estimates the distribution of the real-world data
+𝒙∼𝑝(𝒙) by sampling from the approximate distribution 𝑝𝜽(𝒙)
+with learnable parameter 𝜽. Normally we denote 𝑝𝜽(𝒙) = −𝑓𝜽(𝒙)
+𝑍𝜽
+,
+and optimize the parameter𝜽by max-likelihood max𝜽
+Í𝑁
+𝑖=1 log𝑝𝜽(𝒙𝑖).
+However, we need to know the normalization constant 𝑍𝜽to make
+the max-likelihood training feasible, and approximating it would be
+a very computationally expensive process. Therefore, we choose to
+model the score function ∇𝒙log𝑝𝜽(𝒙;𝜎) rather than the probabil-
+ity density, with the score function, we are able to get data sample
+𝒙0 ∼𝑝𝜽(𝒙) by the following equation:
+𝒙0 = 𝒙(𝑇) +
+∫0
+𝑇−¤𝜎(𝑡)𝜎(𝑡)∇𝒙log𝑝𝜽(𝒙(𝑡);𝜎(𝑡))𝑑𝑡,
+where 𝒙(𝑇) ∼N  0, 𝜎2max𝑰 .
+(10)
+On this basis, we add a condition 𝒄composed of the urban en-
+vironment and use our model to approximate the score function
+∇𝒙log𝑝𝜽(𝒙; 𝒄, 𝜎) ≈(𝐷𝜽(𝒙; 𝒄, 𝜎) −𝒙) /𝜎2, which leads to the train-
+ing target:
+L(𝜃) = E𝒙,𝒄∼𝜒𝑐E𝜎∼𝑞(𝜎)E𝝐∼N(0,𝜎2𝑰) ∥𝐷𝜽(𝒙+ 𝝐; 𝒄, 𝜎) −𝒙∥2
+2 ,
+(11)
+here 𝜒𝑐is the training dataset combined with embeddings computed
+by the scene encoder, and 𝑞(𝜎) represents the schedule of the noise
+level added to the original data sample. For better performance,
+we introduce the precondition as described in [15] to ensure that
+the input and output of the model both follow a standard normal
+distribution with unit variance:
+𝐷𝜽(𝒙; 𝒄, 𝜎) = 𝑐skip (𝜎)𝒙+𝑐out (𝜎)𝐹𝜽(𝑐in (𝜎)𝒙; 𝒄,𝑐noise (𝜎)) , (12)
+
+--- Sayfa 11 ---
+Noise Matters: Diffusion Model-based Urban Mobility Generation with Collaborative Noise Priors
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Figure 7: Visualization of the trajectory distribution of ISP dataset at different timestamps.
+here 𝐹𝜽(·) represents the original output of the diffusion denoiser.
+In the experiment, we use the longitude and latitude of trajec-
+tory points as the generation target. Details of the training hyper-
+parameters can be found in Table 4.
+Table 4: Hyper-parameters of the training process.
+Parameter
+Value
+Num Epochs
+200
+Weight Decay
+0.03
+Learning Rate
+0.0005
+Learning Rate Schedule
+OneCycleLR
+𝜎𝑑𝑎𝑡𝑎
+0.1
+𝑐𝑖𝑛(𝜎)
+1/
+√︃
+𝜎2 + 𝜎2
+𝑑𝑎𝑡𝑎
+𝑐𝑠𝑘𝑖𝑝(𝜎)
+𝜎2
+𝑑𝑎𝑡𝑎/(𝜎2 + 𝜎2
+𝑑𝑎𝑡𝑎)
+𝑐𝑜𝑢𝑡(𝜎)
+𝜎· 𝜎𝑑𝑎𝑡𝑎/
+√︃
+𝜎2 + 𝜎2
+𝑑𝑎𝑡𝑎
+𝑐𝑛𝑜𝑖𝑠𝑒(𝜎)
+1
+4 ln𝜎
+Noise Distribution
+ln(𝜎) ∼N
+
+𝑃mean , 𝑃2
+std
+
+𝑃mean
+-1.2
+𝑃std
+1.2
+Table 5: Statistics of the two mobility datasets.
+Dataset
+City
+Duration
+#Users
+#Loc
+#Traj
+ISP
+Shanghai
+7 days
+90037
+9158
+261042
+MME
+Nanchang
+7 days
+6218
+4096
+43967
+B
+Experiment Details
+B.1
+Datasets
+We conduct experiments on two real-world mobility datasets col-
+lected based on web applications and services. The statistics of the
+two datasets are summarized in Table 5.
+• ISP: The ISP dataset is collected through a partnership with a
+major Internet Service Provider (ISP) in China. The mobility data
+contains more than two million users, with a primary spatial
+scope of Shanghai from April 19 to April 26, 2016. Each mobil-
+ity record in the ISP dataset contains an anonymous user ID,
+timestamp, and cellular base station.
+• MME: The MME dataset is provided by an operator in China.
+The dataset contains the trajectories of more than 6000 users
+over a week in Nanchang, with each mobility record containing
+an anonymous user ID, time stamp, and region ID.
+Figure 7 illustrates the distribution of user trajectory points over
+time throughout the day in the ISP dataset.
+B.2
+Metrics
+We evaluate the generated results of our method from two aspects,
+individual behavior and collective movement patterns. For indi-
+vidual behavior, we evaluate the generated trajectories from the
+following four terms:
+• Radius: Radius tracks the radius of gyration centered in the
+trajectory’s center of mass, we calculate the radius for each tra-
+jectory with a length of one day.
+• Distance: Distance measures the travel distance for each move
+in the trajectory, only calculated when a user moves from one
+location to another.
+• Duration: Duration calculates the time spent at each location, we
+excluded trajectories that remained at the same location through-
+out the entire day in our calculations.
+• DailyLoc: DailyLoc records the number of locations visited by
+each person on a daily basis. Similarly, trajectories that remained
+at the same location throughout the day are not considered.
+We do Kolmogorov–Smirnov Test [24] between the metrics cal-
+culated from the real trajectories and the generated ones. For a
+
+--- Sayfa 12 ---
+WWW ’25, April 28-May 2, 2025, Sydney, NSW, Australia
+Yuheng Zhang, Yuan Yuan, Jingtao Ding, Jian Yuan, and Yong Li.
+(a) Observed Flows
+CPC = 0.6067
+(b) CoDiffMob
+(c) DiffTraj
+CPC = 0.4198
+Figure 8: Visualization of the real and generated flow on MME dataset.
+metric 𝑋, the empirical distribution function 𝐹𝑛with 𝑛samples is
+defined as:
+𝐹𝑛(𝑥) = number of (elements in sample ≤𝑥)
+𝑛
+= 1
+𝑛
+Í𝑛
+𝑖=1 I(−inf,𝑥] (𝑋𝑖),
+(13)
+and with the empirical distribution function of the real samples 𝐹1,𝑛
+and generated samples 𝐹2,𝑚, the Kolmogorov–Smirnov statistic is
+defined as:
+𝐷𝑛,𝑚= sup𝑥∥𝐹1,𝑛(𝑥) −𝐹2,𝑚(𝑥)∥.
+(14)
+For generated flows, following previous work [34], we calculate
+Common Part of Commuters (CPC) and MAPE between the
+real transition matrix and those inferred from the generated data.
+Given real-world dataset X and generated data Y, we calculate
+collective flows F X and F Y from them, CPC is calculated by the
+following formula:
+𝑁𝐶𝐶(F X, F Y) = Í𝑛
+𝑖=1
+Í𝑛
+𝑗=1 min(F X, F Y),
+𝑁𝐶(F X) = Í𝑛
+𝑖=1
+Í𝑛
+𝑗=1 F X,
+𝐶𝑃𝐶(F X, F Y) =
+2𝑁𝐶𝐶(FX,FY )
+𝑁𝐶(FX )+𝑁𝐶(FY ) ,
+(15)
+MAPE is calculated by the average percentage error of the real and
+generated transition probability of each location eF 𝑋
+𝑙𝑖and eF 𝑌
+𝑙𝑖:
+𝑀𝐴𝑃𝐸= 1
+𝑛
+Í𝑛
+𝑖=1 ∥
+eFX
+𝑙𝑖−eFY
+𝑙𝑖
+eFX
+𝑙𝑖
+∥,
+(16)
+here We filtered out data points with real transition probabilities
+lower than 0.01 to ensure the validity of the results, and we used
+the 𝑙1 norm to measure the difference between the two transition
+probability densities.
+Also, we introduce a Diversity metric, which calculates the
+proportion of trajectories generated by the model that are identical
+to those appearing in the real dataset:
+Diversity(Y) =
+Í
+𝒚∈Y I(𝒚∈X)
+|Y|
+,
+(17)
+here X represents the real-world dataset and Y is the generated
+one.
+B.3
+Baselines
+We compare the performance of CoDiffMob with six state-of-the-art
+baselines for mobility generation:
+• TimeGEO [14]: A model-based trajectory synthesis method that
+models temporal decisions using hyperparameters while employ-
+ing the EPR model [35] to capture spatial decision-making.
+• PateGail [46]: A robust generative adversarial imitation learning
+model to mimic the human decision-making process.
+• MoveSim [7]: A generative adversarial framework that uses in-
+sights from human mobility regularities for mobility generation.
+• VOLUNTEER [20]: It utilizes a two-layered VAE to capture the
+joint distribution of user attributes and mobility behaviors.
+• TrajGDM [2]: A trajectory generation framework built on the
+diffusion model, aiming to capture common mobility patterns
+within a trajectory dataset.
+• DiffTraj [66]: A UNet-based diffusion model to capture the spa-
+tiotemporal features of individual movements.
+C
+Additional Results
+Table 6: Results of the ablation study on MME dataset.
+Trajectory
+Flow
+Radius
+Distance
+Duration
+DailyLoc
+CPC
+MAPE
+w/o Noise Prior
+0.1010
+0.1250
+0.0940
+0.2656
+0.4061
+0.7912
+w/o Noise Fusion
+0.2298
+0.1484
+0.0861
+0.3898
+0.6910
+0.5609
+CoDiffMob
+0.0519
+0.0970
+0.0796
+0.1729
+0.6067
+0.6731
+Figure 8 presents the visualization of real and generated collec-
+tive flow data based on the MME dataset. Compared to the best
+baseline, DiffTraj, our method is shown to better capture the collec-
+tive movement patterns in the real data. Table 6 presents the results
+of the ablation study on the MME dataset. The findings align with
+the conclusions drawn from the ISP dataset, as discussed in the
+main text. Specifically, the noise prior improves model performance
+at both the individual behavior and collective movement levels.
+Moreover, the noise fusion design effectively integrates rule-based
+collective movement patterns with model-parameter-learned indi-
+vidual behavior characteristics, enabling the generated results to
+balance performance across both individual and collective levels.

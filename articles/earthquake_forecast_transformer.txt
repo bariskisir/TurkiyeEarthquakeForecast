@@ -1,0 +1,2347 @@
+
+--- Sayfa 1 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+1
+Learning robotic milling strategies based on passive
+variable operational space interaction control
+Jamie Hathaway1,2,†, Alireza Rastegarpanah1,2,†, Rustam Stolkin1,2
+Abstract—This paper addresses the problem of robotic cutting
+during disassembly of products for materials separation and
+recycling. Waste handling applications differ from milling in
+manufacturing processes, as they engender considerable variety
+and uncertainty in the parameters (e.g. hardness) of materials
+which the robot must cut. To address this challenge, we propose
+a learning-based approach incorporating elements of interaction
+control, in which the robot can adapt key parameters, such
+as feed rate, depth of cut, and mechanical compliance during
+task execution. We show how a mathematical model of cutting
+mechanics, embedded in a simulation environment, can be used
+to rapidly train the system without needing large amounts
+of data from physical cutting trials. The simulation approach
+was validated on a real robot setup based on four case study
+materials with varying structural and mechanical properties. We
+demonstrate the proposed method minimises process force and
+path deviations to a level similar to offline optimal planning
+methods, while the average time to complete a cutting task is
+within 25% of the optimum, at the expense of reduced volume
+of material removed per pass. A key advantage of our approach
+over similar works is that no prior knowledge about the material
+is required.
+Note to Practitioners—This work is motivated by challenges
+in emerging fields such as recycling of electric vehicles, where
+products such as batteries adopt a range of designs with
+varying physical geometry and materials. More generally, this
+applies when considering robotic disassembly of any unknown
+component where semi-destructive operations such as cutting
+are required. Product-to-product variation introduces challenges
+when planning cutting processes required to disassemble a com-
+ponent, as contemporary planning approaches typically require
+advance knowledge of the material properties, shape and desired
+path to select tool speed, feed and depth of cut. In this paper,
+we show a mathematical model of milling force embedded in a
+simulation environment can be used as a relatively inexpensive
+approach to simulate a broad spectrum of cutting processes
+the robot may encounter. This allows the robot to learn from
+experience a strategy that can select these key parameters of
+1 Department of Metallurgy & Materials Science, University of Birming-
+ham, Birmingham, UK, B15 2TT.
+2 The Faraday Institution, Quad One, Harwell Science and Innovation
+Campus, Didcot, UK, OX11 0RA.
+† These authors contributed equally to this work.
+This research was funded by the project called “Reuse and Recycling of
+Lithium-Ion Batteries” (RELiB) [RELIB2 grant number FIRG005, RELIB3
+grant number FIRG057], and the project called “Research and development
+of a highly automated and safe streamlined process for increased Lithium-ion
+battery repurposing and recycling” (REBELION) [grant number 101104241].
+The authors would like to acknowledge Ali Aflakian, Carl Meggs and
+Christopher Gell respectively for assistance with experimental validation,
+design of material holder and cutter tool for experiments herein.
+Manuscript received October 31, 2022; revised March 22, 2023; accepted
+May 18, 2023.
+© 2023 IEEE. Personal use of this material is permitted. Permission from
+IEEE must be obtained for all other uses, in any current or future media,
+including reprinting/republishing this material for advertising or promotional
+purposes, creating new collective works, for resale or redistribution to servers
+or lists, or reuse of any copyrighted component of this work in other works.
+a milling task online without user assistance. We develop a
+framework for controlling a robot using this strategy that allows
+the stiffness of the robot arm to be modulated over time to best
+satisfy metrics of productivity (e.g. required cutting time), while
+maintaining safe interaction of the robot with its environment
+(e.g. by avoiding force limits), similarly to how a human operator
+can vary muscular tension to accomplish different tasks. We
+posit that the proposed method can substitute a trial-and-error
+strategy of selecting process parameters for disassembly of novel
+products, or integrated with existing planning approaches to
+adjust the parameters of milling tasks online.
+Index Terms—reinforcement learning, robotic milling, interac-
+tion control, passivity-based control, energy tank
+I. INTRODUCTION
+S
+EMI-destructive disassembly processes such as cutting
+feature extensively in numerous applications, including
+end of life product disassembly, nuclear decommissioning,
+earthquake/disaster response, demolition with roboticised con-
+struction site machinery, or even applications to robotic
+surgery, in which tissue can have variable properties e.g. as
+a blade passes through muscle, fat, ligaments and connective
+tissue. For robotic disassembly of unknown products, chal-
+lenges are presented in developing appropriate process plans
+due to extensive variations in the target environment, owing
+to a variety of object models, conditions and materials. While
+works such as [1] aim to address uncertainty on a product
+level by altering product and operation-level plans, there
+remain difficulties in adapting plans for individual processes
+to uncertainties in the environment on a case-by-case basis.
+Frequent revisions to the original plan are also required due
+to uncertainties in initial process parameter estimates, of the
+component identification or product-to-product variation [2],
+but also to handle new product models while maintaining
+generality to older models, covering potentially decades of
+design iterations. Handling uncertainty on a process level
+remains a challenge that is addressed by few works [3]. In
+particular, destructive tasks such as cutting are necessary,
+either as recourse if identification or removal of fasteners is
+impossible, or if the design prohibits non-destructive disas-
+sembly. While this extends to a wide range of product types,
+this is of particular interest in the field of disassembly of
+electric vehicle (EV) batteries due to the notable lack of
+standardisation, sensitivity of information regarding battery
+designs, and limited design for disassembly.
+In this work, we consider cutting using a rotary machine
+tool for disassembly as a subset of the more general family
+of milling processes, which implies separation, rather than
+shaping of material. Notably, the requirements of cutting, or
+arXiv:2304.01000v2  [cs.RO]  29 Aug 2023
+
+--- Sayfa 2 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+2
+milling for disassembly applications contrast with those of
+manufacturing, which are carried out in controlled environ-
+ments, motivated by stringent limits on dimensional tolerance.
+For disassembly, the precise cutting path is less important,
+however, variation between products imposes much greater
+demands on the flexibility of the system to select appropriate
+process parameters, such as feed rate, depth of cut and
+tool speed. Simultaneously, this variation results in advance
+knowledge, such as product specifications, models, geometry
+and materials becoming difficult to obtain in a disassembly
+context, complicating the use of offline process planning
+approaches. Although previous works such as [4] and [5]
+aim to address issues of path planning and interaction with
+uncertain environments, selection of these process parameters
+online remains largely unaddressed.
+Learning-based approaches have proven to be effective
+at accomplishing a wide range of tasks in unstructured or
+unknown environments. These have been demonstrated exten-
+sively for various interaction control tasks [6]–[9], however,
+applications for destructive tasks remain limited. In particular,
+the advantages of randomised simulations for reducing over-
+head of costly data collection, while learning robust control
+strategies over a distribution of potential environments are
+compelling for addressing uncertainty in tasks such as milling.
+This paper proposes a domain generalisation approach to
+learning cutting tasks based on a mechanistic model-based
+simulation framework. Leveraging the success of approximate
+Model Predictive Control (MPC) and reinforcement learning
+(RL) for manipulation applications in unknown environments,
+we propose a zero-shot system for optimising a cutting task in
+the context of robotic disassembly of unknown single-material
+components, such as removing a cover from an electric vehicle
+battery module or separation of nuclear waste. In addition, we
+address limitations of variable operational space control (OSC)
+in a RL-based manipulation context by combining RL with
+passivity-based control to ensure the closed-loop stability of
+the controlled system in the sense of Lyapunov. In contrast
+with previous schemes that guarantee the stability of the
+controlled system with policy in the case of RL, the proposed
+method is independent of learning strategy and thus can be
+employed even if the policy has already been trained, simply
+by applying the proposed modifications to the existing OSC
+strategy. Moreover, the proposed controller can optionally be
+incorporated into the training process, allowing the agent to
+learn to manage the tank energy if passed to the agent as
+observations.
+The remainder of the paper is structured as follows: in Sec-
+tion II we enumerate previous studies in the area of robotic and
+Computer Numerical Control (CNC) milling, relating this to
+state-of-the-art approaches for interaction control. Section III
+introduces the contemporary milling force modelling approach
+and proposed operational space control framework based on
+energy tanks (ET-OSC). This is then related to the overall
+framework for learning a milling task over a wide domain of
+materials, before evaluation of the modelling and framework
+in Section IV. Section V concludes the paper.
+II. RELATED WORK
+A. Robotic Milling & Milling Parameter Optimisation
+In recent years, research into using industrial robots for
+subtractive operations such as milling, drilling and grinding
+has gained much attention, particularly in the sphere of
+manufacturing. Such applications are driven by a demand
+for low-volume, highly flexible production with high dimen-
+sional tolerance. It is thus unsurprising that a majority of
+research in this area explores increasing the process capability
+of industrial robotics through dimensional compensation for
+the passive compliance of the tool-robot system [10]–[12]
+and compensation for chatter instability [13]. Few works,
+such as [14] consider handling uncertainty in robotic milling
+applications. In a disassembly setting, this uncertainty is a
+considerable challenge, however, dimensional accuracy of such
+processes takes a lower priority, with performance metrics
+shifting towards productivity, lower energy consumption and
+tool wear. Coincidentally, disassembly workstation concepts
+are incorporating human-robot collaboration [15], which im-
+plies a shift towards lower payload robots equipped with
+force and torque sensing capabilities, or “collaborative” robots,
+where the torque capabilities of the robot and safety are more
+significant for selection of milling strategy [16].
+Definition of a successful milling task is further dependent
+on selection of appropriate process parameters, however, is
+complicated by such uncertainty. Most works consider param-
+eter selection in CNC – as opposed to robotic – applications.
+In [17] an automatic approach for offline milling parame-
+ter global optimisation is presented. Due to the nature of
+the optimisation approach, prior knowledge of the material
+in the form of computer aided design (CAD) models and
+materials datasets are required, limiting the effectiveness of
+the approach for disassembly applications, in addition to
+computational overhead from the optimisation process. In [4],
+[18] the problem of motion planning for robotic cutting in
+dismantling operations is addressed (with an application to
+nuclear decommissioning) – however, they do not address the
+separate problem of online control of the manipulator against
+perturbations, caused by forceful interactions between the
+robot’s end-effector (EE) tool and the workpiece. In this paper,
+we address this problem by enabling the robot to adaptively
+select key parameters of the cutting process, online during
+cutting. Separately, the problem of online process parameter
+selection has inspired learning-based approaches. For example,
+a meta-reinforcement-learning (RL) approach is proposed in
+[19] incorporating multiple objectives and safety constraints.
+However, some level of prior knowledge is still required due
+to the need for predictive models for tool wear and power
+profiles of the process. In [20] a combination of RL and
+learned contour error prediction model was employed for
+reducing contouring errors during a CNC milling process.
+Beyond learning for control of milling processes, mechanistic
+modelling approaches have been employed as a means of
+efficient data collection for training predictive force models
+[21]. Such modelling approaches have been proposed in a
+robotic context in [22]. In [12], this is applied directly to
+an industrial robot to guide the optimal workpiece placement
+
+--- Sayfa 3 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+3
+for dimensional compensation of a milling task. Similarly,
+[23] employs a novel voxel-based simulation approach for
+dimensional compensation. However, all of these methods still
+require CAD models of the desired workpiece. In the following
+section, we describe how such simulations can be employed
+using a learning-based approach to optimise a cutting task over
+a generalised domain of materials.
+B. Learning & Interaction Control For Contact-Rich Tasks
+In simulation, complex tasks can be broken down into
+simpler tasks allowing them to be learned in stages. Further-
+more, the cost of data collection in simulation is relatively
+small - as compared to learning from many real cutting
+experiments, which may be prohibitive. Improving domain
+generalisation is therefore crucial for tasks with complex
+dynamics, dependent on a wide range of process parameters, or
+tasks that are prohibitive to learn directly in the target domain
+due to their challenging or destructive nature. Many recent
+works aim to resolve this problem using domain randomisation
+(DR) approaches. DR is a well-known domain generalisation
+technique that aims to achieve zero-shot transfer to a target
+domain by continually varying the parameters of the source
+domain. Therefore, once transferred to a target domain, the
+agent is robust to the differing task dynamics in the real
+world, assuming the approximation of the task dynamics in
+the source domain is sufficiently accurate. However, successful
+applications of DR thus far have been demonstrated mainly for
+non-destructive tasks [6], [9].
+Learning-based approaches to contact-rich tasks are com-
+mon in literature due to their applicability to a wide range
+of problems. A deep RL-based approach to hybrid position-
+force control for robotic assembly tasks was proposed in [6],
+and similarly in [7]. Furthermore, previous work [24]–[26] has
+explored hybrid force-position control in the robot’s operation
+space. This has application to simultaneously controlling e.g.
+the path of a cutting tool across a surface, and the contact force
+applied against the surface. However, this requires accurate
+task modelling due to partitioning of the control space into
+position and force controlled directions. Later work [27], [28]
+explored the use of computer vision and proprioception to
+obtain information about the robot’s configuration constraints
+and the surface which the robot is contacting.
+Alternatively, [29] explore the problem of learning inter-
+action control for a range of manipulation tasks through a
+variable impedance control (VIC)-based action space. VIC
+operates by imposing a desired dynamic behaviour on the
+robot which is assumed during interaction with unknown envi-
+ronments. However, guaranteeing the stable interaction of the
+robot with the environment is a challenging topic for learning-
+based control. Works specific to reinforcement learning in-
+clude [30], [31]. Notably, these proposed approaches require
+incorporation directly into the learning process. Outside of RL,
+this is addressed in [32], [33] using the concept of energy
+tanks (ETs). In [34], this is applied to guarantee stability
+for a cutting task, leveraging a passivity-based DS (dynam-
+ical systems) controller which allows temporary violation of
+passivity conditions without compromising the overall closed-
+loop system stability. In [35] an energy-tank-based VIC for
+redundant manipulators was proposed, allowing implementa-
+tion of desired impedance behaviour in both operational space
+and null space.
+Related to VIC, a key advantage of the operational space
+control paradigm [36] employed in an RL context [29] is that
+the operational space and null space dynamics are decoupled
+using the concept of the inertia-weighted psuedoinverse [37].
+This decoupling allows the null space to be exploited for
+purposes such as postural adjustment and maximising ma-
+nipulability (controllability) of the robot along a desired path
+without impeding the operational space objectives (such as
+following the path itself). By leveraging the applicability of the
+energy tank approach to learning-based control, the problem of
+guaranteeing stability of the learned policy can be addressed
+with modifications to the operational space interaction control
+strategy in a manner that is not only applicable during the
+learning process, but also pre-trained policies. Furthermore,
+the ET-based formalism can be related to the concept of energy
+budgets for human-robot interaction [38], which provides a
+natural framework within which robot and coordinate-agnostic
+safety constraints can be expressed.
+III. METHODOLOGY
+In this section, we show how the contemporary mechanistic
+cutting force model can be embedded in a simulation envi-
+ronment. We introduce the proposed energy-tank based opera-
+tional space controller (ET-OSC) and demonstrate application
+of the modified OSC law results in a passive closed-loop
+system, which provides a stability guarantee for interaction
+with any passive environment. Finally, we demonstrate how
+this is employed in an RL context to provide a framework to
+learn a joint process parameter and interaction control strategy
+for cutting tasks.
+A. Milling simulation
+The mechanistic milling force model [39] is a semi-
+empirical model that aims to relate forces acting on a milling
+tool to the cross-sectional area of undeformed material re-
+moved over each revolution of the tool spindle through empir-
+ically determined mechanistic constants (labelled Kc, Ke). It
+assumes a homogeneous workpiece with isotropic mechanical
+properties. It has a number of properties that provide the basis
+for a useful learning environment:
+• Low computational complexity (allowing faster than real-
+time simulation and hence expeditious data collection).
+• The dynamic behaviour of the environment is controlled
+by a small set of well-defined parameters.
+• The accuracy of the model is well-validated within the
+model assumptions.
+Typically a generalised tool model is discretised to a series of
+Nf flutes and Nd discs. We furthermore adopt the assumption
+from [40] that the values of Kc, Ke are constant over all ele-
+ments despite the varying oblique & rake angles. Nonetheless,
+differing values of Kc, Ke encompass wear of the milling tool
+and changes in the material mechanical properties.
+The mechanistic model defines a frame of reference (M)
+situated at the lower axial face of the tool, which is shown
+
+--- Sayfa 4 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+4
+(a) Six-flute end mill
+(b) Slitting saw
+Fig. 1: Discretisation scheme of tool geometry showing model
+and flute coordinate systems associated with discrete disk and
+flute elements for end mill (left) and slitting saw tool (right).
+For clarity, not all flute frames are visualised.
+along with the discretisation scheme in Figure 1. Based on
+the feed rate of the tool in the world frame (W) vW and
+world-to-model transform RM
+W , the model frame feed rate is
+vM = RM
+W vW
+(1)
+hence, by definition of the material feed per tooth f M:
+f M =
+1
+Nfω vM
+(2)
+where ω is the spindle speed in s−1. Adopting the approach
+from [40], for each flute and disc element, indexed by f, d
+respectively, the thickness of undeformed chip removed hF,D
+can be computed as the feed per tooth projected along the
+radial direction of each flute with associated frame F, D:
+hF,D =
+0
+−1
+0
+RF,D
+M f M
+(3)
+This is a generalisation of the simpler circular tool path ap-
+proximation approach, the latter assuming uniaxial feed of the
+tool along the positive ˆx direction in M. The transformation
+associated with each cutting element is related to the element
+angle θM
+f,d (defined clockwise from ˆy in M about ˆz):
+RM
+F,D =
+
+
+−cos θM
+f,d
+−sin θM
+f,d
+0
+sin θM
+f,d
+−cos θM
+f,d
+0
+0
+0
+1
+
+
+(4)
+The geometry of a general fluted end-mill or slitting saw can
+be constructed as [21]:
+θM
+f,d = Θ + fϕ −
+
+d + 1
+2
+ tan(φ)bf,d
+R
+(5)
+where Θ is the tool rotation angle in W, ϕ is the pitch angle,
+φ is the helix angle, R is the tool radius, and bf,d is the
+length of cutting edge. For slitting saw and end-mill tools this
+coincides with the height of each discrete disc element along
+ˆz in M. The overall cutting force on each flute F F,D can
+then be considered as the sum of chip cross-sectional area
+and edge-dependent components:
+F F,D = bf,d
+
+
+Ke,t
+Ke,r
+Ke,a
+
++ bf,d
+
+
+Kc,t
+Kc,r
+Kc,a
+
+hF,D
+(6)
+with t, r, a denoting the components of Kc, Ke over radial,
+tangential and axial directions respectively. Hence, the total
+model frame cutting force is the sum over all engaged cutting
+elements as
+F M =
+Nf
+X
+f
+Nd
+X
+d
+Gf,dRM
+F,DF F,D
+(7)
+G ∈BNf ×Nd is a Boolean matrix depending on if the element
+f, d is engaged with the workpiece. Intersection is computed
+using a Boolean geometry workpiece model, allowing efficient
+query of the intersection state of a given flute.
+B. Passive operational space control
+Consider the Euler-Lagrange equation for the dynamics of
+a rigid N-degree-of-freedom (DoF) manipulator in operational
+space with joint positions q:
+Λ(q)¨x + Γ(q, ˙q) + µ(q) = F c + F e
+(8)
+where Λ, Γ, µ are the operational space analogues to the
+inertia matrix, Coriolis and centrifugal force matrix and grav-
+itational force vector respectively. F c and F e are the applied
+control wrench and external wrench apparent at the end-
+effector (EE) expressed in W. The control law for operational
+space control (OSC) with time-varying stiffness Kp(t) and
+damping Kd(t) (with difference between current and desired
+EE pose e = x −xd) is expressed as:
+F c = Λ(q) [¨xd + Kd(t)˙e + Kp(t)e] + Γ + µ
+(9)
+Hence the closed loop dynamics of the system:
+¨e + Kd(t)˙e + Kp(t)e = Λ−1F e
+(10)
+Under RL-based variable OSC, the time-varying gains are
+set by the policy and are in general discontinuous. The issue
+with this setup arises when considering the energy storage
+function for the system:
+V (e, ˙e) = 1
+2 ˙eTΛ˙e + 1
+2eTΛKpe
+(11)
+The system’s passivity with respect to the input-output pair
+(˙e, F e) is determined by the condition:
+˙V (e, ˙e) ≤˙eTF e
+(12)
+From (11), substituting ¨e from (10), the power ˙V of the system
+is
+˙V (e, ˙e) = ˙eTF e −˙eTΛKd ˙e
++ 1
+2 ˙eT ˙Λ˙e + 1
+2eT ˙ΛKpe + 1
+2eTΛ ˙Kpe
+(13)
+and it is clear that the latter 3 terms add energy to the system
+that violates (12).
+In general, a loss of passivity affects the stability of the
+interaction between the robot and environment, and conver-
+gence to zero tracking error is no longer guaranteed in free
+space [32]. For RL, this is an issue as without constraints on
+the policy action space, it cannot be guaranteed that ˙Kp(t),
+˙Λ(t) meets (12). One approach could be to leverage action
+space design to restrict the magnitude of
+˙Kp(t), however
+
+--- Sayfa 5 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+5
+in practice from our preliminary evaluations using action
+spaces incorporating
+˙Kp(t), this resulted in poor training
+performance.
+The philosophy of energy tank (ET)-based control is that
+the energy dissipated through the system damping acts as
+a passivity margin within which a desired stiffness policy
+can be implemented. The excess dissipated energy is stored
+in a virtual, finite energy reservoir. When the desired pol-
+icy violates (12), the extra energy is instead drained from
+the tank to implement non-passive control actions, until the
+tank is depleted. Thus, the overall energy of the closed-loop
+system remains bounded. In fact, the stability of the system is
+guaranteed when interacting with any unknown environment,
+as long as the environment is also passive.
+Since ET control operates based on the exchange of energy
+between tank and system, the port-Hamiltonian (PH) approach
+[41] is a natural modelling framework for such systems. This
+has been employed in [42] and [43], which we extend to OSC.
+The generic representation of a PH system with state x, input-
+output pair u, y and Hamiltonian H coupled to an energy tank
+with counterpart xt, ut, yt, Ht is expressed as follows:
+
+
+
+
+
+
+
+
+
+˙x = [J(x) −R(x)] ∂H
+∂x + g(x)u
+˙xt = σ
+xt D(x) + 1
+xt (σPin −Pout) + ut
+y = gT(x) ∂H
+∂x
+yt = ∂Ht
+∂xt
+(14)
+where J(x), R(x) are matrices describing the power transfer
+and dissipation within the system, g(x) the input matrix. σ
+is a gate function controlling the power transferred to the
+tank through the dissipation D(x), while Pin, Pout describe
+external inward and outward power flow. To derive the PH
+representation of the variable-gain system, we adopt the ap-
+proach from [32], [33] by defining the desired gains as a sum
+of constant and time-varying components:
+Λ(t) = Λc + Λv(t)
+(15)
+Kp(t) = Kc + Kv(t)
+(16)
+then the energy storage function (Hamiltonian) of the system
+with constant and time-varying gains is as follows:
+V = 1
+2pTΛ−1
+c p + 1
+2 ˙eTΛv(t)˙e
++ 1
+2eT (Λc + Λv(t)) (Kc + Kv(t)) e
+(17)
+where p = Λc ˙e is the generalised momentum of the system.
+x =
+e
+pT. Using (10):
+˙p = F e −Λ(t)Kd ˙e −ΛcKce −Λv(t)Kce
+−Λ(t)Kv(t)e −Λv(t)¨e
+(18)
+the PH representation of the closed loop system is thus:
+
+
+
+
+
+
+
+
+
+
+
+"
+˙e
+˙p
+#
+=
+"
+0
+I
+−I
+−Λ(t)Kd
+# "
+ΛcKce
+Λ−1
+c p
+#
++
+"
+0
+I
+#
+(F e + w(t))
+y =
+h
+0
+I
+i "
+ΛcKce
+Λ−1
+c p
+#
+= ˙e
+(19)
+where
+w(t) = −Λv(t)Kce −Λ(t)Kv(t)e −Λv(t)¨e
+(20)
+The energy added to the tank through dissipation can be
+computed [33] as
+D(x) = ∂TH
+∂x R(x)∂H
+∂x = ˙eTΛ(t)Kd ˙e
+(21)
+A power balance between power port of tank (ut, yt)
+and closed-loop dynamic system (u, y) implies the following
+equality:
+uT
+t = −1
+xt
+wTy
+(22)
+Therefore, from (14) with (21) and (22), the tank dynamics
+are
+(
+˙xt = σ
+xt ˙eTΛ(t)Kd ˙e −1
+xt wT(t)˙e
+yt = xt
+(23)
+Setting ¨xd = 0, from (8) and (19) the energy-tank OSC law
+(excluding the feedforward terms Γ, µ) is thus:
+F c = −ΛcKce −Λ(t)Kd ˙e + w(t) + Λv(t)¨e
+(24)
+However, when w(t) = 0, the above control law is inadequate
+due to estimation noise associated with the Λv(t)¨e feedback
+term. In this case, an alternative control law may be derived:
+F c = Λ(t)
+ −Λ−1
+c Λ(t)Kd ˙e −Kce
+
++ Λv(t)Λ−1
+c F e
+(25)
+which recovers the desired closed loop dynamics in the case
+w(t) = 0:
+Λc¨x + Λ(t)Kd ˙e + ΛcKce = F e
+(26)
+Note the Λv(t)Λ−1
+c F e term implies external force feedback is
+still required to shape the inertial characteristics of the closed-
+loop system.
+1) Passivity of Energy-Tank-Based OSC: The proof of
+passivity of the ET-based OSC is now broadly similar to
+the impedance controller presented in [33]. Consider the
+Hamiltonian of the combined tank-robot system:
+W(e, ˙e, xt) = Hc(e, ˙e) + Ht(xt)
+(27)
+= 1
+2 ˙eTΛc ˙e + 1
+2eTΛcKce + 1
+2x2
+t
+(28)
+where Hc is the Hamiltonian of the constant gain system from
+(19). Then, by the same procedure as for (13):
+˙Hc(e, ˙e) = −˙eTΛ(t)Kd ˙e + ˙eTF e + ˙eTw(t)
+(29)
+similarly using (23):
+˙Ht(xt) = ˙xtxt = σ ˙eTΛ(t)Kd ˙e −wT(t)˙e
+(30)
+thus
+˙W(e, ˙e, xt) = (σ −1) ˙eTΛ(t)Kd ˙e + ˙eTF e
+(31)
+which, noting the design 0 ≤σ ≤1, satisfies (12).
+
+--- Sayfa 6 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+6
+(a) KUKA LBR iiwa R820
+with slitting saw tool.
+(b) Mujoco simulation with
+heightfield workpiece.
+Fig. 2: Experimental and simulated robotic cutting setup
+consisting of KUKA LBR iiwa R820 14kg collaborative robot
+with wrist-mounted motorised slitting saw tool.
+C. Reinforcement learning
+We define a simulation environment using the Mujoco
+[44] package based on the modelling framework in section
+III-A, replicating the experimental setup as shown in Figure
+2. The tool parameters were determined as R = 25 mm,
+ϕ = 0.1257 rad, φ = 0.0 rad, Nf = 50, Nd = 1, bf,d =
+0.5 mm, and ω = 1000 rpm. The workpiece was modelled as
+a heightfield data array interpolated across a bivariate cubic
+spline surface. Such an approach is chosen over methods with
+greater complexity and accuracy to minimise computational
+overhead, as such approaches are prevalent in literature [17],
+[23], and the focus of the current work is on learning a
+generalised control policy over a domain of materials, not on
+modelling the resulting workpiece geometry / tolerances. Tool
+paths were generated as NURBS (Non-Uniform Rational B-
+Spline) curves c(t). The action space for the controller is
+defined as
+
+diag−1 (Kp)
+˙t∆
+˙n∆
+T
+(32)
+which relates to the controller stiffness, and setpoint position
+xd, which is adjusted according to the planned path, time and
+normal offsets (t∆, n∆) as:
+xd = c(t + t∆) + n∆ˆn
+(33)
+where ˆn is the path normal vector. The observations provided
+to the agent are
+ξ =
+
+˙c(t) ˙xT
+e
+˙x
+F e
+t∆
+n∆
+diag−1 (Kp)
+T (34)
+while for the ET-based controller, the observation vector is
+augmented as:
+ξaug =
+
+ξ
+Ht(xt)
+˙Ht(xt)
+T
+(35)
+Note that while the material geometry and properties may
+vary, this information – including values of Kc, Ke – is not
+provided to the agent at runtime; only the desired reference
+path is known, which may be adjusted by the agent at runtime.
+A notable contrast with related works [17], [19] is that
+TABLE I: Model hyperparameters used with Proximal Policy
+Optimisation (PPO) algorithm for training the variable OSC
+policy for a cutting task. “MLP” refers to a multi-layer
+perceptron. Network architecture is represented as a list of
+hidden layer sizes.
+Hyperparameter
+Value
+Search space
+Learning rate (LR)
+3×10−4
+10−5–10−3
+LR half-life (as ratio of total timesteps)
+0.25
+0.125–0.5
+Batch size
+1024
+256–2048
+Discount factor
+0.99
+0.9–0.99
+Actor/critic network
+MLP
+—
+Actor/critic network architecture
+[64, 64]
+—
+we consider the optimisation of a single milling process in
+isolation. Typical cognitive robotic approaches to disassembly
+incorporate trial and error processes of exploration to deter-
+mine the required disassembly process plan [1], [2], therefore,
+in general the required processes (e.g. to separate the casing
+of a component) are not known in advance. Hence, we define
+the reward function as follows:
+r = QMRV · MRV −Qcuttcut −eQdeT −F eQfF T
+e
+(36)
+where the first two reward components are related to produc-
+tivity of the cutting task, based on:
+• Material removed volume MRV – computed from the
+uncut chip thickness, tool engagement and rotational
+speed of the cutter
+• Time elapsed per operation tcut
+These components are weighted by QMRV, the average cost of
+disassembled product per unit volume of material removed,
+and the cost of machining time Qcut. For simplicity, we
+consider only the time elapsed during the machining process
+and neglect tool changing, setup time and downtime.
+The second two reward components are additional terms
+used to guide the control policy to avoid dangerous or unre-
+alistic actions:
+• eQdeT, the weighted sum of the deviation from the
+desired path setpoint
+• F eQfF T
+e , similarly, for the end-effector wrench acting
+on the tool
+Qf is a cost weighting selected such that the reduction in cost
+from increasing MRV is balanced by increasing load on the
+tool at the maximum permissible process force.
+Policies were learned using the Proximal Policy Optimi-
+sation (PPO) learning algorithm [45]. PPO is an on-policy
+actor-critic policy gradient algorithm which employs a clipped
+objective function to constrain the magnitude of policy pa-
+rameter updates. It features improvements over other pol-
+icy gradient algorithms such as Deep Deterministic Policy
+Gradient (DDPG), as it is resistant to the so-called “catas-
+trophic forgetting” problem. Compared to state-of-the-art off-
+policy algorithms such as Twin-Delayed DDPG (TD3) or Soft
+Actor-Critic (SAC) it exhibits faster convergence for low-
+dimensional problems, however is comparatively less sample
+efficient—in the presented problem formulation, this is an
+acceptable trade-off due to the low computational complexity
+of the simulation. The training hyperparameters were informed
+
+--- Sayfa 7 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+7
+by manual search summarised in Table I. To improve training
+performance, reward normalisation and rolling average ob-
+servation normalisation were employed. Additionally, domain
+randomisation is applied to make the trained agent robust
+to variations in the tool and workpiece properties, which
+further aids domain generalisation when aiming to transfer
+the developed policy to new domains, such as the real world,
+or different selections of milling tool. The workpiece geometry
+is regenerated at the beginning of each training episode, pro-
+viding a wide range of surface geometries with different tool-
+workpiece engagement profiles. The mechanistic constants are
+sampled from a random uniform distribution informed from
+values obtained in literature and preliminary experiments.
+IV. RESULTS & DISCUSSION
+In this section we validate the proposed environment for
+learning cutting tasks based on collection of real world cutting
+data. Then, the effectiveness of the proposed ET-OSC vs.
+traditional OSC is compared while carrying out a cutting
+task. Finally, the performance of the proposed framework in
+simulation is evaluated and compared with a state-of-the-art
+efficient global optimisation (EGO) strategy.
+A. Real world model validation
+The bulk of experimental validation for the mechanis-
+tic modelling approach has been carried out for common
+metals using high-precision measurement equipment which
+is impractical to employ in a disassembly scenario. To be
+broadly applicable in these scenarios, the replicability of force
+measurements should be demonstrated on a real robot setup
+from onboard sensors over a range of different materials. For
+proof of principle we tried this using a KUKA LBR cobot
+equipped with joint torque sensors as shown in Figure 3. We
+selected experimental materials, shown in Figure 4 to match
+the payload capabilities of this robot. However, our method
+should also be workable on larger industrial robots equipped
+with e.g. a 6-axis force torque sensor at the wrist. Cutting
+experiments were carried out at varying feed rates within
+a range selected for each material, keeping radial depth of
+cut (RDOC) and tool speed ω fixed. These materials possess
+dissimilar mechanical properties, varying degrees of structural
+homogeneity and thickness, ensuring differing force profiles
+are generated in each experiment. To correct for sensor bias
+in the collected force measurements, the observed end-effector
+forces were recorded prior to engagement with the material
+and the average added as a measurement offset during cutting.
+The experimental setup was replicated in the simulator and the
+average measured force fitted with the average model force
+using the Levenberg-Marquardt algorithm.
+Figure
+5
+shows
+the
+average
+fitted
+model
+force
+for
+polyurethane (PU) foam, corrugated plastic and mica sheet
+respectively. For simplicity, the force components transverse to
+the feed direction (±Y) are neglected, as the influence of the
+milling force contribution from these directions is relatively
+marginal. For the latter three case studies of cardboard, plastic
+and mica, there is good correspondence of the average force
+between the model predictions and the measured forces with
+Fig. 3: Overview of experimental setup during real world
+cutting task on mica sheet.
+(a) Polyurethane (PU) foam
+(b) Cardboard
+(c) Corrugated plastic
+(d) Mica sheet
+Fig. 4: Selected materials for model validation
+overall RMSE (root mean square error) of 0.634N, 0.700N,
+0.396N respectively, despite their differing structure from
+common engineering materials, such as steels. For mica, the
+strongest relationship is observed, chiefly due to its greater de-
+gree of structural homogeneity and higher mechanical strength.
+The weakest relationship is observed for foam, which also
+exhibits behaviour in the feed direction contrary to expectation
+for a down-milling configuration. This is posited to be due
+to the high structural porosity and low mechanical strength,
+contributing to low observed cutting force, apparent in the
+surface normal direction (+Z), in combination with viscous
+friction effects in opposition to the feed direction. Note,
+however, that approximate modelling of the interaction forces
+is still possible without modifications to the model even in
+spite of this condition, with an overall RMSE of 0.574N,
+albeit suffering from a higher RMSE of 0.727N parallel to
+the feed. In practice, for instantaneous force modelling, an
+RMSE of ∼1N is observed even for higher accuracy modelling
+approaches based on machine learning [21]. While the relative
+error is much lower, due to the much higher forces involved,
+such models would need to be adapted to the range of materials
+considered.
+Chiefly, it should be mentioned the goal of the
+proposed modelling and simulation approach is not necessarily
+accurate reproduction of the instantaneous forces, but rather
+
+--- Sayfa 8 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+8
+1
+2
+3
+4
+4
+6
+Avg. force Y [N]
+Predicted
+Measured
+1
+2
+3
+4
+Feed rate [mmin−1]
+0
+1
+Avg. force Z [N]
+(a) Foam, down milling RDOC
+13.72mm
+0.25
+0.50
+0.75
+1.00
+1.25
+−8
+−6
+−4
+Avg. force Y [N]
+Predicted
+Measured
+0.25
+0.50
+0.75
+1.00
+1.25
+Feed rate [mmin−1]
+−1
+0
+1
+Avg. force Z [N]
+(b)
+Cardboard,
+up
+milling,
+RDOC 6.34mm
+0.2
+0.4
+0.6
+0.8
+1.0
+−6
+−4
+Avg. force Y [N]
+Predicted
+Measured
+0.2
+0.4
+0.6
+0.8
+1.0
+Feed rate [mmin−1]
+2
+3
+Avg. force Z [N]
+(c)
+Corrugated
+plastic,
+up
+milling, RDOC 1.95mm
+0.2
+0.4
+0.6
+0.8
+1.0
+−2
+0
+Avg. force Y [N]
+Predicted
+Measured
+0.2
+0.4
+0.6
+0.8
+1.0
+Feed rate [mmin−1]
+−3
+−2
+−1
+Avg. force Z [N]
+(d) Mica, down milling, RDOC
+1.00mm
+Fig. 5: Average cutting forces measured from onboard sensors for selected materials taken with slitting saw tool with Nf = 100,
+ω = 500rpm, R = 0.025 at varying feed rates, overlaid with mechanistic model predicted average forces. RDOC refers to the
+experiment radial depth of cut. Forces transverse to the feed direction (+Y for up milling, -Y for down milling) are omitted.
+a capability to replicate approximately the distribution of
+observed forces apparent at the end-effector, as these will have
+the greatest impact on the sampled state space and overall
+reward – and hence the policy – during the training process.
+B. Comparison of OSC with ET-based OSC
+To compare ET-OSC with traditional OSC in the case of
+a variable stiffness policy, we establish a case study for a
+cutting task over a planar surface with fixed, random material
+properties, using a variable stiffness policy trained using the
+procedure described in section III-C. To demonstrate the
+applicability of ET-OSC even for pre-trained policies, the
+policy was trained with only traditional OSC at a critically
+damped configuration. In the first case, the trained policy is
+deployed directly using OSC without modification, while in
+the second case the policy is deployed using ET-OSC. To
+evaluate the performance of ET-OSC, 10 repeat evaluations
+are performed, reducing the damping ratio of the controller
+from 1.0 to 0.1. Note the evaluation policy is trained only for
+a damping ratio of 1.0, however, in all expected scenarios,
+completion of the task is expected without violating safety
+constraints imposed upon the manipulator, such as joint limits.
+An overview of the agent variable stiffness policy outputs
+is shown in Figure 6a, 6b, which demonstrates the standard
+stiffness variation profile for the critically damped configura-
+tion and aggressive variations in the stiffness for the lowest
+damping ratios. Along the direction of cut, in the positive x
+direction, the agent adopts a consistently high stiffness. Figure
+6c, 6d shows the deviation of the policy from the setpoint
+position, indicating the tracking performance of ET-OSC and
+OSC. Notable by comparing Figure 6a–6c and Figure 6b–
+6d, the policy overcompensates for the path error with the
+reduced damping and implements undesirable behaviour which
+adds energy to the system. In the case of damping ratio of
+1.0, the performance of the ET-OSC and OSC are broadly
+similar, indicating the performance of the ET-OSC in the case
+dissipation is adequate to fill the tank. However, with further
+reduced damping ratio (Figure 6b), the effect of stiffness
+variation of the policy becomes significant as the damping
+is insufficient to guarantee passivity, and the traditional OSC
+policy diverges. This effect is most pronounced in the Z
+direction, where the saturation of the error signal indicates
+the violation of safety constraints imposed on the workspace
+and joint limits. Furthermore, OSC fails to converge to the
+desired path throughout the task, which is remediated only by
+stabilisation of the commanded stiffness signal after ∼15 s,
+as shown in Figure 6b. Note in both cases, the oscillation and
+reduced task performance of the controller is unavoidable as
+the system is highly under-damped. However, the ET-based
+OSC is capable of completing the cutting task without diver-
+gence or violation of joint safety constraints in spite of this
+condition. This furthermore demonstrates the ability to re-use
+policies even with aggressive variable stiffness characteristics
+without modification with the proposed ET-based OSC.
+C. Agent Evaluation
+We train a variable OSC policy based on the procedure in
+section III-C and evaluate using 4 random case study environ-
+ments shown in Figure 7. The case studies encapsulate dif-
+fering levels of local surface curvature and introduce random
+variation from task to task, which requires the learned policy to
+adapt to differing tool-workpiece engagement (TWE) and ma-
+terial properties, reflective of a previously unseen component.
+The material properties were sampled from a random uniform
+distribution reflecting a down-milling (climb) configuration
+over the range of evaluated case study materials. To evaluate
+the effectiveness of the proposed method, we compare over
+20 trials with an efficient global optimisation (EGO) strategy
+as proposed in [17]. This comparison accounts for the case
+where prior knowledge, such as CAD and material models are
+both known. We adopt similar conditions to those applied in
+[17], using a kriging model with constant mean and Gaussian
+process (GP) estimator with radial basis function (RBF) kernel
+to model the process cost, sampling the optimisation space
+over 115 rollouts, and the optimal set of process parameters
+estimated from the maxima of the GP reward surface model.
+A favourable comparison with the EGO approach suggests the
+capability of the learned policy to select process parameters
+online without prior knowledge of the task. As a benchmark,
+we compare with a basic “baseline” policy which selects
+constant process parameters as ||vW|| = 1.5mmin-1, depth of
+cut DOC=5mm, Kp = 800I3, which reflects a conservative
+initial attempt for an unseen component under the trial-and-
+error approach. Finally, we investigate the effect of adding a
+
+--- Sayfa 9 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+9
+(a) Damping ratio 1.0
+(b) Damping ratio 0.1
+(c) Damping ratio 1.0
+(d) Damping ratio 0.1
+Fig. 6: Comparison of stiffness of energy-tank-based OSC with traditional variable OSC with different settings of controller
+damping ratio (relative to critically damped configuration). With a gain-based policy action space, it is possible for strategies to
+be implemented that result in rapid variation of the controller stiffness over time. With insufficient damping, instability results
+in divergence of the traditional OSC and early termination due to violation of safety constraints.
+(a) Flat surface
+(b) Sinusoidal
+(c) Perlin noise
+(d) Fractal noise
+Fig. 7: Surface geometry case studies considered in simulation:
+planar material 7a, low-curvature surface 7b, high curvature or
+deformed material 7c, and rough, textured surface with high
+local surface curvature 7d. Different workpiece geometries
+influence the tool-workpiece engagement profile, which affects
+the selection of relevant process parameters (e.g. depth of cut).
+radial depth of cut (RDOC) offset to the policy outputs. This
+offset is identical to the benchmark case, which explores the
+capability of the policy to be guided by operator input and
+robustness to this scenario by adjusting the remaining process
+parameters if the user selection of RDOC is inappropriate for
+the task.
+The evolution of the reward function over training is shown
+in Figure 8, showing rapid improvement up to 4×106 samples,
+before convergence to maximum reward, demonstrating suc-
+cessful learning of the process parameter selection strategy. To
+Fig. 8: Training curve for cutting task with Proximal Policy
+Optimisation (PPO) algorithm and variable operational space
+control with domain randomisation of the workpiece geometry,
+tool path and material properties.
+identify the overall level of performance in the context of other
+approaches, the distribution of the rewards obtained between
+the range of tasks is shown in Figure 9, and average rewards
+over the presented case studies in Table II. The overall level
+of performance between each strategy demonstrates the agent
+performs to a similar level as an offline optimisation strategy,
+highlighting the effectiveness of the proposed method. How-
+ever, as the optimisation strategy has access to the full material
+and CAD models beforehand, the expected performance of the
+EGO approach is higher overall. The policy performance is
+
+--- Sayfa 10 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+10
+TABLE II: Comparison of average reward function components over 20 simulated cutting trials between the trained variable OSC
+policy, fixed process parameter “baseline” policy, and efficient global optimisation (EGO) approach, with reward breakdown
+of four sample trials in Figures 10a–10d.
+Strategy
+Expt
+Time
+Deviation
+MRV
+Force
+Total
+Baseline
+1
+-0.6752
+-0.04292
+0.1487
+-1.639
+-2.209
+2
+-1.555
+-2.334
+2.056
+-12.69
+-14.53
+3
+-1.302
+-3.387
+7.889
+-13.82
+-10.62
+4
+-0.9532
+-0.3946
+3.764
+-1.701
+0.7154
+Avg.
+-0.9662
+±0.06015
+-1.561
+±0.2477
+2.426
+±0.4446
+-7.827
+±1.012
+-7.928
+±1.173
+EGO [17]
+1
+-0.3562
+-0.02075
+0.1259
+-0.2042
+-0.4553
+2
+-0.7818
+-1.773
+16.31
+-11.39
+2.365
+3
+-0.6538
+-0.7885
+23.65
+-6.121
+16.09
+4
+-0.4922
+-0.3531
+7.554
+-1.773
+4.935
+Avg.
+-0.4947
+±0.02975
+-0.4525
+±0.1054
+6.832
+±1.936
+-3.354
+±0.7925
+2.530
+±1.383
+Ours
+1
+-0.4550
+-0.03773
+0.4675
+-0.3418
+-0.3670
+2
+-0.9090
+-0.03431
+0.05685
+-0.05936
+-0.9458
+3
+-0.8088
+-0.2255
+2.669
+-3.248
+-1.614
+4
+-0.5976
+-0.06534
+0.6324
+-0.2541
+-0.2846
+Avg.
+-0.6135
+±0.02923
+-0.09865
+±0.01781
+0.5349
+±0.1419
+-0.9572
+±0.3273
+-1.135
+±0.2825
+Ours (DOC offset)
+1
+-0.4428
+-0.03700
+1.315
+-1.135
+-0.2996
+2
+-0.8986
+-0.1114
+1.017
+-0.5519
+-0.5445
+3
+-1.050
+-1.137
+8.822
+-14.41
+-7.774
+4
+-0.5752
+-0.1399
+1.710
+-0.6540
+0.3405
+Avg.
+-0.6516
+±0.03687
+-0.7065
+±0.4077
+1.814
+±0.4388
+-5.336
+±2.508
+-4.880
+±2.886
+Fig. 9: Box plot showing distribution of rewards from 20 sim-
+ulated cutting experiments between fixed process parameter
+“baseline” policy, trained variable operational space control
+policy, and offline optimisation (EGO). One outlier is present
+at -56.53 for the policy with depth of cut (DOC) offset, which
+is omitted for clarity.
+markedly more consistent than the baseline for the majority
+of trials, even in the case that a DOC offset bias is added by
+the user, implying the limitations of a trial-and-error parameter
+selection strategy. Comparing the individual reward function
+components suggests reductions in path tracking error by 54%
+relative to the benchmark, even for the DOC adjusted policy,
+while process time is maintained within 25% of the optimum
+obtained with EGO, rising to 31% for the DOC offset case.
+Figures 10a, 10b, 10c, 10d show the estimated negative
+reward (cost) surface contour for four selected rollouts, show-
+ing the resultant optimal process parameters. The evolution
+of parameter selection of the policy during each rollout is
+overlaid as a quiver plot. Figures 11, 12, 13, 14 show the
+path deviation, force, material removal and controller stiffness
+for the selected rollouts, comparing between the described
+parameter selection strategies. Comparison of these figures
+indicates the selection of feed rate is close to the optimal
+behaviour over all case studies. The selected feed rates cor-
+respond closely with regions of low cost, corroborated by the
+similar task duration of the policy and EGO over all trials.
+Comparing the tracking performance between each strategy
+indicates improved tracking of the desired path in the X and
+Y directions, while increasing tracking error in the normal
+direction.
+The selection of RDOC by the learned policy particularly
+differs from the optimal behaviour, assuming a low depth
+of cut throughout each task, however, outperforms a naive
+selection of DOC throughout all tasks. From the partial
+dependence plots for depth of cut in Figure 10a, 10b, it is
+clear that lower depths of cut are favoured in these scenarios to
+minimise process force. Although some deviation is observed
+in Figure 10d, corresponding to the cost surface favouring
+higher RDOC, the implemented behaviour is still highly
+conservative. This is particularly apparent in Figure 12, where
+the user RDOC offset is required to achieve a similar level
+of material removal as the baseline. The propensity to favour
+low RDOC throughout the selected case studies suggests the
+susceptibility of the method to local minima, contrasting with
+EGO. Further examination of the DOC variation over the
+selected rollouts reveals a loop-like structure in which the
+DOC is rapidly increased. Throughout each operation, small
+deviations from the path are observed. Close to the end of
+the path, this results in a “corner-cutting” behaviour, where
+the controller withdraws from the surface before reaching the
+path endpoint. Hence, the loop-like RDOC structure suggests
+
+--- Sayfa 11 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+11
+(a) Case study 1 Kc =
+718.7
+839.9
+0.03656TNmm−2,
+Ke =
+8.337
+0.4894
+−0.009854T Nmm−1
+(b) Case study 2 Kc =
+368.4
+759.6
+0.03994TNmm−2,
+Ke =
+3.306
+3.509
+−0.007470T Nmm−1
+(c) Case study 3 Kc =
+343.7
+788.0
+−0.04609TNmm−2,
+Ke =
+9.203
+3.984
+−0.0005049T Nmm−1
+(d) Case study 4 Kc =
+463.4
+997.7
+0.09269TNmm−2,
+Ke =
+3.253
+6.923
+0.0002610T Nmm−1
+Fig. 10: Contour plots of estimated reward function dependence of each process parameter pair for each cutting case study
+using Gaussian process (GP) kriging model. The star shows the location of the found optimum. The diagonal plots show the
+partial dependence of the reward function with respect to each process parameter; the dotted line marks the found optimum.
+Top right: Plot of surface geometry and planned cutting path.
+
+--- Sayfa 12 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+12
+0.00
+0.01
+Error X (ex) [m]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+−0.005
+0.000
+Error Y (ey) [m]
+0
+1
+2
+3
+4
+5
+6
+7
+Time [s]
+−0.005
+0.000
+0.005
+Error Z (ez) [m]
+(a) Path error, all
+−20
+0
+20
+Force Fx [N]
+Policy
+Policy (DOC offset)
+−10
+0
+10
+Force Fy [N]
+0
+1
+2
+3
+4
+Time [s]
+−40
+−20
+0
+Force Fz [N]
+(b) Force, policies
+−20
+0
+20
+Force Fx [N]
+Baseline
+−10
+0
+10
+Force Fy [N]
+0
+1
+2
+3
+4
+5
+6
+7
+Time [s]
+−20
+0
+Force Fz [N]
+(c) Force, baseline
+−10
+0
+10
+Force Fx [N]
+EGO
+−5
+0
+5
+Force Fy [N]
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+3.5
+Time [s]
+−20
+0
+Force Fz [N]
+(d) Force, EGO
+Time [s]
+−0.025
+0.000
+0.025
+MRV reward
+Policy
+Policy (DOC offset)
+Time [s]
+−0.04
+−0.02
+0.00
+MRV reward
+Baseline
+0
+1
+2
+3
+4
+5
+6
+7
+Time [s]
+0.00
+0.01
+MRV reward
+EGO
+(e) MRV, Top: policy, Middle:
+baseline, Bottom: EGO
+500
+1000
+1500
+Stiff. Kx [Nm−1]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+1000
+1500
+Stiff. Ky [Nm−1]
+0
+1
+2
+3
+4
+5
+6
+7
+Time [s]
+500
+1000
+1500
+Stiff. Kz [Nm−1]
+(f) Implemented stiffness ac-
+tions, all
+Fig. 11: Observations during rollout for cutting of ma-
+terial (Kc
+=
+718.7
+839.9
+0.03656TNm−2, Ke
+=
+8.337
+0.4894
+−0.009854T Nm−1).
+a compensatory strategy for the compliance characteristics of
+the robot, allowing better coverage of the entire desired cutting
+path. Thus, in spite of the conservative RDOC behaviour, the
+selection of RDOC offset by the agent may be a useful strategy
+to compensate for path planning errors, e.g. in the case of
+damaged / deformed components. This informs applications
+for a baseline parameter adjustment method or means of data
+collection with reduced user intervention.
+Overall, a key advantage of the proposed method is that the
+performance of a milling task can be improved in isolation
+without any prior knowledge. Since no rollouts are computed
+in advance as required with the EGO approach, the com-
+putational overhead is much lower. Nonetheless, the overall
+greater performance of EGO, coupled with the results for the
+policy with DOC offset may suggest a hybrid strategy based
+on combination of offline process modelling, with recourse
+to the learned parameter selection strategy where data are
+unavailable. This would allow such datasets to be constructed
+and added to a global knowledge base over time, reflecting
+the approaches in [1], [2] for disassembly applications. An
+alternative could be to employ EGO as a supervisor to accel-
+erate the learning process and alleviate the problem of local
+minima, while preserving some of our method’s advantages.
+−0.02
+0.00
+Error X (ex) [m]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+−0.0025
+0.0000
+0.0025
+Error Y (ey) [m]
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Time [s]
+−0.01
+0.00
+Error Z (ez) [m]
+(a) Path error, all
+−5
+0
+5
+Force Fx [N]
+Policy
+Policy (DOC offset)
+−1
+0
+Force Fy [N]
+0
+2
+4
+6
+8
+Time [s]
+−10
+0
+Force Fz [N]
+(b) Force, policies
+0
+20
+Force Fx [N]
+Baseline
+−2
+0
+Force Fy [N]
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Time [s]
+−10
+0
+Force Fz [N]
+(c) Force, baseline
+0
+20
+Force Fx [N]
+EGO
+−5
+0
+Force Fy [N]
+0
+1
+2
+3
+4
+5
+6
+7
+8
+Time [s]
+−20
+0
+Force Fz [N]
+(d) Force, EGO
+Time [s]
+0.0000
+0.0025
+0.0050
+MRV reward
+Policy
+Policy (DOC offset)
+Time [s]
+0.000
+0.002
+MRV reward
+Baseline
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Time [s]
+0.000
+0.005
+MRV reward
+EGO
+(e) MRV, Top: policy, Middle:
+baseline, Bottom: EGO
+500
+1000
+1500
+Stiff. Kx [Nm−1]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+1000
+1500
+Stiff. Ky [Nm−1]
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Time [s]
+500
+1000
+1500
+Stiff. Kz [Nm−1]
+(f) Implemented stiffness ac-
+tions, all
+Fig. 12: Observations during rollout for cutting of ma-
+terial (Kc
+=
+368.4
+759.6
+0.03994TNm−2, Ke
+=
+3.306
+3.509
+−0.007470T Nm−1).
+V. CONCLUSION
+We propose a novel learning-based approach to milling
+parameter selection based on a mechanistic milling force sim-
+ulation. We demonstrate the replicability of real-world results
+in the simulation environment and successful learning of a
+variable operational space control (OSC) policy over a wide
+distribution of materials and surface profiles. We furthermore
+address the issue of stability for variable OSC policies using
+the concept of energy tanks (ETs). Although the general con-
+cept of ET control is not new, this work solves relevant prob-
+lems for reinforcement-learning-based interaction control and
+demonstrates the applicability of ET-OSC to already trained
+policies. For the simulated milling task, a favourable com-
+parison with a constant parameter benchmark and greatly im-
+proved task consistency implies the generality of the proposed
+approach. Although an efficient global optimisation (EGO)
+strategy based on prior knowledge outperforms the proposed
+method, our approach has reduced computational overhead,
+and is independent of prior knowledge, material properties
+and workpiece geometry, informing potential applications as a
+conservative baseline parameter adjustment method or means
+of data collection for unknown components with reduced
+user intervention. Future work will demonstrate generality
+of our approach to real-world robotic cutting demonstrations
+
+--- Sayfa 13 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+13
+0.00
+0.01
+Error X (ex) [m]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+−0.050
+−0.025
+0.000
+Error Y (ey) [m]
+0
+2
+4
+6
+8
+10
+12
+Time [s]
+−0.01
+0.00
+0.01
+Error Z (ez) [m]
+(a) Path error, all
+−10
+0
+Force Fx [N]
+Policy
+Policy (DOC offset)
+0
+20
+40
+Force Fy [N]
+0
+2
+4
+6
+8
+10
+Time [s]
+−40
+−20
+0
+Force Fz [N]
+(b) Force, policies
+−10
+0
+10
+Force Fx [N]
+Baseline
+0
+20
+40
+Force Fy [N]
+0
+2
+4
+6
+8
+10
+12
+Time [s]
+−20
+0
+Force Fz [N]
+(c) Force, baseline
+−20
+0
+Force Fx [N]
+EGO
+0
+20
+40
+Force Fy [N]
+0
+1
+2
+3
+4
+5
+6
+Time [s]
+−20
+0
+Force Fz [N]
+(d) Force, EGO
+Time [s]
+0.00
+0.05
+MRV reward
+Policy
+Policy (DOC offset)
+Time [s]
+0.00
+0.02
+MRV reward
+Baseline
+0
+2
+4
+6
+8
+10
+12
+Time [s]
+0.000
+0.025
+MRV reward
+EGO
+(e) MRV, Top: policy, Middle:
+baseline, Bottom: EGO
+500
+1000
+1500
+Stiff. Kx [Nm−1]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+1000
+1500
+Stiff. Ky [Nm−1]
+0
+2
+4
+6
+8
+10
+12
+Time [s]
+500
+1000
+1500
+Stiff. Kz [Nm−1]
+(f) Implemented stiffness ac-
+tions, all
+Fig. 13: Observations during rollout for cutting of ma-
+terial (Kc
+=
+
+343.7
+788.0
+−0.04609
+TNm−2, Ke
+=
+9.203
+3.984
+−0.0005049T Nm−1).
+using a variety of different rotary contact tools. Furthermore,
+while this work demonstrates generalisation across a range of
+single-component materials, the extension to complex products
+comprising multiple layers or composite materials could be
+investigated. Moreover, an online framework could use a
+combination of our approach for online parameter adjustment,
+guided by EGO where material models are available, with
+recourse to the proposed method where these are unavailable.
+REFERENCES
+[1] S. Vongbunyong, S. Kara, and M. Pagnucco, “Basic behaviour
+control of the vision-based cognitive robotic disassembly automation,”
+Assembly Automation, vol. 33, no. 1, pp. 38–56, Jan 2013. [Online].
+Available: https://doi.org/10.1108/01445151311294694
+[2] ——, “Learning and revision in cognitive robotics disassembly automa-
+tion,” Robotics and Computer-Integrated Manufacturing, vol. 34, pp.
+79–94, 2015.
+[3] H. Poschmann, H. Br¨uggemann, and D. Goldmann, “Disassembly
+4.0: A review on using robotics in disassembly tasks as a way of
+automation,” Chemie Ingenieur Technik, vol. 92, no. 4, pp. 341–359,
+2020. [Online]. Available: https://onlinelibrary.wiley.com/doi/abs/10.
+1002/cite.201900107
+[4] T. Pardi, V. Ortenzi, C. Fairbairn, T. Pipe, A. M. G. Esfahani, and
+R. Stolkin, “Planning maximum-manipulability cutting paths,” IEEE
+Robotics and Automation Letters, vol. 5, no. 2, pp. 1999–2006, 2020.
+[5] A. Rastegarpanah, J. Hathaway, and R. Stolkin, “Vision-guided mpc
+for robotic path following using learned memory-augmented model,”
+Frontiers in Robotics and AI, vol. 8, 2021.
+−0.02
+0.00
+Error X (ex) [m]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+0.00
+0.01
+0.02
+Error Y (ey) [m]
+0
+2
+4
+6
+8
+10
+Time [s]
+−0.01
+0.00
+0.01
+Error Z (ez) [m]
+(a) Path error, all
+0
+10
+Force Fx [N]
+Policy
+Policy (DOC offset)
+−10
+0
+Force Fy [N]
+0
+1
+2
+3
+4
+5
+6
+Time [s]
+−10
+0
+Force Fz [N]
+(b) Force, policies
+0
+20
+Force Fx [N]
+Baseline
+−10
+0
+Force Fy [N]
+0
+2
+4
+6
+8
+10
+Time [s]
+−10
+0
+Force Fz [N]
+(c) Force, baseline
+0
+20
+Force Fx [N]
+EGO
+−20
+0
+Force Fy [N]
+0
+1
+2
+3
+4
+5
+Time [s]
+−20
+0
+Force Fz [N]
+(d) Force, EGO
+Time [s]
+0.00
+0.05
+MRV reward
+Policy
+Policy (DOC offset)
+Time [s]
+0.00
+0.02
+0.04
+MRV reward
+Baseline
+0
+2
+4
+6
+8
+10
+Time [s]
+0.00
+0.05
+MRV reward
+EGO
+(e) MRV, Top: policy, Middle:
+baseline, Bottom: EGO
+500
+1000
+1500
+Stiff. Kx [Nm−1]
+Policy
+Policy (DOC offset)
+Baseline
+EGO
+1000
+1500
+Stiff. Ky [Nm−1]
+0
+2
+4
+6
+8
+10
+Time [s]
+500
+1000
+1500
+Stiff. Kz [Nm−1]
+(f) Implemented stiffness ac-
+tions, all
+Fig. 14: Observations during rollout for cutting of ma-
+terial (Kc
+=
+463.4
+997.7
+0.09269TNm−2, Ke
+=
+3.253
+6.923
+0.0002610T Nm−1).
+[6] C.
+C.
+Beltran-Hernandez,
+D.
+Petit,
+I.
+G.
+Ramirez-Alpizar,
+and
+K. Harada, “Variable compliance control for robotic peg-in-hole
+assembly: A deep-reinforcement-learning approach,” Applied Sciences,
+vol. 10, no. 19, 2020. [Online]. Available: https://www.mdpi.com/
+2076-3417/10/19/6923
+[7] Y. Wang, C. C. Beltran-Hernandez, W. Wan, and K. Harada, “Hybrid
+trajectory and force learning of complex assembly tasks: A combined
+learning framework,” IEEE Access, vol. 9, pp. 60 175–60 186, 2021.
+[8] X. Li, J. Xiao, W. Zhao, H. Liu, and G. Wang, “Multiple peg-in-hole
+compliant assembly based on a learning-accelerated deep deterministic
+policy gradient strategy,” Industrial Robot: the international journal of
+robotics research and application, vol. 49, no. 1, pp. 54–64, Jan 2022.
+[Online]. Available: https://doi.org/10.1108/IR-01-2021-0003
+[9] X. B. Peng, M. Andrychowicz, W. Zaremba, and P. Abbeel, “Sim-to-real
+transfer of robotic control with dynamics randomization,” in 2018 IEEE
+International Conference on Robotics and Automation (ICRA), 2018, pp.
+3803–3810.
+[10] G. Xiong, Y. Ding, and L. Zhu, “A feed-direction stiffness based tra-
+jectory optimization method for a milling robot,” in Intelligent Robotics
+and Applications, Y. Huang, H. Wu, H. Liu, and Z. Yin, Eds.
+Cham:
+Springer International Publishing, 2017, pp. 184–195.
+[11] Y. Lin, H. Zhao, and H. Ding, “Posture optimization methodology
+of 6r industrial robots for machining using performance evaluation
+indexes,” Robotics and Computer-Integrated Manufacturing, vol. 48,
+pp. 59–72, 2017. [Online]. Available: https://www.sciencedirect.com/
+science/article/pii/S0736584516301223
+[12] F. Schnoes and M. Zaeh, “Model-based planning of machining
+operations for industrial robots,” Procedia CIRP, vol. 82, pp. 497–502,
+2019, 17th CIRP Conference on Modelling of Machining Operations
+(17th CIRP CMMO). [Online]. Available: https://www.sciencedirect.
+com/science/article/pii/S2212827119309849
+[13] B.
+Gonul,
+O.
+F.
+Sapmaz,
+and
+L.
+T.
+Tunc,
+“Improved
+stable
+
+--- Sayfa 14 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+14
+conditions in robotic milling by kinematic redundancy,” Procedia
+CIRP, vol. 82, pp. 485–490, 2019, 17th CIRP Conference on Modelling
+of Machining Operations (17th CIRP CMMO). [Online]. Available:
+https://www.sciencedirect.com/science/article/pii/S2212827119309886
+[14] Y. Gao, H. Gao, K. Bai, M. Li, and W. Dong, “A robotic milling
+system based on 3d point cloud,” Machines, vol. 9, no. 12, 2021.
+[Online]. Available: https://www.mdpi.com/2075-1702/9/12/355
+[15] W. J. Tan, C. M. M. Chin, A. Garg, and L. Gao, “A hybrid disassembly
+framework for disassembly of electric vehicle batteries,” International
+Journal of Energy Research, vol. 45, no. 5, pp. 8073–8082, 2021.
+[Online]. Available: https://onlinelibrary.wiley.com/doi/abs/10.1002/er.
+6364
+[16] E. Leal-Mu¯noz, E. Diez, J. Marquez, and A. Vizan, “Feasibility of
+machining using low payload robots,” Procedia Manufacturing, vol. 41,
+pp. 594–601, 2019, 8th Manufacturing Engineering Society International
+Conference, MESIC 2019, 19-21 June 2019, Madrid, Spain.
+[17] H. Ma, W. Liu, X. Zhou, Q. Niu, and C. Kong, “An effective and
+automatic approach for parameters optimization of complex end milling
+process based on virtual machining,” Journal of Intelligent Manufactur-
+ing, vol. 31, no. 4, pp. 967–984, 2020.
+[18] T. Pardi, V. Maddali, V. Ortenzi, R. Stolkin, and N. Marturi, “Path
+planning for mobile manipulator robots under non-holonomic and task
+constraints,” in 2020 IEEE/RSJ International Conference on Intelligent
+Robots and Systems (IROS), 2020, pp. 6749–6756.
+[19] Q. Xiao, C. Li, Y. Tang, and L. Li, “Meta-reinforcement learning of
+machining parameters for energy-efficient process control of flexible
+turning operations,” IEEE Transactions on Automation Science and
+Engineering, vol. 18, no. 1, pp. 5–18, 2021.
+[20] Y. Jiang, J. Chen, H. Zhou, J. Yang, P. Hu, and J. Wang, “Contour error
+modeling and compensation of cnc machining based on deep learning
+and reinforcement learning,” The International Journal of Advanced
+Manufacturing Technology, vol. 118, no. 1, pp. 551–570, Jan 2022.
+[Online]. Available: https://doi.org/10.1007/s00170-021-07895-6
+[21] A. Agarwal and K. Desai, “Amalgamation of physics-based cutting
+force
+model
+and
+machine
+learning
+approach
+for
+end
+milling
+operation,” Procedia CIRP, vol. 93, pp. 1405–1410, 2020, 53rd CIRP
+Conference on Manufacturing Systems 2020. [Online]. Available:
+https://www.sciencedirect.com/science/article/pii/S2212827120307368
+[22] E. Rivi`ere-Lorph`evre, H. N. Huynh, F. Ducobu, and O. Verlinden,
+“Cutting force prediction in robotic machining,” Procedia CIRP,
+vol. 82, pp. 509–514, 2019, 17th CIRP Conference on Modelling
+of Machining Operations (17th CIRP CMMO). [Online]. Available:
+https://www.sciencedirect.com/science/article/pii/S2212827119307577
+[23] F. Schn¨os, D. Hartmann, B. Obst, and G. Glashagen, “Gpu accelerated
+voxel-based machining simulation,” The International Journal of
+Advanced Manufacturing Technology, vol. 115, no. 1, pp. 275–289, Jul
+2021. [Online]. Available: https://doi.org/10.1007/s00170-021-07001-w
+[24] V. Ortenzi, M. Adjigble, J. A. Kuo, R. Stolkin, and M. Mistry, “An
+experimental study of robot control during environmental contacts
+based on projected operational space dynamics,” in 2014 IEEE-RAS
+International Conference on Humanoid Robots, 2014, pp. 407–412.
+[25] V. Ortenzi, R. Stolkin, J. A. Kuo, and M. Mistry, “Projected inverse
+dynamics control and optimal control for robots in contact with the en-
+vironment: A comparison,” in 2015 IEEE/RSJ International Conference
+on Intelligent Robots and Systems (IROS), 2015, pp. 4009–4015.
+[26] V. Ortenzi, R. Stolkin, J. Kuo, and M. Mistry, “Hybrid motion/force
+control: a review,” Advanced Robotics, vol. 31, no. 19-20, pp. 1102–
+1113, 2017. [Online]. Available: https://doi.org/10.1080/01691864.2017.
+1364168
+[27] V. Ortenzi, N. Marturi, M. Mistry, J. Kuo, and R. Stolkin, “Vision-based
+framework to estimate robot configuration and kinematic constraints,”
+IEEE/ASME Transactions on Mechatronics, vol. 23, no. 5, pp. 2402–
+2412, 2018.
+[28] V. Ortenzi, H.-C. Lin, M. Azad, R. Stolkin, J. A. Kuo, and M. Mis-
+try, “Kinematics-based estimation of contact constraints using only
+proprioception,” in 2016 IEEE-RAS 16th International Conference on
+Humanoid Robots (Humanoids), 2016, pp. 1304–1311.
+[29] R. Mart´ın-Mart´ın, M. Lee, R. Gardner, S. Savarese, J. Bohg, and
+A. Garg, “Variable impedance control in end-effector space. an action
+space for reinforcement learning in contact rich tasks,” in Proceedings of
+the International Conference of Intelligent Robots and Systems (IROS),
+2019.
+[30] M. Han, L. Zhang, J. Wang, and W. Pan, “Actor-critic reinforcement
+learning for control with stability guarantee,” IEEE Robotics and Au-
+tomation Letters, vol. 5, no. 4, pp. 6217–6224, 2020.
+[31] M. Jin and J. Lavaei, “Stability-certified reinforcement learning: A
+control-theoretic perspective,” IEEE Access, vol. 8, pp. 229 086–229 100,
+2020.
+[32] F. Ferraguti, C. Secchi, and C. Fantuzzi, “A tank-based approach to
+impedance control with variable stiffness,” in 2013 IEEE International
+Conference on Robotics and Automation, 2013, pp. 4948–4953.
+[33] F. Ferraguti, N. Preda, A. Manurung, M. Bonf`e, O. Lambercy,
+R. Gassert, R. Muradore, P. Fiorini, and C. Secchi, “An energy tank-
+based interactive control architecture for autonomous and teleoperated
+robotic surgery,” IEEE Transactions on Robotics, vol. 31, no. 5, pp.
+1073–1088, 2015.
+[34] R. Wu and A. Billard, “Learning from demonstration and interactive
+control of variable-impedance to cut soft tissues,” IEEE/ASME Trans-
+actions on Mechatronics, pp. 1–12, 2021.
+[35] Y. Michel, C. Ott, and D. Lee, “Passivity-based variable impedance
+control for redundant manipulators,” IFAC-PapersOnLine, vol. 53, no. 2,
+pp. 9865–9872, 2020, 21st IFAC World Congress.
+[36] O. Khatib, “A unified approach for motion and force control of robot
+manipulators: The operational space formulation,” IEEE Journal on
+Robotics and Automation, vol. 3, no. 1, pp. 43–53, 1987.
+[37] J. Nakanishi, R. Cory, M. Mistry, J. Peters, and S. Schaal, “Operational
+space
+control:
+A
+theoretical
+and
+empirical
+comparison,”
+The
+International Journal of Robotics Research, vol. 27, no. 6, pp. 737–757,
+2008. [Online]. Available: https://doi.org/10.1177/0278364908091463
+[38] J. Lachner, F. Allmendinger, E. Hobert, N. Hogan, and S. Stramigioli,
+“Energy budgets for coordinate invariant robot control in physical
+human–robot
+interaction,”
+The
+International
+Journal
+of
+Robotics
+Research, vol. 40, no. 8-9, pp. 968–985, 2021. [Online]. Available:
+https://doi.org/10.1177/02783649211011639
+[39] E. Armarego and R. Brown, The Machining of Metals.
+Prentice-Hall,
+1969.
+[40] L. Berglind, D. Plakhotnik, and E. Ozturk, “Discrete cutting force
+model
+for
+5-axis
+milling
+with
+arbitrary
+engagement
+and
+feed
+direction,” Procedia CIRP, vol. 58, pp. 445–450, 2017, 16th CIRP
+Conference on Modelling of Machining Operations (16th CIRP
+CMMO). [Online]. Available: https://www.sciencedirect.com/science/
+article/pii/S221282711730433X
+[41] B. Maschke and A. van der Schaft, “Port-controlled hamiltonian
+systems: Modelling origins and systemtheoretic properties,” IFAC
+Proceedings Volumes, vol. 25, no. 13, pp. 359–365, 1992, 2nd IFAC
+Symposium on Nonlinear Control Systems Design 1992, Bordeaux,
+France, 24-26 June. [Online]. Available: https://www.sciencedirect.com/
+science/article/pii/S1474667017523083
+[42] A. Gheibi, A. R. Ghiasi, S. Ghaemi, and M. A. Badamchizadeh,
+“Designing of robust adaptive passivity-based controller based on
+reinforcement learning for nonlinear port-hamiltonian model with
+disturbance,” International Journal of Control, vol. 93, no. 8, pp. 1754–
+1764, 2020. [Online]. Available: https://doi.org/10.1080/00207179.2018.
+1532607
+[43] Y. Michel, R. Rahal, C. Pacchierotti, P. R. Giordano, and D. Lee,
+“Bilateral teleoperation with adaptive impedance control for contact
+tasks,” IEEE Robotics and Automation Letters, vol. 6, no. 3, p. 5429
+– 5436, 2021, all Open Access, Green Open Access.
+[44] E. Todorov, T. Erez, and Y. Tassa, “Mujoco: A physics engine for
+model-based control,” in 2012 IEEE/RSJ International Conference on
+Intelligent Robots and Systems.
+IEEE, 2012, pp. 5026–5033.
+[45] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov,
+“Proximal policy optimization algorithms,” CoRR, vol. abs/1707.06347,
+2017. [Online]. Available: http://arxiv.org/abs/1707.06347
+Jamie Hathaway Jamie Hathaway is an PhD can-
+didate at the University of Birmingham as part of
+the Faraday Institution RELIB (Reuse and Recy-
+cling of Lithium-ion Batteries) project. He received
+the MEng degree in Nuclear Engineering in 2020
+from the University of Birmingham. His research
+interests primarily focus on data-driven methods
+for modelling and intelligent robotic control, and
+their application to contact-rich tasks. His current
+work focuses on learning and demonstration-based
+methods to develop generalised interaction control
+strategies for robotising the process of battery pack disassembly.
+
+--- Sayfa 15 ---
+IEEE TRANSACTIONS ON AUTOMATION SCIENCE & ENGINEERING
+15
+Alireza Rastegarpanah Dr Rastegarpanah is a se-
+nior robotic researcher at the Faraday Institution-
+University of Birmingham who is leading the
+robotics team at a project called ”Reuse and Re-
+cycling of Lithium-ion batteries (RELIB)” with a
+focus on automating the process of testing, disas-
+sembly and sorting Electrical Vehicle Lithium-ion
+batteries using advanced robotics and AI techniques.
+Dr Alireza Rastegarpanah is an interdisciplinary
+engineer with diverse research interests broadly cen-
+tres on robotics, physical human-robot interaction,
+machine vision, machine learning and robotic manipulation. Currently his
+research comprises two main streams: (i) developing adaptive learning-based
+control strategies for disassembly of complex products, and (ii) Developing
+Neural Network models for predicting the state of health of EV batteries.
+Rustam
+Stolkin
+Rustam
+Stolkin
+received
+the
+M.Eng. degree in engineering science from the Uni-
+versity of Oxford, Oxford, U.K. in 1998, and the
+Ph.D. degree in computer vision from the University
+College London, London, U.K., in 2004. He is the
+Chair of Robotics with the University of Birming-
+ham, Birmingham, U.K.; the Royal Society Industry
+Fellow; the Chair of the Expert Group on Robotic
+and Remote Systems for the OECD’s Nuclear En-
+ergy Agency; and founded the U.K. National Centre
+for Nuclear Robotics in 2017. His research interests
+include computer vision and image processing, machine learning and AI,
+robotic grasping and manipulation, and human–robot interaction.

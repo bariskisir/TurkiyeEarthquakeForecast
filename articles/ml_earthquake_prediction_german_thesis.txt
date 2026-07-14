@@ -1,0 +1,173 @@
+
+--- Sayfa 1 ---
+Anwendung von Machine Learning zur Prognose von Erdbebenereignissen
+Leonard Conrath
+Referent: Prof. Dr. Andreas Weinmann | Korreferent: Prof. Dr. Arnim Malcherek
+Darmstadt University of Applied Sciences
+Einleitung
+Erdbeben stellen eine der verheerendsten Formen natürlicher Katastrophen dar, mit gravierenden
+Folgen für das menschliche Leben, die Infrastruktur und die Wirtschaft. Der United States Geo‐
+logical Survey (USGS) schätzt, dass jährlich etwa 500.000 Erdbeben stattfinden, von denen rund
+100.000 von Menschen wahrgenommen werden können und etwa 100 ernsthafte Zerstörungen
+verursachen [8]. Angesichts dieser Zahlen ist die Bedeutung einer präzisen Erdbebenvorhersage
+sowohl aus wissenschaftlicher als auch aus gesellschaftlicher Perspektive immens. Trotz intensiver
+Forschungsbemühungen bleibt die exakte Vorhersage von Erdbeben eine der größten ungelösten
+Fragen in der Geophysik. Traditionelle Ansätze, die auf die Analyse von Vorbebenaktivitäten und
+tektonischen Spannungen basieren, haben sich als informativ erwiesen, weisen jedoch signifikante
+Einschränkungen auf, insbesondere bei der Vorhersage des genauen Zeitpunkts und Ortes eines
+bevorstehenden Erdbebens [2].
+In diesem Kontext eröffnet Machine Learning (ML) neue Wege für die Erdbebenvorhersage. ML‐
+Algorithmen sind in der Lage, komplexe Muster in seismischen Daten zu erkennen, die für men‐
+schliche Beobachter oder herkömmliche Analysemethoden schwer zugänglich sind. Insbesondere
+Deep‐Learning‐Algorithmen werden zunehmend für die Erdbebenvorhersage eingesetzt, da sie
+große Datensätze verarbeiten und aus Fehlern lernen können. Die Anwendung von ML in der
+Erdbebenvorhersage beinhaltet eine Vielzahl von Datentypen, die Informationen über Platten‐
+grenzen, Bruchzonen und historische Erdbebenaktivitäten in bestimmten Regionen liefern kön‐
+nen [5].
+Die vorliegende Thesis konzentriert sich auf die Analyse und Anwendung von ML‐Techniken
+zur Erdbebenvorhersage. Die immense Bedeutung einer genauen Erdbebenvorhersage für die
+öffentliche Sicherheit macht diese Forschungsrichtung hochrelevant. Sie verbindet theoretis‐
+che und praktische Aspekte und zielt darauf ab, das Verständnis und die Effektivität von ML‐
+gestützten Vorhersagemodellen zu verbessern.
+Forschungsfragen und Methodik
+Die folgenden Forschungsfragen werden in dieser Arbeit adressiert:
+1. Welche ML‐Modelle übertreffen traditionelle seismologische Vorhersagemethoden in Bezug
+auf die Erkennung seismischer Muster und die Vorhersage von Zeitpunkt, Ort und Stärke von
+Erdbeben?
+2. Welche ML‐Modelle erweisen sich als besonders effektiv für die Vorhersage spezifischer
+Erdbebenparameter (Zeitpunkt, Ort, Magnitude) und unter welchen Bedingungen?
+3. Welche spezifischen Datentypen tragen am meisten zur Genauigkeit von ML‐Vorhersagen
+bei?
+4. Inwieweit lassen sich durch den Einsatz neuer ML‐Techniken, wie Deep Learning und
+Ensemble‐Methoden, die Genauigkeit und Zuverlässigkeit von Vorhersagemodellen für
+Erdbeben steigern?
+Forschungsstand: Einsatz von ML in der Erdbebenvorhersage
+Eine umfassende Literatursuche wurde in führenden Datenbanken bis Februar 2024 durchge‐
+führt, um aktuelle Forschungen zur Anwendung von ML in der Erdbebenvorhersage zu identi‐
+fizieren. Die Auswahl basierte auf strengen Kriterien, einschließlich der Verwendung von ML,
+der Qualität und Aktualität der Forschung sowie der Sprache der Publikation. Untersuchungen
+wurden kategorisiert in spezifische Algorithmen, vergleichende Analysen und fortgeschrittene
+Hybrid‐ und Ensemble‐Modelle. Diese Kategorisierung ermöglicht eine gründliche Bewertung
+der Effizienz und der methodischen Vielfalt von ML in der Seismologie. Die ausgewählten Studien
+liefern wesentliche Einsichten zur Vorhersagegenauigkeit und den Anwendungsmöglichkeiten
+von ML‐Modellen.
+Erkenntnisse aus dem aktuellen Forschungsstand
+Die Analyse der ML‐Modelle für Erdbebenvorhersagen zeigt, dass sowohl Deep‐Learning‐
+Modelle (wie CNNs und LSTMs) als auch Ensemble‐Methoden (wie RF und AdaBoost) in der
+Lage sind, seismologische Datenmuster mit hoher Genauigkeit zu erkennen und zu interpretieren.
+Diese Modelle übertreffen traditionelle Methoden signifikant und bieten durch ihre spezialisierten
+Fähigkeiten zur Dateninterpretation verbesserte Vorhersageleistungen.
+Hauptpunkte:
+LSTM‐ und CNN‐basierte Ansätze zeigen hohe Effizienz bei der Modellierung von
+zeitabhängigen und räumlichen Mustern in seismischen Daten, mit Erfolgsbeispielen in
+Studien von Wang et al. [9] und Huang [4].
+Ensemble‐ und Hybridmodelle, wie die von Saad et al. [7] und Asim et al. [1], nutzen die
+Stärken mehrerer Ansätze, um die Vorhersagegenauigkeit weiter zu erhöhen.
+Die Optimierung der Datennutzung ist entscheidend für die Effektivität der Modelle, wobei
+die Integration verschiedener Datenquellen und die sorgfältige Feature‐Auswahl (wie von
+Hajikhodaverdikhan et al. [3] und Rouet‐Leduc et al. [6] gezeigt) die Modellleistung signifikant
+verbessern.
+Herausforderungen wie die Verfügbarkeit qualitativ hochwertiger Trainingsdaten, die
+Generalisierbarkeit der Modelle über verschiedene geografische Gebiete hinweg, und die
+Interpretierbarkeit komplexer ML‐Modelle bleiben kritische Bereiche, die weitere Forschung
+und methodische Verbesserungen erfordern.
+Diese Erkenntnisse legen nahe, dass die kontinuierliche Entwicklung und Anpassung von ML‐
+Methoden, die Verbesserung der Datenqualität und ‐diversität, sowie die Etablierung standard‐
+isierter Evaluationsmetriken entscheidend für zukünftige Fortschritte in der präzisen und zuver‐
+lässigen Erdbebenvorhersage sind.
+Modellentwicklung- und bewertung
+Ein spezifisches ML‐Modell wurde entwickelt, um die Vorhersagefähigkeit und praktische An‐
+wendbarkeit von ML‐Algorithmen für Erdbebenvorhersagen zu evaluieren.
+Dieses Modell,
+zugeschnitten auf die seismisch aktive Region Türkei‐Syrien, zielt darauf ab, die Magnitude des
+stärksten Erdbebens innerhalb der nächsten fünf Tage vorherzusagen und die Wahrscheinlichkeit
+eines signifikanten Erdbebens zu bestimmen.
+Der verwendete Datensatz, bereitgestellt durch die USGS, umfasst rund 3,5 Millionen Erd‐
+bebenereignisse weltweit und enthält wichtige Informationen wie Ereignisdauer, geografische
+Lokalisationen und Magnituden. Das Modell wurde durch umfangreiches Preprocessing und das
+Ableiten neuer Variablen im Feature Engineering entwickelt, die die seismische Aktivität model‐
+lieren. Dazu zählen Indikatoren wie die Dauer des Ereignisses und geografische Koordinaten.
+Es wurden verschiedene Modelle getestet, darunter lineare Regression, Random Forest, LSTM
+und Boosting‐Ensemble‐Modelle, um die Dynamik seismischer Daten effektiv zu erfassen und
+die Präzision der Erdbebenvorhersage zu erhöhen.
+Die Modelloptimierung erfolgte durch eine Mischung aus manuellen Anpassungen und automa‐
+tisierten Methoden wie Grid‐Search, wobei die Modelle kontinuierlich mittels Kreuzvalidierung
+und Robustheitstests auf ihre Präzision und Zuverlässigkeit überprüft wurden. Eine umfassende
+Validierung bestätigte die Generalisierbarkeit und Effektivität der Modelle über verschiedene Re‐
+gionen und Zeiträume. Die endgültigen Modelle zeigten deutliche Verbesserungen gegenüber
+herkömmlichen Vorhersagemethoden hinsichtlich der Genauigkeit und Zuverlässigkeit der Erd‐
+bebenvorhersage.
+Die Evaluation der verschiedenen ML‐Modelle ergab signifikante Unterschiede in ihrer Leistungs‐
+fähigkeit bei der Vorhersage der Erdbebenmagnitude und der Wahrscheinlichkeit starker Erd‐
+bebenereignisse.
+Die Ergebnisse sind in den folgenden Tabellen dargestellt:
+Table 1. Evaluationsergebnisse für die Vorhersage der Erdbebenmagnitude
+Metrik
+LR
+RF
+ANN
+LSTM Ensemble
+MAE
+0.6867 0.8181 0.7265 0.6679
+0.8575
+MSE
+1.5077 1.6796 1.4639 1.2887
+1.6332
+Table 2. Evaluationsergebnisse für die Vorhersage des Auftretens starker Erdbebenereignisse
+Metrik
+LR
+RF
+ANN
+LSTM Ensemble
+Sensitivität
+0.7006 0.7628 0.6731 0.8830
+0.6248
+Genauigkeit 0.6510 0.5683 0.8200 0.3882
+0.8731
+Präzision
+0.1377 0.2158 0.4204 0.1758
+0.5496
+Das LSTM‐Modell war besonders effektiv bei der Vorhersage der Erdbebenmagnitude, während
+das Ensemble‐Modell beim Erkennen starker Erdbeben überzeugte. Diese Ergebnisse betonen
+die Wichtigkeit der gezielten Modellauswahl und sorgfältigen Auswahl und Aufbereitung der
+Features, abhängig von den spezifischen Vorhersagezielen in der Erdbebenvorhersage.
+Fazit und Ausblick
+Die Untersuchung von ML‐Modellen zur Erdbebenvorhersage hat deutlich gemacht, dass ins‐
+besondere Ensemble‐ und Deep Learning‐Methoden traditionellen Ansätzen überlegen sind,
+sowohl in der Genauigkeit der Vorhersagen als auch in der Fähigkeit, komplexe seismische
+Muster effektiv zu interpretieren. Trotz der beeindruckenden Fortschritte bestehen Heraus‐
+forderungen wie die Generalisierbarkeit der Modelle über verschiedene Regionen und die In‐
+terpretierbarkeit tief lernender Algorithmen. Zukünftige Forschungen sollten sich daher auf
+die Verbesserung der Datenqualität, die Erweiterung der Modelltests auf verschiedene ge‐
+ographische Bedingungen und die Entwicklung transparenterer Modelle konzentrieren, um die
+Zuverlässigkeit und praktische Anwendbarkeit von ML in der Erdbebenvorhersage weiter zu er‐
+höhen. Darüber hinaus könnte die Integration neuer Datenquellen wie Satellitenbilder und die
+Standardisierung von Evaluationsmetriken die Vorhersagegenauigkeit weiter verbessern und
+die Grundlage für robustere Katastrophenmanagement‐Strategien schaffen.
+Referenzen
+[1] K. M. Asim, A. Idris, T. Iqbal, and F. Martínez‐Álvarez.
+Seismic indicators based earthquake predictor system using genetic programming and adaboost classification.
+Soil Dynamics and Earthquake Engineering, 2018.
+[2] Robert J. Geller.
+Earthquake prediction: A critical review.
+Geophysical Journal International, 1997.
+[3] Peyman Hajikhodaverdikhan, Mohammad Nazari, Mehrdad Mohsenizadeh, Shahaboddin Shamshirband, and Kwok‐Wing Chau.
+Earthquake prediction with meteorological data by particle filter‐based support vector regression.
+Engineering Applications of Computational Fluid Mechanics, 2018.
+[4] J. Huang, X. Wang, Y. Zhao, X. Chen, and X. Han.
+Large earthquake magnitude prediction in taiwan based on deep learning neural network.
+Neural Network World, 2018.
+[5] M. A. Meier et al.
+Machine learning in seismology: Turning data into insights.
+Seismological Research Letters, 2017.
+[6] Bertrand Rouet‐Leduc, Claudia Hulbert, Nicholas Lubbers, Kévin Barros, Colin J. Humphreys, and Paul A. Johnson.
+Machine learning predicts laboratory earthquakes.
+Geophysical Research Letters, 44(18):9276–9282, 2017.
+[7] O. M. Saad et al.
+Machine learning for fast and reliable source‐location estimation in earthquake early warning.
+IEEE Geoscience and Remote Sensing Letters, 2022.
+[8] United States Geological Survey.
+United States Geological Survey, 2023.
+[9] Qian Wang, Yu Guo, Lei Yu, and Lei Pan.
+Earthquake prediction based on spatio‐temporal data mining: An lstm network approach.
+IEEE Transactions on Emerging Topics in Computing, 2020.

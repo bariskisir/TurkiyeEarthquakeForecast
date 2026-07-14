@@ -1,0 +1,995 @@
+
+--- Sayfa 1 ---
+An enrichment approach for enhancing the expressivity of neural
+operators with applications to seismology
+Ehsan Haghighata, Umair bin Waheedb, George Karniadakisc
+aDepartment of Civil and Environmental Engineering, Massachusetts Institute of
+Technology, Cambridge, 02139, MA, USA
+bDepartment of Geosciences, King Fahd University of Petroleum and Minerals, Dhahran, 31261, Saudi
+Arabia
+cDepartment of Applied Mathematics, Brown University, Providence, 02912, RI, United States
+Abstract
+The Eikonal equation plays a central role in seismic wave propagation and hypocenter
+localization, a crucial aspect of efficient earthquake early warning systems. Despite re-
+cent progress, real-time earthquake localization remains challenging due to the need to
+learn a generalizable Eikonal operator.
+We introduce a novel deep learning architec-
+ture, Enriched-DeepONet (En-DeepONet), addressing the limitations of current operator
+learning models in dealing with moving-solution operators. Leveraging addition and sub-
+traction operations and a novel ‘root’ network, En-DeepONet is particularly suitable for
+learning such operators and achieves up to four orders of magnitude improved accuracy
+without increased training cost. We demonstrate the effectiveness of En-DeepONet in
+earthquake localization under variable velocity and arrival time conditions. Our results
+indicate that En-DeepONet paves the way for real-time hypocenter localization for velocity
+models of practical interest. The proposed method represents a significant advancement
+in operator learning that is applicable to a gamut of scientific problems, including those
+in seismology, fracture mechanics, and phase-field problems.
+Keywords:
+Earthquake Localization, Neural Operators, DeepONet, machine learning
+1. Introduction
+The Eikonal equation is a cornerstone in a wide range of physical phenomena. It is
+a fundamental non-linear partial differential equation (PDE) in the domain of geometric
+optics [1], seismology [2], computer vision [3], and Hamiltonian mechanics [4]. In seismol-
+ogy, the Eikonal equation is used to model wave propagation phenomena, particularly to
+calculate the travel time of seismic waves through different geological layers. These wave-
+fronts travel at speeds dictated by the material properties of the earth, and the Eikonal
+equation enables the computation of these varying travel times based on spatially de-
+pendent velocities. By accurately characterizing these times, seismologists can infer the
+properties of subsurface geologies, such as rock type and structure, fluid content, pres-
+sure conditions, and stress fields. The Eikonal equation, therefore, plays a crucial role
+Preprint submitted to Elsevier
+November 8, 2023
+arXiv:2306.04096v2  [cs.LG]  6 Nov 2023
+
+--- Sayfa 2 ---
+in our understanding of the Earth’s interior, aiding in areas from resource exploration to
+earthquake prediction.
+The Eikonal equation is also pivotal in solving the earthquake hypocenter localiza-
+tion problem – a fundamental task in seismology, encompassing the determination of the
+initial rupture point or the hypocenter of an earthquake. The precise and prompt identi-
+fication of the earthquake hypocenter holds substantial implications for earthquake early
+warning systems, rapid response initiatives, and timely seismic hazard assessments [5].
+Advancements in seismic network infrastructure, real-time data processing algorithms,
+and machine learning have made significant strides in enabling more precise and timely
+hypocenter localization. However, real-time hypocenter localization remains an elusive
+goal for seismologists. This requires learning a generalizable Eikonal operator that could
+be inferred in real-time for predicting hypocenter coordinates corresponding to variations
+in seismic arrival times and velocity model.
+Operator learning, i.e., learning non-linear maps from one infinite-dimensional Banach
+space to another, seeks to identify the hidden mathematical operators that govern a given
+dataset or a system, often expressed in terms of PDEs or integral equations.
+In this
+context, neural operators have emerged as a promising tool to build surrogate models for
+obtaining near real-time simulation speeds [6, 7, 8, 9, 10]. Neural operators leverage neural
+networks (NNs) to learn how to map complex relationships within classes of PDEs. They
+have recently been applied to solve different problems under both data-driven and physics-
+informed optimizations. Some of the operator learning methods include the Fourier neural
+operator (FNO) [7], wavelet neural operator (WNO) [11], and the graph kernel network
+(GKN) [8], to name a few. In particular, FNOs have received significant attention and
+have also been used in seismology for two-dimensional wavefield [12] and travel time mod-
+eling [13]. Nevertheless, their applications remain limited to two-dimensional problems as
+incorporating Fourier transforms in three dimensions is computationally non-trivial.
+Built on the foundations of the universal approximation theorem for operators [14],
+a more general deep neural operator (DeepONet) has been developed by [6] that allows
+one to fully learn the underlying operator and thus perform real-time predictions for ar-
+bitrary new inputs and complex domains. DeepONets consist of two constituent parts:
+a ‘branch net’ and a ‘trunk net.’ The branch net encodes the input function using a
+predetermined number of sensors. The trunk net, on the other hand, encodes the contin-
+uous solution operator as a function of the spatiotemporal inputs. These two networks
+collaborate to transform the input data into the designated outputs. The unique archi-
+tecture of DeepONets enables them to capture and learn complex operators directly from
+data. Building upon this, Physics-Informed DeepONets (PI-DeepONets) augment the
+capabilities of DeepONets by incorporating known physical laws or governing equations
+as additional constraints during the training process [10].
+Despite its success in learning operators for a variety of computational science and
+engineering problems [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], DeepONets show
+weakness in learning operators in which the output solution moves spatially, correspond-
+ing to variations in the input function (see Supplementary Materials). Therefore, in this
+paper, we propose a novel DeepONet architecture, namely the Enriched DeepONet (En-
+DeepONet), that overcomes the aforementioned limitation. This is particularly useful for
+2
+
+--- Sayfa 3 ---
+learning the Eikonal operator, in which we map the observed travel times at seismic sta-
+tions to travel time values for the entire computational domain. The hypocenter location
+is then obtained by the coordinates of the minimum travel time value. Compared to the
+standard DeepONet architecture, represented in Fig. 1-a, the En-DeepONet (Fig. 1-b)
+leverages addition and subtraction operators as well as a newly introduced ‘root’ network
+for constructing the surrogate model. Adding such operations resembles the enrichment
+strategies in classical numerical methods like the Finite Element Methods [27, 28], hence
+the name of the proposed architecture. A comparison of the En-DeepONet architecture
+against the standard DeepONet architecture is presented in the Supplementary Materi-
+als, highlighting up to four orders of magnitude improved accuracy without an increase
+in training cost or the number of trainable parameters under both supervised and unsu-
+pervised (physics-informed) optimizations.
+We apply the proposed framework to earthquake localization under both variable ve-
+locity and arrival time conditions that characterize real-world scenarios. We also study
+the sensitivity of the framework in hypocenter localization with respect to noisy arrival
+times. Through rigorous testing and evaluations, we observe the remarkable performance
+of En-DeepONet in achieving near real-time localization capabilities even for highly het-
+erogeneous velocity models. The ability to accurately localize earthquake hypocenters
+amidst such variability is a significant advancement in the realm of seismology.
+By harnessing the capabilities of the novel En-DeepONet architecture, our work ad-
+dresses existing limitations and paves the way for more advanced and adaptable solutions
+in seismology and beyond. With an improved understanding of seismic events and the
+capability to predict them in near real-time, we can substantially improve the efficiency
+of early warning systems. This, in turn, contributes to the broader objective of disaster
+risk reduction, enabling quicker and more informed decisions during an earthquake event
+to mitigate its impact and save lives.
+2. Problem statement
+2.1. Eikonal equation
+We cast the source localization task as a traveltime modeling problem. Given first-
+arrival traveltimes observed at seismic sensors, we build the traveltime field in the entire
+computational domain using En-DeepONet. Once that is obtained, the hypocenter loca-
+tion is given by the coordinates of the minimum traveltime value.
+Given a source location xs and a velocity field v(x), the Eikonal equation provides
+the first arrival traveltime field T(x). The Eikonal equation is expressed as
+∥∇T(x)∥2 =
+1
+v(x)2,
+s.t.
+T(xs) = 0,
+(1)
+where ∇is the gradient vector. This PDE forms a nonlinear and hyperbolic first-order
+partial differential equation that requires special solution methods. This equation implies
+that the gradient of the arrival time surface is inversely proportional to the speed of the
+wavefront.
+3
+
+--- Sayfa 4 ---
+2.2. Earthquake hypocenter localization using Eikonal equation
+The hypocenter localization problem is solved using the Eikonal equation through an
+iterative inversion process that seeks to minimize the misfit between observed and calcu-
+lated traveltimes [29]. This process begins with an initial hypocenter location guess and a
+subsurface velocity model, followed by forward modeling to obtain theoretical traveltimes
+at seismic stations. The misfit between the calculated and observed traveltimes is then
+computed, and an optimization algorithm is employed to update the hypocenter location
+accordingly. By repeating these steps until convergence or a predefined stopping criterion
+is met, the hypocenter location is refined, ultimately providing a solution closely aligned
+with observed traveltimes at seismic stations.
+A number of methods have been developed over the years to solve the hypocenter
+localization problem. Heuristic approaches, like the genetic algorithm [30] or simulated
+annealing [31], are among the methods used to seek out the hypocenter with the least
+error. Other approaches involve systematic searching or sampling techniques to gauge the
+probability of the earthquake location over the model space [32, 33]. For instance, grid
+search methodically covers the model space to calculate the probability distribution of the
+hypocenter location. However, this approach can be computationally demanding due to
+the repeated forward solutions and optimization process. Moreover, it is unable to meet
+the need for real-time hypocenter localization. More recently, several deep learning-based
+localization methods have been developed that have shown remarkable performance in
+real-time localization [34, 35, 36]. However, their velocity generalization capabilities are
+often in question.
+2.3. Surrogate modeling using DeepONets
+An alternative strategy involves solving the Eikonal equation for potential source loca-
+tions a priori and constructing a surrogate model that encompasses all possible solutions,
+using arrival times at seismic stations as inputs. If this surrogate model can be accessed
+and queried in real-time, it enables rapid localization of an earthquake’s hypocenter.
+While conventional neural networks may be employed for this purpose [37] with limited
+efficacy, DeepONets have demonstrated exceptional capabilities as a robust and efficient
+tool for building such surrogate models.
+2.4. DeepONet: A Data-Driven and Physics-Informed Efficient Architecture for Surrogate
+Modeling
+Operator networks have recently emerged as promising tools for developing surrogate
+solvers, which can provide instantaneous solutions based on various sensor readings. These
+sensors refer to measurements of specific field variables at fixed locations. The network
+architecture consists of two main components: a branch-net, which encodes the sensor
+data, and a trunk-net, which approximates the continuous solution.
+The outputs of
+these networks, known as the embedding nodes, are combined through a dot product to
+construct the final output or operator. The DeepONet architecture is expressed as [6]:
+T(u)(x, t) ≈
+p
+X
+k=1
+bk(u1, u2, . . . , up)tk(x, t),
+(2)
+4
+
+--- Sayfa 5 ---
+Branch 
+Net
+Trunk 
+Net
+!x 
+kAiujet+O4W19Y3NreJ2aWd3b/+gfHjU0nGqGDZLGLVCahGwSU2DTcCO4lCGgUC28H4dua3n1BpHstHM0nQj+hQ8pAzaqz0EPS9frniVt05yCrxclKBHI1+as3iFkaoTRMUK27npsYP6PKcCZwWuqlGhPKxnSIXUsljVD72fzUKTmzyoCEsbIlDZmrvycyGmk9iQLbGVEz0sveTPzP6YmvPYzLpPUoGSLRWEqiInJ7G8y4AqZERNLKFPc3krYiCrKjE2nZEPwl9eJa2LqndZrd3XKvWbPI4inMA
+pnIMHV1CHO2hAExgM4Rle4c0Rzovz7nwsWgtOPnMf+B8/gDtC42T</latexit>b1
+IBFcG9f9dgpr6xubW8Xt0s7u3v5B+fCoreNUMWyxWMSqE1CNgktsGW4EdhKFNAoEPgbjm5n/+IRK81g+mEmCfkSHkoecUWOl+6Bf65crbtWdg6wSLycVyNHsl796g5ilEUrDBNW67mJ8TOqDGcCp6VeqjGhbEyH2LVU0gi1n81PnZIzqwxIGCtb0pC5+nsio5HWkyiwnRE1I73szcT/vG5qwis/4zJDUq2WBSmgpiYzP4mA6QGTGxhDLF7a2EjaizNh0SjYEb/nlVdKuVb2Lav2uXmlc53EU4QR
+O4Rw8uIQG3EITWsBgCM/wCm+OcF6cd+dj0Vpw8plj+APn8wfuj42U</latexit>b2
+J2aWd3b/+gfHjU0nGqGDZLGLVCahGwSU2DTcCO4lCGgUC28H4dua3n1BpHstHM0nQj+hQ8pAzaqz0EPSTfrniVt05yCrxclKBHI1+as3iFkaoTRMUK27npsYP6PKcCZwWuqlGhPKxnSIXUsljVD72fzUKTmzyoCEsbIlDZmrvycyGmk9iQLbGVEz0sveTPzP6YmvPYzLpPUoGSLRWEqiInJ7G8y4AqZERNLKFPc3krYiCrKjE2nZEPwl9eJa2LqndZrd3XKvWbPI4inMApnIMHV1CHO2hAExgM4Rle4c0Rzovz7nwsWgtOPnMf+B8/gBMlo3S</
+latexit>bp
+t1
+t2
+tp
+8
+>
+>
+<
+>
+>
+:
+b1 ⇥t1
+b2 ⇥t2
+. . .
+bp ⇥tp
+9
+>
+>
+=
+>
+>
+;
+8
+>
+>
+<
+>
+>
+:
+b1 + t1
+b2 + t2
+. . .
+bp + tp
+9
+>
+>
+=
+>
+>
+;
+8
+>
+>
+<
+>
+>
+:
+b1 −t1
+b2 −t2
+. . .
+bp −tp
+9
+>
+>
+=
+>
+>
+;
+Root 
+Net
+Branch 
+Net
+Trunk 
+Net
+!x 
+b1
+r1q/qh69LBbBU0lKUY9FLx4r2lpoQ9lsJ+3SzSbsboQS+hO8eFDEq7/Im/GbZuDtj4YeLw3w8y8IBFcG9f9dgpr6xubW8Xt0s7u3v5B+fCoreNUMWyxWMSqE1CNgktsGW4EdhKFNAoEPgbj
+m5n/+IRK81g+mEmCfkSHkoecUWOl+6Bf65crbtWdg6wSLycVyNHsl796g5ilEUrDBNW67mJ8TOqDGcCp6VeqjGhbEyH2LVU0gi1n81PnZIzqwxIGCtb0pC5+nsio5HWkyiwnRE1I73szcT/
+vG5qwis/4zJDUq2WBSmgpiYzP4mA6QGTGxhDLF7a2EjaizNh0SjYEb/nlVdKuVb2Lav2uXmlc53EU4QRO4Rw8uIQG3EITWsBgCM/wCm+OcF6cd+dj0Vpw8plj+APn8wfuj42U</latexi
+t>b2
+BbBU0mkqMeiF48V7Qe0oWy2k3bpZhN2N0IJ/QlePCji1V/kzX/jts1BWx8MPN6bYWZekAiujet+O4W19Y3NreJ2aWd3b/+gfHjU0nGqGDZLGLVCahGwSU2DTcCO4lCGgUC28H4dua3n1BpHstHM0nQj+hQ8pAzaqz
+0EPSTfrniVt05yCrxclKBHI1+as3iFkaoTRMUK27npsYP6PKcCZwWuqlGhPKxnSIXUsljVD72fzUKTmzyoCEsbIlDZmrvycyGmk9iQLbGVEz0sveTPzP6YmvPYzLpPUoGSLRWEqiInJ7G8y4AqZERNLKFPc3krYi
+CrKjE2nZEPwl9eJa2LqndZrd3XKvWbPI4inMApnIMHV1CHO2hAExgM4Rle4c0Rzovz7nwsWgtOPnMf+B8/gBMlo3S</latexit>bp
+t1
+t2
+tp
+X
+(a)
+(b)
+T(u)(x)
+T(u)(x)
+8
+>
+>
+>
+>
+<
+>
+>
+>
+>
+:
+u(x1)
+u(x2)
+u(x3)
+. . .
+u(xn)
+9
+>
+>
+>
+>
+=
+>
+>
+>
+>
+;
+Fb6GS8fugkJj0s=">ACNHicbZDLSgMxFIYzXut4q7p0EyxCuykz3pelbgQ3FWwrdE
+rJpKdtMJMZkoy0DH0oNz6IGxFcKOLWZzCd1qLWA4GP/1xyzu9HnCntOM/W3PzC4tJyZ
+sVeXVvf2MxubdUGEsKVRryUN74RAFnAqaQ43kQS+Bzq/u35KF+/A6lYK71IJmQ
+LqCdRgl2kit7KXnQ5eJpBwQLVl/aMf5fstYM9L6WBKhyl57VCrb0kUbA9Ee9rbyuac
+opMGngV3Ajk0iUor+2jm0TgAoSknSjVcJ9LNhEjNKIeh7cUKIkJvSRcaBgUJQDWT9Ogh
+3jdKG3dCaZ7QOFV/diQkUGoQ+KbS7NdTf3Mj8b9cI9ads2bCRBRrEHT8USfmWId45CB
+uMwlU84EBQiUzu2LaI5JQbXy2jQnu35NnoXZQdE+Kx1dHuVJ5YkcG7aI9lEcuOkUldIE
+qIoukdP6BW9WQ/Wi/VufYxL56xJzw76FdbnF4AhqF8=</latexit>8
+>
+>
+>
+>
+<
+>
+>
+>
+>
+:
+u(x1)
+u(x2)
+u(x3)
+. . .
+u(xn)
+9
+>
+>
+>
+>
+=
+>
+>
+>
+>
+;
+Figure 1: Illustration of alternative deep neural operators. (a) The standard DeepONet architecture
+incorporates two sub-networks, namely the ‘branch network’ and the ‘trunk network.’ The function of
+the branch network is to encode the input data, leveraging a set number of prearranged sensors. The
+trunk network is used to encode the locations of the output function. Together, these networks allow
+learning the transformation of input data into the designated output parameters. (b) The proposed En-
+DeepONet architecture leverages the addition and subtraction operators, in addition to multiplication,
+to combine the outputs of branch and trunk networks. We pass this output to a root network that helps
+to learn more generalized mathematical operators.
+with ui as the sensor readings at fixed locations, and bk and tk as outputs of branch and
+trunk networks, as depicted in Fig. 1-a. bk and tk are embedding bases for the sensor and
+solution networks.
+Such a network construction can be trained under data-driven (supervised) or data-
+free physics-informed (unsupervised) approaches. Of course, the training cost of the latter
+is much more than the former because of Enriched computational graphs due to AD and
+the more complex loss envelope and multi-objective loss function. Nevertheless, given a
+set of inputs Y and sensor readings Ui at fixed locations and target data G, we can set
+up the optimizer using the MSE loss function as follows:
+arg min
+θ∈RN
+L = MSE(T(u)(x, t) −T ∗),
+(3)
+where θ represents the set of all trainable parameters, and T ∗represent the expected
+values for the travel time. Given the continuous construction with respect to the spatio-
+temporal input set y, we can also leverage AD to incorporate any PDE-based losses, just
+like the standard PINN (for more details, see [10]).
+2.5. En-DeepONet
+Here, we propose a revised DeepONet architecture, namely, the Enriched-DeepONet
+(or En-DeepONet for short), for traveltime modeling. Standard DeepONet architecture,
+expressed in Eq. (3), demonstrated its effectiveness in addressing problems with variable
+amplitude of the expected solution. However, in the context of earthquake source local-
+ization, the solution itself shifts spatially as the hypocenter moves. We find that standard
+DeepONet performs poorly in capturing such solutions, which is rooted in the use of the
+5
+
+--- Sayfa 6 ---
+projection (multiplication) operator. We also find that adding summation or subtraction
+operation—i.e., tk(x, t)±bk(u1, u2, . . . , up)—improves the learning capacity of DeepONets
+significantly for such problems. Given that this operation does not reduce the output
+dimension, we add an additional linear layer to reduce the output dimension to a single
+output, similar to what a dot-product does. This is expressed mathematically as:
+T(u)(x, t) ≈
+p
+X
+k=1
+w+
+k (tk(x, t) + bk(u1, u2, . . . , up))
++
+p
+X
+k=1
+w−
+k (tk(x, t) −bk(u1, u2, . . . , up))
++
+p
+X
+k=1
+w∗
+k(tk(x, t) · bk(u1, u2, . . . , up)),
+(4)
+where, w◦
+k are summation weights (linear layer) associated with each operation. Note that
+setting w±
+k = 0 and w∗
+k = 1 recovers the original DeepONet construction, expressed in
+Eq. (2). Finally, we can even further generalize the DeepONet architecture, by adding
+a full neural network instead of the linear layer, namely RootNet, as shown in Fig. 1-b.
+Therefore, we call this generalized construction the Enriched-DeepONet or En-DeepONet.
+Therefore, the most general form of En-DeepONet is expressed mathematically as
+T(u)(x, t) ≈r
+
+
+
+
+
+t(x, t) · b(u1, u2, . . . , up)
+t(x, t) + b(u1, u2, . . . , up)
+t(x, t) −b(u1, u2, . . . , up)
+
+
+
+
+,
+(5)
+where r(◦) stands for the output ”root” network.
+3. Applications
+In this section, we explore the application of the En-DeepONet architecture for instant
+traveltime field estimation. To this end, we first explore its application to hypocenter
+localization of the Marmousi velocity model [38], a highly heterogenous velocity model,
+leading to highly accurate realtime predictions.
+Furthermore, by considering a range
+of simple and complex velocity models, we illustrate the capacity of En-DeepONet to
+generalize over velocity model variations, ultimately harnessing the full potential of the
+operator learning paradigm.
+We first present a comparison of the En-DeepONet architecture against the standard
+DeepONet architecture, highlighting the need for the addition and subtraction operators,
+in addition to the multiplication operator used in the standard DeepONet construction,
+to obtain optimal accuracy when the expected solution shifts with the change in sensor
+position. We then apply the framework to a set of problems with increasing complexity.
+All problems are set up in SciANN [39], a TensorFlow/Keras API optimized for physics
+informed machine learning, and codes reproducing the results will be made public at
+https://github.com/ehsanhaghighat/En-DeepONet.
+6
+
+--- Sayfa 7 ---
+Figure 2: A standard physics-informed DeepONet solution for learning the distance function from a circle
+with a variable radius. The red circles indicate the coordinates associated with zero distance and are
+fed as input to the branch network. The standard DeepONet model shows high accuracy in learning the
+distance function, compared with those computed using the fast marching method.
+7
+
+--- Sayfa 8 ---
+3.1. Why En-DeepONet?
+Let us consider the simplest form of the eikonal equation – the isotropic eikonal equa-
+tion with a constant velocity model (v(x) = 1). This problem can be solved under both
+data-driven and physics-informed optimizations, see [10], where the authors’ objective
+was learning distance function from a circle with a variable radius. The inputs to the
+branch network are the spatial coordinates (x, y) of a fixed set of nodes located on the
+circle, which are associated with the zero distance. As we increase or decrease the radius
+of the circle, x, y values are scaled proportionally. The results are plotted in Fig. 2. It
+can be observed that the standard DeepONet model can accurately capture the solution
+for various radii, with a maximum error of 1.3% of the true solution.
+Next, we consider the sensors located on a circle with a fixed radius of 0.2m but with
+a moving center to simulate the earthquake source localization problem. As one would
+expect, for an isotropic medium with a constant velocity model, the emanating wave-
+front propagates as a circle (in 2D) and only shifts with the location of the hypocenter.
+To have a fair comparison, we set up the networks in such a way that the number of
+trainable parameters are the same for both standard DeepONet and En-DeepONet net-
+works. Accordingly, we use five hyperbolic-tangent layers with 50 neurons width, with
+an output linear embedding layer of size 50, for both branch and trunk networks. This
+choice results in 14,800 trainable parameters for the DeepONet architecture. For the case
+of the En-DeepONet network, we use two layers with 50 neurons width for both branch
+and trunk networks, followed by a two layer root network with 50 and 20 neurons re-
+spectively, resulting in 15,891 trainable parameters. The activation functions are again
+hyperbolic-tangent function.
+The results are shown in Fig. 3. As can be seen, the standard DeepONet fails to learn
+the solution under data-driven or physics-informed training, whereas the En-DeepONet
+accurately captures the expected solution with remarkable accuracy. Both data-driven
+and physics-informed (unsupervised) training are performed. The evolution of loss func-
+tion and training times are shown in Fig. 3, where En-DeepONet outperforms standard
+DeepONet significantly with the same training cost. The results are shown in Fig. 4.
+As can be seen, the standard DeepONet fails to learn the solution under data-driven or
+physics-informed training, whereas the En-DeepONet accurately captures the expected
+solution with remarkable accuracy.
+The reason the new architecture outperforms the standard architecture is intuitive. Let
+us consider the analytical formula for a circular levelset with a fix radius R and centered
+at the origin, i.e., ϕ(x, y) = x2 +y2 −R2. Moving the center of the circle to (xs, ys) results
+in a levelset formula that is translated in (x, y), ϕ(x, y) = (x −xs)2 + (y −ys)2 −R2. We
+can notice that the subtraction operator provides a more natural choice in this case. Now,
+let us consider a more general case where levelsets form ellipsoids instead of circles, i.e.,
+ϕ(x, y) = a(x −xs)2 + b(y −ys)2 −R2. We can note that the a and b parameters are now
+multiplied to the other functions, which is the analogy we use to keep the multiplication
+operator. Therefore, adding all operators is required to be able to address change in
+center, anisotropy, and amplitude, and therefore the choice for enriched DeepONet.
+This simple problem highlights that the addition or subtraction operators introduced
+in this paper, in addition to the multiplication operator used in the standard DeepONet
+8
+
+--- Sayfa 9 ---
+Data Driven
+Physics-Informed (Unsupervised)
+(a)                                                     (b)                                                               (c)   
+(d) 
+Figure 3: Standard DeepONet vs. En-DeepONet for variable source location with data-driven (a, b)
+and physics-informed (unsupervised) training (c, d). The vertical axis is the normalized loss function,
+and the horizontal axes are training epochs (a, c) and training time in seconds (b, d). The training is
+conducted with a similar number of parameters, the same batch-size and epochs, so that it provides a
+fair comparison between the two architectures. Note that En-DeepONet loss can be further improved as
+the loss value is still reducing after 10,000 epochs.
+construction, is necessary for optimal accuracy when the expected solution shifts with the
+change in sensor position.
+3.2. Source localization for the Marmousi velocity model
+here, we consider a realistic setting for the hypocenter source localization problem
+by using the highly heterogeneous Marmousi velocity model [38], shown in Fig. 5. We
+consider 20 sensors (seismic stations) located at the surface of the velocity model. The
+trunk network includes four layers with 20, 50, 100, and 100 neurons. The branch network
+includes two layers with 50 and 100 neurons. The root network includes 5 hidden layers
+with 100, 80, 60, 40, 20 neurons. Hyperbolic-tangent is used as the activation function,
+with a final linear output layer, representing the travel time. We train En-DeepONet to
+predict traveltimes in the entire computational domain. The coordinates of the minimum
+traveltime value then form the hypocenter location.
+We generate the training dataset by using the fast marching eikonal solver [40] for
+200 randomly selected source locations within the Marmousi model. Here, the branch net
+encodes the arrival times observed at seismic stations located on the top surface. Once
+trained, we test our En-DeepONet model using 1000 randomly selected source locations
+from within the velocity model. A few representative results are plotted in Fig. 6. As can
+be seen, the solution remains very accurate even for such a heterogeneous velocity model,
+which shows the potential application of the proposed framework for realistic problems.
+A summary of the results is presented in terms of the root-mean-squared error (RMSE)
+and absolute error histograms in Fig. 7. We observe that in most cases, the horizontal
+and vertical location errors are less than 50 m. The vertical location errors are larger on
+average than the horizontal ones, which is explained by the surface acquisition geometry
+used in this test. Finally, we study the sensitivity of the location accuracy to noise in
+the observed arrival times. Through absolute error and RMSE, Fig. 8 shows the location
+accuracy remains largely accurate even for an extremely high noise ratio of 50%.
+9
+
+--- Sayfa 10 ---
+Figure 4: Standard DeepONet vs.
+En-DeepONet for variable source location with physics-informed
+(unsupervised) training. Each column plots the distance field from a randomly located circle, with the
+horizontal and vertical axes as the x, y coordinates. The plotted solutions correspond to three different
+locations for the circle, computed using (a) the reference fast marching method (FMM), (b) the physics-
+informed En-DeepONet, and (c) physics-informed standard DeepONet.
+Figure 5: The highly heterogeneous Marmousi velocity model used in this study for assessing the hypocen-
+ter localization capabilities of En-DeepONet.
+10
+
+--- Sayfa 11 ---
+Figure 6: Analyzing the accuracy of traveltime fields predicted by the trained En-DeepONet model for
+three representative source locations from the test set for the Marmousi model.
+The En-DeepONet
+solutions are plotted in the left column, the reference FMM solutions are plotted in the middle column,
+and the relative errors are plotted in the right column. For each case, the relative error is evaluated as the
+absolute percentage error normalized by its maximum traveltime. The trained En-DeepONet model takes
+observed traveltimes on the surface as input and produces the traveltime field in the entire domain. The
+hypocenter is then obtained by the location of the minimum traveltime value, and indicated by the red
+stars. Despite the heterogeneity of the velocity model, the predicted traveltime field is highly accurate,
+with maximum error values reaching only 2%.
+(a)                                                        (b)
+Figure 7: RMSE distribution of predicted traveltimes by the trained En-DeepONet model (a), and a
+distribution of the absolute error in location coordinates (b), sampled over 1,000 random realizations for
+the Marmousi model.
+11
+
+--- Sayfa 12 ---
+(a)                                                                             (b)                                          
+(c)
+Figure 8: An assessment of the degradation in accuracy of the predicted traveltime fields and the resulting
+locations due to the addition of noise to the observed traveltime picks. For a representative source location
+in the Marmousi model, in (a), we plot the observed traveltimes (in black) and the resulting traveltime
+curves by adding noise with varying ratios. In (b), we plot the evolution of the error in the estimated
+source locations, averaged over 1,000 random realizations with corrupted traveltime inputs. Finally, in (c),
+we show the evolution of the RMSE for traveltime predictions, averaged over 1,000 random realizations
+with the corrupted traveltime inputs. Despite the added noise to the observed traveltimes, the source
+location is predicted with high accuracy.
+(a)                                                        (b)
+Figure 9: (a) A representative velocity model generated by random sampling of velocity at corners of
+the square and bilinear interpolation. (b) The En-DeepONet architecture with both velocity and receiver
+branches, used to generalize over both the source location and the velocity model. We use two branch
+networks – one for the velocity model (velocity branch) and the other for the observed traveltimes at the
+receivers (receiver branch), and a trunk network. These branch and trunk networks are combined with
+the En-DeepONet rules and then passed as input to the root network. The resulting output is a function
+of the velocity model sampled at discrete locations, traveltime sampled at discrete receiver points, and
+spatial coordinates.
+12
+
+--- Sayfa 13 ---
+Figure 10: Analyzing the accuracy of traveltime fields predicted by the trained En-DeepONet model for
+three representative velocity models (first column from the left) and source locations from the test set.
+Also plotted are the corresponding traveltime fields predicted by the trained En-DeepONet model (second
+column from the left), the corresponding FMM reference solution (third column from the left), and the
+resulting absolute relative percentage error (fourth column from the left). The trained En-DeepONet
+model takes observed traveltimes on the surface and the velocity model as inputs and produces the
+traveltime field in the entire domain. The hypocenter is then obtained by the location of the minimum
+traveltime value, and indicated by the red stars. Despite the challenge of varying velocity models, the
+predicted traveltime field for a new velocity model and source location both is highly accurate.
+13
+
+--- Sayfa 14 ---
+(a)                                                        (b)
+Figure 11: RMSE distribution of predicted traveltimes by the trained En-DeepONet model (a), and
+distribution of the absolute error in location coordinates (b), sampled over 1,000 random realizations.
+(a)                                                                             (b)                                          
+(c)
+Figure 12: An assessment of the degradation in accuracy of the predicted traveltime fields and the
+resulting locations due to the addition of noise to the observed traveltime picks. For a representative
+source location and a velocity model, in (a), we plot the observed traveltimes (in black) and the resulting
+traveltime curves by adding noise with varying ratios. In (b), we plot the evolution of average error in
+the estimated source locations over 1,000 random realizations with corrupted traveltime inputs. Finally,
+we also show in (c) the evolution of the RMSE for traveltime predictions, averaged over 1,000 random
+realizations with the corrupted traveltime inputs. Despite the complexity of the problem, the solution
+accuracy does not deteriorate much with the increasing noise levels in the observed traveltimes.
+3.3. Source and velocity generalization for a smooth velocity model
+As the next representative problem, we now consider a more complex setup. Given an
+arbitrary velocity model and arrival times at seismic stations located at the top bound-
+ary of the velocity model, we aim to build an En-DeepONet model for the hypocenter
+localization problem. Here, we consider 20 seismic receivers, equally spaced on the sur-
+face. We additionally consider 100 velocity sensors on a uniform grid inside the domain.
+The trunk network includes five layers with 20, 50, 100, 100, and 100 neurons. Both the
+velocity and the receiver branch networks include three layers with 100 neurons. A linear
+layer is considered here for the root network. Hyperbolic-tangent is used as the activation
+function. The final output represents the travel time.
+To this end, let us consider a square domain, with its corners being assigned random
+velocities drawn from a representative uniform distribution, i.e., v ∼U(0.2, 8)km/s, as
+shown in Fig. 9-a.
+The network architecture is depicted in Fig. 9-b.
+Here, we need
+two branch networks to parameterize the velocity models as well as arrival times. The
+trunk network remains the same, with spatial coordinates as inputs. To generate the
+14
+
+--- Sayfa 15 ---
+training data, we draw a random velocity model, as well as a random source location
+from (xs, ys) ∼U(−0.9, 0.9)m, within the desired domain Ω= [−1, 1] × [−1, 1]. Solving
+the eikonal equation using FMM provides us traveltimes needed to build the input-output
+pairs for the training dataset. We generate 200 such samples to train our En-DeepONet
+model, and then we test it on 1,000 random realizations.
+Once trained, given a new velocity model from within the training distribution and
+wavefront arrival times on the surface, we can instantly query the network to recover the
+traveltime field and, therefore, the hypocenter location associated with the arrival time
+and velocity model. The results for a few representative realizations are presented in
+Fig. 10. The trained network is able to predict solutions associated with random source
+location and velocity models very accurately. It is worth highlighting that the test velocity
+models are not used during the training. However, as long as they are from within the
+training distribution, we can expect the trained En-DeepONet model to generate highly
+accurate solutions.
+We consider 1000 randomly generated pairs of velocity models and hypocenter loca-
+tions to test the localization accuracy. The RMSE of the traveltime field and and absolute
+location error histograms are shown in Fig. 11. We observe extremely small location er-
+rors, indicating that our En-DeepONet model is able to generalize well over the considered
+family of smooth velocity models. Additionally, by corrupting traveltimes observed at re-
+ceivers using random noise with different ratios (Fig. 12-a), we can evaluate the average
+error in source location and traveltime RMSE as a function of noise ratio, as shown in
+Fig. 12-c-d. We observe that for a large portion of samples, the traveltime predictions
+and the estimated source location remain highly accurate, underscoring the efficacy of the
+proposed approach for practical scenarios.
+3.4. Source and velocity generalization for the OpenFWI velocity models
+Finally, as a challenging test case, we consider a family of velocity models from the
+OpenFWI velocity dataset. OpenFWI represents a comprehensive suite of large-scale,
+multi-structured datasets, specifically curated for enhancing machine learning applications
+in seismic Full Waveform Inversion (FWI) [41].
+OpenFWI provides access to twelve
+different families of velocity models, in varying degrees of complexity. For our study,
+we choose the CurveFault-B family of velocity models, representing extremely complex
+geologic conditions. A few samples from this family of velocity models are shown in Fig. 13.
+In this problem, we consider 30 seismic receivers, equally spaced on the surface. We
+additionally consider 14×14 uniformly distributed velocity sensors inside the domain. The
+trunk network includes nine layers, each with 50 neurons. The velocity branch includes
+five layers with 100, 80, 50, 50, and 50 neurons, while the receiver branch includes five
+layers, each with 50 neurons. Finally, the root network includes 8 hidden layers, each
+with 50 neurons, and a final output linear layer that represents the travel time. The
+hyperbolic-tangent function is used as the activation function.
+Similar to the previous case, we train the En-DeepONet model (Fig. 9-b) to learn the
+variations in the resulting traveltime field w.r.t. variations in both the observed arrival
+times and the velocity model. Using FMM, we generate 200 input-output pairs of the
+training dataset by considering different velocity models from the dataset and source
+15
+
+--- Sayfa 16 ---
+Figure 13: A few representative velocity models from the CurveFault-B family of velocity models in the
+OpenFWI dataset [41].
+Figure 14: Analyzing the accuracy of traveltime fields predicted by the trained En-DeepONet model for
+three representative velocity models from the OpenFWI dataset (first column from the left) and source
+locations from the test set. Also plotted are the corresponding traveltime fields predicted by the trained
+En-DeepONet model (second column from the left), the corresponding FMM reference solution (third
+column from the left), and the resulting absolute relative percentage error (fourth column from the left).
+The trained En-DeepONet model takes observed traveltimes on the surface and the velocity model as
+inputs and produces the traveltime field in the entire domain. The coordinates of the minimum traveltime
+value then yield the hypocenter location that are indicated by the red stars. Despite the challenge of
+dealing with a highly complex set of velocity models, the predicted traveltime fields are generally accurate
+for most part of the computational domain.
+16
+
+--- Sayfa 17 ---
+(a)                                                        (b)
+Figure 15: RMSE distribution of predicted traveltimes by the trained En-DeepONet model (a), and
+distribution of the absolute error in location coordinates (b), sampled over 1,000 random realizations for
+the CurveFault-B family of velocity models in the OpenFWI dataset.
+(a)                                                                             (b)                                          
+(c)
+Figure 16: An assessment of the degradation in accuracy of the predicted traveltime fields and the
+resulting locations due to the addition of noise to the observed traveltime picks. For a representative
+source location and a velocity model, in (a), we plot the observed traveltimes (in black) and the resulting
+traveltime curves by adding noise with varying ratios. In (b), we plot the evolution of average error in
+the estimated source locations over 1,000 random realizations with corrupted traveltime inputs. Finally,
+we also show in (c) the evolution of the RMSE for traveltime predictions, averaged over 1,000 random
+realizations with the corrupted traveltime inputs. The solution accuracy is generally lower than earlier
+but expected due to the complexity of learning an operator corresponding to the complex CurveFault-B
+family of the OpenFWI dataset.
+17
+
+--- Sayfa 18 ---
+locations.
+Once trained, we evaluate the performance of the En-DeepONet model by
+feeding new velocity models and the corresponding arrival times observed on the surface
+from the test set. A few representative results are shown in Fig. 14. We notice that despite
+being from the same family, the velocity models vary significantly compared to each other.
+Despite the huge differences in velocity models, the trained En-DeepONet model yields a
+traveltime map with reasonable accuracy for most of the computational domain. While
+the errors are certainly larger than in the previous test cases, this challenging family of
+velocity models is deliberately chosen to test the limits of the proposed algorithm.
+We present a summary of these tests through an RMSE distribution of the traveltime
+field and a histogram of location errors in Fig. 15. While in most cases, the location
+errors in both the horizontal and vertical directions are less than 200 m, there are some
+instances in which these errors exceed 500 m, which suggests further improvements may
+be needed before the proposed approach can be used in critical applications for such a
+complex family of velocity models.
+Finally, in Fig. 16, we show the degradation of accuracy of the predicted traveltime
+fields and the resulting locations as we pollute the observed arrival times by the addition
+of random noise with varying ratios. As expected, the situation generally worsens with
+the addition of noise, resulting in even higher errors in traveltime fields and locations.
+4. Summary and conclusions
+In this study, we introduced En-DeepONet, an enhanced variant of deep operator
+networks, for near real-time earthquake hypocenter localization. By incorporating in-
+formation from seismic arrival times and velocity models, En-DeepONet effectively es-
+timated traveltime fields associated with earthquake sources. The addition of the root
+network, which included multiplication, addition, and subtraction operators, improved
+the accuracy of field relocation in scenarios with moving fields. Through extensive exper-
+iments, including various velocity models and arrival times, En-DeepONet demonstrated
+remarkable accuracy in earthquake localization, even in complex and heterogeneous envi-
+ronments. The framework exhibited excellent generalization capabilities and robustness
+against noisy arrival times. The method offers a computationally practicable method to
+quantify uncertainty in hypocenter locations due to errors in traveltime picks and veloc-
+ity model variations. Moreover, our findings highlight the potential of En-DeepONet to
+enhance seismic monitoring systems and contribute to the development of effective early
+warning systems for mitigating seismic hazards.
+In this article, we focused on a two-dimensional velocity model to illustrate the efficacy
+of En-DeepONet compared to the standard DeepONet architecture. Extension of the idea
+to three-dimensions is essential for solving problems of practical interests in hypocenter
+localization. Given that the standard DeepONet architecture has proven to outperform
+other operator networks, like Fourier Neural Operators, in three dimensions, we believe
+that our proposed En-DeepONet architecture further improves the representation capa-
+bilities of DeepONets without any additional computational cost. Moreover, a refinement
+of the proposed approach may be needed in the case when traveltime picks from certain
+sensors are unavailable during evaluation of the trained En-DeepONet.
+18
+
+--- Sayfa 19 ---
+Acknowledgments
+We acknowledge the support provided by the College of Petroleum Engineering and
+Geosciences (CPG) at King Fahd University of Petroleum & Minerals (KFUPM) through
+Competitive Research Grant No. CPG21103.
+Data availability
+The
+data
+and
+codes
+used
+in
+this
+study
+will
+be
+shared
+at
+https://github.com/ehsanhaghighat/En-DeepONet.
+Appendix A. Application to the Laplace equation
+To show that the En-DeepONet architecture is not limited to the Eikonal equation,
+we consider the Laplace equation in two dimensions subjected to a moving pulse source
+term, representing injection/production wells in porous media or a moving heat source
+term. The governing PDE is expressed as
+∂2u(x)
+∂x2
++ ∂2u(x)
+∂y2
+= −exp
+
+−∥x −xs∥2
+δ2
+
+,
+x ∈Ω,
+(A.1)
+subjected to the boundary conditions
+u(x) = 0,
+x ∈∂Ω,
+(A.2)
+where, xs is the center of the source location, and δ is the source width. We consider
+a square domain Ω= [−1, 1] × [−1, 1], and we consider a fixed source width δ2 = 0.1.
+The source center xs is chosen randomly from xs ∼U(−0.9, 0.9)m to build the neural
+operator. We only consider unsupervised (physics-informed) in this case, meaning that
+the training is only based on the PDE and its boundary condition, without using any
+other data.
+The input to the branch net is the location of the center of the pulse, i.e., xs, therefore
+sensor size is 2 in two dimensions. As per the network details, to provide a fair comparison
+between standard DeepONet and En-DeepONet architectures, we keep total trainable
+parameters similar for both cases. Accordingly, for the standard DeepONet network, we
+use five hyperbolic-tangent layers with 50 neurons width, with an output linear embedding
+layer of size 50, for both branch and trunk networks. This choice results in 12,900 trainable
+parameters. For the case of the En-DeepONet network, we use two layers with 50 neurons
+width for both branch and trunk networks, followed by a two layer root network with 50
+and 20 neurons respectively, resulting in 13,900 trainable parameters.
+The activation
+functions are again hyperbolic-tangent function. The input/output sampling points and
+optimization hyper parameters are kept identical for both cases.
+The results are shown in Fig. A.17. As can be seen, the standard DeepONet fails to
+learn the solution operator for this moving source problem, whereas the En-DeepONet
+accurately captures the expected solution, which is an identical trend compared to those
+previously reported for the Eikonal equation (see Fig. 4). The loss history Fig. A.18 also
+shows a similar trend to those previously reported in Fig. 3.
+19
+
+--- Sayfa 20 ---
+Figure A.17: Standard DeepONet vs. En-DeepONet for variable source location for the Laplace equation,
+with physics-informed (unsupervised) training. Each column plots the temperature field force a randomly
+selected source location, with the horizontal and vertical axes as the x, y coordinates.
+The plotted
+solutions correspond to three different locations for the center of the source pulse, computed using (a)
+the reference solution from Finite Element Method (FEM) using COMSOL software, (b) the physics-
+informed En-DeepONet, and (c) physics-informed standard DeepONet.
+20
+
+--- Sayfa 21 ---
+0
+2000
+4000
+6000
+8000
+10000
+epochs
+10
+4
+10
+3
+10
+2
+10
+1
+100
+Normalized loss ( /
+0)
+DeepONet
+En-DeepONet
+0
+2000
+4000
+6000
+Training time (s)
+10
+4
+10
+3
+10
+2
+10
+1
+100
+DeepONet
+En-DeepONet
+Figure A.18: Loss function for the standard DeepONet vs. En-DeepONet for moving source location for
+the Laplace equation, with physics-informed (unsupervised) training. The vertical axis is the normalized
+loss function, and the horizontal axes are training epochs (Left) and training time in seconds (Right).
+The training is conducted with a similar number of parameters, the same batch-size and epochs, so that
+it provides a fair comparison between the two architectures. Note that En-DeepONet loss can be further
+improved as the loss value is still reducing after 10,000 epochs.
+References
+[1] V. Perlick, Ray optics, Fermat’s principle, and applications to general relativity,
+Vol. 61, Springer Science & Business Media, 2000.
+[2] R. L. Nowack, Wavefronts and solutions of the eikonal equation, Geophysical Journal
+International 110 (1) (1992) 55–62.
+[3] E. Rouy, A. Tourin, A viscosity solutions approach to shape-from-shading, SIAM
+Journal on Numerical Analysis 29 (3) (1992) 867–884.
+[4] G. Wolansky, Eikonal functions: Old and new, A Celebration of Mathematical Mod-
+eling: The Joseph B. Keller Anniversary Volume (2013) 181.
+[5] C. Satriano, L. Elia, C. Martino, M. Lancieri, A. Zollo, G. Iannaccone, Presto, the
+earthquake early warning system for southern italy: Concepts, capabilities and future
+perspectives, Soil Dynamics and Earthquake Engineering 31 (2) (2011) 137–153.
+[6] L. Lu, P. Jin, G. Pang, Z. Zhang, G. E. Karniadakis, Learning nonlinear operators
+via deeponet based on the universal approximation theorem of operators, Nature
+Machine Intelligence 3 (3) (2021) 218–229.
+[7] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart,
+A. Anandkumar, Fourier neural operator for parametric partial differential equa-
+tions, arXiv preprint arXiv:2010.08895 (2020).
+[8] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart,
+A. Anandkumar, Neural operator: Graph kernel network for partial differential equa-
+tions, arXiv preprint arXiv:2003.03485 (2020).
+21
+
+--- Sayfa 22 ---
+[9] L. Lu, X. Meng, S. Cai, Z. Mao, S. Goswami, Z. Zhang, G. E. Karniadakis, A com-
+prehensive and fair comparison of two neural operators (with practical extensions)
+based on fair data, Computer Methods in Applied Mechanics and Engineering 393
+(2022) 114778.
+[10] S. Wang, H. Wang, P. Perdikaris, Learning the solution operator of parametric par-
+tial differential equations with physics-informed deeponets, Science advances 7 (40)
+(2021) eabi8605.
+[11] T. Tripura, S. Chakraborty, Wavelet neural operator: a neural operator for paramet-
+ric partial differential equations, arXiv preprint arXiv:2205.02191 (2022).
+[12] T. Zhang, K. Innanen, D. Trad, Learning the elastic wave equation with fourier
+neural operators (2022).
+[13] K. Suleymanli, U. Waheed, Microseismic source localization using fourier neural oper-
+ators, in: 84th EAGE Annual Conference & Exhibition, no. 1, European Association
+of Geoscientists & Engineers, 2023, pp. 1–5.
+[14] T. Chen, H. Chen, Universal approximation to nonlinear operators by neural net-
+works with arbitrary activation functions and its application to dynamical systems,
+IEEE Transactions on Neural Networks 6 (4) (1995) 911–917.
+[15] S. Goswami, M. Yin, Y. Yu, G. E. Karniadakis, A physics-informed variational deep-
+onet for predicting crack path in quasi-brittle materials, Computer Methods in Ap-
+plied Mechanics and Engineering 391 (2022) 114587.
+[16] S. Wang, H. Wang, P. Perdikaris, Improved architectures and training algorithms for
+deep operator networks, Journal of Scientific Computing 92 (2) (2022) 1–42.
+[17] S. Goswami, A. Bora, Y. Yu, G. E. Karniadakis, Physics-informed neural operators,
+arXiv preprint arXiv:2207.05748 (2022).
+[18] S. Lanthaler, S. Mishra, G. E. Karniadakis, Error estimates for deeponets: A deep
+learning framework in infinite dimensions, Transactions of Mathematics and Its Ap-
+plications 6 (1) (2022) tnac001.
+[19] B. L¨utjens, C. H. Crawford, C. D. Watson, C. Hill, D. Newman, Multiscale
+neural operator: Learning fast and grid-independent pde solvers, arXiv preprint
+arXiv:2207.11417 (2022).
+[20] N. B. Kovachki, Z. Li, B. Liu, K. Azizzadenesheli, K. Bhattacharya, A. M. Stu-
+art, A. Anandkumar, Neural operator: Learning maps between function spaces with
+applications to pdes., J. Mach. Learn. Res. 24 (89) (2023) 1–97.
+[21] G. Lin, C. Moya, Z. Zhang, Learning the dynamical response of nonlinear non-
+autonomous dynamical systems with deep operator neural networks, Engineering
+Applications of Artificial Intelligence 125 (2023) 106689.
+22
+
+--- Sayfa 23 ---
+[22] J. He, S. Koric, S. Kushwaha, J. Park, D. Abueidda, I. Jasiuk, Novel deeponet archi-
+tecture to predict stresses in elastoplastic structures with variable complex geometries
+and loads, arXiv preprint arXiv:2306.03645 (2023).
+[23] W. Li, M. Z. Bazant, J. Zhu, Phase-field deeponet: Physics-informed deep operator
+neural network for fast simulations of pattern formation governed by gradient flows
+of free-energy functionals, arXiv preprint arXiv:2302.13368 (2023).
+[24] S. Koric, A. Viswantah, D. W. Abueidda, N. A. Sobh, K. Khan, Deep learning
+operator network for plastic deformation with variable loads and material properties,
+Engineering with Computers (2023) 1–13.
+[25] S. Garg, S. Chakraborty, Vb-deeponet: A bayesian operator learning framework
+for uncertainty quantification, Engineering Applications of Artificial Intelligence 118
+(2023) 105685.
+[26] S. Koric, D. W. Abueidda, Data-driven and physics-informed deep learning operators
+for solution of heat conduction equation with parametric heat source, International
+Journal of Heat and Mass Transfer 203 (2023) 123809.
+[27] N. Mo¨es, J. Dolbow, T. Belytschko, A finite element method for crack growth without
+remeshing, International journal for numerical methods in engineering 46 (1) (1999)
+131–150.
+[28] G. Karniadakis, S. Sherwin, Spectral/hp element methods for computational fluid
+dynamics, Numerical Mathematics and Scie, 2005.
+[29] W. Lee, J. C. Lahr, C. Valdes, The hypo71 earthquake location program, Interna-
+tional Geophysics 81 (B) (2003) 1641–1642.
+[30] M. Sambridge, K. Gallagher, Earthquake hypocenter location using genetic algo-
+rithms, Bulletin of the Seismological Society of America 83 (5) (1993) 1467–1491.
+[31] S. D. Billings, Simulated annealing for earthquake location, Geophysical Journal
+International 118 (3) (1994) 680–692.
+[32] A. Lomax, J. Virieux, P. Volant, C. Berge-Thierry, Probabilistic earthquake location
+in 3d and layered models: Introduction of a metropolis-gibbs method and comparison
+with linear locations, Advances in seismic event location (2000) 101–134.
+[33] A. Lomax, A. Michelini, A. Curtis, R. Meyers, Earthquake location, direct, global-
+search methods, Encyclopedia of complexity and systems science 5 (2009) 2449–2473.
+[34] H. Wang, T. Alkhalifah, U. bin Waheed, C. Birnie, Data-driven microseismic event
+localization: An application to the oklahoma arkoma basin hydraulic fracturing data,
+IEEE Transactions on Geoscience and Remote Sensing 60 (2021) 1–12.
+23
+
+--- Sayfa 24 ---
+[35] D. Wamriew, R. Pevzner, E. Maltsev, D. Pissarenko, Deep neural networks for de-
+tection and location of microseismic events and velocity model inversion from micro-
+seismic data acquired by distributed acoustic sensing array, Sensors 21 (19) (2021)
+6627.
+[36] M. Izzatullah, I. E. Yildirim, U. B. Waheed, T. Alkhalifah, Laplace hypopinn:
+physics-informed neural network for hypocenter localization and its predictive un-
+certainty, Machine Learning: Science and Technology 3 (4) (2022) 045001.
+[37] D. Anikiev, U. b. Waheed, F. Stanˇek, D. Alexandrov, Q. Hao, N. Iqbal, L. Eisner,
+Traveltime-based microseismic event location using artificial neural network, Fron-
+tiers in Earth Science 10 (2022).
+[38] R. Versteeg, The marmousi experience: Velocity model determination on a synthetic
+complex data set, The Leading Edge 13 (9) (1994) 927–936.
+[39] E. Haghighat, R. Juanes, Sciann: A keras/tensorflow wrapper for scientific computa-
+tions and physics-informed deep learning using artificial neural networks, Computer
+Methods in Applied Mechanics and Engineering 373 (2021) 113552.
+[40] J. A. Sethian, Fast marching methods, SIAM review 41 (2) (1999) 199–235.
+[41] C. Deng, S. Feng, H. Wang, X. Zhang, P. Jin, Y. Feng, Q. Zeng, Y. Chen, Y. Lin,
+Openfwi: Large-scale multi-structural benchmark datasets for seismic full waveform
+inversion, arXiv preprint arXiv:2111.02926 (2021).
+24

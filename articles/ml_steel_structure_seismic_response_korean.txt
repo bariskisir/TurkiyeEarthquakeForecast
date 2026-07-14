@@ -1,0 +1,787 @@
+
+--- Sayfa 1 ---
+한국공간구조학회지_ 91
+기계학습 기반 강 구조물 지진응답 예측기법
+Machine Learning based Seismic Response Prediction Methods     
+for Steel Frame Structures
+이 승 혜
+*
+Lee, Seunghye
+이 재 홍
+**
+Lee, Jaehong
+Abstract
+In this paper, machine learning models were applied to predict the seismic response of steel frame structures. Both 
+geometric and material nonlinearities were considered in the structural analysis, and nonlinear inelastic dynamic analysis 
+was performed. The ground acceleration response of the El Centro earthquake was applied to obtain the displacement of 
+the top floor, which was used as the dataset for the machine learning methods. Learning was performed using two 
+methods: Decision Tree and Random Forest, and their efficiency was demonstrated through application to 2-story and 
+6-story 3-D steel frame structure examples.
+Keywords : Machine learning, Steel frame structures, Seismic response, Prediction methods, Deep learning 
+ISSN 1598-4095(Print)
+ISSN 2287-7401 (Online)
+http://dx.doi.org/10.9712/KASS.2024.24.2.91
+Journal of Korean Association for Spatial Structures
+Vol. 24, No. 2 (통권 96호), pp.91~99, June, 2024
+1. 서론1)
+2010년 이후 전 세계적으로 큰 주목을 받아왔던 규
+모(Maganitude) 7.0이 넘는 지진을 살펴보면 매년 1
+건 이상의 지진이 발생하는 것을 알 수 있다 <Table 
+1>. 이러한 지진은 내진설계가 제대로 이루어지지 않
+은 지역에서는 대규모의 인명 사상자가 발생하며, 
+2011년 동일본 대지진(도호쿠 지방 태평양 해역 지
+진)의 경우와 같이 선진기술력으로 준비를 해왔다 하
+더라도 지진해일이 수반되어 수 만명의 인명피해가 
+발생할 수 있다. 우리나라 또한 2016년 경주지진(Mw 
+5.4)과 2017년 포항지진(Mw 5.4)이 발생한 이후 한반도
+** 정회원, 딥러닝 건축연구소,
+세종대학교 건축공학과 조교수, 공학박사
+Deep Learning Architecture Research Center
+Dept. of Architectural Engineering,
+Sejong University
+** 교신저자, 정회원, 딥러닝 건축연구소,
+세종대학교 건축공학과 교수, 공학박사
+Deep Learning Architecture Research Center
+Dept. of Architectural Engineering,
+Sejong University
+Tel: 02-3408-3287
+E-mail: jhlee@sejong.ac.kr
+가 더 이상 안전지대가 아니라는 인식이 자리 잡았다
+1).
+Year
+Magnitude
+Event
+2010
+8.8
+2010 Chile earthquake
+2011
+9.0 - 9.1
+2011 Tohoku earthquake
+2012
+8.6
+2012 Indian Ocean earthquake
+2013
+8.3
+2013 Okhotsk Sea earthquake
+2014
+8.2
+2014 Iquique earthquake
+2015
+8.3
+2015 Illapel earthquake
+2016
+7.9
+2016 Solomon Islands earthquakes
+2017
+8.2
+2017 Chiapas earthquake
+2018
+8.2
+2018 Fiji earthquakes
+2019
+8.0
+2019 Peru earthquake
+2020
+7.8
+July 2020 Alaska Peninsula 
+earthquake
+2021
+8.2
+2021 Chignik earthquake
+2022
+7.6
+2022 Michoacán earthquake
+2022 Papua New Guinea 
+earthquake
+2023
+7.8
+2023 Turkey–Syria earthquakes
+2024
+7.5
+2024 Noto earthquake
+<Table 1> Largest earthquakes by year 
+(Since 2010)
+2). 
+
+--- Sayfa 2 ---
+이승혜․이재홍
+92 _ 제24권 제2호 통권96호, 2024. 6
+구조물의 
+내진성능평가(Seismic 
+performance 
+assessment) 
+및 
+지진응답예측(Seismic 
+response 
+prediction)을 위해서는 수치해석 모델링을 통해 비선
+형 지진응답을 수행해야 하지만 이는 많은 계산시간
+과 인력, 비용이 요구된다. 이는 실제 지진에 대한 구
+조물의 동적응답 산정이 지반과 구조물 사이의 상호
+작용(Soil-Structure Interaction, SSI)을 고려하여 다
+양한 
+지반조건 
+하에서 
+FDM(Finite 
+Difference 
+Method) 혹은 FEM(Finite Element Method) 기반 
+상용소프트웨어를 사용하여 모델링 및 데이터베이스 
+구축을 하기 때문이다
+3).
+최근 기계학습(Machine learning) 혹은 인공지능
+(Artificial intelligence) 기법을 사용하여 구조물의 지
+진응답을 예측하려는 연구가 많이 진행되고 있다. 축
+적된 
+데이터를 
+사용하는 
+지도학습(Supervised 
+learning) 기반의 모델은 대부분 Artificial Neural 
+Network (ANN)의 적용을 시작으로 진행한다. 특히 
+구조물의 비선형 거동을 예측하는 기술에는 다양한 
+기계학습 기법이 사용되어 온 것을 알 수 있다. 
+Neural Network
+4) 뿐 만 아니라 Long Short-Term 
+Memory 
+(LSTM)5), 
+WaveNet6), 
+Convolutional 
+Neural Network (CNN)
+7) 등 다양한 기법을 통해 예
+측률을 높이려는 노력이 계속되고 있다.
+본 연구에서는 지진에 대한 강 구조물의 비선형 응
+답을 
+예측하는 
+기계학습 
+모델을 
+제안하였다. 
+Beam-column으로 구성된 프레임 구조물을 대상으로 
+기하 비선형성(Geometrical nonlinearity)과 재료 비
+선형성(material nonlinearity)을 고려하였으며 2차 
+비탄성해석(second-order inelastic analysis)을 적용
+하였다. El Centro 지진8) 을 적용하여 응답해석을 수
+행하였으며 분류(Classification)와 회귀(Regression)
+에 모두 사용할 수 있는 지도학습형 기계학습 알고리
+즘인 
+Decision 
+Tree9)와 
+앙상블학습(Ensemble 
+learning) 기법 중 하나인 Random Forest
+10) 기법을 
+사용한 예측모델을 제안하였다. 2-Story 와 6-Story
+의 강구조 모델을 사용하여  효율성을 입증하였다. 
+ 
+2. 프레임 구조의 비선형 동적해석
+2.1 프레임 구조
+프레임 강 구조물의 해석을 수행하기 위해 선행 연
+구의 비선형 해석 모델을 채택하였다
+11). 본 해석 모델
+은 기하 및 재료 비선형성을 적용하며 소성힌지모델
+(Plastic hinge model)
+12)의 수정된 버전을 사용한다. 
+부재에 증분되어 가해지는 기본 하중과 변형 간의 관
+계식은 다음과 같이 나타낼 수 있다. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(1) 
+여기서 좌항의 P, MyA, MyB, MZA, MZB, T는 각각 증분
+하여 가해지는 축력(Axial force), y축과 z축에 대한 
+단부모멘트(End moment), 비틀림하중(torsion)을 나
+타낸다. 좌항의 δ, θyA, θyB, θzA, θzB, φ는 각각 증분하
+여 가해지는 하중에 대한 변위(displacement), 절점 
+회전각(joint rotation)과 비틀림각(Angle of twist)을 
+의미한다. 6x5 행렬식 안의 A, Iy, Iz, L은 각각 부재 
+단면적, y축과 z축에 대한 관성모멘트(moment of 
+inertia)와 부재의 길이를 뜻하며 Et는 잔류응력
+(Residual stree)으로 인한 점진적인 항복을 설명하는 
+CRC(Column Research Council) 접선계수(Tangent 
+modulus) 이며 G는 재료의 전단계수를 뜻한다. 행렬
+식 안의 k항목은 다음과 같다. 
+
+
+
+
+
+
+
+(2a) 
+
+
+
+(2b)
+
+
+
+
+
+
+
+(2c)
+
+
+
+
+
+
+
+(2d)
+
+--- Sayfa 3 ---
+기계학습 기반 강 구조물 지진응답 예측기법
+한국공간구조학회지_ 93
+
+
+
+(2e) 
+
+
+
+
+
+
+
+(2f)
+여기서 S1, S2, S3, S4는 각각 y축과 z축에 대한 안정함
+수(Stability function)를 뜻한다13). 식(2a)부터 식(2f)
+의 ηA와 ηB는 A와 B 양 끝단에서 소성화로 인한 비탄
+성 강성 감소를 허용하는 스칼라 매개변수이다. 이 항
+은 탄성 상태일 때 1.0 소성힌지로 되었을 때 0의 값
+을 갖는다. 매개변수 η는 아래 식과 같이 포물선 함수
+로 변화하는 것으로 가정된다.
+ for ≤
+(3a) 
+ for 
+(3b) 
+여기서 α는 Orbison yield surface로 다음과 같이 나
+타낼 수 있다. 
+
+
+
+
+                 
+
+
+
+(4) 
+여기서 식(4) 항목의 함수는 다음과 같이 나타낼 수 
+있다. 
+
+ (strong-axis)
+ (weak-axis)
+(5a)
+(5b)
+(5c) 
+2.2 동적 해석
+수치 증분에 대한 운동방정식(equation of motion)
+을 풀기 위해 Newmark-beta Method
+14)중 Constant- 
+Average-Acceleration 적분법이 사용되었다. 각 시간 
+단계의 잔류 힘은 Newton-Raphson 반복과정을 통
+해 제거되며 구조물의 증분 운동방적식은 다음과 같다.
+∆∆∆∆
+(6) 
+여기서 ∆, ∆, ∆는 각각 증분 가속도, 
+증분 속도, 증분 변위의 벡터를 의미한다. [M], [C], 
+[K]는 각각 질량, 감쇠, 탄젠트강성 행렬을 의미한다. 
+시간 스텝은 k+1 스텝에서 k단계를 뺀 차로 나타내며 
+(∆) ∆하중 증분이 구조물에 가해질 
+때 본 해석법은 반복과정을 통해 수렴 해를 찾아낸다. 
+k+1단계의 변위 ∆는 이전 단계 변위 ∆
+에 계산된 변위 증분∆을 더하여 계산된다. 
+∆∆∆
+(7) 
+각 스텝이 수렴하여 해를 찾으면 구조물의 응답은 
+아래와 같은 식을 사용하여 갱신된다. 
+∆
+(8a) 
+
+∆
+∆
+(8b)
+
+∆
+∆
+∆
+∆
+(8c)
+<Fig. 1> Ground acceleration spectrum of 
+El Centro earthquake
+3. 구조물 응답 데이터 확보
+본 연구에서는 El Centro 지진을 사용하여 구조물 
+응답 데이터를 수집하였다. 1940년 5월 18일 미국 캘
+리포니아 남부 Imperial Valley에서 발생한 El Centro 
+지진은 규모 6.9로 본 지역에 막대한 피해를 주었다. 
+El Centro 기록으로 알려진 지반 운동 데이터는 지진 
+공학 연구에 광범위하게 사용되고 있으며 내진 설계 
+
+--- Sayfa 4 ---
+이승혜․이재홍
+94 _ 제24권 제2호 통권96호, 2024. 6
+및 구조해석 방법론의 발전에 크게 기여하였다. <Fig. 
+1>은 El Centro 지진의 지반 가속도 응답데이터를 나
+타낸 그래프이다.
+본 연구에서는 해당 구조물에 El Centro 지진의 지
+반 가속도 응답 데이터를 대입하여 최상층 변위 응답
+을 도출하였다. 2장에서 서술한 비선형 동적해석 기법
+을 사용하여 Python 코드를 작성하였으며 이를 통해 
+시간에 따른 변위 응답을 2차원 그래프로 얻을 수 있
+었다. 시간 스텝의 증분은 1/50으로 하였으며 
+Newmark-beta method를 위한 수렴기준은 10
+-9으
+로, 감쇠계수는 0.05로 설정하였다. 
+4. 기계학습 예측모델
+최적의 회귀 기법을 선택하기 위해 주요한 속성은 
+종속변수(Dependent 
+variable)과 
+독립변수
+(Independent variable)의 특성과 변수관의 관계라 
+할 수 있지만 일반적인 회귀 문제는 독립변수를 입력
+으로 받아 그에 대한 종속변수를 결과로 예측하는 문
+제 형태를 취한다. 선형 회귀(Linear regression) 기법
+은 가장 기본적인 형태라 할 수 있지만 현실의 대부
+분 문제는 비선형 형태를 띠게 마련이다. 최근에는 
+Decision Tree 학습법이나 앙상블 기법(Ensemble 
+method)
+15)로 비선형 데이터의 해석을 수행하는 추세
+이다. 본 연구에서는 Decision Tree와 앙상블 기법 중 
+하나인 Random Forest 모델을 사용하여 지진하중에 
+대한 구조물 응답 예측을 수행하였다. 
+ 
+2.1 Decision Tree
+Decision Tree 알고리즘은 앞서 소개한 바와 같이 
+분류 및 회귀 작업 모두에 널리 쓰이는 강력한 기계
+학습 방법 중 하나이다. Decision Tree 기법은 특성 
+값을 기반으로 데이터를 반복적으로 분할하여 최종 
+예측을 제공하는 일련의 결정 노드(Decision node)와 
+리프 노드(Leaf node)를 생성함으로써 마치 나무
+(Tree)와 같이 결정모델을 구성한다. 분류 작업 중 다
+양한 분할 기준을 설정하는데 주로 지니 불순도(Gini 
+Impurity)나 엔트로피(Entropy)를 사용한다. 이러한 
+분할 기준은 나무를 분할 함에 있어 분할 품질을 평
+가하는데 사용되며 효과적인 예측 모델의 생성을 보
+장한다. 과적합(Overfit)하는 경향에도 불구하고 단순
+성과 해석이 가능한 특징으로 인해 여전히 널리 사용
+되고 있다.
+ 
+2.1 Random Forest
+Decision Tree와 같이 트리 기반의 알고리즘
+(Tree-based algorithm)들이 관측값과 목표값을 연결
+시켜주는 예측모델에 결정트리를 사용한다면 앙상블 
+기법은 이러한 결정트리를 사용하지만 다양한 학습 
+알고리즘들을 결합하여 개별 알고리즘만으로 얻을 수 
+있는 것 보다 더 나은 예측 성능을 도출한다.
+Random Forest 기법은 다중의 의사결정 트리를 
+구성하고 그 예측을 집계하여 모델의 정확도와 견고
+성을 향상시키는 앙상블 학습 방법이다. 이 방법은 무
+작위 기능선택(Random feature selection)을 활용하
+여 과적합과 분산을 전체적으로 줄이는 다양한 트리
+를 구성한다. 분류 작업의 경우 Decsion Tree가 특정 
+분할기준을 사용하여 확장하는 것이 비해 회귀 문제
+에서의 Random Forest는 개별 트리의 예측 평균을 
+사용한다. 
+하지만 모델이 복잡하고 비선형에 최적화 되었다고 
+해서 무작정 예측율이 높은 것이 아니므로 해당 데이
+터에 적합한 예측모델을 찾는 과정은 필수로 수반되
+어야 한다. 최근 다양한 구조해석 및 설계 문제에 기
+계학습 예측기법을 적용하는 연구들을 많이 찾아볼 
+수 
+있으나 
+각각의 
+데이터를 
+분석하고 
+전처리
+(preprocession)과정을 통해 정제한 뒤 다양한 모델을 
+적용하는 과정은 시행착오(Trial and error)법처럼 수
+행되어야 하므로 데이터 경향에 맞는 최적의 모델을 
+찾는 궁극적인 목표를 위해 모두 필요한 과정이라 하
+겠다.
+2.3 시계열 교차 검증 기법
+예측 기법이 주어진 데이터 세트에만 과적합한 모
+델을 만드는 것을 방지하기 위해 전체 데이터 세트를 
+시계열 교차 검증(Time series cross validation)기법
+을 통해 분할하여 평가하였다. 보통의 기계학습 과정
+은 훈련 세트(training set)와 테스트 세트(test set)를 
+
+--- Sayfa 5 ---
+기계학습 기반 강 구조물 지진응답 예측기법
+한국공간구조학회지_ 95
+일정한 비율로 분할하는 방법을 사용한다. 하지만 데
+이터 세트의 일부 구간을 따로 분할하여 훈련을 진행
+할 시 훈련 데이터에만 과적합하는 오류를 범하기 쉽
+다. 이를 방지하기 위해 많이 쓰이는 방법이 교차검증
+(Cross validation) 기법이다. 교차검증은 모집단 D를 
+k개의 집합으로 나누어 (k-1)개의 부분 집합을 훈련
+세트로 사용하고 나머지 하나의 부분 집합을 테스트 
+세트로 사용하는 방식을 취한다. 총 k번의 훈련과 테
+스트를 거쳐 k개의 테스트 결괏값에 대한 평균을 얻
+는 방식을 k겹 교차 검증(k-fold cross validation) 기
+법이라고 부른다. 
+본 연구의 데이터는 시간에 따른 순서가 존재하는 
+시계열성을 나타내기 때문에 k겹 교차 검증에서 더 
+나아가 관찰의 시간적 순서를 유지하며 훈련 데이터
+의 부분 집합을 취하는 시계열 교차 검증 기법을 사
+용하였다. 이 접근 방법은 과거의 데이터를 사용하여 
+미래 결과를 예측하는 실제 시나리오를 보다 정확하
+게 반영한다. <Fig. 2>는 시계열 교차 검증 기법의 예
+시를 그림으로 나타낸 것이다.
+<Fig. 2> Illustration of the time series 
+cross validation technique
+2.4 평가기법
+본 연구에서는 각 예측 모델의 성능을 평가하기 위
+해 평균 제곱 오차(Mean Squared Error: MSE)와 결
+정계수(Coefficient of determination: R2) 두 가지 평
+가기법을 도입하였다. 특히 결정계수 R
+2 지표는 예측 
+값(t)이 입력 값에 대해 얼마나 설명력을 갖게 되는지
+를 의미하는 수치로 1에 가까운 수 일수록 양의 상관
+관계를 의미한다. n개의 데 이터 샘플을 사용하였을 
+때 두 가지 성능 평가 지표의 식은 아래와 같다.
+
+Coefficient of determination (R2)
+
+
+
+
+
+
+
+
+
+
+
+(9)
+
+Mean Square Error (MSE)
+
+
+
+
+
+
+(10)
+<Fig. 3> Two-story steel frame structure
+5. 수치해석
+본 연구에서는 2-Story 와 6-Story의 강구조 모델
+에 기계학습 예측모델을 적용하여 성능을 비교하였다. 
+해당 구조물에 El Centro 지반 가속도 응답을 가력한 
+후 최상층의 변위 응답을 도출하여 데이터를 구성하
+였다. 기계학습 예측을 위한 입력(Input)과 출력
+(Output)은 각각 El Centro 지진에 의한 지반 가속도
+와 비선형 동적 해석을 수행한 최상층의 변위 응답이 
+된다. 입력과 출력이 모두 단변량(univariate)이므로 
+비교적 쉬운 예측 문제라고 치부하기 쉬우나 입력 및 
+출력 모두 정(Positive)과 부(Negative) 방향으로 번
+갈아 진동하는 형식으로 예측 모델 또한 비선형성을 
+
+--- Sayfa 6 ---
+이승혜․이재홍
+96 _ 제24권 제2호 통권96호, 2024. 6
+띈다. 수치해석을 위한 모델은 파이썬(Python) 프로
+그래밍 
+언어로 
+작성되었으며, 
+사이킷런(scikit- 
+learn)16) 
+라이브러리의 
+DecisionTreeRegressor, 
+RandomForestRegressor를 사용하였다. 재현과 비교
+를 위해 모델을 위한 하이퍼 파라미터는 기본 설정을 
+사용하였다.
+(a) Decision Tree
+(b) Random Forest
+<Fig. 4> Comparison of ground truth and 
+predicted response for 2-story steel frame 
+structure
+4.1 2-story steel space frame
+첫 번째 예제는 2-story 강 프레임 구조물로 <Fig. 2>에 
+나타나 있다. 모든 부재는 W8 × 31 로 구성하였으며 재료
+의 탄성계수(Elastic modulus) 및 포아송비(Poisson’s 
+ratio)는 각각 200GPa과 0.3으로 설정하였다. 재료의 항복
+응력은 700MPa로 가정하였으며 프레임 절점에 질량은 50 
+N·sec2/mm로 입력하였다. x 방향의 기둥 간격은 3m, y 
+방향의 기둥 간격은 2.5m로 설정하였으며 1층과 2층의 층
+고는 각각 1.76m와 2.2m로 입력하였다. El Centro 지진은 
+x방향으로 가력되었으며 그에 대한 최상층 응답을 시간에 
+대한 변위 데이터로 수집하였다. 재료의 물성치는 <Table 
+2>에 정리되어 있다.
+<Fig. 4>는 Decision Tree 모델과 Random Forest 
+모델을 사용하여 예측한 응답을 참값(Ground truth)
+과 비교한 것이다. 두 기법 모두 응답 경향을 잘 따르
+는 편이나 Decision Tree 모델의 예측률이 더 높은 
+것으로 파악되었다. 이는 <Table 3>의 결정계수 R
+2을 
+값을 비교하면 더 명확히 파악할 수 있다. 하지만 
+MSE 값이 Decision Tree의 경우가 더 큰 값을 보이
+는 것을 보아 일부 구간에서 실제 값과 크게 벗어나
+는 결과를 보임에 기인한 것으로 판단된다.
+Propery
+Elastic modulus
+200 GPa
+Poission’s ratio
+0.3
+Yield stress
+700 MPa
+<Table 2> Material properties of 2-story steel 
+frame structure.
+MSE
+R2
+Decision Tree
+2.22436
+0.972
+Random Forest
+0.00016
+0.785
+<Table 3> MSE and R-squared scores on the 
+full 
+dataset 
+for 
+2-story 
+steel 
+frame 
+structure.
+4.2 6-story steel space frame
+두 번째 예제는 6-story 강 프레임 구조물로 <Fig. 5>에 
+3차원 형상이 나타나 있으며 부재의 재료는 206,850 MPa
+의 탄성계수와 79,293 MPa의 전단계수 값을 갖는다. 프레
+임의 비선형 비탄성 동적해석을 위한 항복응력은 250 MPa
+로 설정하였다. 해당 구조물의 각 층 바닥 다이어프레임의 
+효과는 무시하였으며 9.6 kN/m
+2의 바닥하중에 가해진다. 6
+층 구간과 3층 구간이 접합되는 절점(8, 11, 14, 17, 20, 23)
+은 256.84 kN·sec
+2/m의 집중질량(Lumped mass)을, 이를 
+제외한 모든 절점은 128.42 kN·sec
+2/m의 집중질량을 가하
+였다. 모든 층은 3.658m의 층고를 가져 구조물은 총 
+21.948m의 높이이며 El Centro 지진은 y방향으로 가력되
+었다. 1층부터 3층의 기둥은 W12 × 87 부재를 선택하였으
+며 3층 구간과 6층 구간이 만나는 부재(13번~18번)는 W12 
+× 120 부재를 입력하였다. 4층부터 6층의 기둥은 W10 × 
+60 부재로 구성되어 있으며 모든 보 부재는 <Fig. 6>에 나
+타나 있다.
+
+--- Sayfa 7 ---
+기계학습 기반 강 구조물 지진응답 예측기법
+한국공간구조학회지_ 97
+Propery
+Elastic modulus
+206,850 MPa
+Shear modulus
+79,293 MPa
+Yield stress
+250 MPa
+<Table 4> Material properties of 2-story steel 
+frame structure.
+<Fig. 5> Six-story steel frame structure
+<Fig. 6> Plan view of a six-story steel 
+frame
+<Fig. 7>은 Decision Tree와 Random Forest 기법으로 
+6-story 프레임 구조물을 예측한 결과이다. 2-story의 결
+과와 마찬가지로 Decision Tree 기법이 더 좋은 결괏값을 
+보이며 이는 <Table 5>의 R
+2 값에서 확인할 수 있다(R
+2 = 
+0.940). Decison Tree를 사용한 결과라도 6-story의 경우 
+2-story의 경우보다 더 실제 응답 선을 벗어나는 노이즈
+(noise)가 보인다. 
+본 연구에서는 지진응답에 대한 구조물의 비선형 거동
+을 예측하는 가능한 모델을 제안하는 것으로 두 모델 모두 
+기본 값을 적용하였다. Random Forest의 평균화 특성 때
+문에 Decision Tree의 경우보다 노이즈가 많이 보이는 것
+처럼 보이나 두 기법 모두 추세선을 잘 따라가는 경향을 
+보여 추후 다양한 지진 응답을 통해 검증하고 모델을 수정
+해갈 필요가 있다. 
+MSE
+R
+2
+Decision Tree
+0.00127
+0.940
+Random Forest
+0.00509
+0.760
+<Table 5> MSE and R-squared scores on the 
+full 
+dataset 
+for 
+6-story 
+steel 
+frame 
+structure.
+(a) Decision Tree
+(b) Random Forest
+<Fig. 7> Comparison of ground truth and 
+predicted response for 6-story steel frame 
+structure
+
+--- Sayfa 8 ---
+이승혜․이재홍
+98 _ 제24권 제2호 통권96호, 2024. 6
+6. 결론
+본 논문에서는 강 구조물의 지진응답을 예측하기 
+위해 기계학습 모델을 적용하였다. 해당 구조물은 기
+하 및 재료 비선형 모두를 고려하였으며 비선형 비탄
+성 동적해석을 수행하였다. El Centro 지진의 지반가
+속도 응답을 가력하여 이에 대한 최상층의 변위를 얻
+었으며 이를 기계학습의 데이터세트로 구성하였다. 학
+습은 Decision Tree와 Random Forest 두 가지 방법
+으로 수행하였으며 2-story와 6-story 예제에 적용하
+여 효율성을 입증하였다. 두 기법 모두 응답의 추세선
+을 잘 따라가는 경향을 보이나 구조물의 주기가 길어
+질수록 노이즈를 보이는 경향이 있다. 추후 연구에서
+는 다양한 지진과 기계학습 기법을 적용하여 최적의 
+예측기법과 이를 수정하는 방법에 대해 연구할 필요
+가 있다.
+감사의 글
+ 이 성과는 정부(과학기술정보통신부)의 재원으로 한
+국연구재단의 지원을 받아 수행된 연구임(NRF- 
+2023R1A2C2003310).
+References
+ 1. Yun, S., Hamm, S., Jeon, H., and Cheong, J., 
+“Trend Analysis of Earthquake Researches 
+in the World”, Journal of the Korean earth 
+science society Vol.42, No.1 pp.76-87, 2021
+ 2. https://www.isc.ac.uk/iscgem/index.php
+ 3. Won, J., and Shin, J., “Development  of  
+Artificial  Neural  Network  Model  for  
+Prediction  of  Seismic  Response  of  Building  
+with  Soil-structure  Interactio”, JOURNAL  
+OF  THE  KOREAN  GEOTECHNICAL  
+SOCIETY, Vol.36,  No.8, pp. 7–15, 2020
+DOI:https://doi.org/10.7843/kgs.2020.36.8.7
+ 4. Lagaros, N. D., & Papadrakakis, M. (2012). 
+Neural network based prediction schemes 
+of the non-linear seismic response of 3D 
+buildings. Advances in Engineering Software, 
+44(1), 92-115.
+DOI:https://doi.org/10.1016/j.advengsoft.2011.05.033
+ 5. Zhang, R., Chen, Z., Chen, S., Zheng, J., 
+Büyüköztürk, O., & Sun, H. (2019). Deep 
+long 
+short-term 
+memory 
+networks 
+for 
+nonlinear 
+structural 
+seismic 
+response 
+prediction. Computers & Structures, 220, 
+55-68.
+DOI:https://doi.org/10.1016/j.compstruc.2019.05.006
+ 6. Ning, C., Xie, Y., & Sun, L. (2023). LSTM, 
+WaveNet, and 2D CNN for nonlinear time 
+history prediction of seismic responses. 
+Engineering Structures, 286, 116083.
+DOI:https://doi.org/10.1016/j.engstruct.2023.116083
+ 7. Zhang, R., Liu, Y., & Sun, H. (2020). 
+Physics-guided convolutional neural network 
+(PhyCNN) for data-driven seismic response 
+modeling. 
+Engineering 
+Structures, 
+215, 
+110704.
+DOI:https://doi.org/10.1016/j.engstruct.2020.110704
+ 8. Pacific Earthquake Engineering Research 
+Center (PEER). (1940). "Imperial Valley (El 
+Centro) Earthquake Record." PEER Ground 
+Motion Database. Retrieved from
+https://ngawest2.berkeley.edu/
+ 9. Quinlan, J. R.. “Induction of decision trees”, 
+Machine Learning, 1(1), p.p. 81-106, 1986
+10. Breiman, L., “Random Forests”, Machine 
+Learning, 45(1), p.p. 5-32, 2001
+11. Thai, H. T., & Kim, S. E., “Practical 
+advanced analysis software for nonlinear 
+inelastic analysis of space steel structures”, 
+Advances in Engineering Software, 40(9), 
+p.p. 786-797, 2009
+12. Housner, G. W. (1960). Limit Design of 
+Structures. 
+Journal 
+of 
+the 
+Engineering 
+Mechanics Division, ASCE, 86(EM4), 107-132.
+13. Chen, W. F., & Lui, E. M. (1987). Structural 
+stability: theory and implementation. (No 
+
+--- Sayfa 9 ---
+기계학습 기반 강 구조물 지진응답 예측기법
+한국공간구조학회지_ 99
+Title).
+14. Newmark, N. M. (1959). A method of 
+computation 
+for 
+structural 
+dynamics. 
+Journal 
+of 
+the 
+engineering 
+mechanics 
+division, 85(3), 67-94.
+15. Dietterich, T. G. (2000, June). Ensemble 
+methods in machine learning. In Inter- 
+national workshop on multiple classifier 
+systems (pp. 1-15). Springer, Berlin, Heidelberg.
+16. https://scikit-learn.org/stable/
+▪ Received : May 28, 2024
+▪ Revised  : June 04, 2024
+▪ Accepted : June 04, 2024

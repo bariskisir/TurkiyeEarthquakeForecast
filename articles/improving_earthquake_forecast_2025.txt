@@ -1,0 +1,974 @@
+
+--- Sayfa 1 ---
+Joint Registration and Conformal Prediction
+for Partially Observed Functional Data
+Fangyi Wang, Sebastian Kurtek and Yuan Zhang
+Department of Statistics, The Ohio State University
+Abstract
+Predicting missing segments in partially observed functions is challenging due to
+infinite-dimensionality, complex dependence within and across observations, and irreg-
+ular noise. These challenges are further exacerbated by the existence of two distinct
+sources of variation in functional data, termed amplitude (variation along the y-axis)
+and phase (variation along the x-axis). While registration can disentangle them from
+complete functional data, the process is more difficult for partial observations. Thus,
+existing methods for functional data prediction often treat phase variation as negligible.
+Furthermore, they typically require precise model specifications and/or rely on com-
+putationally intensive tools, such as bootstrapping, to construct prediction intervals.
+We propose a unified registration and prediction approach for partially observed func-
+tions using conformal prediction. Our method integrates registration and prediction in
+one algorithm while ensuring exchangeability through carefully constructed predictor-
+response pairs. Using a neighborhood smoothing algorithm, the framework produces
+pointwise prediction bands with finite-sample marginal coverage guarantees under weak
+assumptions. The method is easy to implement, computationally efficient, and permits
+simple parallelization. Numerical studies and real-world data examples demonstrate the
+effectiveness and practical utility of our method.
+Keywords: conformal prediction, elastic functional data analysis, neighborhood smoothing,
+phase variation
+1
+arXiv:2502.15000v2  [stat.ME]  19 Nov 2025
+
+--- Sayfa 2 ---
+1
+Introduction
+Accurate prediction of future trajectories given historical functional data is an important
+question in many applications. For instance, given previous (complete) daily observations of
+traffic flow rate, and a partial observation (up to some time) for a new day, prediction of
+traffic flow rate for the rest of that day can help optimize transportation networks and reduce
+congestion during rush hour [Chiou, 2012]. As another example, given complete historical daily
+maximum temperatures at a particular location, one may be interested in a daily maximum
+temperature forecast for the rest of the current year, which can help mitigate societal risks
+related to extremely cold weather. See Section 6 for more detailed analyses. Other examples
+include growth rate prediction for people or other natural objects, forecasting of pollutant
+density, and so on. These predictions can be used to anticipate future trends and help inform
+biomedical, environmental and social decisions.
+Functional data is challenging to analyze, because it is inherently infinite-dimensional, ex-
+hibits complex dependencies within and potentially across observations, and is often observed
+at discrete time points with heteroscedastic noise. Functional observations encompass two
+sources of variation, one along the x-axis called phase and one along the y-axis called ampli-
+tude. A common practice is to first separate amplitude and phase variations. This is done
+via a process called registration, which “warps” the functions’ domains to align their key fea-
+tures with respect to time [Kneip and Gasser, 1992, Ramsay and Silverman, 2005, Srivastava
+et al., 2011]. However, registration is often treated as a pre-processing step, with subsequent
+statistical modeling and inference applied to “well-aligned” data. Meanwhile, registration un-
+certainty is often ignored in downstream tasks. Furthermore, when the data contains partial
+observations, registration is much more challenging since the domains of partial and complete
+functions are fundamentally different [Bauer et al., 2021, Bryner and Srivastava, 2021].
+To tackle the aforementioned challenges, we propose a framework for prediction of partially
+observed functions wherein registration is directly incorporated. Comparing to a sequential
+2
+
+--- Sayfa 3 ---
+approach of “registration then prediction”, our approach bypasses the need for registration
+of partial observations to complete ones, and propagates registration uncertainty to the pre-
+diction step. We adapt conformal prediction, a distribution-free uncertainty quantification
+method that provides valid finite-sample coverage validity [Vovk et al., 2005, Lei et al., 2018].
+This requires a careful construction of exchangeable predictor-response data pairs, which are
+not naturally defined in our context. In addition, we employ a nonparametric, neighborhood
+smoothing prediction algorithm [Zhang et al., 2017], which offers flexibility without strong
+modeling assumptions on the relationship between predictors and responses. Thus, our main
+contributions are as follows.
+1. We propose a novel framework that integrates registration into conformal prediction of the
+amplitude component for partial functional data. This results in more accurate prediction
+intervals, as compared to procedures that do not utilize registration, when functional data
+contains phase variation. We additionally define a separate conformal prediction procedure
+for the phase component, which incorporates a monotonicity constraint. Our approach
+builds on the elastic functional data analysis (EFDA) framework for registration [Srivastava
+et al., 2011, Srivastava and Klassen, 2016].
+2. Our method offers distribution-free uncertainty quantification with a finite-sample guar-
+antee. For conformal prediction of partially observed functions, we construct predictors
+and responses from raw data that maintain exchangeability throughout, and leverage ideas
+from split conformal methods to integrate registration. Unlike traditional parametric ap-
+proaches, our method imposes minimal assumptions on the data generating process. We
+employ a nonparametric neighborhood smoothing prediction algorithm that provides more
+flexibility than competitors such as functional linear regression.
+3. Compared to nonparametric bootstrap or Bayesian uncertainty quantification, our ap-
+proach is much faster, making it well-suited for big data.
+3
+
+--- Sayfa 4 ---
+Related work. There exist many approaches for functional data prediction, but most of them
+do not consider the challenges posed by phase variation. They include functional regression
+[Chiou, 2012, Maity, 2017], time series models [Leroux et al., 2018, Jiao et al., 2023] and neu-
+ral networks [Yin et al., 2021]. For uncertainty quantification, these approaches generally use
+closed-form confidence intervals based on variance estimates [Leroux et al., 2018], or nonpara-
+metric bootstrap residual sampling [Chiou, 2012, Jiao et al., 2023]. However, these methods
+require strong parametric assumptions, and the resulting prediction intervals’ coverage rate
+converges to the desired nominal level asymptotically with no finite-sample guarantee. Matuk
+et al. [2022] and Earls and Hooker [2017] define Bayesian models for joint registration and
+prediction, where prediction intervals are constructed from posterior samples. Nonetheless,
+the high computational cost of these approaches hinders their application to large datasets.
+Conformal prediction provides prediction intervals that have a finite-sample coverage guar-
+antee without imposing assumptions on the data generating process [Vovk et al., 2005]. It is
+generally computationally more efficient when compared to Bayesian methods, which utilize
+Markov chain Monte Carlo to sample from the posterior distribution. Since being introduced,
+conformal prediction has been widely applied in a variety of scenarios, ranging from regression
+and classification for multivariate data [Lei et al., 2018, Cauchois et al., 2021] to prediction
+tasks involving more complex data structures, e.g., survival analysis [Cand`es et al., 2023, Gui
+et al., 2024], time series [Zaffran et al., 2022, Angelopoulos et al., 2023], and matrices [Gui
+et al., 2023, Shao and Zhang, 2023]. However, relatively few works have focused on the appli-
+cation of conformal prediction to functional data. Lei et al. [2015] used a basis projection for
+functional observations to obtain prediction sets for basis coefficients; they did not consider
+partially observed functions. Diquigiovanni et al. [2021, 2022] and Ajroldi et al. [2023] applied
+conformal prediction to functional data and functional time series using a domain-adaptive
+nonconformity score based on modulation functions. Recently, Diana et al. [2023] and De Mag-
+istris et al. [2024] studied conformalized spatial functional inference. All of the aforementioned
+4
+
+--- Sayfa 5 ---
+methods treated phase variation as negligible and did not consider registration.
+The rest of the article is organized as follows. Section 2 gives a brief introduction of the
+elastic functional data analysis (EFDA) framework. Section 3 defines full conformal prediction
+for partial functional data without registration, while Section 4 introduces a joint registration
+and prediction method. Simulations and real-world data examples are presented in Sections
+5 and 6 to demonstrate the validity and efficiency of the proposed method. We conclude with
+a brief discussion in Section 7.
+2
+Preliminaries - registration via EFDA
+A summary of key notation used throughout Sections 2-4 is provided in Table 1. Let F = {f :
+[0, 1] →R|f is absolutely continuous} be the representation space for functional data. Phase
+variation in functional data is characterized through warping functions, which are elements
+of the group of orientation and boundary preserving diffeomorphisms, denoted as Γ := {γ :
+[0, 1] →[0, 1]|γ(0) = 0, γ(1) = 1, ˙γ > 0} (˙γ is the derivative of γ). For a γ ∈Γ, the domain
+warping of a function f ∈F is given by composition, f◦γ, which locally stretches or compresses
+the domain of f without changing its values. Registering a function f2 with respect to another
+function f1 involves finding γ ∈Γ that minimizes the distance between f2 ◦γ and f1. To
+ensure that the solution does not depend on arbitrary domain warping of f1 or f2, we require
+a distance d(·, ·) that is preserved under simultaneous warping: d(f1, f2) = d(f1 ◦γ, f2 ◦γ). It
+is well-known that the standard L2 distance, given by d2(f1, f2) :=
+ R 1
+0 (f1(t) −f2(t))2dt
+1/2
+,
+does not satisfy this property (Srivastava and Klassen [2016], Chapter 4).
+Instead, one can use (the extension of) the Fisher-Rao (FR) Riemannian metric that is
+preserved under simultaneous warping. However, the resulting Riemannian distance cannot
+be computed in closed form.
+To address this computational bottleneck, Srivastava et al.
+[2011] proposed the square-root slope function (SRSF) that reduces the FR metric to the L2
+metric. For a function f ∈F, its SRSF q : [0, 1] →R is given by Q(f) = q := sign( ˙f)
+q
+| ˙f|,
+where Q : F →Q and Q ⊂L2([0, 1], R). Given f(0), the inverse of Q is Q−1(f(0), q)(t) =
+5
+
+--- Sayfa 6 ---
+Table 1: Summary of key notation.
+F
+space of complete absolutely continuous functions
+Q ⊂L2([0, 1], R)
+corresponding space of square-root slope functions (SRSFs)
+F ∋fi : [0, 1] →R
+complete functional observation
+Q ∋qi : [0, 1] →R
+SRSF of fi
+¯f ∈F
+sample Karcher mean
+¯q ∈Q
+sample Karcher mean SRSF
+fi ◦γ∗
+i ∈F
+amplitude of fi with respect to ¯f
+γ∗
+i
+relative phase of fi with respect to ¯f
+T
+uniform grid of time points on [0, 1]
+J ⊂[0, 1]
+subinterval on which partial function was observed
+fJ
+i
+fi restricted to domain J
+(Xi, Yi(t))
+predictor-response pair
+[
+Yi(t)
+estimate of Yi(t)
+Si(t) = |Yi(t) −[
+Yi(t)|
+nonconformity score
+It
+prediction interval at t ∈T
+f(0) +
+R t
+0 q(s)|q(s)|ds. Finally, the domain warping of a function f by γ, f ◦γ, is given by
+the following transformation of its SRSF: (q ◦γ)√˙γ. Given two functions f1, f2 ∈F and
+their SRSFs q1, q2 ∈Q, dFR(f1, f2) = d2(q1, q2) = d2((q1 ◦γ)√˙γ, (q2 ◦γ)√˙γ). Thus, the SRSF
+simplifies calculation of the FR Riemannian distance while maintaining its invariance under
+simultaneous warping (Srivastava and Klassen [2016], Chapter 4). Pairwise registration of f2
+to f1, with SRSFs q2 and q1, is given by the optimization problem
+γ∗= arg min
+γ∈Γ
+d2
+ q1, (q2 ◦γ)
+p
+˙γ
+
+,
+(1)
+which can be solved using dynamic programming [Robinson, 2012]. Then, f2 ◦γ∗is registered
+to f1, and the amplitude distance between them is given by da(f1, f2) = d2(q1, (q2 ◦γ∗)√˙γ∗);
+here, γ∗is the relative phase of f2 with respect to f1. Multiple registration of f1, . . . , fn is
+6
+
+--- Sayfa 7 ---
+performed pairwise using (1) with respect to a template function. Let q1, . . . , qn be the SRSFs
+of f1, . . . , fn, and define the sample Karcher mean as the template, which is given by
+¯q := arg min
+q∈Q
+n
+X
+i=1
+min
+γi∈Γ d2
+2(q, (qi ◦γi)
+p
+˙γi).
+(2)
+The corresponding mean in F is ¯f := Q−1( ¯f(0), ¯q), where ¯f(0) =
+1
+n
+Pn
+i=1 fi(0). Multiple
+registration produces (i) {γ∗
+i }, relative phases with respect to the Karcher mean, and (ii)
+{fi ◦γ∗
+i }, amplitudes of {fi}. See Algorithms 2 and 3, and Section 3.4 in Srivastava et al.
+[2011] for implementation details; we use the fdasrvf package in R [Tucker and Stamm, 2025].
+3
+Functional conformal prediction without registration
+Our data are functions, f1, . . . , fn+1
+i.i.d.
+∼PF, where PF is a probability distribution on F.
+The observed portion of the (n + 1)th sample is denoted by f J
+n+1, where J ⊆[0, 1].
+For
+simplicity, we focus on J = [0, U], where U ∼πu for some distribution πu on [0, 1]. This can
+be generalized to other observation patterns (Section 4.1). Given f1, . . . , fn and f J
+n+1, our goal
+is to construct pointwise prediction intervals for fn+1 on a fixed, uniform grid of time points,
+T := {t1, . . . , tT}, where t1 = 0, tT = 1 and tk+1 −tk = 1/(T −1), k = 1, . . . , T −1. Given
+α ∈(0, 1), we want the prediction interval It for fn+1(t) to satisfy
+P(fn+1(t) ∈It) ≥1 −α
+(3)
+for each time point t ∈T , which defines finite-sample coverage validity. To achieve (3), we
+appeal to conformal prediction, which usually has the following three key components:
+1. exchangeable (or i.i.d.)
+predictor-response data pairs
+ (X1, Y1), . . . , (Xn+1, Yn+1)
+
+∼
+PX×Y, where X and Y represent the predictor and response sample spaces, respectively,
+and PX×Y is a joint probability distribution defined on X ×Y. Exchangeability means that
+ (X1, Y1), . . . , (Xn+1, Yn+1)
+
+d=
+ (Xπ(1), Yπ(1)), . . . , (Xπ(n+1), Yπ(n+1))
+
+for all permutations
+π : [1 : n + 1] →[1 : n + 1];
+7
+
+--- Sayfa 8 ---
+2. a permutation symmetric algorithm that uses augmented data
+ (X1, Y1), . . . , (Xn, Yn),
+(Xn+1, y)
+
+(y is a trial value for Yn+1 that may be included in the prediction set) to fit
+model ˆµy : X →Y.
+Permutation symmetry means that ˆµy remains unchanged under
+permutations, π : [1 : n + 1] →[1 : n + 1], of the data pairs
+ (X1, Y1), . . . , (Xn+1, y)
+
+.
+3. a nonconformity score that measures the discrepancy of each observation relative to the
+fit, e.g., the absolute residual Si = |Yi −ˆµy(Xi)|.
+In the classical settings of conformal prediction for regression or classification, the predictor-
+response pairs are well-defined. In contrast, the main challenge in applying conformal pre-
+diction to partially observed functional data is to construct meaningful {(Xi, Yi)} while en-
+suring exchangeability, as there are no natural predictor and response variables. In this set-
+ting, the prediction target fn+1(t) is analogous to the response Yn+1, and thus, we define
+Yi(t) := fi(t), i = 1, . . . , n + 1, i.e., we are predicting fn+1 at time t, ∀t ∈T .
+Since
+f1, . . . , fn+1 are i.i.d. samples from PF, Y1(t), . . . , Yn+1(t) are exchangeable. Further, since
+we observe f J
+n+1, it can be viewed as the new feature Xn+1. To define X1, . . . , Xn that are
+exchangeable with Xn+1, we cut f1, . . . , fn at t = U, and set Xi := f J
+i , i = 1, . . . , n + 1. The
+construction of Xi depends on both fi and U ∼πu. Thus, to ensure exchangeability of the
+predictors, we require Assumption 1.
+Assumption 1. U is independent of fi, ∀i = 1, . . . , n + 1.
+Assumption 1 is fairly mild and holds in many real-world data scenarios where the trunca-
+tion time point does not depend on the observation process, e.g., monitoring of environmental
+measurements. With exchangeable {(Xi, Yi(t))} and a properly chosen symmetric algorithm
+and nonconformity score, we can implement Full Functional Conformal Prediction (FFCP) as
+follows. Let Ytrial be a set of trial values for Yn+1(t). The set Ytrial is a user-specified uniform
+grid of points along the y-axis with a sufficiently large range and resolution. For each y ∈Ytrial,
+we set Yn+1(t) = y and fit ˆµy to the augmented data ((X1, Y1(t)), . . . , (Xn, Yn(t)), (Xn+1, y)).
+8
+
+--- Sayfa 9 ---
+We then compute Si(t) = |Yi(t) −ˆµy(Xi)| for i = 1, . . . , n + 1 and include y in the pre-
+diction interval It if Sn+1(t) is within the 1 −α quantile of the empirical distribution of
+{S1(t), . . . , Sn+1(t)}, i.e., It := {y : |y −ˆµy(Xn+1)| = Sn+1(t) ≤Q1−α({S1(t), . . . , Sn+1(t)})},
+where Qβ(·) denotes the lower β quantile function. We repeat this procedure for each t ∈T ,
+and get the set of prediction intervals It1, . . . , ItT for fn+1(t1), . . . , fn+1(tT), where each pre-
+diction interval Itk satisfies the coverage validity in (3) (Vovk et al. [2005], Proposition 2.3).
+Remark 1. We consider prediction of the entire function fn+1, even on the interval J where
+it was observed, for reasons that will become clear in Section 4; however, in the current setting,
+which does not consider phase variation, one can simply predict fn+1 on [0, 1]\J .
+A permutation symmetric algorithm is required to fit ˆµy to the augmented data composed
+of functional predictors Xi and scalar responses Yi(t). One choice is linear scalar-on-function
+regression, applied independently for each t ∈T . But, it imposes strong assumptions on the
+relationship between predictors and responses, and the error, which might not hold for complex
+functional data. Instead, we use the neighborhood smoothing technique from Zhang et al.
+[2017], which is an adaptation of the Nadaraya-Watson estimator [Nadaraya, 1964, Watson,
+1964] for non-conventional data types. This approach is similar in spirit to nonparametric
+functional regression [Ferraty et al., 2007] and enforces minimal assumptions on the predictor-
+response relationship. Specifically, the neighborhood smoothing estimator for Yi(t) is
+[
+Yi(t) :=
+P
+i′̸=i K(h−1d(Xi, Xi′))Yi′(t)
+P
+i′̸=i K(h−1d(Xi, Xi′))
+,
+i = 1, . . . , n + 1,
+(4)
+where K(·) is a kernel function, e.g., triangular or Gaussian kernel, h is a bandwidth param-
+eter, and d(Xi, Xi′) is a distance between functions Xi and Xi′. Higher weights are assigned
+to Yi′ for predictors Xi′ that are closer to Xi as measured via distance d(·, ·); h controls the
+weights’ concentration. This approach is computationally efficient, because (4) can be com-
+puted for all t ∈T using a one-pass evaluation of a distance matrix D with Di,j := d(Xi, Xj)
+[Shao and Zhang, 2023]. In our implementation, we use the Gaussian kernel for K(·). In
+9
+
+--- Sayfa 10 ---
+addition, we must choose the distance d(·, ·) between functional predictors and bandwidth
+parameter h in the kernel, both of which can affect prediction accuracy.
+Choice of distance. Any valid distance between functions can be used. The L2 distance
+on F, d2(·, ·), is most commonly used in functional data analysis.
+Another choice is the
+FR Riemannian distance on F, dFR(·, ·) (Section 2). These two choices are computationally
+efficient when evaluating the distance matrix D, since they do not incorporate registration.
+Alternatively, one may consider the amplitude distance da(·, ·) (Section 2), which involves
+registration of predictors. This choice can lead to better prediction accuracy, but is slower to
+compute due to optimization over Γ.
+Choice of bandwidth parameter. To tune the bandwidth parameter h, we adapt the
+method of Liang et al. [2024], which ensures coverage validity while selecting a model that
+minimizes PI length. Specifically, we consider a set of candidate bandwidth values h ∈H
+and obtain prediction intervals Ih
+tk for k = 1, . . . , T. We can set H to be a grid of fixed
+values, or the lower β quantile of the empirical distribution of the distances {Di,j}i<j for
+a grid of β ∈(0, 1).
+We select the optimal bandwidth parameter h∗(i) globally, h∗:=
+arg minh∈H
+1
+T
+PT
+k=1 length(Ih
+tk), or (ii) locally, h∗
+tk := arg minh∈H length(Ih
+tk), k = 1, . . . , T.
+The full FFCP algorithm is presented in Figure 1. To illustrate the practical performance
+of FFCP, we present a quick simulation. Consider two-peak functions without and with phase
+variation (top and bottom of Figure 2(a), respectively). We draw B = 1000 Monte Carlo
+samples with n = 100, truncation time point U = 0.5 for fn+1, and 1 −α = 0.9. Evaluation
+is based on two criteria, (i) coverage validity: empirical pointwise coverage rate, pk =
+1
+B
+PB
+b=1 1
+n
+f (b)
+n+1(tk) ∈I(b)
+tk
+o
+, k = 1, . . . , T; (ii) prediction accuracy: pointwise average
+prediction interval (PI) length ℓk = 1
+B
+PB
+b=1 length(I(b)
+tk ), k = 1, . . . , T.
+Results for functional
+data without (with) phase variation are given in the top (bottom) row of Figure 2. Panels (b)
+and (c) show pointwise coverage rates pk (solid red) with pointwise 95% confidence intervals
+(CIs) (shaded region), and pointwise average PI lengths ℓk for k = 1, . . . , T, respectively.
+10
+
+--- Sayfa 11 ---
+f1, . . . , fn
+fn+1
+Y1(t), . . . , Yn(t)
+Yn+1(t) = y
+X1, . . . , Xn
+Xn+1 = f J
+n+1
+responses
+predictors
+symmetric prediction algorithm
+d
+Y1(t), . . . ,
+d
+Yn+1(t)
+Si(t) = Yi(t) −d
+Yi(t)
+i = 1, . . . , n + 1
+It =
+n
+y : Sn+1(t) ≤Q1−α
+
+{S1(t), . . . , Sn+1(t)}
+o
+repeat for all tk ∈T
+pointwise PIs for fn+1
+Figure 1: Full Functional Conformal Prediction (FFCP) algorithm.
+(a)
+(b)
+(c)
+(d)
+Figure 2: FFCP without (row 1) and with (row 2) phase variation. (a) Data. (b) & (c) Coverage
+rates pk (solid red) with 95% CIs (shaded region) and average PI lengths ℓk, respectively. (d) Partial
+observation fJ
+n+1 (black), ground truth f[0,1]\J
+n+1
+(blue), and pointwise PIs (red).
+The time-averaged coverage rate ¯p = PT
+k=1 pk/T and PI length ¯ℓ= PT
+k=1 ℓk/T are also
+reported.
+We see that FFCP guarantees finite-sample coverage validity for any t ∈T for
+functions without and with phase variation. However, pointwise PI lengths tend to be much
+larger when phase variation is present in the data. Panel (d) demonstrates pointwise prediction
+intervals It1, . . . , ItT for fn+1 for a randomly chosen Monte Carlo sample. We show the partial
+observation f J
+n+1 (black), the ground truth missing segment f [0,1]\J
+n+1
+(blue), and the lower and
+upper boundaries of the pointwise PIs (red). When there is no phase variation in the data,
+11
+
+--- Sayfa 12 ---
+the PIs form a prediction band that accurately captures the geometric features, i.e., two peaks
+and one valley, of the underlying function fn+1. However, when phase variation is present,
+the prediction band is less effective at capturing such geometric features, since their timing
+varies considerably across observations. As a result, Yi(t) fails to provide useful information
+for predicting Yn+1(t). These results indicate that FFCP is better suited for functional data
+without phase variation.
+4
+Joint registration and prediction for functional data
+Next, we incorporate registration into conformal prediction when functional data exhibits
+phase variation. In this context, the prediction target changes to the amplitude fn+1 ◦γ∗
+n+1,
+where γ∗
+n+1 ∈Γ registers fn+1 to a template function. Thus, we define new response variables
+Yi(t) := (fi◦γ∗
+i )(t) for each t ∈T , while keeping the predictors Xi = f J
+i unchanged. However,
+a critical challenge now is the choice of template for registration that preserves exchangeabil-
+ity of {(Xi, Yi(t))}. One simple choice is to randomly select a function from the complete
+observations f1, . . . , fn as the template, e.g., f1. However, this would break exchangeability
+of {(Xi, Yi(t))}, since the registration process would treat f1 differently from f2, . . . , fn+1. Al-
+ternatively, to preserve exchangeability, one could still use f1 as the template, but only use
+(fi ◦γ∗
+i )(t), i = 2, . . . , n + 1 to define the responses. However, this approach may lead to
+unstable predictions, as the randomly selected template function may not be representative
+of the population, and could even be an outlier. To address this, we need a template func-
+tion that is (i) representative of the population, and (ii) independent of the functions being
+registered. This will be accomplished using the split conformal prediction approach.
+Specifically, we randomly split f1, . . . , fn into two independent training and calibration sets
+of sizes n1 and n2 = n −n1, respectively. We first use the training set f1, . . . , fn1 to compute
+the sample Karcher mean ¯f using (2) and the inverse SRSF mapping Q−1. We then register
+each function in the calibration set, fn1+1, . . . , fn, to ¯f by computing γ∗
+1, . . . , γ∗
+n2 via (1) (γ∗
+i is
+the relative phase of fn1+i with respect to ¯f). Finally, we use the amplitudes ˜fi := fn1+i◦γ∗
+i to
+12
+
+--- Sayfa 13 ---
+f1, . . . , fn
+fn+1
+Xn2+1 = f J
+n+1
+training set
+calibration set
+X1, . . . , Xn2
+Karcher mean
+Y1(t), . . . , Yn2(t)
+Yn2+1(t) = y
+predictors
+responses
+...same as FFCP
+pointwise PIs
+for fn+1 ◦γ∗
+n2+1
+registration
+Figure 3: Split Functional Conformal Prediction (SFCP) algorithm.
+construct the response variables Yi(t) = ˜fi(t), i = 1, . . . , n2. The response corresponding to
+fn+1 is Yn2+1(t) = (fn+1 ◦γ∗
+n2+1)(t). This procedure maintains exchangeability of {(Xi, Yi(t))},
+as permutation symmetry is preserved when the template function is computed using an
+independent training set. After constructing exchangeable {(Xi, Yi(t))}, they can be used as
+the input of FFCP. We call this procedure Split Functional Conformal Prediction (SFCP) and
+present it in Figure 3. Like FFCP, SFCP provides a marginal finite-sample coverage guarantee,
+which is formally stated in Theorem 1.
+Theorem 1. Under Assumption 1, for any T ≥2, any calibration set size n2 such that
+0 < n2 < n, any α ∈(0, 1) and each tk ∈T , the prediction set Itk from SFCP satisfies
+1 −α ≤P
+
+(fn+1 ◦γ∗
+n2+1)(tk) ∈Itk
+
+≤1 −α + n−1
+2 .
+Remark 2. While the anti-conservative bound improves with larger calibration set size n2, a
+sufficiently large training set size n1 is also needed to ensure stable estimation of the sample
+Karcher mean. This trade-off motivates a balanced data split.
+Remark 3. SFCP targets the amplitude of fn+1, fn+1 ◦γ∗
+n2+1, where the latent γ∗
+n2+1 registers
+fn+1 to the Karcher mean of the training set. Since γ∗
+n2+1(U) is unobserved, it is unknown
+which time interval [0, 1]\J corresponds to after accounting for phase variation. Thus, we
+must generate prediction sets over the entire domain [0, 1], i.e., for all tk ∈T .
+13
+
+--- Sayfa 14 ---
+The relationship between FFCP and SFCP is different from the relationship between classical
+full and split conformal prediction. The split conformal method was originally developed to
+improve computational efficiency of the full conformal method. In our case, however, the
+training set is used to estimate the sample Karcher mean, which acts as the template for
+registration of the calibration set, as well as the target function. The goal is not to speed up
+computation, but rather to construct new response variables that improve prediction accuracy
+in the presence of phase variation. Both FFCP and SFCP are suitable prediction methods for
+functional data with or without phase variation as they both guarantee finite-sample coverage.
+However, failing to account for phase variation generally inflates variance [Marron et al., 2015],
+and as a result, impairs prediction (simulation in Section 3). Thus, we advocate the use of
+SFCP rather than FFCP for functional data with phase variation.
+4.1
+Other observational regimes for partial functional data
+FFCP and SFCP are not limited to settings where a single continuous segment of fn+1 on
+J = [0, U] is observed.
+The approaches can be generalized to the case of J = [U1, U2],
+where U1, U2 ∼πu, 0 ≤U1 < U2 ≤1 and πu is a probability density on [0, 1]2. Two other
+generalizations apply to fragmented and sparse functional data.
+Fragmented. The observed portions of fn+1 are spread across random disjoint subintervals,
+J = ∪J
+j=1Jj, Jj = [Uj,1, Uj,2]. This scenario is often encountered in applications involving seg-
+mented functional observations, e.g., X-ray measurements of bone mineral density [Bachrach
+et al., 1999]. In this case, the predictors are Xi = fi := (f J1
+i , . . . , f JJ
+i
+), i = 1, . . . , n + 1. One
+can then define a distance for neighborhood smoothing as dprod(Xi, Xi′) := PJ
+j=1 λjd(f
+Jj
+i , f
+Jj
+i′ ),
+where λj are weights with PJ
+j=1 λj = 1. The simplest choice is λj = 1/J ∀j. Alternatively,
+one can choose λj to be proportional to the length of each subinterval.
+Sparse. Here, fn+1 is observed at a set of discrete time points, J = {t1, . . . , tNt} ⊆[0, 1].
+Such observations are common when full continuous measurements are difficult or impractical
+to collect, e.g., longitudinal data in clinical trials [Yao et al., 2005]. Now, the predictors are
+14
+
+--- Sayfa 15 ---
+f1, . . . , fn
+fn+1
+Xn2+1 = f J
+n+1
+training set
+calibration set
+X1, . . . , Xn2
+Karcher mean
+evaluate at t ∈T
+Y1, . . . , Yn2
+Yn2+1 = y
+responses
+predictors
+bY1, . . . , bYn2+1
+neighborhood smoothing
+Si = dw(Yi, bYi)
+PIs for Yn2+1
+registration
+γ∗
+i
+Figure 4: Split Functional Conformal Prediction of relative Phase (SFCPP) algorithm.
+Xi := (fi(t1), . . . , fi(tNt)) ∈RNt, and we use the Euclidean distance in RNt for neighborhood
+smoothing: de(Xi, Xi′) :=
+qPNt
+k=1(fi(tk) −fi′(tk))2.
+4.2
+Conformal prediction of relative phase
+SFCP focuses on predicting the amplitude component fn+1 ◦γ∗
+n2+1, but it is also useful for
+prediction of the relative phase γ∗
+n2+1. Phase prediction allows assessment of uncertainty in
+the relative timing of amplitude features of fn+1 with respect to the sample Karcher mean ¯f.
+We use the same functional predictors as before, Xi = f J
+n1+i, i = 1, . . . , n2 + 1, which include
+amplitude and phase variation. However, we cannot predict the target function γ∗
+n2+1 pointwise
+at each t ∈T independently, because the resulting PIs {Itk} would not be monotonically
+increasing (recall that ˙γ(t) > 0 ∀t).
+Instead, we predict γ∗
+n2+1 jointly for all t ∈T , by
+considering Yn2+1 = (γ∗
+n2+1(t1), . . . , γ∗
+n2+1(tT)) ∈RT as the prediction target. Thus, we define
+the other response variables as Yi = (γ∗
+i (t1), . . . , γ∗
+i (tT)) for i = 1, . . . , n2. This results in
+exchangeable {(Xi, Yi)}.
+We again employ the neighborhood smoothing estimator in (4),
+which yields bYi ∈RT, i = 1, . . . , n2 + 1. Note that the discretization grid T for prediction of
+relative phase can be different from the discretization grid used for prediction of amplitude.
+Due to computational considerations, we use a much coarser (equally spaced) time grid for
+relative phase prediction.
+15
+
+--- Sayfa 16 ---
+Since Yi ∈RT is a discretized version of γ∗
+i , we use the FR distance on Γ as the non-
+conformity score. To efficiently compute the FR distance, we again employ the SRSF rep-
+resentation: for a γ ∈Γ, its SRSF is qγ = √˙γ. Under the SRSF representation, the space
+of warping functions is the positive orthant of the Hilbert sphere and the FR metric sim-
+plifies to the L2 metric (Srivastava and Klassen [2016], Section 4.10.2). Thus, the distance
+between two warping functions γi and γj is dw(γi, γj) := cos−1(
+R 1
+0 qγ
+i (t)qγ
+j (t)dt), resulting in
+the nonconformity score Si = dw(Yi, bYi) for i = 1, . . . , n2 + 1. The prediction set is given by
+Iγ := {y : Sn2+1 ≤Q1−α({S1, . . . , Sn2+1})}, where y = (y1, . . . , yT) ∈RT are trial vectors
+for Yn2+1 with fixed y1 = 0 and yT = 1. Figure 4 illustrates the Split Functional Conformal
+Prediction of relative Phase (SFCPP) algorithm.
+5
+Simulations
+We simulate i.i.d.
+f1, . . . , fn+1 without phase variation from a homogeneous population
+of two-peak functions: fi(t) = Zi1 exp{−(t −0.25)2/0.072} + Zi2 exp{−(t −0.75)2/0.072},
+Zi := (Zi1, Zi2)
+i.i.d.
+∼N(2, 0.1I2). We induce phase variation in {fi} by simulating γi = Fa,b,
+where Fa,b is the cumulative distribution function of a Beta(a, b) with a, b
+i.i.d.
+∼Unif(1, 3), and
+computing fi ◦γi. To evaluate coverage validity, prediction accuracy and computational effi-
+ciency, we use B = 500 Monte Carlo samples with n = 100, T = 100 and 1 −α = 0.9. We use
+d2(·, ·) on F and local tuning for the bandwidth parameter in neighborhood smoothing.
+Simulation 1:
+comparison to other prediction methods.
+We compare SFCP and
+FFCP to two state-of-the-art functional regression methods, implemented in the R package
+refund [Goldsmith et al., 2024]: (i) scalar-on-function regression (SoF), with predictors fJ
+i
+and responses fi(t) fitted independently for each t ∈T , i.e., E[fi(t)] = β0 +
+R
+J β(s)fi(s)ds,
+i = 1, . . . , n, t ∈T ; (ii) function-on-function regression (FoF), with predictors f J
+i
+and re-
+sponses fi, i.e., E[fi] = β0 +
+R
+J β(s, t)fi(s)ds, i = 1, . . . , n. The PIs for these two approaches
+are constructed using the method of Marra and Wood [2012], which utilizes the Bayesian pos-
+terior covariance matrix of the parameters. To ensure numerical stability of the optimization
+16
+
+--- Sayfa 17 ---
+(a)
+(b)
+(c)
+(d)
+(e)
+(f)
+Figure 5: Row 1: without phase variation. Row 2: with phase variation. (a) Pointwise coverage
+rates (solid) with 95% CIs (shaded regions) and (b) average PI lengths for SoF (light blue), FoF
+(green), FFCP (red) and SFCP (dark blue). (c)-(f) Target function (black), point prediction (blue),
+pointwise PIs (red) for SoF, FoF, FFCP and SFCP, respectively.
+procedures for SoF and FoF, we apply functional principal component analysis (FPCA) to the
+predictors, fixing the dimension to 8 or a number that explains 90% of the total variance,
+whichever is smaller. In addition to the pointwise coverage rates pk, we also evaluate the
+empirical overall coverage rate, p =
+1
+B
+PB
+b=1 1
+
+f (b)
+n+1(tk) ∈I(b)
+tk ∀k ∈[1 : T]
+	
+, which checks
+whether the entire target function is within the pointwise prediction band.
+Figure 5 shows results for functions without (row 1) and with (row 2) phase variation,
+using a truncation time point U = 0.5 for fn+1. Panels (a) & (b) show pointwise coverage
+rates (with 95% CIs as shaded regions) and average PI lengths, respectively. Panels (c)-(f)
+show examples of PIs (red) and a point prediction (blue) from SoF, FoF, FFCP and SFCP,
+respectively. For FFCP and SFCP, the point prediction is taken to be the midpoint of PIs at
+each time point. Note that the prediction target (black) for the first three methods is fn+1,
+but for SFCP it is the amplitude of fn+1. SoF and FoF generate PIs with very small lengths,
+but fail to provide valid coverage. Pointwise coverage for FoF exhibits periodic spikes, which
+are related to the location of knots for the B-spline basis used in estimating the coefficient
+17
+
+--- Sayfa 18 ---
+Table 2: Overall coverage rates with standard errors in parentheses.
+Data
+SoF
+FoF
+FFCP
+SFCP
+No phase variation
+0.1740 (0.0170)
+0 (0)
+0.6900 (0.0207)
+0.6800 (0.0209)
+Phase variation
+0 (0)
+0 (0)
+0.3620 (0.0215)
+0.6740 (0.0210)
+(a)
+(b)
+(c)
+(d)
+Figure 6: Row 1: fragmented. Row 2: sparse. (a) Observed (black) and missing (blue) segments
+for fn+1. (b) & (c) Coverage rates (solid) with 95% CIs (shaded regions) and average PI lengths,
+respectively. (d) Ground truth fn+1 ◦γ∗
+n+1 (black), point prediction (blue) and pointwise PIs (red).
+surface β(s, t). PIs from FFCP and SFCP have valid coverage. However, in the presence of
+phase variation, SFCP yields PIs with smaller length than FFCP; qualitatively, SFCP results in
+much better pointwise PIs in this case. Table 2 reports the overall coverage rate p. In absence
+of phase variation, SoF and FoF have p = 0.1740 and p = 0, respectively, whereas FFCP and
+SFCP have p ≈0.7. When phase variation is present in the data, the overall coverage decreases
+to 0.362 for FFCP, but remains stable for SFCP at p = 0.674. Computationally, SFCP is faster
+than SoF and FFCP, but slower than FoF, when phase variation is not present in the data.
+When phase variation is present, SFCP and SoF have comparable speed and are both faster
+than FFCP, but slower than FoF.
+Simulation 2: other observational regimes. We evaluate the performance of SFCP for
+18
+
+--- Sayfa 19 ---
+fragmented and sparse observations. For fragmented data, we simulate J1 = [0, 0.2], J2 =
+[0.4, 0.6], J3 = [0.8, 1], and use λj = 1/3 in the distance dprod(·, ·). For sparse data, we simulate
+J = {0, 0.1, . . . , 0.9, 1}. Here, we use data with phase variation. Row 1 (row 2) in Figure 6
+shows results for the fragmented (sparse) case. Panel (a) shows observed (black) and missing
+(blue) segments of fn+1. Panels (b) & (c) show pointwise coverage rates (with 95% CIs as
+shaded regions) and average PI lengths, respectively. Panel (d) shows the resulting PIs (red)
+with a point prediction (blue) for the amplitude of fn+1 (black). SFCP yields PIs that preserve
+coverage validity in both observational regimes, with very similar PI lengths.
+Simulation 3: prediction of relative phase. We apply SFCPP to predict the relative phase
+component γ∗
+n2+1 using data with phase variation. Since SFCPP predicts γ∗
+n2+1 for all time
+points simultaneously, we use global tuning for the bandwidth parameter in neighborhood
+smoothing. We use a coarse grid of time points for prediction, T := {0, 0.25, 0.5, 0.75, 1},
+and set α = 0.1 as before. Figure 7 shows the prediction results for a randomly selected
+Monte Carlo replicate; panels (a)-(c) correspond to truncation of fn+1 at U = 0.25, 0.5
+and 0.75, respectively. In all cases, SFCPP provides a reasonable point prediction (blue) and
+informative PIs (red).
+The time averaged PI lengths (average computed over the coarse
+time grid T ) for (a)-(c) are 0.233, 0.210 and 0.157, respectively. Overall, the PIs become
+narrower as we observe more of fn+1 matching intuition. Across all Monte Carlo samples, for
+U = 0.25, 0.5 and 0.75, the coverage rates and associated 95% CIs are 0.868 (0.838, 0.898),
+0.878 (0.849, 0.907) and 0.894 (0.867, 0.921), the average time averaged PI lengths are 0.199,
+0.169 and 0.168, and the average computational costs (in seconds) are 47.73, 47.23 and 47.33,
+respectively. Thus, the proposed method has valid coverage. Computing time heavily depends
+on the number of trial values used at each time point; here, we used 100.
+6
+Data examples
+Example 1: real-world data with simulated truncation time point. We compare pre-
+diction performance of SoF, FoF, FFCP and SFCP on three functional datasets with a simulated
+19
+
+--- Sayfa 20 ---
+(a)
+(b)
+(c)
+Figure 7: Ground truth γ∗
+n2+1 (black), point prediction (blue), PIs (red) and identity warping
+(green). (a)-(c) Truncation time points U = 0.25, 0.5 and 0.75, respectively.
+truncation point. Rows 1-3 in Figure 8(a) show the following three datasets, respectively: (i)
+Berkeley growth rate functions, first derivative of measurements on heights in centime-
+ters for n = 93 boys and girls from age 1-18 [Ramsay and Silverman, 2005]; (ii) PQRST
+complexes, n = 80 segmented PQRST complexes from a long electrocardiogram (ECG) sig-
+nal; [Kurtek et al., 2013]; (iii) traffic flow rate functions, pre-smoothed traffic flow rate
+on National Highway 5 in Taiwan for n = 84 days [Chiou, 2012, Jiao et al., 2023]. In each
+case, we rescaled the time axis to [0, 1] and normalized all functions to have unit L2 norm.
+For each dataset, fn+1 is chosen at random and truncated using U = 0.5. Panels (b)-(e) show
+PIs (red) and point predictions (blue) from SoF, FoF, FFCP and SFCP, respectively; the target
+function is in black. Compared to the other approaches, SFCP yields much more accurate
+point predictions and PIs, which capture the main geometric features of the target functions.
+In most cases, SoF and FoF generate PIs that are overly smooth and fail to capture the true
+target function. FFCP generates much wider PIs to maintain its coverage guarantee, but the
+resulting point predictions are not accurate.
+Example 2: prediction of maximum daily temperature. Finally, we focus on forecast-
+ing maximum daily temperatures (MDTs) in Rhode Island. We use complete observations of
+MDT from 1950 to 2024 to predict the amplitude and relative phase of MDT for 2025, based
+on a partial observation from January 1 to March 13 [NCEI]. The data is shown in Figure
+9(a) with the partial observation highlighted in red. We apply SFCP and SFCPP to both, raw
+20
+
+--- Sayfa 21 ---
+(a)
+(b)
+(c)
+(d)
+(e)
+Figure 8: Rows 1-3: Berkeley growth rate functions, PQRST complexes and traffic flow rate func-
+tions. (a) Data. (b)-(e) Prediction results, with target function (black), point prediction (blue) and
+pointwise PIs (red), for SoF, FoF, FFCP and SFCP, respectively.
+data and data after smoothing using a Fourier basis projection. Panels (b) and (d) in Figure
+9 show the PIs (red) and point predictions (blue) for amplitude generated by SFCP based on
+raw and smoothed data, respectively. Panels (c) and (e) show the corresponding results for
+relative phase generated by SFCPP, with point predictions in blue, PIs in red and the identity
+warping function in green. Overall, the proposed approaches perform very well. Based on
+raw data, SFCP generates PIs that capture the overall MDT trend and (local) daily fluctua-
+tions. Based on smoothed data, the prediction band for amplitude captures the global MDT
+trend with reasonable pointwise PI lengths. The 2025 MDT trend in Rhode Island has one
+maximum in mid-July and one minimum in late January. Relative phase predictions based
+on both raw and smoothed data show a small relative timing shift of 2025 MDT with respect
+to the historical mean, indicated by point predictions that are close to the identity warping
+and tight PIs.
+21
+
+--- Sayfa 22 ---
+(a)
+(b)
+(c)
+(d)
+(e)
+Figure 9: Prediction of MDT in Rhode Island. (a) Complete historical data with partial observation
+for 2025 in red. (b) & (d) Amplitude prediction. PIs (red) and point prediction (blue) for raw and
+pre-smoothed data, respectively. (c) & (e) Relative phase prediction. PIs (red), point prediction
+(blue) and identity warping (green) for raw and pre-smoothed data, respectively.
+7
+Discussion
+We introduced a novel conformal prediction framework for partial functional data that incor-
+porates registration. Results based on simulations and real-world data examples validate the
+proposed method’s finite-sample coverage, high prediction accuracy and computational effi-
+ciency. Despite these advantages over competing approaches, several challenges remain that
+we leave as future work. First, SFCP may be less effective for heterogeneous populations with
+significant amplitude variation across subpopulations. In such cases, inaccurate estimation of
+the Karcher mean, a key step in our framework, may impair prediction accuracy. Addressing
+this issue requires strategies that account for such heterogeneity, e.g., a group conditional ap-
+proach given observed labels for subpopulations. Second, SFCP generates pointwise prediction
+intervals with marginal coverage validity. We will explore alternative formulations that utilize
+basis expansions with a global coverage guarantee. Finally, SFCP relies on a grid search over
+trial values when constructing prediction intervals, which can be computationally expensive
+for a dense grid of time points. This issue is further amplified in SFCPP, where joint prediction
+over multiple time points is required. For reference, the approximate SFCPP computing times
+for T = 5, 6, 7, 8, 9 (number of time points along x-axis) with 50 trial values at each time point,
+using a fixed bandwidth, are 0.12, 0.78, 7.26, 61.5 and > 1440 minutes, respectively. While the
+22
+
+--- Sayfa 23 ---
+use of a coarse time grid often results in a good approximation for the underlying warping
+function and enforces regularity in the PIs, exploring alternative conformal prediction meth-
+ods that avoid an exhaustive grid search can significantly improve computational efficiency
+and broaden the utility of both SFCP and SFCPP.
+Acknowledgments: This research was partially supported by grants NSF DMS-2311109 (to
+YZ), and NIH R37-CA214955, NSF DMS-2015226 and NSF DMS-2413747 (to SK).
+References
+N. Ajroldi, J. Diquigiovanni, M. Fontana, and S. Vantini. Conformal prediction bands for two-
+dimensional functional time series. Computational Statistics & Data Analysis, 187:107821,
+2023.
+A. Angelopoulos, E. Cand`es, and R.J. Tibshirani. Conformal PID control for time series
+prediction. Advances in Neural Information Processing Systems, 36, 2023.
+L.K. Bachrach, T. Hastie, M.-C. Wang, B. Narasimhan, and R. Marcus. Bone mineral acquisi-
+tion in healthy Asian, Hispanic, black, and Caucasian youth: a longitudinal study. Journal
+of Clinical Endocrinology & Metabolism, 84(12):4702–4712, 1999.
+A. Bauer, F. Scheipl, H. K¨uchenhoff, and A.-A. Gabriel. Registration for incomplete non-
+Gaussian functional data. arXiv:2108.05634, 2021.
+D. Bryner and A. Srivastava. Shape analysis of functional data with elastic partial matching.
+IEEE Trans. on Pattern Analysis and Machine Intelligence, 44(12):9589–9602, 2021.
+E. Cand`es, L. Lei, and Z. Ren. Conformalized survival analysis. Journal of the Royal Statistical
+Society, Series B, 85(1):24–45, 2023.
+M. Cauchois, S. Gupta, and J.C. Duchi. Knowing what you know: valid and validated confi-
+dence sets in multiclass and multilabel prediction. Journal of Machine Learning Research,
+22(81):1–42, 2021.
+J.-M. Chiou. Dynamical functional prediction and classification, with application to traffic
+flow prediction. Annals of Applied Statistics, 6(4):1588–1614, 2012.
+A. De Magistris, A. Diana, and E. Romano. Conformal prediction for functional ordinary
+kriging. arXiv:2409.20084, 2024.
+Andrea Diana, Elvira Romano, and Antonio Irpino. Distribution free prediction for geograph-
+ically weighted functional regression models. Spatial Statistics, 57:100765, 2023.
+23
+
+--- Sayfa 24 ---
+J. Diquigiovanni, M. Fontana, and S. Vantini. The importance of being a band: Finite-sample
+exact distribution-free prediction sets for functional data. arXiv:2102.06746, 2021.
+J. Diquigiovanni, M. Fontana, and S. Vantini. Conformal prediction bands for multivariate
+functional data. Journal of Multivariate Analysis, 189:104879, 2022.
+C. Earls and G. Hooker. Variational Bayes for functional data registration, smoothing, and
+prediction. Bayesian Analysis, 12(2):557 – 582, 2017.
+F. Ferraty, A. Mas, and P. Vieu. Nonparametric regression on functional data: inference and
+practical aspects. Australian & New Zealand Journal of Statistics, 49(3):267–286, 2007.
+J. Goldsmith, F. Scheipl, L. Huang, et al. refund: Regression with Functional Data, 2024.
+v0.1-37.
+Y. Gui, R. Foygel Barber, and C. Ma. Conformalized matrix completion. Advances in Neural
+Information Processing Systems, 36:4820–4844, 2023.
+Y. Gui, R. Hore, Z. Ren, and R. Foygel Barber. Conformalized survival analysis with adaptive
+cut-offs. Biometrika, 111(2):459–477, 2024.
+S. Jiao, A. Aue, and H. Ombao. Functional time series prediction under partial observation of
+the future curve. Journal of the American Statistical Association, 118(541):315–326, 2023.
+A. Kneip and T. Gasser. Statistical tools to analyze data representing a sample of curves.
+Annals of Statistics, pages 1266–1305, 1992.
+S. Kurtek, W. Wu, G.E. Christensen, and A. Srivastava. Segmentation, alignment and sta-
+tistical analysis of biosignals with application to disease classification. Journal of Applied
+Statistics, 40:1270–1288, 2013.
+J. Lei, A. Rinaldo, and L. Wasserman. A conformal prediction approach to explore functional
+data. Annals of Mathematics and Artificial Intelligence, 74:29–43, 2015.
+J. Lei, M. G’Sell, A. Rinaldo, R.J. Tibshirani, and L. Wasserman. Distribution-free predictive
+inference for regression. Journal of the American Statistical Association, 113(523):1094–
+1111, 2018.
+A. Leroux, L. Xiao, C. Crainiceanu, and W. Checkley.
+Dynamic prediction in functional
+concurrent regression with an application to child growth. Statistics in Medicine, 37(8):
+1376–1388, 2018.
+R. Liang, W. Zhu, and R. Foygel Barber. Conformal prediction after efficiency-oriented model
+selection. arXiv:2408.07066, 2024.
+A. Maity. Nonparametric functional concurrent regression models. Wiley Interdisciplinary
+Reviews: Computational Statistics, 9(2):e1394, 2017.
+24
+
+--- Sayfa 25 ---
+Giampiero Marra and Simon N Wood. Coverage properties of confidence intervals for gener-
+alized additive model components. Scandinavian Journal of Statistics, 39(1):53–74, 2012.
+J.S. Marron, J.O. Ramsay, L.M. Sangalli, and A. Srivastava. Functional data analysis of
+amplitude and phase variation. Statistical Science, 30(4):468–484, 2015.
+J. Matuk, K. Bharath, O. Chkrebtii, and S. Kurtek. Bayesian framework for simultaneous
+registration and estimation of noisy, sparse, and fragmented functional data. Journal of the
+American Statistical Association, 117(540):1964–1980, 2022.
+E.A. Nadaraya. On estimating regression. Theory of Probability & Its Applications, 9(1):
+141–142, 1964.
+NCEI. National Centers for Environmental Information. www.ncei.noaa.gov/cdo-web/.
+J.O. Ramsay and B.W. Silverman. Functional Data Analysis. Springer, 2005.
+D.T. Robinson. Functional Data Analysis and Partial Shape Matching in the Square Root
+Velocity Framework. PhD thesis, Florida State University, 2012.
+M. Shao and Y. Zhang. Distribution-free matrix prediction under arbitrary missing pattern.
+arXiv:2305.11640, 2023.
+A. Srivastava and E.P. Klassen. Functional and shape data analysis. Springer, 2016.
+A. Srivastava, W. Wu, S. Kurtek, E. Klassen, and J.S. Marron. Registration of functional
+data using fisher-rao metric. arXiv:1103.3817, 2011.
+J. Derek Tucker and Aymeric Stamm. fdasrvf: Elastic Functional Data Analysis, 2025. v2.3.6.
+V. Vovk, A. Gammerman, and G. Shafer. Algorithmic Learning in a Random World. Springer,
+2005.
+G.S. Watson. Smooth regression analysis. Sankhy¯a A, pages 359–372, 1964.
+F. Yao, H.-G. M¨uller, and J.-L. Wang. Functional data analysis for sparse longitudinal data.
+Journal of the American Statistical Association, 100(470):577–590, 2005.
+X. Yin, G. Wu, J. Wei, Y. Shen, H. Qi, and B. Yin. Deep learning on traffic prediction: Meth-
+ods, analysis, and future directions. IEEE Trans. on Intelligent Transportation Systems, 23
+(6):4927–4943, 2021.
+M. Zaffran, O. F´eron, Y. Goude, J. Josse, and A. Dieuleveut. Adaptive conformal predictions
+for time series.
+In International Conference on Machine Learning, pages 25834–25866.
+PMLR, 2022.
+Y. Zhang, E. Levina, and J. Zhu. Estimating network edge probabilities by neighbourhood
+smoothing. Biometrika, 104(4):771–783, 2017.
+25

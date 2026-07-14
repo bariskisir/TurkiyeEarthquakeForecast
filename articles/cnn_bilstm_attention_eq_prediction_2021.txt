@@ -1,0 +1,1980 @@
+
+--- Sayfa 1 ---
+arXiv:2107.12915v1  [physics.geo-ph]  27 Jul 2021
+Initial Foundation for Predicting Individual
+Earthquake’s Location and Magnitude by Using
+Glass-Box Physics Rule Learner
+In Ho Cho,1∗
+1CCEE Department, Iowa State University, Ames, IA 50011, USA
+∗To whom correspondence should be addressed; E-mail: icho@iastate.edu.
+Although researchers accumulated knowledge about seismogenesis and decades-
+long earthquake data, predicting imminent individual earthquakes at a spe-
+ciﬁc time and location remains a long-standing enigma. This study hypothe-
+sizes that the observed data conceal the hidden rules which may be unraveled
+by a novel glass-box (as opposed to black-box) physics rule learner (GPRL)
+framework. Without any predeﬁned earthquake-related mechanisms or statis-
+tical laws, GPRL’s two essentials, convolved information index and transpar-
+ent link function, seek generic expressions of rules directly from data. GPRL’s
+training with 10-years data appears to identify plausible rules, suggesting a
+combination of the pseudo power and the pseudo vorticity of released energy
+in the lithosphere. Independent feasibility test supports the promising role of
+the unraveled rules in predicting earthquakes’ magnitudes and their speciﬁc
+locations. The identiﬁed rules and GPRL are in their infancy requiring sub-
+stantial improvement. Still, this study hints at the existence of the data-guided
+hidden pathway to imminent individual earthquake prediction.
+1
+
+--- Sayfa 2 ---
+Analytically or computationally simulated earthquakes are widely used to offer valuable
+insights into the long-standing enigma of seismogenesis. Researchers seek clues from ba-
+sic physics – the thermal instability for computational reproductions of deeper slow earth-
+quakes (1), natural ﬂuid injections into fault zones for earthquake swarms (2), or sliding fric-
+tional blocks for the chaotic slip pulse behaviors (3). By combining a number of mechanics-
+/physics-based rules, researchers can reproduce “virtual” earthquakes on computer (4,5). For il-
+lustration purposes, this paper calls these methods as “bottom-up” approach since their common
+starting point is the adopted mechanics- or physics-based rules and the associated parameters.
+Despite their important roles and values, the bottom-up approaches may explain real earthquake
+behaviors from a restricted angle, bounded by the intrinsic limits of the adopted rules and ex-
+periments used for determining the rules’ key parameters. For instance, many studies used the
+frictional strength of the fault, e.g., rate-and-state friction (6–8), f(ψ, V ) = asinh−1 
+V
+2V0eψ/a
+along with a rule about state evolution (9, 10), G(ψ, V ) = bV0
+dc
+
+e(f0−ψ)/b −V
+V0
+
+, where a is
+the direct effect parameter, V is the slip velocity, V0 is the reference velocity, ψ is the state
+variable, b is the state evolution parameter, dc is the state evolution distance, and f0 is the
+reference friction coefﬁcient for steady sliding at V0. Parameters (a, b) are useful to simulate
+the depth of earthquake arrest or nucleation as well as physically sound fault behaviors (e.g.,
+a −b > 0 for the stable sliding, the so-called velocity-strengthening whereas a −b < 0 for un-
+stable sliding, the velocity-weakening). To determine the parameters, researchers often assume
+a “link” between laboratory tests and real-world earthquakes, e.g., wet granite laboratory tests
+for deriving (a, b) (6, 11, 12). The assumed “link” behind the experiment-driven parameters is
+compelling since it is built upon actual, physical observations. However, it is also true that such
+a link essentially brings in a simpliﬁcation of ﬁtting or extrapolations (6) and sometimes needs
+to embrace discrepancy among experimental observations, e.g., valuable yet diverse pieces of
+evidence in (11–13). This paper calls another approach of using high-precision observation
+2
+
+--- Sayfa 3 ---
+methodologies as “top-down” approach. The top-down approach becomes important with the
+advent of new observation technologies, which provide a valuable top-down viewpoint to ex-
+plaining the fault, fracture, and slip behaviors. For instance, interferometric synthetic aperture
+radar (InSAR) (14, 15) can help researchers constraint detailed surface deformations of large
+continental earthquakes and also can determine the sense of fault slips through image analyses,
+revealing many small fractures adjacent to rupture zones. Also, a densely distributed global
+positioning system (GPS) can help describe high-precision coseismic displacements (16). The
+statistical approach constitutes a backbone of seismogenesis research. Scientists have recorded
+and documented them offering valuable statistical rules. The statistical laws of earthquakes
+such as the Gutenberg-Richter frequency-magnitude relation (17) shed light on the long-term
+earthquake forecast (18) from precursory patterns (19) or small-scale events (20).
+It is natural for earthquake forecasting methods to seek to integrate these top-down, bottom-
+up, and statistical approaches holistically. Existing earthquake forecasting methods often rely
+on statistical/probabilistic assumptions about earthquake rate models, geophysical knowledge
+of known faults’ characteristics, physics assumptions like Coulomb stress-based criteria, and
+many other empirical models (21, 22). For instance, UCERF3 (the Third Uniform California
+Earthquake Rupture Forecast) (22) inherited the elastic-rebound theory and helps incorporate
+other seismogenic mechanisms, e.g., UCERF3-ETAS (23) – an extension to the epidemic-type
+aftershock sequence (ETAS) of (24), thereby helping “operational” (providing an ofﬁcial pro-
+tocol for real-time forecasts to the public) earthquake forecasting in California (27, 28). Com-
+bined with advanced statistics, ETAS-based forecasting offers important statistics about collec-
+tive seismicity, holding practical and scientiﬁc importance (25,26). However, these forecasting
+methods’ accuracy in predicting “individual” earthquake’s speciﬁc location is limited by the
+underlying statistical, empirical, and physical assumptions. It is important to note the central
+difference of the present work from existing forecasting methods: ﬁrst, this paper focuses on
+3
+
+--- Sayfa 4 ---
+predicting “individual” future earthquake’s location and magnitude in lieu of collective event
+counts or overall probability; second, this paper intentionally uses the observed earthquake data
+without adopting any pre-deﬁned statistical laws (e.g., various power laws like GR law, Omori
+law, fertility law, or magnitude-energy law), in hopes of unraveling hidden rules guided by
+data only. Recently, newly emerging technologies of machine learning (ML) gradually play
+an important role in earthquake-related research. For instance, deep learning is harnessed to
+study earthquake swarms (2) and to improve seismic phase-detection (29). The convolutional
+networks are used for seismic phase picking by (30). Despite their notable contributions, ML-
+driven exploration of hidden mechanisms behind earthquakes is in its infancy. Limits of direct
+use of existing ML methods are summarized in (32).
+The common challenge of the aforementioned approaches in pursuit of hidden rules behind
+imminent earthquake predictions is that they look at earthquakes through a pre-deﬁned lens of
+scientists. Still, earthquake remains a chaotic, natural enigma involving the multifaceted hidden
+physics (Fig. S1). If one truly seeks to unravel a “hidden rule” itself, it may be vital to remain
+independent of pre-deﬁned rules without any prejudice. Indeed, recent efforts appear to support
+that earthquake prediction is a feasible scientiﬁc question (31). This study hypothesizes that the
+most reliable source would be the observed data which conceal the hidden rules. This study also
+hypothesizes that exploring and learning the observed earthquake data may help unravel hidden
+rules behind imminent earthquake prediction. This study places top priority on the minimal use
+of general physics and scientists’ eyes independent of earthquake-related pre-deﬁned mecha-
+nisms and lets GPRL identify a plausible and interpretable generic expression of the hidden
+rule of the imminent earthquake prediction.
+4
+
+--- Sayfa 5 ---
+Results
+Overall architecture of the glass-box physical rule learner.
+The overall architecture of
+GPRL framework developed for this study is summarized in Fig. 1. The central notion in Fig.
+1 is in alignment with the author’s recent applications of GPRL to the nano-scale unknown
+phenomena (33). Compared to deep learning, one of the central novelties of GPRL is to “ex-
+ternalize” multi-layered convolutions by conducting multiple convolutions at the information
+level in Fig. 1A), not in the hidden layers or neurons. The starting point is raw data sets of
+earthquake hypocenters, of which spatial information is integrated via three-dimensional (3D)
+spatial convolution with multiple inﬂuence ranges (i.e. Lk, k = 1, ..., nl). Then, the 3D con-
+volved IIs are further integrated via temporal convolutions with multiple temporal inﬂuence
+ranges (Tl, l = 1, ..., nT), thereby generating 4D spatio-temporal convolved IIs. Multiple con-
+volved IIs and their interactions may be regarded as the counterparts to the deep learning’s
+multi-layered convolutions. Then, scientists’ basic knowledge is infused into the diverse IIs to
+quantify the generic terms of energy, power, gradients, or vorticity (Fig. 1B). All these physics
+quantities are “pseudo” quantities since they are not from the ﬁrst principle or direct physics
+theory. Still, they convey physical meanings. These basic quantities are derived from data via
+LFs and no other earthquake (EQ)-related mechanisms. Thus, this approach pursues completely
+data-driven learning. Naturally, the inclusion of other physics concepts (e.g., heat, temperature,
+ﬂuid) is straightforward as long as they are derived from observed data. Flexible and expressive
+LFs (Fig. 1C) identify mathematical expressions between IIs and the basic physics quantities
+in Fig. 1B. The revealed expressions will be about the imminent earthquake prediction as well
+as about physics quantities (Fig. 1D). The best-so-far expressions of the identiﬁed rules are
+remembered and reused as a prior best generation in Fig. 1D. Importantly, all the identiﬁed
+rules will hold clear interpretability, expandability for other physics quantities, and capability
+5
+
+--- Sayfa 6 ---
+Fig. 1. Overall architecture of the glass-box physics rule learner for identifying hidden
+rules of imminent earthquake predictions. (A) Externalized information convolution to gen-
+erate spatio-temporal 4D convolved information index. (B) Data-driven basic physics (pseudo)
+quantities, not driven by pre-deﬁned earthquake-related mechanisms. (C) Rule learning core
+using ﬂexible link functions (LFs), a combination of Bayesian update and evolutionary algo-
+rithm, and scientist-in-the-loop for infusing scientists’ knowledge into ﬁtness (error) measures.
+(D) Remember the best-so-far expressions of identiﬁed rules. Shareable data sets are for other
+ML methods applications.
+of smooth evolution. All the generated data sets (marked by the green cylinder in Fig. 1)
+are made publicly available upon request to the author to spark independent investigations with
+other ML methods and catalyze innovative explorations of broad scientists. Generation of con-
+volved information index. The observed earthquake hypocenter data sets adopted herein (34)
+are processed into a text-based matrix form of {λ, φ, −h, M}(t)
+i , i = 1, ..., n(t) and t = 1, ..., nep
+where n(t) means the number of total hypocenters recorded during one epoch (one month) in
+[(t −1), t] and nep means the number of total epochs (Table S1 summarizes the processed data
+from 1980 through 2019). Since this study pursues meaningful conclusions for the society, one
+epoch is assumed to be one month, which may be adjustable for a speciﬁc scientiﬁc reason.
+The coordinates {λ, φ} in [deg] stand for the longitude and latitude, respectively. The ground-
+normal h is in [km], being positive above the ground datum. The magnitude M ∈[0, 10) means
+the observed moment magnitude. To facilitate the spatial convolution, the geodetic coordinates
+{λ, φ, −h, M}(t)
+i
+are transformed into the earth-centered rectilinear coordinate {x, y, z, M}(t)
+i
+6
+
+--- Sayfa 7 ---
+(see (32)). A point-wise information index (II) is denoted as “local” II, IIlocal ∈R[0, 1] and
+calculated as IIlocal
+(t)(x(t)
+i ) = M(t)
+i /10 where x(t)
+i
+= (x, y, z)(t)
+i . Clearly, the local II maps real
+earthquake magnitudes to the range of [0,1). Fig. S2 shows the calculated point-wise informa-
+tion index during the periods between epoch 10465 and epoch 10476 (i.e. from October 2018
+to September 2019; (34)). For comparison, the raw recorded magnitudes of relatively quiet
+epoch (10470) and active epoch (10474) are compared in Fig. 2A-B. Fault zones are inherently
+multiscale (2) with a core being surrounded by the damaged zone of which macro-fractures
+decay with distance from the core (35). Thus, an individual earthquake’s impact may not be
+described by a point-wise index, rather requiring a comprehensive means to capture a spatial
+impact on the surrounding. Complex spatial inﬂuences of many earthquakes may be integrated
+and accounted for by the spatial convolution presented herein. One of the key enablers of deep
+learning is the convolution process that allows information integration. If convolution is done
+over a spatial domain, ML can better understand the interaction of spatially distributed infor-
+mation and hidden patterns while applied to the temporal domain, the interactions between past
+and present information can be elucidated. Inheriting the philosophy of the deep learning’s con-
+volution, GPRL framework seeks to spatially integrate the local II over the 3D point cloud, i.e.
+myriad earthquake events in the lithosphere. The key difference from the deep learning is that
+this study “externalizes” the multi-layered convolutions by conducting multiple convolutions at
+the information level, not in the opaque deep network layers. Rather than a uniform integra-
+tion, we adopt a weighted integration using Gaussian weight function (denoted ω) to realize
+the proximity-proportionate importance of information. This process generates the “convolved
+spatial II” denoted as II
+(t)
+S . Fig. 2C illustrates the derivation of the convolved spatial II. The
+physical meaning of the convolved spatial II is that II
+(t)
+S (ξj; Lk) quantiﬁes how much the jth
+reference volume experiences earthquakes during one epoch (t) while the closer events the
+higher impact on the volume. The “reference volume” is deﬁned as a discretized volume in
+7
+
+--- Sayfa 8 ---
+Fig. 2. Illustration of deﬁnitions of the convolved II. (A-B) 3D point cloud of the recorded
+magnitudes of two example epochs (months) of the West region in the U.S. (C) Deﬁnition of
+the convolved spatial (3D) II. One reference volume accumulates the impacts of earthquakes
+during one epoch with the 3D Gaussian weights. (D) Convolved spatio-temporal (4D) II. Using
+the half Gaussian weight, all the past earthquakes are incorporated with time-decaying impacts.
+8
+
+--- Sayfa 9 ---
+the lithosphere with ﬁxed spatial coordinate which is needed for spatial and temporal convolu-
+tion (see details in (32)). This study’s reference volume has dimensions of (0.1 deg, 0.1 deg,
+5 km) due to the limit of computational resources. If the earthquakes during the epoch took
+place nearby (i.e. within or close to the Lk) the failure directly affects the jth reference vol-
+ume whereas earthquakes occurred at distance (i.e. much larger than Lk), the reduced impact
+is recorded in the jth reference volume via the II
+(t)
+S (ξj; Lk). This is a time-dependent quantity
+and thus deﬁned at an epoch (t) and calculated as
+II
+(t)
+S (ξj; Lk) =
+Z
+V
+ω(ξj, x(t)
+i ; Lk)II(t)
+local(x(t)
+i )dx
+(1)
+where ω(ξj, x(t)
+i ; Lk) = (Lk(2π)1/2)−N exp
+
+−|x(t)
+i
+−ξj|2
+2L2
+k
+
+= N (x(t)
+(i), L2
+k); ξj stands for the po-
+sition vector of the center of jth reference volume and ∀x(t)
+i
+∈V, and V means the entire litho-
+sphere domain under consideration. The detailed scheme for discretization of the integration
+Eq. (1) is presented in (32). In Eq. (1), Lk ∈R+, k = 1, ..., nL stands for the radius of inﬂuence
+range. With a larger value of Lk, the earthquake events across a broad space can be incorpo-
+rated at the expense of over-smoothing effect; with a smaller Lk, higher priority on the adjacent
+earthquakes to the current reference volume at the expense of local spikes or over-ﬁtting effect.
+For the weighting function, there is no restriction to the use of other weightings. The dimension
+parameter N = 3 is used for the spatial convolution over 3D point cloud whereas N = 1 is used
+for the temporal convolution over time which shall be explained later. Fig. S3 shows three cases
+of the convolved spatial II with different inﬂuence ranges. All three cases used the procedures
+given in Eq. 1. Still, with a larger L > 50 km such as Fig. S3C, the over-smoothing effect is
+notable. In heterogeneous materials or composite structures, this spatial convolved II may help
+ML understand internal complexity as scientists do (36).
+Earthquake is not a one-time event, but a reference volume in the lithosphere experiences in-
+cessantly many events over time. By extending convolution to the time domain, we can in-
+9
+
+--- Sayfa 10 ---
+corporate such transient information about how one reference volume has been being affected
+by past earthquakes. Performing convolution over time creates “convolved spatio-temporal II”
+(denoted as II
+(t)
+ST). This convolved spatio-temporal II accounts for all the past earthquakes up
+to the present epoch t. Fig. 2D illustrates the calculation procedure of the spatio-temporal II.
+Since it embraces information over space and time, its another name would be 4D II. The one-
+dimensional (N = 1) Gaussian weighting is used, being centered at the present time t. Being
+not certain about the optimal temporal inﬂuence ranges, here we allow in total nT temporal
+inﬂuence ranges, denoted by Tl, l = 1, ..., nT. For a temporal inﬂuence range Tl, we have
+II
+(t)
+ST(ξj; Lk, Tl) =
+Z
+ω(τ; Tl)II
+(tpast)
+S
+(ξj; Lk)dtpast
+(2)
+where ω(τ; Tl) = (Tl(2π)1/2)−1 exp
+
+−τ 2
+2T 2
+l
+
+= N (t, T 2
+l ); τ = |t −tpast|, t ≥tpast, meaning
+the time gap between the current and the past time, all given in [epoch]. This convolved spatio-
+temporal II is calculated at the jth reference volume center, ξj. As in the spatial convolved II,
+this spatio-temporal II is generated by the discretization scheme described in (32). Importantly,
+in the discretization scheme, the incremental time-lapse ∆ti over one epoch, which is assumed
+to be constant ∆ti = 1 epoch (i.e. one month). With a larger value of Tl, the earthquake events
+across a long past period can be incorporated at the expense of over-smoothing effect; with a
+smaller Tl, a higher priority on the most recent earthquakes to the present time at the expense of
+local spikes or over-ﬁtting effect. Choosing values and total counts of Tl is subject to learning
+and prediction accuracy. In concept, this inclusion of temporal effects with time-dependent de-
+caying inﬂuence shares the similar notions of the well-known long short-term memory (LSTM)
+and its variants (37,38) that uses selective remembering and forgetting in the time axis.
+Fig. S6 explains the training with an epoch time frame. Departing from the ﬁrst epoch, all
+the spatio-temporal convolved IIs within the epoch frame will be used for training and then the
+identiﬁed rule is used to predict the earthquakes of the last epoch of the frame (32). As expected,
+10
+
+--- Sayfa 11 ---
+the convolved spatio-temporal II appears to successfully quantify earthquake events (Fig. S5)
+and effectively distinguish the low and high seismic activities. The convolved spatio-temporal
+II may span substantially small values which may hamper the searching power of the adopted
+link function (LF). For instance, the cubic regression spline (CRS)-based LF takes a covariate
+ranging between [0,1], and thus if the covariate is very small the subsequent learning may not
+be efﬁcient. Thus, it is helpful to rescale the convolved spatio-temporal II to [0,1]. Details about
+the recommended normalization scheme and a succinct proof of the upper bound are presented
+in (32).
+Flexible and transparent link functions.
+Placing top priority on the interpretability, this
+study proposes to adopt an expressive link function (LF) using transparent, ﬂexible basis that
+can describe a mathematical expression between the convolved spatio-temporal II, IIST and
+the hidden physical rules. LF is denoted as L(IIST; θ) where θ is a set of free parameters
+prescribing the LF. This study used an evolutionary algorithm coupled with the Bayesian up-
+date scheme to enable LF to continue to learn, train, and evolve. There is little restriction of
+choice of other forms of LFs. For balancing the efﬁciency and interpretability, one may choose
+the cubic regression spline (CRS)-based LF with high ﬂexibility (39, 40) or two-parameter
+based exponential LF with its simplicity.
+First, the CRS-based LF has a general form as
+L(k,l)(II
+(t)
+ST(ξj; Lk, Tl); θ(k,l)) = Pp
+i=1 a(k,l)
+i
+b(k,l)
+i
+(II
+(t)
+ST(ξj; Lk, Tl)) where θ(k,l) = {a, x∗}(k,l)
+with a(k,l) = {a1, ..., ap}(k,l), the knots x∗(k,l) = {x∗
+1, ..., x∗
+(p−2)}(k,l), and the cubic spline ba-
+sis b(k,l)
+i
+given in Eq. (28) in (32). Next, the two-parameter exponential LF has a simpler
+form as L(k,l)(II
+(t)
+ST(ξj; Lk, Tl); θ(k,l)) = exp
+
+a(k,l)II
+(t)
+ST(ξj; Lk, Tl)b(k,l)
+−1 where θ(k,l) =
+{a(k,l), b(k,l); k = 1, ..., nL, l = 1, ..., nT}, and “-1” is to make the minimum of the LF near zero.
+It should be noted that the exponential LF is always non-zero, positive, and monotonically in-
+creasing while preserving the concave or convex shape (see Fig. S7 in (32)).
+Hidden expression of the released energy.
+By leveraging the ﬂexible and expressive LFs,
+11
+
+--- Sayfa 12 ---
+the observed earthquake data help identify a hidden expression about the released energy in the
+lithosphere. Earthquakes leave behind a footprint on energy. For instance, earthquakes result in
+macroscopic and microscopic damages and fractures on the surrounding solid domain (2,35) as
+well as the faults. The released energy (denoted as E(t)
+r (ξj) ∈R+) of the jth reference volume
+at current time t may be represented in terms of the convolved spatio-temporal IIs. It should
+be noted that this paper does not adopt the well-proven magnitude-energy power law since the
+present goal is to establish a purely data-driven hidden rule learning. Owing to the accumulated
+inﬂuences of adjacent earthquakes over time, it is plausible to consider that the released energy
+at a reference volume is increasing. Thus, the simple exponential LF is preferred for the hidden
+relation between the released energy and the convolved spatio-temporal II. The true physical
+rule of the released energy, if exists, is hard to formulate, and thus this approach seeks to bor-
+row the learning power of GPRL. Amongst many possible combination operations (e.g., + or
+×), the additive operation is found to be favorable. The identiﬁed best-so-far expression of the
+released energy is given by
+E∗(t)
+r
+(ξj) = max
+"nL=2
+X
+k=1
+nT =2
+X
+l=1
+L(k,l)(II
+(t)
+ST(ξj; Lk, Tl); θ(k,l)), 0.0
+#
+(3)
+where the best-so-far free parameters θ(k,l) are summarized in Table S2. Example plots using
+the exponential LFs with additive combination are shown in Fig. S8. And the best combination
+of the spatial and temporal inﬂuence ranges are identiﬁed as Lk = (10, 25) [km] and Tl = (3, 6)
+[epoch = month] by comparative investigations. This combination of short- and long-range in-
+ﬂuence ranges appears to outperform the other rules with a single L or T or many L’s and T’s.
+As shown in Fig. S9, relative contribution of different inﬂuence ranges appears complicated
+but interpretable. In the higher II ranges (IIST > 0.8), the spatio-temporal II with (L1, T2) =
+(10 km, 6 epochs) and (L2, T1) = (25 km, 3 epochs) to the released energy are signiﬁcant (see
+Figs. S9B-C). In contrast, the contribution of II with (L1, T1) = (10 km, 3 epochs) are uniform
+12
+
+--- Sayfa 13 ---
+regardless of IIST and thus important in the low and mid ranges of II (IIST < 0.8; Fig. S9A).
+Although this identiﬁed rule of the released energy may not be close to the “exact” one, the
+clear interpretability of the identiﬁed rule is still meaningful, conveying physically-sound im-
+plications. For instance, Fig. S9A implies that nearly all the earthquakes in close distance and
+recent time retain their inﬂuence. Contrarily, Figs. S9B-C imply that only larger earthquakes
+(IIST >0.8) retain inﬂuence because they are far away or old enough to allow post-earthquake
+curing.
+Pseudo power and pseudo vorticity of the released energy.
+Other important physics quan-
+tities would be the spatial gradients of the released energy over the lithosphere and “power.”
+The time derivative of energy is physically related to the power. The calculation procedure of
+the time derivatives of the energy-related terms is presented in (32). Figs. S10 and S11 present
+example plots of the spatial gradients and time derivative of the released energy at depth 2.5
+km and 12.5 km, respectively. These plots are with respect to the earth-centered coordinate
+system before transformation to geodetic coordinates. The spatial gradient with respect to the
+geocentric coordinate system may convey weak physical and geometrical information in view
+of the curved structure of the earth lithosphere. Thus, it is meaningful to transform the geo-
+cetric gradient (denoted as ∇E(t)
+r ) to the geodetic gradient (denoted as ∇gE(t)
+r ), i.e., the spatial
+gradient with respect to the geodetic coordinate system (λ, φ, h). This can be done by Jacobian
+J (details are in (32)): ∇gE(t)
+r (ξj) = J∇E(t)
+r (ξj). Fig. S12 shows example plots of the gradient
+ﬁeld vector at depth z = 12.5 km with respect to the geodetic coordinate system. By observing
+the transient change of the spatial gradient of the released energy, this study derives the pseudo
+“vorticity” ω = (ωλ, ωφ, ωh) as
+ω := ∇g ×
+ 
+∇g
+∂E(t)
+r (ξj)
+∂t
+!
+(4)
+13
+
+--- Sayfa 14 ---
+=
+ ∂
+∂φ
+∂E
+′
+r
+∂h −∂
+∂h
+∂E
+′
+r
+∂φ , ∂
+∂h
+∂E
+′
+r
+∂λ −∂
+∂λ
+∂E
+′
+r
+∂h , ∂
+∂λ
+∂E
+′
+r
+∂φ −∂
+∂φ
+∂E
+′
+r
+∂λ
+
+(5)
+In Eq. (4), ∇g = (∂/∂λ; ∂/∂φ, ∂/∂h); ”×” is the curl operator; E′
+r =
+∂E(t)
+r (ξj)
+∂t
+. Fig. S13
+presents example plots of the calculated vorticity vector. The vorticity of the released energy
+ﬂow is considered as another physics quantity since the vorticity may hint at the temporal ro-
+tation of the strain energy ﬁeld which may play an important role in rupture initiation. There
+is no direct deﬁnition of the velocity ﬁeld needed for vorticity calculation, and thus the spatial
+gradient of the time derivative of the released energy (∇g
+∂E(t)
+r (ξj)
+∂t
+) is regarded as a “pseudo ve-
+locity” in Eq. (4). Physically, this pseudo velocity ﬁeld may describe the spatial distribution
+of how the released energy is changing over time. Although the time increment is large (here,
+one month) compared to mathematical derivative, the slow motion of the earth plate (e.g., 8-10
+cm/year (16)) may justify the use of such a large time interval for the pseudo velocity.
+The best-so-far identiﬁed rule of magnitude prediction.
+Without any prior knowledge of
+existing magnitude prediction models (e.g., (18–20,41)), this study directly seeks to ﬁnd a hid-
+den rule of magnitude predictions. Aiming at a purely data-driven pathway, this study explores
+basic physics quantities that can be derived from the observed data. Training and searching for
+the best-performing rules are conducted by GPRL framework on the West-South region of the
+U.S. (solid box in Fig. 3F). Using the identiﬁed rule, the separate feasibility test was conducted
+on the West-North region of the U.S. (dashed box in Fig. 3F). To ensure independent feasibility
+test, no data of the training region are used for the feasibility test and vice versa. In pursuit of the
+best rules, many possible candidates of physics quantities are explored: the released energy Er
+and many forms of physical variants of Er including the three components of the spatial gradient
+vector ∇gE(t)
+r , the local maximums and minimums of ∇gE(t)
+r , the time derivative ∂∇gE(t)
+r /∂t
+meaning the power, and the pseudo vorticity (Eq. 4). From the comparative investigations, the
+best-so-far rule of the magnitude prediction identiﬁed by GPRL framework suggests holding
+14
+
+--- Sayfa 15 ---
+three physics quantities: (1) the released energy (the corresponding best-so-far CRS LF is de-
+noted by LE), (2) the power, i.e., the time derivative of the released energy (LP), and (3) the
+pseudo vorticity of the released energy ﬂow (Lω). The best-so-far rule of magnitude prediction
+is identiﬁed as the multiplicative combination of these CRS LFs of three physics quantities as
+M(t+1)
+pred (ξj) := LE(E∗(t)
+r
+; θE)LP
+ 
+Sg
+ 
+e2∂E∗(t)
+r
+∂t
+!
+; θP
+!
+Lω
+ Sg
+ e2ωλ
+
+; θω
+
+(6)
+where E∗(t)
+r
+is the best-so-far rule-driven released energy at epoch t and at the reference volume
+ξj. The best-so-far free parameters θE, θP, and θω are summarized in Table S2. Sg(.) stands
+for a typical sigmoid function, Sg(x) = 1/(1 + e−x), for brevity. The power term’s LF LP uses
+the sigmoid function to transform ∂E(t)
+r (ξj)/∂t ∈R[−∞, ∞] to R(0, 1) which is compatible
+with the input range of CRS bases. A slightly modiﬁed sigmoid with a scaling-up factor e2
+is used since it appears to outperform against a typical sigmoid case. This scheme applies
+to the pseudo vorticity’s LF Lω since ωh ∈R[−∞, ∞]. Amongst many candidates for Lω,
+e.g., ωλ, ωφ, ωh, or
+q
+ω2
+λ + ω2
+φ, comparative investigations suggest that ωλ appears to give the
+most plausible performance, as ﬁnally included in Eq. (6). Physically, ωλ may describe the
+slow rotational motion of the energy ﬂow about the longitudinal axis. This study’s training
+data are from the Southern U.S. region of which plate motions and the known major faults are
+roughly parallel or normal to the longitudinal axis. This coincidence may underpin the relatively
+important role of ωλ in the identiﬁed rule of magnitude prediction. The feasibility test results
+at depth 2.5 km are shown in Fig. 3 which are generated by using the best-so-far identiﬁed
+rules by GPRL that are based on the spatial and temporal inﬂuence ranges, i.e. Lj ∈{10, 25}
+[km] and Tk ∈{3, 6} epochs (months). The underlying spatio-temporal 4D convolved IIs are
+presented in Fig. S15. The best-so-far prediction rule appears to reproduce two peaks near
+the real two peaks’ locations (Fig. 3A-B). It should be noted that the prediction rule training
+and error function are all based on the minimum magnitude threshold Mthr = 3.49 (Fig. 3B).
+15
+
+--- Sayfa 16 ---
+Fig. 3. Feasibility test results at depth 2.5 km with the best-so-far identiﬁed rules using
+the past 10 years data (epochs from 10355 through 10473) for predicting epoch 10474
+(July, 2019) events. (A) Observed real earthquake magnitudes at depth 2.5 km. (B) Predicted
+magnitudes using the identiﬁed rules. Only M > 3.49 is shown since the training set the
+Mthr = 3.49. (C) The released energy distribution by Eq. (3). (D) Power distribution calculated
+by (LP) in Eq. (6). (E) Pseudo vorticity (ωλ) distribution calculated by (Lω) in Eq. (6). (F) The
+West region of the U.S. used for training and feasibility test. (map from Google Earth).
+16
+
+--- Sayfa 17 ---
+Interestingly, from the naked eyes, the spatial irregularities in the 4D IIs are not apparent. But
+their spatial and transient ﬂuctuations gradually emerge and become noticeable as the 4D IIs
+are transformed into other physics quantities of the released energy, its spatial gradients (Figs.
+S10A-C), the time derivative of the spatial gradients of the released energy (power-like quantity;
+Figs. S10D-F), and the pseudo vorticity (Figs. S13A-C). Another feasibility test result at a
+different depth 12.5 km where the overall peak (M = 4.31) took place is shown in (Fig. 4). The
+underlying spatio-temporal 4D convolved IIs are presented in Fig. S16. As in the prediction
+results at depth = 2.5 km, despite the weak variations in the spatio-temporal IIs, other physics
+quantities appear to magnify the hidden spatio-temporal ﬂuctuations inside the lithosphere at
+depth 12.5 km (see Figs. S11 and S17). Despite the error in magnitude and location, the best-
+so-far prediction rule appears to pinpoint the single peak near the real earthquake event (Fig.
+4A-B).
+Application to Large Magnitude Event Prediction (M > 7.0).
+As an application to large
+earthquake prediction, the best-performance setting of GPRL of the previous sections is applied
+to training of large event of magnitude larger than 7.0 in the entire West region of the U.S.
+(i.e., longitude and latitude in (-130, -110) and (30, 45) [deg], respectively, and depth (-5, 20)
+[km]). GPRL is trained with past 10 years earthquake data up to March 1992 with training
+target (epoch 10147) magnitude 7.2 earthquake occurred on April 25, 1992 at (40.3353333
+deg, -124.22867 deg, 9.856 km). From this training, the best-so-far rule identiﬁed by GPRL
+appears to be successful in reproducing the next-month earthquake’s location and magnitude as
+shown in Fig. 5A-B. Then, with the learned best-so-far rules, an independent prediction test is
+conducted to predict magnitude 7.2 earthquake (epoch 10363) on April 4, 2010 at (32.2861667
+deg, -115.2953333 deg, 9.987 km). As shown in Fig. 5C-D, the best-so-far identiﬁed rule of
+GPRL appears to successfully predict the location and magnitude of the large event on April,
+2010, notably using the observed 10 years data 30 days before the event without any physics
+17
+
+--- Sayfa 18 ---
+Fig. 4. Feasibility test results at depth 12.5 km with the best-so-far identiﬁed rules using
+the past 10 years data (epochs from 10355 through 10473) for predicting epoch 10474
+(July, 2019) events. (A) Observed real earthquake magnitudes at depth 12.5 km. (B) Predicted
+magnitudes using the identiﬁed rules. Only M > 3.49 is shown since the training set the
+Mthr = 3.49. (C) The released energy distribution by Eq. (3). (D) Power distribution calculated
+by (LP) in Eq. (6). Pseudo vorticity (ωλ) distribution is shown in Fig. S17.
+18
+
+--- Sayfa 19 ---
+mechanisms or statistical laws. It is interesting to note that the GPRL-driven rule appears to
+predict localized large event (Fig. 5B) in a relatively narrow zones and also the group of large
+activities (Fig. 5D) across relatively wide zones. The associated results of released energy,
+pseudo power, and pseudo vorticity are presented in Fig. S18.
+Discussion
+This study proposed a mere data-guided pathway to the long-sought rule of imminent “individ-
+ual” earthquake predictions. To seek fundamentally different data-driven approach, this paper
+focuses on predicting individual future earthquake’s location and magnitude instead of collec-
+tive event counts or overall probability, and this paper intentionally uses the observed earthquake
+data without adopting any pre-deﬁned statistical laws such as GR law, Omori law, fertility law,
+or magnitude-energy law. Without any prejudice of earthquake-related mechanisms or statisti-
+cal laws, the observed data of decades-long hypocenters appear to help unravel the hidden rule
+of predicting imminent individual earthquake events before 30 days. Amongst many physics
+quantities, the best-so-far rule is identiﬁed to hold the pseudo power and pseudo vorticity (about
+longitudinal axis) of the released energy in the lithosphere. The identiﬁed rules appear to have a
+complex nonlinear relationship with the internal physics quantities, which underpins the strong
+learning capability of the proposed GPRL framework. Unlike the black-box machine learning,
+the adopted glass-box physics rule learning offers an interpretable expression of the identiﬁed
+rule as expected. Independent feasibility test supports a promising role of the proposed method.
+Still, the identiﬁed rule and GPRL framework are not the ﬁnal version but an initial version,
+being subject to substantial improvement and evolution. Since its starting point is the observed
+data, the improvement of the earthquake data sets (29,30,42) will positively inﬂuence the pre-
+diction accuracy. As long as the reliability and precision of the relevant data is ensured, further
+inclusion of more physics (e.g., thermal instability (1), pore pressure (7), ﬂuid injection (2))
+19
+
+--- Sayfa 20 ---
+Fig. 5. Large magnitude event prediction test. (A) Observed real earthquake events on April,
+1992 (epoch 10147). (B) Trained and reproduced magnitudes using GPRL. Only M > 6.8
+is shown since this large event application’s training set the Mthr = 6.80. (C) Observed real
+earthquake events on April, 2010 (epoch 10363). (D) Large peak group predicted by GPRL-
+driven rules.
+20
+
+--- Sayfa 21 ---
+into the present framework would lead to a positive improvement, which will be straightfor-
+ward in view of clear interpretability and extensibility of the present framework. With respect
+to computational aspects of GPRL, there is ample room for further sophistication. For instance,
+it would be beneﬁcial to consider more ﬂexible, versatile bases (39) for the link functions,
+an extensive library of possible mathematical expressions (45), powerful symbolic regression
+methods (46), or stochastic optimizer (47). Consistent evolution or automated optimization of
+many hyper-parameters of the GPRL framework may be done by inheriting the reinforcement
+learning paradigm (48). In light of the multifaceted nature of earthquake phenomena, enabling
+imminent individual earthquake predictions will require comprehensible collaborations of geo-
+physics, mechanics, computer science, data science, and so on like a recent multi-disciplinary
+global collaborations (49). The initial outcome of this study catalyzes such a broad endeavor.
+Notably, this paper paves an initial ground for purely data-driven prediction of individual large
+earthquake’s location and magnitude one month before, and its potential is boundless for sci-
+ence and humanity.
+Methods
+Raw earthquake data sets of training epochs.
+This study collected and processed of raw
+earthquake catalog data available in (34) between January 1980 and October 2019 as summa-
+rized in Table S1. One training epoch corresponds to one month’s earthquake events – epoch
+10000 stands for January 1980, epoch 10477 for October 2019. All of these earthquake data
+sets are made available upon request to the author.
+Computational implementation of proposed algorithms.
+The spatio-temporal convolution
+of earthquake catalog data to generate the convolved information index is computationally ex-
+pensive. This study developed a parallelized glass-box physics rule learner framework with
+C++ and OpenMPI. All other learning, evolutionary algorithm and Bayesian update scheme
+21
+
+--- Sayfa 22 ---
+are implemented on the parallel program. The developed program is made available upon re-
+quest to the author. Iowa State University’s high-performance computing facility, Condo cluster
+is used for this study. Tables S3, S4, S5, and S6 present the input setup of GPRL program used
+for training and feasibility test.
+Reference volumes in the Earth lithosphere domain. This study deﬁnes reference volumes
+of the given domain in the Earth lithosphere. Within a time period, The raw data of earthquake
+hypocenters are distributed over the lithosphere domain and thus constitute a sort of irregular
+3D point cloud. To generate 4D convolved spatio-temporal information index (II) by perform-
+ing spatial and temporal convolutions, it is efﬁcient to deﬁne a ﬁxed location in the space and
+time, which is the central reason for the reference volumes. Admittedly the Earth lithosphere
+is not a simple spherical structure, and the earthquake hypocenters are often recorded on longi-
+tude, latitude and depth, (λ, φ, h)(t)
+i , i = 1, ..., n(t). Therefore, this study processes raw data to
+the earth-centered 3D coordinates, (x, y, z)(t)
+i , i = 1, ..., n(t).
+1. Transform Raw Hypocenter Data to Geocentric Coodinates: At current epoch (t), the
+ﬁrst step is to read each hypocenter’s raw coordinate (λ, φ, −h)(t)
+i
+where the longitude
+xλ ∈[−180, 180] is in [deg], the latitude φ ∈[−90, 90] in [deg], and the depth h in
+[km]. Here, h means the ellipsoidal height along its normal, being positive outward
+normal to the reference ellipsoid. Note the earthquake catalog data use the reversed sign
+convention of h. Transform them to the earth-centered 3D spatial coordinate (x, y, z)(t)
+i
+(i.e. geocentric rectangular coordinates) as described in (50)
+x =
+ 
+a2
+p
+a2cos2φ + b2sin2φ
++ h
+!
+cosφ cosλ
+(7)
+y =
+ 
+a2
+p
+a2cos2φ + b2sin2λ
++ h
+!
+cosφ sinλ
+(8)
+22
+
+--- Sayfa 23 ---
+z =
+ 
+b2
+p
+a2cos2φ + b2sin2λ
++ h
+!
+sinφ
+(9)
+where a = 6378.1370 km and b = 6356.7523 km according to the 1984 World Geodetic
+System (WGS 84) revision.
+2. Reference Volumes: Given the ranges of longitudes, latitudes, and depths, this study de-
+ﬁnes uniformly distributed grid system and each cell is denoted as a reference volume.
+The total number of reference volumes nrv is simply calculated by nrv = nλ × nφ × nh
+where nλ = |λmax −λmin|/∆λ, nφ = |φmax −φmin|/∆φ, and nh = |hmax −hmin|/∆h.
+Here (∆λ, ∆φ, ∆h) are user-deﬁned increments of longitude, latitude, and depth, respec-
+tively. The index of reference volume is ordered by λ, φ, and h. Thus, the coordinates or
+the jth reference volume’s center, denoted as ξj ∈R3, is represented by
+ξj =
+
+λmin + (jλ + 1
+2)∆λ, φmin + (jφ + 1
+2)∆φ, −hmin −(jh + 1
+2)∆h
+
+,
+(10)
+where j = jλ + jφ × nλ + jh × (nλ × nφ), jλ ∈Z[0, nλ −1], jφ ∈Z[0, nφ −1], and
+jh ∈Z[0, nh −1]. After calculating the center coordinates in ([deg], [deg], [km]), we can
+easily transform them to the geocentric rectangular coordinates using the same formulae
+in Eqs. (7 – 9). Whenever using Eq. (9), the outward normal is used for the positive sign
+of the depth. Another important quantity about the reference volume is the actual volume
+of individual reference volume element. In view of the curved ellipsoidal lithosphere, the
+volume of the jth reference volume element Vj [km3] is calculated by
+Vj = 4π∥ξj∥2
+2∆h ∆λ
+360◦
+∆φ
+180◦
+(11)
+Discretization of convolved information index. For the integration over a discrete 3D point
+cloud, with an uniformity assumption over a reference volume, the approximation is given by
+II
+(t)
+S (ξj; Lk) ∼=
+n(t)
+X
+i=1
+ω(ξj, x(t)
+i ; Lk)II(t)
+local(x(t)
+i )V (x(t)
+i )
+(12)
+23
+
+--- Sayfa 24 ---
+where V (x(t)
+i ) is the volume which contains the ith hypocenter in the lithosphere domain at
+time (t) and is assumed to be 1 km3. Rationales behind this unit volume assignment to each
+hypocenter point’s V (x(t)
+i ) are twofold. First, the spatial impact of each hypocenter is already
+taken into account by the IIlocal’s weighted spatial integration in Eqs. (1) and (12). Second,
+each epoch has new hypocenters emerging at the random locations and with a random total
+count. To retain the physical consistency of the II, i.e. the more earthquakes the more released
+strain energy, it is efﬁcient to use the unit volume per hypocenter. Unlike V (x(t)
+i ), the jth the
+reference volume does have actual spatial volume (denoted as Vj) which is accurately calculated
+on the Earth ellipsoid reference (see the algorithm in corresponding section in (32)). For the
+discretization of the integration over the time space,
+II
+(t)
+ST(ξj; Lk, Tl) ∼=
+nepoch
+X
+i=1
+ω(τi; Tl)II
+(ti)
+S (ξj; Lk)∆ti
+(13)
+where τi = |t −ti|, t ≥ti and ∆ti is the incremental time lapse over one epoch, which is
+assumed to be constant ∆ti = 1 epoch (i.e. one month). Tl ∈R+, l = 1, ..., nT. With a larger
+value of Tl, the earthquake events across a longer past period can be incorporated at the expense
+of over-smoothing effect; with a smaller Tl, a higher priority on the most recent earthquakes to
+the present time at the expense of local spikes or over-ﬁtting effect. Choosing values and total
+counts of Tl is subject to learning and prediction accuracy. To some extent, this inclusion of
+temporal effects by ML shares the similar notions of the well-known long short-term memory
+(LSTM) and its variants (37,38) that uses selective remembering and forgetting in the time axis.
+Holistic error measure specialized for the earthquake prediction.
+Another notable chal-
+lenge of this study is rooted in the question of how to deﬁne an effective and efﬁcient earthquake-
+specialized error (equivalently, loss or ﬁtness). Sufﬁciently large earthquakes (e.g. moment
+magnitude > 4.0) are not regarded as a point-wise phenomenon (e.g., rupture area > 1 km2;
+(43, 44)), but rather they span certain spaces. A successful error measure for ML should be
+24
+
+--- Sayfa 25 ---
+able to holistically quantify the discrepancy in magnitudes, locations, and false warnings of the
+predicted earthquakes. To fulﬁll such multifaceted objectives, this study proposed a comprehen-
+sive error measure. As explained in Fig. S14, a good prediction rule should be able to predict
+not only the magnitudes of future events but also their locations in the three-dimensional litho-
+sphere with the smallest number of false predictions. Still, this study’s error measure is open to
+improvement by incorporating further computational schemes and/or deeper physics-ingrained
+terms. In particular, this study proposes a holistic error function J in Eq. (14) that accommo-
+dates diverse errors in magnitude, location and false alarms. The proposed error function places
+higher importance on the large events.
+J (s) = (1 −acnt)
+X
+˜k∈Top
+ω(˜k)
+MDE(˜k)
+MD/n(Top) + acntEcnt
+(14)
+E(˜k)
+MD := aMerf
+ 
+|M(t+1)
+obs
+(ξ˜k) −M(t+1)
+pred (ξk∗)|
+M(t+1)
+obs
+(ξ˜k)
+!
++ (1 −aM)erf
+||ξ˜k −ξk∗||2
+rmax
+
+(15)
+Ecnt := 1
+2erf
+|n(Top) −n(Toppred)|
+n(Top)
+
++ 1
+2erf
+
+
+
+X
+∀˜k∈Top−1
+pred
+|Mthr −M(t+1)
+pred (ξ˜k)|/Mthr
+n(Top−1
+pred)
+
+
+
+(16)
+After sorting the observed real magnitudes in descending order, we can obtain Top, a set
+of indices of reference volumes that contains the sorted real magnitudes greater than Mthr,
+Top := {˜k of ξ˜k| M(t+1)
+obs
+(ξ˜1) ≥M(t+1)
+obs
+(ξ˜2) ≥· · · > Mthr}. Similarly, we obtain Toppred, a
+set of indices of reference volumes that contains the sorted predicted magnitudes, Toppred :=
+{˜k of ξ˜k| M(t+1)
+pred (ξ˜1) ≥M(t+1)
+pred (ξ˜2) · ·· > Mthr}. k∗(˜k) ∈Toppred means the index of the spa-
+tially closest reference volume to ˜k ∈Top, obtained by k∗(˜k) := argmin∀k∈Toppred||ξ˜k −ξk||2.
+E(k)
+MD in Eq. (15) considers a weighted average of errors in magnitude and location of earth-
+quakes larger than the threshold Mthr. erf(.) is the Gauss error function used for mapping
+real-valued error ∈R[0, ∞) to the range of [0,1] and its general deﬁnition is given by erf(z) :=
+25
+
+--- Sayfa 26 ---
+2
+√π
+R z
+0 e−t2dt where z ∈C and erf(z) ∈[−1, 1]. A weight coefﬁcient aM ∈R[0, 1] determines
+the relative importance of magnitude error compared to the location error. Here, aM = 0.5 is
+used meaning the same importance in predicting magnitudes and locations. The proposed error
+function addresses the correct and false prediction of total events’ count above the threshold by
+the second term of the right hand side of Eq. (14). The relative importance of the counting error
+is weighted by acnt ∈R[0, 1], herein acnt = 0.1 is used. rmax = 200 km is used to normalize the
+distance prediction error. Predictions only within rmax are considered in the error calculation
+while the predictions beyond rmax are regarded as incorrect predictions. Also, the proposed
+error measure puts increasing weights on the larger real earthquakes through ω(˜k)
+MD deﬁned as
+ω(˜k)
+MD := exp(M(t+1)
+obs
+(ξ˜k)/10.0); ˜k ∈Top, which helps improve the accuracy of predicting
+larger, rare events. The additional error term Ecnt of Eq. (16) quantiﬁes the wrong predictions
+since such “false alarm” may hamper reliability of the prediction and result in substantial soci-
+etal cost. Ecnt consists of two terms, the ﬁrst term is about how many false alarms happened in
+terms of the total count while the second term is about how far the false alarms deviate from the
+minimum threshold Mthr. In Eq. (16) Top−1
+pred := {˜k |˜k ∈Toppred & never used in E(˜k)
+MD}.
+Data availability. The data supporting the plots and other ﬁndings of this study are available
+from the corresponding author upon reasonable request.
+Acknowledgments
+This work was supported by the National Science Foundation under grants CSSI-1931380 (in
+part). The research reported in this paper is partially supported by the HPC@ISU equipment at
+Iowa State University, some of which has been purchased through funding provided by the NSF
+under MRI grant CNS-1229081 and CRI grant 1205413.
+26
+
+--- Sayfa 27 ---
+Author contributions
+Cho is responsible for all algorithms and programs presented as well as writing of the manuscript.
+Additional Information
+Supplementary Information accompanies this paper at (32).
+Competing interests: The author declares no competing interests.
+References
+1. L. Wang, and S. Barbot, Excitation of San Andreas tremors by thermal instabilities below
+the seismogenic zone. Science Advances 6(eabb2057) (2020).
+2. Ross, Z. E., Cochran, E. S., Trugman, D. T., and Smith, J. D., 3D fault architecture controls
+the dynamism of earthquake swarms. Science 368, 1357–1361 (2020).
+3. Ahmed E. Elbanna and Thomas H. Heaton, A new paradigm for simulating pulse-like rup-
+tures: the pulse energy equation. Geophys. J. Int. 189, 1797–1806 (2012).
+4. Sylvain Barbot, Nadia Lapusta, Jean-Philippe Avouac, Under the Hood of the Earthquake
+Machine: Toward Predictive Modeling of the Seismic Cycle. Science 336, 707–710 (2012).
+5. Junle Jiang and Nadia Lapusta, Deeper penetration of large earthquakes on seismically qui-
+escent faults. Science 352(6291), 1293–1297 (2016).
+6. Allison, K. L., and Dunham, E. M. Earthquake cycle simulations with rate-and-state friction
+and power-law viscoelasticity. Tectonophysics 733(9):232–256 (2018).
+27
+
+--- Sayfa 28 ---
+7. Zhu, W., Allison, K. L., Dunham, E. M., and Yang, Y. Fault valving and pore pressure
+evolution in simulations of earthquake sequences and aseismic slip. Nature Communications
+11(4833) (2020).
+8. Rice, J.R., Lapusta, N., and Ranjith, K., Rate and state dependent friction and the stability
+of sliding between elastically deformable solids. J. Mech. Phys. Solids 49(9):1865–1898
+(2001).
+9. Ruina, A., Slip instability and state variable friction laws. J. Geophys. Res. Solid Earth
+88(B12):10359–10370 (1983).
+10. Marone, C., Laboratory-derived friction laws and their application to seismic faulting.
+Annu. Rev. Earth Planet. Sci. 26(1):643–696 (1998).
+11. Blanpied, M.L., Lockner, D.A., and Byerlee, J.D., Fault stability inferred from granite
+sliding experiments at hydrothermal conditions. Geophys. Res. Lett. 18(4):609–612 (1991).
+12. Blanpied, M.L., Lockner, D.A., and Byerlee, J.D., Frictional slip of granite at hydrothermal
+conditions. J. Geophys. Res. Solid Earth 100(B7):13045–13064 (1995).
+13. Mitchell, E.K., Fialko, Y., and Brown, K.M., Velocity-weakening behavior of Westerly
+granite at temperature up to 600 C. J. Geophys. Res. Solid Earth 121(9):6932–6946 (2016).
+14. Xu, X., D. T. Sandwell, and B. Smith-Konter, Coseismic Displacements and Sur-
+face Fractures from Sentinel-1 InSAR: 2019 Ridgecrest Earthquakes. Seismol. Res. Lett.
+91:1979–1985 (2020). [doi: 10.1785/0220190275].
+15. Xiaohua Xu, David T. Sandwell, Lauren A. Ward, Chris W. D. Milliner, Bridget R.
+Smith-Konter, Peng Fang, Yehuda Bock, Surface deformation associated with fractures
+28
+
+--- Sayfa 29 ---
+near the 2019 Ridgecrest earthquake sequence. Science 370(6516):605–608 (2020). [DOI:
+10.1126/science.abd1690 ].
+16. Mark Simons, Sarah E. Minson, Anthony Sladen, Francisco Ortega, Junle Jiang, Susan E.
+Owen, Lingsen Meng, Jean-Paul Ampuero, Shengji Wei, Risheng Chu, Donald V. Helm-
+berger, Hiroo Kanamori, Eric Hetland, Angelyn W. Moore, Frank H. Webb, The 2011 Mag-
+nitude 9.0 Tohoku-Oki Earthquake: Mosaicking the Megathrust from Seconds to Centuries.
+Science 332:1421–1425 (2011). [DOI: 10.1126/science.1206731].
+17. Gutenberg, B., and C. F. Richter, Seismicity of the Earth and Associated Phenomena.
+Princeton Univ. Press, Princeton, New York (1954).
+18. Rundle, J. B., Turcotte, D. L., Shcherbakov, R., Klein W., and Sammis, C., Statistical
+physics approach to understanding the multiscale dynamics of earthquake fault systems.
+Reviews of Geophysics 41(4), (2003) (doi:10.1029/2003RG000135).
+19. Keilis-Borok, V. I., and A. A. Soloviev, Nonlinear Dynamics of the Lithosphere and Earth-
+quake Prediction. Springer-Verlag, New York (2003).
+20. K. F. Tiampo, J. B. Rundle, S. McGinnis, S. J. Gross, and W. Klein, Eigenpatterns in
+southern California seismicity. J. Geophys. Res. 107(B12):2354 (2002).
+21. Toda, S., and Stein, R. S., Long- and Short-Term Stress Interaction of the 2019 Ridgecrest
+Sequence and Coulomb-Based Earthquake Forecasts. Bulletin of the Seismological Society
+of America 110(4):1765–1780 (2020).
+22. Field, Edward H. and Biasi, Glenn P. and Bird, Peter and Dawson, Timothy E. and Felzer,
+Karen R. and Jackson, David D. and Johnson, Kaj M. and Jordan, Thomas H. and Madden,
+Christopher and Michael, Andrew J. and Milner, Kevin R. and Page, Morgan T. and Parsons,
+29
+
+--- Sayfa 30 ---
+Tom and Powers, Peter M. and Shaw, Bruce E. and Thatcher, Wayne R. and Weldon, Ray
+J., II and Zeng, Yuehua, Long-Term Time-Dependent Probabilities for the Third Uniform
+California Earthquake Rupture Forecast (UCERF3). Bulletin of the Seismological Society of
+America 105(2A):511–543 (2015).
+23. Field, E. H., K. R. Milner, J. L. Hardebeck, M. T. Page, N. van der Elst, T. H. Jordan,
+A. J. Michael, B. E. Shaw, and M. J. Werner, A spatiotemporal clustering model for the
+third Uniform California Earthquake Rupture Forecast (UCERF3-ETAS): Toward an oper-
+ational earthquake forecast. Bulletin of the Seismological Society of America 107(3):1049–
+1081 (2017).
+24. Ogata,Y., Space-time point-process models for earthquake occurrences. Ann. Inst. Stat.
+Math. 50(2):379–402 (1998).
+25. Shcherbakov, R., Zhuang, J., Z¨oller, G., and Ogata, Y., Forecasting the magnitude of the
+largest expected earthquake. Nature Communications 10:4051 (2019).
+26. Nandan, S., Ram, S. K., Ouillon, G., and Sornette, D., Is Seismicity Operating at a Critical
+Point? Physical Review Letters 126:128501 (2021).
+27. Milner, K. R., E. H. Field, W. H. Savran, M. T. Page, and T. H. Jordan, Operational Earth-
+quake Forecasting during the 2019 Ridgecrest, California, Earthquake Sequence with the
+UCERF3-ETAS Model Seismol. Res. Lett. 91:1567–1578 (2020).
+28. Morgan T. Page, Edward H. Field, Kevin R. Milner, and Peter M. Powers, The UCERF3
+Grand Inversion: Solving for the Long-Term Rate of Ruptures in a Fault System. Bulletin of
+the Seismological Society of America 104(3):1184–1204 (2014).
+30
+
+--- Sayfa 31 ---
+29. Zachary E. Ross, Men-Andrin Meier, Egill Hauksson, and Thomas H. Heaton, General-
+ized Seismic Phase Detection with Deep Learning. Bulletin of the Seismological Society of
+America 108(5A), 2894—2901 (2018).
+30. Esteban Pardo , Carmen Garﬁas, and Norberto Malpica, Seismic Phase Picking Using Con-
+volutional Networks. IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING
+57(9), 7086—7092 (2019).
+31. Varotsos, P. A., Skordas, E. S., and Sarlis, N. V., Fluctuations of the entropy change under
+time reversal: Further investigations on identifying the occurrence time of an impending
+major earthquake. Europhysics Letters 132:29001 (2020).
+32. Materials and methods are described in the supplementary materials.
+33. In Ho Cho, Qiang Li, Rana Biswas, and Jaeyoun Kim, A Framework for Glass-Box
+Physics Rule Learner and Its Application to Nano-Scale Phenomena. Nature Communica-
+tions Physics 3(78) (2020).
+34. United
+States
+Geological
+Survey
+(USGS),
+Earthquake
+Catalog.
+USGS
+https://earthquake.usgs.gov/earthquakes/search/ (last accessed in Nov 2020), (2020).
+35. Mitchell, T. M., and Faulkner, D. R., The nature and origin of off-fault damage surrounding
+strike-slip fault zones with a wide range of displacements: A ﬁeld study from the Atacama
+fault system, northern Chile. Journal of Structural Geology 31, 802–816 (2009).
+36. Cho, I., A framework for self-evolving computational material models inspired by deep
+learning. Int J Numer Methods Eng. 120(10):1202–1226 (2019) (DOI: 10.1002/nme.6177).
+37. Hochreiter, S. and Schmidhuber, J., Long short-term memory. Neural Computation
+9(8):1735–1780 (1997).
+31
+
+--- Sayfa 32 ---
+38. Gers, F. A., Schmidhuber, J. and F. Cummins. Learning to forget: Continual prediction with
+LSTM. Neural Computation 12(10):2451–2471 (2000).
+39. Wood, S., Generalized additive models: an introduction with R. Boca Raton, FL: CRC
+Press (2006).
+40. Gu, C., Smoothing spline ANOVA models. New York: Springer Science and Business Media
+(2013).
+41. Sotolongo-Costa, O. and Posadas, A., Fragment-asperity interaction model for earthquakes.
+Physics Review Letters 92(4), 048501 (2004).
+42. Xu, X., Sandwell, D. T., and Smith-Konter, B., Coseismic Displacements and Surface Frac-
+tures from Sentinel-1 InSAR: 2019 Ridgecrest Earthquakes. Seismological Research Letters
+91(4):1979–1985,(2019).
+43. Yang, W., Hauksson, E., and Shearer, P. M., Computing a Large Reﬁned Catalog of Fo-
+cal Mechanisms for Southern California (1981-2010): Temporal Stability of the Style of
+Faulting. Bulletin of the Seismological Society of America 102(3):1179–1194,(2012).
+44. Kanamori, H., and Anderson, D. L., Theoretical basis of some empirical relations in seis-
+mology. Bulletin of the Seismological Society of America 65(5), 1073–1095 (1975).
+45. Champion, K., Lusch, B., Kutz, J. N., and Brunton, S.L., Data-driven discovery of co-
+ordinates and governing equations. Proceedings of National Academy of Sciences 116(45),
+22445–22451 (2019). (www.pnas.org/cgi/doi/10.1073/pnas.1906995116).
+46. Silviu-Marian Udrescu, and Max Tegmark, AI Feynman: A physics-inspired method for
+symbolic regression. Science Advances 6(:eaay2631) (2020).
+32
+
+--- Sayfa 33 ---
+47. Kingma, D.P., and Ba, J. L., ADAM: A Method for Stochastic Optimization. ICLR(2015)
+(arXiv:1412.6980).
+48. Sutton, R. S. and Barto, A. G., Introduction to Reinforcement Learning,MIT Press, Cam-
+bridge, MA, USA, (2017).
+49. Mignan, A., Ouillon, G., Sornette, D., and Freund, F., Global Earthquake Forecasting Sys-
+tem (GEFS): The challenges ahead,Eur. Phys. J. Special Topics 230:473–490 (2021).
+50. Lichtenegger, H., Collins, J., Hofmann-Wellenhof, B., GPS-theory and practice. Austria,
+Springer Vienna.
+51. Brown, N., and Sandholm, T., Superhuman AI for heads-up no-limit poker: Libratus beats
+top professionals. Science 359(6374):418–424 (2018).
+52. Mnih, V. Kavukcuoglu, K.
+Silver, D.
+Rusu, A. A.
+Veness, J.
+Bellemare, M. G.
+Graves, A.
+Riedmiller, M.
+Fidjeland, A. K.
+Ostrovski, G.
+Petersen, S.
+Beattie, C.
+Sadik, A.
+Antonoglou, I.
+King, H.
+Kumaran, D.
+Wierstra, D.
+Legg, S., and Hassabis,
+D., Human-level control through deep reinforcement learning. Nature 518(7540):529–533
+(2015).
+53. Maziar Raissi, Alireza Yazdani, George Em Karniadakis, Hidden ﬂuid mechanics: Learn-
+ing velocity and pressure ﬁelds from ﬂow visualizations.Science 367, 1026—1030, (2020).
+54. Karpatne, A., Atluri, G., Faghmous, J.H., Steinbach, M., Banerjee, A., Ganguly, A.,
+Shekhar, S., Samatova, N., and Kumar, V., Theory-Guided Data Science: A New Paradigm
+for Scientiﬁc Discovery from Data. IEEE Transactions on Knowledge and Data Engineering
+29(10):2318–2331 (2017).
+33
+
+--- Sayfa 34 ---
+55. Koza, J., Genetic Programming: On The Programming of Computers By Means of Natural
+Selection. Cambridge, MA: MIT Press (1992).
+56. Cho, I., Song, I., and Teng, Y., Numerical Moment Matching Stabilized by a Genetic Algo-
+rithm for Engineering Data Squashing and Fast Uncertainty Quantiﬁcation Computers and
+Structures 204:31–47 (2018) (doi.org/10.1016/j.compstruc.2018.04.002).
+34
+
+--- Sayfa 35 ---
+Initial Foundation for Predicting Individual Earthquake’s
+Location and Magnitude by Using Glass-Box Physics Rule
+Learner
+In Ho Cho1
+1CCEE Department, Iowa State University, Ames, IA 50011, USA
+Limits of direct use of existing machine learning methods
+Despite many triumphs of recent ML methods (51, 52), the direct adoption of the existing ML
+methods for this study’s goal is not promising for several reasons. This study needs to explore
+multifaceted physical data sets deﬁned over multiple-dimensions and seeks to unravel generic
+expressions (i.e. glass-box learning) in lieu of ﬁnal predictions (i.e. black-box learning). Pursu-
+ing hidden rules, this study is aligned with the so-called physics-guided ML paradigms in broad
+science and engineering (36, 45, 53, 54). Recently, the author applied the glass-box physics
+rule learner (GPRL) to hidden physics of nano-scale tribocharging phenomena (33). This study
+inherits the central notions of the GPRL framework and substantially expand it for the hidden
+rules of imminent earthquake prediction. Such extensions of GPRL is possible since it can deal
+with multifaceted measurements over higher dimensions, infuse basic physics and scientists
+knowledge, extract hidden rule’s generic expressions, and evolve the rules with increasing data
+through the Bayesian update scheme.
+Rescaling of information index to R[0,1]
+The convolved spatio-temporal II may span substantially small values which may hamper the
+searching power of the adopted link function (LF). For instance, the cubic regression spline
+(CRS)-based LF takes a covariate ranging between [0,1], and thus if the covariate is very small
+35
+
+--- Sayfa 36 ---
+Fig. S1. Multifaceted approaches to Earthquakes.
+the subsequent learning may not be efﬁcient. Thus, it is helpful to rescale the convolved spatio-
+temporal II to [0,1]. One immediate normalization would be using the maximum range of the
+convolved spatio-temporal II during the current epoch (t) as
+II
+(t)
+ST(ξj; Lk, Tl) =
+II
+(t)
+ST(ξj; Lk, Tl) −min∀ξj[II
+(t)
+ST(ξj; Lk, Tl)]
+|max∀ξj[II
+(t)
+ST(ξj; Lk, Tl)] −min∀ξj[II
+(t)
+ST(ξj; Lk, Tl)]|
+(17)
+However, this simple normalization may not guarantee the consistency over different epochs
+since each epoch may have different ranges of the spatio-temporal IIs. Therefore, it is more
+robust to use the normalization with the upper bound (see a brief proof in the following section)
+Table S1. Earthquake catalog and the associated training epochs [1 month = 1 epoch]
+Year (begin)
+Year (end)
+Epoch (begin)
+Epoch (end)
+1980
+1984
+10000
+10059
+1985
+1989
+10060
+10119
+1990
+1994
+10120
+10179
+1995
+1999
+10180
+10239
+2000
+2004
+10240
+10299
+2005
+2009
+10300
+10359
+2010
+2014
+10360
+10419
+2015
+2019 (up to Oct.)
+10420
+10477
+36
+
+--- Sayfa 37 ---
+Fig. S2. Point-wise information index, IIlocal. Events above 0.3 (i.e. Mw ≥3.0) are shown.
+Each line corresponds to the events during one-month period from October 2018 (epoch number
+10465) to September 2019 (10476).
+of the spatio-temporal II as
+II
+(t)
+ST(ξj; Lk, Tl) =
+II
+(t)
+ST(ξj; Lk, Tl)
+enepoch(Tl(2π)1/2)−1 × en(t)(Lk(2π)1/2)−3
+(18)
+where it is reasonably assumed that enepoch = 60 epochs (i.e., 5 years); en(t) = 200 (i.e. at
+most 200 events larger than magnitude 3.0 per month) based on the past earthquakes in the
+catalog database (34). This assumption of constant enepoch and en(t) helps the spatio-temporal II
+be consistently normalized for a given pair of (Lk, Tl). As long as the consistency is being held
+and the resulting II is within [0,1], these values of enepoch and en(t) can be changed by researchers
+for the upper bound-based normalization. Fig. S4 presents the positive role of the upper bound-
+based normalization that boosts the convolved spatio-temporal II to the manageable range of
+[0,1].
+To consider the upper bound of the spatio-temporal II, it is necessary to consider the
+upper bound of the convolved spatial II. In lieu of exploring all possible ranges, bound-aware
+searching helps fast searching, and thus the derivation of the upper bound is presented in the
+37
+
+--- Sayfa 38 ---
+Fig. S3. Convolved Spatial II at the depth z = 12.5 km: (A) Calculated with L = 25 km. (B)
+With L = 50 km. (C) L = 100 km.
+following section.
+Upper bound of spatio-temporal information index
+To consider the upper bound of the spatio-temporal II, it is necessary to consider the upper
+bound of the convolved spatial II.
+II
+(t)
+S (ξj; Lk) ∼=
+n(t)
+X
+i=1
+ω(ξj, x(t)
+i ; Lk)II(t)
+local(x(t)
+i )V (x(t)
+i )
+(19)
+≤
+n(t)
+X
+i=1
+ω(ξj, x(t)
+i ; Lk) × 1.0 × 1.0
+(20)
+≤n(t) × ω(ξj = x(t)
+i ; Lk) = n(t) × (Lk(2π)1/2)−3
+(21)
+Here, the inequality Eq. 20 assumes the extreme case when all events are maximum magnitude
+of 10 and thus IIlocal = 10/10 = 1.0. V (x(t)
+i ) = 1.0 is physically explained in the text around
+Eq. 12. The last inequality Eq. 21 assumes another extreme case when all events happen at
+the jth reference volume and all the Gaussian weights take the maximum value. Thus, the
+maximum physically conceivable upper bound of II
+(t)
+S (ξj; Lk) is n(t)(Lk(2π)1/2)−3. Now we
+38
+
+--- Sayfa 39 ---
+Fig. S4.
+Convolved Spatio-Temporal II after Normalization with the Physical Upper
+Bound. The same shape but dramatic increase in the scale of values from 10−5 to the desired
+range of [0,1].
+39
+
+--- Sayfa 40 ---
+Fig. S5. Comparison of two convolved spatio-temporal II: (A) IIST over 12 epochs from
+10462 to 10472 showing relatively low seismic activity; (B) IIST over 12 epochs from 10465
+to 10475 showing relatively high seismic activity with peaks ﬁve fold larger than (A), mainly
+due to the notably active epoch 10474 (see Fig. S2 and Fig. 2). All IISTs are generated with
+(L, T) =(75 km, 12 epochs) and the plot depth is z = 12.5 km.
+can consider the upper bound of the convolved spatio-temporal II.
+II
+(t)
+ST(ξj; Lk, Tl) ∼=
+nepoch
+X
+i=1
+ω(τi; Tl)II
+(ti)
+S (ξj; Lk)∆ti
+(22)
+≤
+nepoch
+X
+i=1
+ω(τi; Tl)
+ n(ti)(Lk(2π)1/2)−3
+∆ti
+(23)
+≤nepoch × ω(τi = 0; Tl)
+ n(ti)(Lk(2π)1/2)−3
+∆ti
+(24)
+≤(nepoch × (Tl(2π)1/2)−1)
+ n(ti)(Lk(2π)1/2)−3
+∆ti
+(25)
+The inequality Eq. 24 assumes the extreme case that all past earthquake events took place
+current epoch and thus gives τi = 0. As explained before, ∀∆ti = 1 epoch which means
+1 month in this study. Therefore, the physically conceivable upper bound of the convolved
+spatio-temporal II is
+ nepoch(Tl(2π)1/2)−1  n(ti)(Lk(2π)1/2)−3
+.
+40
+
+--- Sayfa 41 ---
+Fig. S6. Illustration of training with a epoch frames. The last epoch of the time frame is
+used for target during training. Between different time frames, the Bayesian inheritance of the
+prior-best rules may take place.
+Training with an epoch frame
+Fig. S6 explains how training takes place with a time frame. Departing from the ﬁrst epoch
+(marked by “START EPOCH NUMBER”) with the length of “NUMBER TOTAL EPOCH DATA SETS”,
+all the convolved spatio-temporal IIs within the epoch frame are used for training and then the
+identiﬁed rule is used to predict the earthquakes of the last epoch of the frame (marked by dashed
+box). After training, the best-so-far rules are identiﬁed. For instance, when “START EPOCH NUMBER
+= 10462”, and “NUMBER TOTAL EPOCH DATA SETS = 12”, the training is conducted with
+∀II
+(t)
+ST, t = [10462, 10472] (in total 11 epochs) in order to identify the hidden rules that can best
+reproduce earthquakes happening at the last epoch 10473. These identiﬁed rules are stored as a
+prior generation. Between different time frames, the prior best generation of the identiﬁed rules
+can be inherited via the combination of Bayesian update and evolutionary algorithm.
+41
+
+--- Sayfa 42 ---
+Flexible and expressive link functions
+Place top priority on the interpretability, this study proposes to adopt an expressive link function
+(LF) using transparent, ﬂexible basis that is capable of describing a mathematical expression be-
+tween the convolved spatio-temporal II, IIST and the hidden physical rules. LF is denoted as
+L(IIST; θ) where θ is a set of free parameters prescribing the LF. This study used an evolution-
+ary algorithm coupled with the Bayesian update scheme to enable LF to continue to learn, train,
+and evolve. There is little restriction of choice of other forms of LFs. For balancing the efﬁ-
+ciency and interpretability, this study chose the cubic spline basis owing to its high smoothness
+and ﬂexibility. The cubic spline curves consist of a few cubic polynomials connected at knots
+so that the curves are continuous up to the second derivatives (39). If practical cubic spline
+bases (40) (denoted as bi) are adopted, LFs are given as
+L(IIST; a, x∗) =
+p
+X
+i
+aibi(IIST)
+(26)
+CRS-Based LF: L(k,l)(II
+(t)
+ST(ξj; Lk, Tl); θ(k,l)) =
+p
+X
+i=1
+a(k,l)
+i
+b(k,l)
+i
+(II
+(t)
+ST(ξj; Lk, Tl));
+(27)
+where b1(x) = 1, b2(x) = x, and
+bi+2(x) = [(x∗
+i −1
+2)2 −1
+12][(x −1
+2)2 −1
+12]
+4
+−[(|x −x∗
+i | −1
+2)4 −1
+2(|x −x∗
+i | −1
+2)2 +
+7
+240]
+24
+,
+(28)
+for i = 1...p −2. Here, x∗
+i is ith knot location. To fully describe one LF, we need to identify
+p+(p−2) unknowns, i.e. a = {a1, ..., ap} and x∗= {x∗
+1, ..., x∗
+(p−2)}. For brevity, we denote the
+total unknown parameters as θ = {a, x∗} hereafter. The adopted cubic spline bases can accom-
+modate a variety of relation forms, ranging from a simple monotonic rule to a highly nonlinear
+rule. It should be noted that the adopted cubic spline basis is not for the direct regression, but
+42
+
+--- Sayfa 43 ---
+Fig. S7. Exponential LF: The two-parameter exponential LF is adjusted by a and b. While a
+controls the amplitude, b governs the shape.
+for the transparent expressions of the ﬁnal rule.
+Exponential LF: L(k,l)(II
+(t)
+ST(ξj; Lk, Tl); θ(k,l)) = exp
+
+a(k,l)II
+(t)
+ST(ξj; Lk, Tl)b(k,l)
+−1 (29)
+Time derivatives and spatial gradient of the released energy
+The time derivative of energy is physically related to the power. For later use of power term in
+the prediction model it is helpful to prepare time derivatives of the energy-related terms. For
+the ﬁnite difference method, we adopt the backward difference scheme in view of our goal to
+predict the imminent earthquake in the next time epoch (t + 1), and thus the form is given as
+∂II
+(t)(k,l)
+ST
+∂t
+= II
+(t)(k,l)
+ST
+−II
+(t−1)(k,l)
+ST
+∆t
++ O(∆t)
+(30)
+∂a(t)(k,l)/∂t and ∂b(t)(k,l)/∂t are similarly calculated. It should be noted that the spatial gradient
+is with respect to the geocentric coordinate system which convey little physical and geometrical
+information of the earth lithosphere. Thus, it is meaningful to transform the geocetric gradient
+of a function f to the geodetic gradient (denoted as ∇gf), i.e., the gradient with respect to the
+43
+
+--- Sayfa 44 ---
+Fig. S8. Released Energy using Additive Combination of Exponential LFs:
+Example
+plots of the released energy calculated by the additive combination of four exponential LFs
+with (L, T), L = (12.5, 25) km and T = (6, 12) epochs (A) at the depth z = 7.5 km and (B)
+z = 12.5 km.
+geodetic coordinate system λ, φ, h. This can be done by multiplying Jacobian J as
+∇gf(ξj) = J∇f(ξj),
+(31)
+where the Jacobian’s entities {J(i,j)}, i, j = 1, 2, 3 as given by
+J(1,1) = ∂x
+∂λ = −(DJ1) cosφ sinλ
+(32)
+J(2,1) = ∂x
+∂φ = (DJ2) cosφ cosλ −(DJ1)sinφ cosλ
+(33)
+J(3,1) = ∂x
+∂h = cosφ cosλ
+(34)
+J(1,2) = ∂y
+∂λ = (DJ1) cosφ cosλ
+(35)
+J(2,2) = ∂y
+∂φ = (DJ2) cosφ sinλ −(DJ1)sinφ sinλ
+(36)
+44
+
+--- Sayfa 45 ---
+J(3,2) = ∂y
+∂h = cosφ sinλ
+(37)
+J(1,3) = ∂z
+∂λ = 0
+(38)
+J(2,3) = ∂z
+∂φ = (DJ4) sinφ + (DJ3)cosφ
+(39)
+J(3,3) = ∂z
+∂h = sinφ
+(40)
+DJ1 =
+a2
+(a2cos2φ + b2sin2φ)1/2 + h
+(41)
+DJ2 = a2(a2cosφ sinφ −b2sinφ cosφ)
+(a2cos2φ + b2sin2φ)3/2
+(42)
+DJ3 =
+b2
+(a2cos2φ + b2sin2φ)1/2 + h
+(43)
+DJ4 = b2(a2cosφ sinφ −b2sinφ cosφ)
+(a2cos2φ + b2sin2φ)3/2
+(44)
+45
+
+--- Sayfa 46 ---
+Fig. S9. Link function comparison of the identiﬁed best-so-far rule of the released energy.
+(A) Two-parameter exponential LF with (L1, T1) =(10 km, 3 epochs). (B) (L1, T1) =(10 km, 6
+epochs). (C) (L2, T1) =(25 km, 3 epochs). (D) (L2, T2) =(25 km, 6 epochs).
+Feasibility test result details
+The separate feasibility test was conducted on the West-North region of the U.S. as marked by
+dashed box in Fig. 3F. The results were predicted by using the identiﬁed best-so-far rule of
+the magnitude prediction rule in Eq. 6. No data exchange across the training and feasibility
+test regions is allowed. Results were extracted from two separate depths, 2.5 km and 12.5 km,
+where noticeable earthquake activities are observed (Fig. 3A and Fig. 4A). This section presents
+additional detailed plots of the spatio-temporal convolved II, components of the spatial gradient
+vector of the released energy, the time derivative of the spatial gradients of the released energy,
+and components of the pseudo vorticity vector. All values are generated by the identiﬁed rules
+46
+
+--- Sayfa 47 ---
+Fig. S10. Spatial gradients and time derivatives of the released energy at depth = 2.5
+km generated from the past 10 years data (epochs from 10355 through 10473). (A-C) At
+depth = 2.5 km, three components of the spatial gradients of the released energy with respect to
+the earth-centered XYZ system. (D-F) Time derivative of the spatial gradients of the released
+energy with the time increment of 1 epoch for derivative calculation.
+and no intervention was made.
+47
+
+--- Sayfa 48 ---
+Fig. S11. Spatial gradients and time derivatives of the released energy at depth = 12.5 km
+generated from the past 10 years data (epochs from 10355 through 10473). (A-C) Three
+components of the spatial gradients of the released energy with respect to the earth-centered
+XYZ system. (D-F) Time derivative of the spatial gradients of the released energy with the time
+increment of 1 epoch for derivative calculation.
+Bayesian update and evolutionary algorithm
+Aiming at no distributional assumptions about the priors/posteriors as well as pursuing smooth
+evolution, this study adopts the combination of Bayesian update and a modiﬁed genetic al-
+gorithm (36). The key evolutionary algorithm involves the preparation of initial generation,
+organism-wise evaluation of ﬁtness score, and ﬁtness-based spawning of the next generation.
+The prior best physical rules can be smoothly inherited by the Bayesian update-based ﬁtness
+proportionate probability (FPP) rule. To accelerate the evolution speed of the modiﬁed genetic
+algorithm, an individual variable-wise gene cross-over scheme has been used, and the changing
+search range scheme is used in an iterative manner for better performance as successfully done
+in (36). Since an individual s realizes a candidate of θ, the all free parameters in current gen-
+48
+
+--- Sayfa 49 ---
+Fig. S12. Spatial Gradient of the Released Energy with respect to the Geodetic Coordinate
+System. (A) The released energy generated by the multiplicative combination of four exponen-
+tial LFs with (L, T), L = (12.5, 25) km and T = (6, 12) epochs at the depth z = 12.5 km.
+(B-D) Spatial gradients of the released energy in the longitude (λ), latitude (φ), and depth (h)
+direction at depth 12.5 km downward, respectively. The increments of (0.2 deg, 0.2 deg, 5 km)
+are used for spatial discretization.
+49
+
+--- Sayfa 50 ---
+Fig. S13. Vorticity of the released energy ﬂow at depth = 2.5 km generated from the past
+10 years data (epochs from 10355 through 10473). (A-C) Three components of the vorticity
+calculated by Eq. (4).
+Fig. S14. Illustration of Comprehensive Error Calculation. (A) Deﬁnition of Mobj and
+Mpred, the observed and predicted moment magnitudes, respectively, which are closest each
+other. Examples of poor predictions due to the location error (B) or due to the the magnitude
+error (C). Good prediction of both magnitude and location (D).
+eration S, the raw cost of an individual s, termed as J (s), is calculated by a number of types.
+In the type deﬁnition, M(t+1)
+obs
+(ξj) means the observed maximum moment magnitude in the jth
+reference volume at epoch (t + 1) that is regarded as the true (measured) physical response.
+Mthr denotes the user-deﬁned moment magnitude threshold. Then, following typical genetic
+algorithm procedure (36,55,56) the normalized ﬁtness score F of an individual is calculated by
+F(s) =
+(1 + J (s))−1
+P
+∀s∈S[(1 + J (s))−1]
+(45)
+where s denotes an individual in the entire generation S. Learning a hidden physical rule is not a
+one-time task, rather a continuous activity. As diverse new experimental data become available,
+the physical rule learner must embrace all the previous knowledge and learn new information.
+To seamlessly realize this continuous learning, this study infused the Bayesian update scheme
+50
+
+--- Sayfa 51 ---
+Table S2. Identiﬁed free parameters of the best-so-far link functions
+LF
+(Lj, Tk)
+a = {a1, a2}: Exponential LF
+Related Rule
+1
+(10, 3)
+{1.74118, 0.117647}
+Released energy (Er)
+2
+(10, 6)
+{2.77647, 8.03922}
+Er
+3
+(25, 3)
+{2.75294, 4.82353}
+Er
+4
+(25, 6)
+{0.635294, 10.0}
+Er
+Physics
+a = {a1, a2, a3, a4, a5}: CRS LF
+x∗= {x∗
+1, x∗
+2, x∗
+3}: knots
+5
+Er
+{−0.94902, 1.98431, 1.12157, −0.0705882, 0.980392}
+{0.169935, 0.624837, 0.682353}
+6
+Power
+{−1.8902, 0.462745, −1.02745, −0.305882, −1.87451}
+{0.215686, 0.424837, 0.891503}
+7
+Vorticity
+{0.14902, −1.81176, 1.60784, 1.21569, 0.886275}
+{0.188235, 0.456209, 0.722876}
+into the evolutionary algorithm’s FPP rule. Suppose we have the best-so-far generation, de-
+noted as S∗and its associated ﬁtness scores, F ∗(s), s ∈S∗. According to the FPP rule, the
+probability of selecting an θ for next parent is given by Prob(θ) ∝F(s), s ∈S∗. Thus, F ∗(s)
+is regarded as a prior PDF of parameters θ = {a, x∗}, i.e. πprior(θ) in the typical Bayesian
+formalism. For initialization of πprior(θ), this study intentionally departs from fully random
+initialization to investigate positive evolution trends without special initialization assumption.
+Thus, this framework is purely data-driven, requiring no distributional assumptions about priors
+and posteriors. For the posterior distribution, we adopted the following two-stage procedure.
+Suppose that we have the prior best LFs and their S∗and that new experimental data become
+available. At the ﬁrst learning generation with the new data, we can calculate the ﬁrst ﬁtness
+scores F(s; S∗) by applying the prior S∗and LFs to the new experiment. After the ﬁrst genera-
+tion, we can estimate the Bayesian ﬁtness score (denoted as FB) as:
+FB(s) = 1
+κ
+F(s; S∗)F ∗(s)
+P
+∀s∈S∗F ∗(s)
+(46)
+where κ is needed for normalizing the Bayesian ﬁtness to unity, which is simply given by
+κ =
+X
+∀s∈S∗
+F(s; S∗)F ∗(s)
+P
+∀s∈S∗F ∗(s)
+(47)
+51
+
+--- Sayfa 52 ---
+Table S3. Training Setup for the GPRL: Part 1 - Information Index and Learning Control
+Program syntax
+Values
+Meaning
+NUMBER TOTAL EPOCH DATA SETS
+120
+total epoch numbers of training time frame
+the last epoch (10474) is the target
+training epochs from 10355 through 10473
+START EPOCH NUMBER
+10355
+the ﬁrst epoch number of the time frame
+NUMBER INFLUENCE RANGES
+2
+total number of spatial inﬂuence ranges Lj
+INFLUENCE RANGES VALUES
+(vector)
+values of Lj
+10 25
+a vector needs to be given below the parameter
+NUMBER TIME INFLUENCE RANGES
+2
+total number of temporal inﬂuence ranges Tk
+INFLUENCE TIME RANGES VALUES
+(vector)
+values of Tk
+3 6
+a vector needs to be given below the parameter
+GLOBAL DOMAIN RANGES VALUES
+(vector)
+(λmin, λmax, φmin, φmax, hmin, hmax)
+-120 -115 30 40 -10 30
+(vector)
+a vector needs to be given below the parameter
+GLOBAL DOMAIN INCREMENT VALUES
+(vector)
+∆λ, ∆φ, ∆h of a reference volume
+0.1 0.1 5
+a vector needs to be given below the parameter
+MIN MAGNITUDE THRESHOLD
+3.49
+minimum magnitude threshold Mthr
+COEF MAGNITUDE ERROR
+0.5
+the relative importance factor of magnitude error
+aM in Eq. (15)
+VORTICITY TYPE
+1
+Pseudo vorticity type in prediction model (Eq. (6))
+1: ωλ; 2: ωφ; 3: ωh; 4: L2 norm of (ωλ, ωφ)
+VORTICITY SCALING FACTOR
+7.3890560989
+scaling factor in sigmoid function of vorticity
+e.g. e2 = 7.3890560989 for ωλ
+R MAX ERROR
+200
+the maximum range in location error [km]
+rmax in Eq. (15)
+COEF FALSE ALARM ERROR
+0.1
+the relative importance of the false alarm error
+acnt in Eq. (14)
+PREDICTION TEST UNKNOWN TARGET
+0
+0: Training; 1: feasibility test
+BAYESIAN UPDATE
+0
+1: Perform Bayesian update (B.U.) ; 0: No B.U.
+PRIOR BEST
+0
+1: Use the prior-best generation
+as the initial generation ; 0: Random initialization
+52
+
+--- Sayfa 53 ---
+Table S4. Training Setup for the GPRL: Part 2 - Evolutionary Algorithm Related
+Program syntax
+Values
+Meaning
+NUMBER ORGANISMS
+100000
+total organisms per generation
+N ALLELE
+4
+total alleles per gene
+MUTATION RATE
+0.005
+mutation rate during cross-over and spawning
+MAXIMUM GENERATION
+30
+total generations for evolution
+N GENE
+4
+the number of genes per real value
+N REAL VARIABLE
+144
+total number of real-valued free parameters
+meaningful up to 56th real variable while others are dummy
+MIN MAX VALUES
+(vector)
+min-max range of each free parameter
+1 0 3
+a1 (Eq. 29) of the exponential LF number 1
+2 0 10
+a2 (Eq. 29) of the exponential LF number 1
+3 -1 1
+dummy of LF number 1 *
+4 -1 1
+dummy of LF number 1 *
+5 -1 1
+dummy of LF number 1 *
+6 0 0.333333333
+dummy of LF number 1 *
+7 0.333333333 0.666666667
+dummy of LF number 1 *
+8 0.666666667 1
+dummy of LF number 1 *
+...
+similar inputs for the exponential LFs number 2 through 4
+33 -2.0 2.0
+a1 (Eq. 28) of CRS LF number 5
+34 -2.0 2.0
+a2 of CRS LF number 5
+35 -2.0 2.0
+a3 of CRS LF number 5
+36 -2.0 2.0
+a4 of CRS LF number 5
+37 -2.0 2.0
+a5 of CRS LF number 5
+38 0 0.333333333
+x∗
+1 (Eq. 28) of CRS LF number 5
+39 0.333333333 0.666666667
+x∗
+2 of CRS LF number 5
+40 0.666666667 1
+x∗
+3 of CRS LF number 5
+...
+similar inputs for the CRS LFs number 6 and 7
+meaningful up to 56th row while others are dummy
+* Note: Each LF is assigned with at most 8 real-valued free parameters for consistency in input.
+The exponential LF requires only 2 free parameters and thus the remaining 5 values are dummy
+with no meaning.
+53
+
+--- Sayfa 54 ---
+Table S5. Feasibility Test Setup of GPRL: Part 1 - Information Index and Learning Control
+Program syntax
+Values
+Meaning
+NUMBER TOTAL EPOCH DATA SETS
+120
+total epoch numbers of training time frame
+the last epoch (10474) is the target
+training epochs from 10355 through 10473
+START EPOCH NUMBER
+10355
+the ﬁrst epoch number of the time frame
+NUMBER INFLUENCE RANGES
+2
+total number of spatial inﬂuence ranges Lj
+INFLUENCE RANGES VALUES
+(vector)
+values of Lj
+10 25
+a vector needs to be given below the parameter
+NUMBER TIME INFLUENCE RANGES
+2
+total number of temporal inﬂuence ranges Tk
+INFLUENCE TIME RANGES VALUES
+(vector)
+values of Tk
+3 6
+a vector needs to be given below the parameter
+GLOBAL DOMAIN RANGES VALUES
+(vector)
+(λmin, λmax, φmin, φmax, hmin, hmax)
+-125 -120 35 50 -10 30
+a vector needs to be given below the parameter
+GLOBAL DOMAIN INCREMENT VALUES
+(vector)
+∆λ, ∆φ, ∆h of a reference volume
+0.1 0.1 5
+a vector needs to be given below the parameter
+MIN MAGNITUDE THRESHOLD
+3.49
+minimum magnitude threshold Mthr
+COEF MAGNITUDE ERROR
+0.5
+the relative importance factor of magnitude error
+aM in Eq. (15)
+VORTICITY TYPE
+1
+Pseudo vorticity type in prediction model (Eq. (6))
+1: ωλ; 2: ωφ; 3: ωh; 4: L2 norm of (ωλ, ωφ)
+VORTICITY SCALING FACTOR
+7.3890560989
+scaling factor in sigmoid function of vorticity
+e.g. e2 = 7.3890560989 for ωλ
+R MAX ERROR
+200
+the maximum range in location error [km]
+rmax in Eq. (15)
+COEF FALSE ALARM ERROR
+0.1
+the relative importance of the false alarm error
+acnt in Eq. (14)
+PREDICTION TEST UNKNOWN TARGET
+1
+0: Training; 1: feasibility test
+BAYESIAN UPDATE
+1
+1: Perform Bayesian update (B.U.) ; 0: No B.U.
+PRIOR BEST
+1
+1: Use the prior-best generation
+as the initial generation ; 0: Random initialization
+54
+
+--- Sayfa 55 ---
+Table S6. Feasibility Setup of GPRL: Part 2 - Evolutionary Algorithm Related
+Program syntax
+Values
+Meaning
+NUMBER ORGANISMS
+5
+Top 5 prior best organisms for feasibility test
+N ALLELE
+4
+total alleles per gene
+MUTATION RATE
+0.005
+mutation rate during cross-over and spawning
+MAXIMUM GENERATION
+1
+One generation for feasibility test
+N GENE
+4
+the number of genes per real value
+N REAL VARIABLE
+144
+total number of real-valued free parameters
+meaningful up to 56th real variable while others are dummy
+MIN MAX VALUES
+(vector)
+min-max range of each free parameter
+1 0 3
+a1 (Eq. 29) of the exponential LF number 1
+2 0 10
+a2 (Eq. 29) of the exponential LF number 1
+3 -1 1
+dummy of LF number 1 *
+4 -1 1
+dummy of LF number 1 *
+5 -1 1
+dummy of LF number 1 *
+6 0 0.333333333
+dummy of LF number 1 *
+7 0.333333333 0.666666667
+dummy of LF number 1 *
+8 0.666666667 1
+dummy of LF number 1 *
+...
+similar inputs for the exponential LFs number 2 through 4
+33 -2.0 2.0
+a1 (Eq. 28) of CRS LF number 5
+34 -2.0 2.0
+a2 of CRS LF number 5
+35 -2.0 2.0
+a3 of CRS LF number 5
+36 -2.0 2.0
+a4 of CRS LF number 5
+37 -2.0 2.0
+a5 of CRS LF number 5
+38 0 0.333333333
+x∗
+1 (Eq. 28) of CRS LF number 5
+39 0.333333333 0.666666667
+x∗
+2 of CRS LF number 5
+40 0.666666667 1
+x∗
+3 of CRS LF number 5
+...
+similar inputs for the CRS LFs number 6 and 7
+meaningful up to 56th row while others are dummy
+* Note: Each LF is assigned with at most 8 real-valued free parameters for consistency in input.
+The exponential LF requires only 2 free parameters and thus the remaining 5 values are dummy
+with no meaning.
+55
+
+--- Sayfa 56 ---
+Then, from the second learning generation of the new experiment, the probability of selecting
+two parents is proportional to the Bayesian ﬁtness score as
+Prob(parenti|s) ∝FB(s), (i = 1, 2).
+(48)
+Once again, an individual s realizes a candidate of θ = (a, x∗) in the new generation S, and
+thus the desired posterior distribution is obtained. In this way, the prior knowledge is smoothly
+inherited to the new experiment on the framework of evolutionary algorithm, thereby enabling
+constantly evolving physical rule learning. For allowing for evolving with new data, the pre-
+vious scores are inherited by the Bayesian score Eq. (46). Since the adopted evolutionary
+algorithm remembers prior generation’s ﬁtness scores, which offer the probability distribution
+of free parameters of LFs. As the Bayesian inheritance continues with new experimental data,
+the probability distribution of LFs will naturally evolve. Thus, the proposed framework can
+achieve evolving capability with increasing data. In the future, more dedicated investigations
+should focus on validation of the constantly evolving capability of LFs with sufﬁcient, diverse
+test data. To some extent, the aforementioned combination of Bayesian update and evolutionary
+algorithm can be viewed as a log-likelihood maximization as explained in (36).
+56
+
+--- Sayfa 57 ---
+Fig. S15. Convolved spatio-temporal information index IIST at depth = 2.5 km used for
+the feasibility test with the best-so-far identiﬁed rules for the prediction target epoch num-
+ber 10474 (July, 2019) using past 10 years data (epochs from 10355 through 10473). (A)
+At depth = 2.5 km and with the spatial and temporal inﬂuence ranges (L1, T1) = (10 km, 3
+epochs = 3 months). (B) (L1, T2) = (10 km, 6 epochs). (C) (L2, T1) = (25 km, 3 epochs). (D)
+(L2, T2) = (25 km, 6 epochs).
+57
+
+--- Sayfa 58 ---
+Fig. S16. Convolved spatio-temporal information index IIST at depth = 12.5 km used
+for the feasibility test with the best-so-far identiﬁed rules for the prediction target epoch
+number 10474 (July, 2019) using past 10 years data (epochs from 10355 through 10473).
+(A) At depth = 12.5 km and with the spatial and temporal inﬂuence ranges (L1, T1) = (10 km,
+3 epochs = 3 months). (B) (L1, T2) = (10 km, 6 epochs). (C) (L2, T1) = (25 km, 3 epochs).
+(D) (L2, T2) = (25 km, 6 epochs).
+58
+
+--- Sayfa 59 ---
+Fig. S17. Vorticity of the released energy ﬂow at depth = 12.5 km generated from the past
+10 years data (epochs from 10355 through 10473). (A-C) Three components of the vorticity
+calculated by Eq. (4).
+Fig. S18. Associated results of large scale event prediction test. (A-C) Released energy,
+pseudo power, and pseudo vorticity of trained reproduction of Fig. 5B, respectively. (D-F)
+Released energy, pseudo power and pseudo vorticity of trained reproduction of Fig. 5D, respec-
+tively.
+59

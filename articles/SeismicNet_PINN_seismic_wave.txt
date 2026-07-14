@@ -1,0 +1,1137 @@
+
+--- Sayfa 1 ---
+SeismicNet: Physics-informed neural networks for seismic wave modeling in
+semi-inﬁnite domain
+Pu Rena,1, Chengping Raob,1, Su Chenc, Jian-Xun Wangd, Hao Sune,f,˚, Yang Liug,˚
+aDepartment of Civil and Environmental Engineering, Northeastern University, Boston, MA 02115, USA
+bDepartment of Mechanical and Industrial Engineering, Northeastern University, Boston, MA 02115, USA
+cKey Laboratory of Urban Security and Disaster Engineering of the Ministry of Education, Beijing University of
+Technology, Beijing, 100124, China
+dDepartment of Aerospace and Mechanical Engineering, University of Notre Dame, Notre Dame, IN 46556, USA
+eGaoling School of Artiﬁcial Intelligence, Renmin University of China, Beijing, 100872, China
+fBeijing Key Laboratory of Big Data Management and Analysis Methods, Beijing, 100872, China
+gSchool of Engineering Sciences, University of Chinese Academy of Sciences, Beijing, 101408, China
+Abstract
+Recently, there has been an increasing interest in leveraging physics-informed neural networks (PINNs) for
+modeling dynamical systems.
+However, very limited studies have been conducted along this horizon on
+seismic wave modeling tasks. A critical challenge is that these geophysical problems are typically deﬁned in
+large domains (i.e., semi-inﬁnite), which leads to high computational cost. In this paper, we present a new
+PINN model for seismic wave modeling in semi-inﬁnite domain without the need of labeled data. In speciﬁc,
+the absorbing boundary condition is introduced into the network as a soft regularizer for handling truncated
+boundaries. To scale up, we consider a sequential training strategy via temporal domain decomposition to
+improve the scalability of the network and solution accuracy. Moreover, we design a novel surrogate modeling
+strategy to account for parametric loading, which estimates the wave propagation in semi-inﬁnite domain
+given the seismic loading at diﬀerent locations. Various numerical experiments have been implemented to
+evaluate the performance of the proposed PINN model in the context of forward modeling of seismic wave
+propagation. In particular, we deﬁne diverse material distributions to test the versatility of this approach.
+The results demonstrate excellent solution accuracy under distinctive scenarios.
+Keywords:
+Physics-informed neural networks, Domain decomposition, Seismic wave modeling, Absorbing
+boundary conditions, Forward simulation, Semi-inﬁnite domain
+1. Introduction
+Understanding seismic wave propagation is crucial for the communities of seismology and earth-
+quake engineering. Typically, we record the seismic signals with seismometers and derive various
+information about the composition of the Earth, e.g., the discovery of Mohorovicic discontinuity
+which separates the crust and the mantle of the Earth. For decades, we have observed a signiﬁcant
+advancement in the theoretical investigation of seismic wave physics. Furthermore, the theoreti-
+cal breakthrough also brings about the rapid development of numerical modeling of seismic wave
+propagation for applied seismology and engineering practices, such as ﬁnite diﬀerence [1, 2], ﬁnite
+element [3] and spectral element [4, 5] methods. In general, the traditional numerical methods
+˚Corresponding authors.
+Email addresses: ren.pu@northeastern.edu (Pu Ren), haosun@ruc.edu.cn (Hao Sun), liuyang22@ucas.ac.cn
+(Yang Liu)
+1Equal contribution.
+Preprint submitted to Elsevier
+November 3, 2022
+arXiv:2210.14044v3  [physics.geo-ph]  2 Nov 2022
+
+--- Sayfa 2 ---
+employ ﬁnite sets of basis functions (e.g., polynomials) and the corresponding parameters to ap-
+proximate the analytical solutions of diﬀerential equations. They excel in solution accuracy for
+various ordinary or partial diﬀerential equations (ODEs/PDEs), but may show weakness in sur-
+rogate modeling and inverse analysis, which require repeated runs of forward models and lead to
+high computational costs.
+Thanks to the great progress of artiﬁcial intelligence (AI), in particular machine learning (ML),
+many scientists start to explore the potential of using ML to address seismic wave propagation
+problems [6–11].
+For example, Fourier Neural Operator (FNO) [12] has been investigated for
+forward and inverse analysis of 2D acoustic wave equation [13]. Nevertheless, these research eﬀorts
+rely on large amounts of high-ﬁdelity labeled data, which are usually diﬃcult to record and collect.
+It has been a pressing task to develop novel ML methods for dealing with imperfect measurement
+data (e.g., sparse and potentially noisy).
+The recent development of PINNs [14, 15] has shed new light on scientiﬁc computing with lim-
+ited labeled data. The general principle of PINNs is to integrate deep neural networks (DNNs)
+and physical laws to learn the underlying consistent dynamics from small or zero labeled data.
+The advent of PINNs provides a new perspective for training neural networks, where the intro-
+duction of physical laws into the network strengthens the constraint for optimization in small data
+regimes. For instance, the latest research works [16–21] attempt to solve PDE systems when the full
+physics knowledge is accessible, i.e., governing equations, initial and boundary conditions (I/BCs).
+In addition, we observe the explosive research of applying this paradigm to miscellaneous scien-
+tiﬁc domains, including ﬂuid ﬂows [22–28], solid mechanics [29–32], multi-scale and multi-physics
+modeling [33–35], heat transfer [36], equation discovery [37–40] and data augmentation [41–44].
+Although PINN has shown great success in various scientiﬁc problems, it is also noteworthy that
+they are not competent in comparison with traditional numerical methods for forward simulations
+in terms of solution accuracy. Their huge potential lies in tackling surrogate modeling and inverse
+analysis with a tradeoﬀbetween accuracy and computational eﬃciency, especially when only sparse
+data are recorded.
+In this paper, we present a PINN approach for forward modeling of seismic wave propagation,
+as a basis for possible inverse analysis (e.g., full waveform inversion, a.k.a., FWI). Recently, a few
+studies [45–48] show the eﬃcacy of PINN succeeding in solving FWI problems in the context of
+acoustic wave equations. Note that the acoustic wave equations are formulated in scalar ﬁeld and
+generally used to model wave propagation under deep subsurface (e.g., at the km scale), which are
+inapplicable to near-surface waveform simulation and inversion. Elastic wave equations provide a
+solution to near sub-surface wave propagation modeling. To this end, we establish a PINN model
+for solving elastic wave equations (i.e., a more complex PDE system) in semi-inﬁnite domain with
+inhomogeneous material proﬁles. We also design a PINN-based surrogate model to directly infer
+the full waveforms given diverse loading locations, which, to the best of our knowledge, is the ﬁrst
+attempt in the context of seismic wave propagation modeling. The main contributions of this paper
+are three-fold. First, we introduce the absorbing boundary condition (ABC) into PINN to deal
+with truncated boundaries in semi-inﬁnite domain, which works as a soft regularizer in network
+optimization, to enable reliable wave progragation. Second, a temporal decomposition training
+strategy is presented to improve the scalability and solution accuracy of our PINN architecture
+for large-scale modeling.
+Lastly, we validate the eﬀectiveness of our approach for elastic wave
+propagation modeling compared with the reference numerical results under various scenarios (e.g.,
+diﬀerent material distributions and loading conditions).
+The rest of the paper is organized as follows, apart from this Introduction section. Section 2
+formulates the scientiﬁc problem of forward analysis of seismic wave propagation. Section 3 presents
+the details of the speciﬁc PINN model, an introduction to ABC, the sequential training scheme
+2
+
+--- Sayfa 3 ---
+via domain decomposition, and the strategy for parametric surrogate modeling. In Section 4, we
+show the results for extensive numerical experiments to evaluate the performance of our proposed
+method. Section 5 discusses the advantages and limitations of the current method as well as the
+future research directions. Section 6 concludes the entire paper.
+2. Problem formulation
+In this paper, we aim to investigate the potential of PINN for seismic wave propagation modeling
+in 2D elastic media. The speciﬁc governing equations of interest are given by
+ρB2u0
+Bt2 “ B
+Bx
+ˆ
+p2µ ` λqBu0
+Bx ` λBu1
+By
+˙
+` B
+By
+ˆ
+µpBu1
+Bx ` Bu0
+By q
+˙
+,
+ρB2u1
+Bt2 “ B
+Bx
+ˆ
+µpBu1
+Bx ` Bu0
+By q
+˙
+` B
+By
+ˆ
+λBu0
+Bx ` p2µ ` λqBu1
+By
+˙
+,
+(1)
+where tx, yu and t denote the spatial and temporal coordinates, respectively; tu0, u1u are the
+two displacement variables (horizontal and vertical). ρ is the density and tλ, µu represent Lam´e
+constants of the media. Regarding the setting of boundary conditions (BCs), we provide a detailed
+illustration in Section 3.2. In addition, Eq. (1) can also be rewritten in a matrix formulation, which
+is summarized as:
+utt “ D1uxx ` Huxy ` D2uyy.
+(2)
+where u “ ru0, u1sJ is the displacement vector and the subscripts denote the partial derivatives, e.g.,
+uxx “ B2u{Bx2. Moreover, tD1, D2, Hu refer to the coeﬃcient matrices associated with material
+properties, which are expressed as
+D1 “
+„α2
+0
+0
+β2
+
+, D2 “
+„β2
+0
+0
+α2
+
+, H “
+„
+0
+α2 ´ β2
+α2 ´ β2
+0
+
+.
+(3)
+Herein, α and β represent the longitudinal and transverse wave speeds, respectively, which can be
+calculated through
+α “
+d
+λ ` 2µ
+ρ
+, β “
+cµ
+ρ .
+(4)
+Our objective is to leverage PINN for forward simulation of elastic wave propagation, including
+solving the speciﬁc PDEs and parametric surrogate modeling.
+To be more precise, we aim to
+solve the seismic wave propagation equations in elastic media (as shown in Eq. (1) or (2)) using
+PINN in a given semin-inﬁnite domain. We only rely on the accessible physical principles (i.e.,
+governing equations and I/BCs) to optimize the entire network without any labeled data. In the
+part of parametric surrogate modeling, we build a PINN architecture to extrapolate the seismic
+responses with respect to diﬀerent loading positions. Herein, a new variable xc is introduced into
+PINNs apart from the typical coordination information (e.g., tt, x, yu). Here, xc is used to mark
+the speciﬁc spatial loading location of interest, which serves for both training and extrapolation.
+3. Methodology
+In this section, we introduce a new PINN architecture for forward modeling of elastic wave
+propagation in semin-inﬁnite domain. Considering the characteristics of seismological tasks, the
+ABC is applied on the truncated boundaries to eliminate wave reﬂection due to boundary eﬀect. A
+domain decomposition training strategy is then introduced to handle large-scale simulations. Fur-
+thermore, we also propose a speciﬁcally-designed DNN-based framework for parametric surrogate
+modeling, which is slightly diﬀerent from vanilla PINN used for solving generic PDEs.
+3
+
+--- Sayfa 4 ---
+3.1. PINNs
+DNNs have received considerable attention in the scientiﬁc computing community thanks to
+their theoretical foundation of universal approximation [49, 50]. The previous implementations
+of DNNs for scientiﬁc tasks generally rely on a large amount of labeled data. Nevertheless, the
+recent breakthrough of PINNs [14] has enabled learning in a “small data” regime by incorporating
+physical constraints (e.g., governing equations and I/BCs) into the networks. Typically, a PINN
+architecture is composed of an input layer, multiple hidden layers and an output layer. Each layer
+is designated with a speciﬁed neuron number. For instance, the mathematical formulation of the
+connection between the pi ´ 1q-th layer and the i-th layer is given by
+Xi “ σ
+`
+WiXi´1 ` bi˘
+, i P r1, n ` 1s,
+(5)
+where tWi, biu denote the corresponding weight matrix and bias vector at the i-th layer, respec-
+tively; σp¨q is a nonlinear activation function; n is the number of hidden layers. Here, tXi´1, Xiu
+are the input and output variables at the i-th layer. The general goal of PINNs is to leverage DNNs
+to approximate the solutions of PDEs of interest with a spatial or spatiotemporal input coordinates
+(e.g., tt, x, yu for 2D time-dependent dynamics). Herein, the diﬀerence between general DNN-based
+solvers and PINNs lies in the introduction of physics loss apart from data loss. The physics loss
+is obtained based on the strong form of PDEs and the derivative terms of interest are calculated
+via automatic diﬀerentiation [51]. We discuss the speciﬁc network architecture for our tasks in
+Section 3.3.
+3.2. Absorbing boundary condition
+As the seismic wave propagation problem commonly features a semi-inﬁnite domain (e.g., in
+Earth), the computational domain needs to be truncated to avoid unnecessary computation. Nev-
+ertheless, one of the main obstacles is to guarantee that the wave propagates out the computational
+domain without interfering with the upstream ﬁeld when it passes through truncated boundaries.
+To overcome this issue in numerical simulations, researchers have developed various mathematical
+formulations [52–55] to describe ABCs on the truncated boundaries. The illustrative diagram of
+the ABC is presented in Fig. 1. In this paper, we consider one of the most popular ABCs, which
+is given by
+uty1 ` C1utt ` C2utx1 ` C3ux1x1 “ 0.
+(6)
+where x1 (tangential direction) and y1 (outer normal direction) axes determine the local coordinate
+system. In addition, tC1, C2, C3u are coeﬃcients matrices reﬂecting the material properties of the
+media, written as
+C1 “
+„1{β
+0
+0
+1{α
+
+, C2 “ pβ ´ αq
+„ 0
+1{β
+1{α
+0
+
+, C3 “ 1
+2
+„β ´ 2α
+0
+0
+α ´ 2β
+
+.
+(7)
+x
+y
+Truncated boundary
+Seismic wave
+Figure 1: Illustrative diagram of the absorbing boundary condition. The local coordinate system is determined by x1
+(tangential direction) and y1 (outer normal direction) axes. x and y axes deﬁne the global coordinate.
+4
+
+--- Sayfa 5 ---
+Note that the ABC described in Eq. (6) is deﬁned by using the local coordinate system. There-
+fore, a proper coordinate transformation is required for automatic diﬀerentiation in PINNs. By
+introducing the ABC into the network, we are free from simulating a large computational domain
+with PINNs. Moreover, since the PINN deals with the strong form of the governing equation,
+Eq. (6) can be used readily to impose the corresponding BCs. In contract, the variational form of
+the analytical law is required in traditional ﬁnite element analysis, which brings additional com-
+plexity in numerical implementation.
+3.3. Network architecture
+First of all, we observe that Eq. (1) is characterized by many second-order derivatives, which
+could cause a huge computational graph for PINN. Our previous work [24] has demonstrated that
+reducing the order of automatic diﬀerentiation (i.e., the order of derivatives in governing equations)
+can eﬀectively improve the learnability and the solution accuracy of PINNs. Hence, we re-formulate
+the governing equations in Eq. (1) to an equivalent state-space form, which are given by
+ρvt “ Qσ,
+σt “ Cϵt,
+ut “ v.
+(8)
+where u “ ru0, u1sJ and v “ rv0, v1sJ refer to the displacement and velocity vectors, respectively.
+tσ, ϵtu denote the corresponding stress and strain rate vectors, which are expressed as
+σ “ rσxx, σyy, σxysJ ,
+ϵt “
+„Bv0
+Bx , Bv1
+By , Bv0
+By ` Bv1
+Bx
+J
+.
+(9)
+Note that tσxx, σyyu represent the normal stresses along x-dimension and y-dimension, respectively;
+σxy is the shear stress. In addition, Q is an operator matrix and C represents the constitutive tensor,
+which are formulated as
+Q “
+« B
+Bx
+0
+B
+By
+0
+B
+By
+B
+Bx
+ﬀ
+,
+C “
+»
+–
+λ ` 2µ
+λ
+0
+λ
+λ ` 2µ
+0
+0
+0
+µ
+ﬁ
+ﬂ.
+(10)
+In essence, Eq. (8) represent the governing equations of elastodynamics under the assumption of
+plane strain [56].
+Furthermore, the overall architecture of our designed PINNs for modeling seismic wave propa-
+gation is presented in Fig. 2. Three separate DNNs are employed to approximate the variables of
+displacement u, velocity v, and stress σ considering their diﬀerent numerical scales. After obtaining
+these ﬁeld variables, we utilize the automatic diﬀerentiation [51] to evaluate the partial derivatives
+of interests with respect to the input coordinates. Based on the diﬀerential terms, we construct
+a loss function LpW, bq of the concerned physical laws in PINN, including governing equations
+and I/BCs (including the ABCs). In speciﬁc, the equation loss LepW, bq is a mean square error
+(MSE) loss that follows the analytical expressions of elastodynamics as shown in Eq. (8). Such
+a loss component helps preserve the inherent PDE structure. The I/BC loss LcpW, bq is also an
+MSE loss that measures the misﬁt in the context of given I/BCs. It is noteworthy that this type
+of PINNs does not rely on observation data loss in forward simulation. Namely, only equation loss
+5
+
+--- Sayfa 6 ---
+Automatic differentiation
+1. Governing equations
+DNNs
+Physical Laws
+2. Initial/boundary conditions
+⋮
+⋮
+⋮
+⋮
+⋮
+PDE loss:
+I/BC loss:
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+At initial state:
+On loading area:
+On truncated boundary:
+On free surface:
+Loss function:
+t
+x
+y
+t
+x
+y
+t
+x
+y
+σ
+v
+u
+σpx, y, tq
+vpx, y, tq
+upx, y, tq
+1
+B
+Bt
+B
+Bx
+B
+By
+1
+B
+Bt
+B
+Bx
+B
+By
+σ
+v
+u
+vt
+σt
+Bσxx
+Bx
+Bσxy
+By
+ρvt “ Qσ,
+σt “ Cϵt,
+ut “ v.
+vy1 ` C1vt ` C2vx1 ` C3ux1x1 “ 0
+σ ¨ n “ 0
+σ ¨ n “ ¯tn
+upx, y, 0q “ u0
+vpx, y, 0q “ v0
+LepW, bq
+LcpW, bq
+tW˚, b˚u “ arg mintW,bu tη0LepW, bq ` ηLcpW, bqu
+Figure 2: Overview of the proposed PINN framework for seismic wave propagation, including the network architecture
+and the constraint of physical laws. Three separate DNNs are used to approximate the displacement u, velocity v,
+and stress σ, respectively.
+Automatic diﬀerentiation is exploited for obtaining the derivative terms and further
+constructing the loss function.
+Le and I/BC loss Lc are suﬃcient to constrain the network and also respect the consistent physical
+principles. The optimal network parameters tW˚, b˚u are learned by minimizing the combined loss
+function, as follows
+tW˚, b˚u “ arg min
+tW,bu
+tη0LepW, bq ` ηLcpW, bqu,
+(11)
+where η0 and η are weighting coeﬃcients (i.e., user-deﬁned hyperparameters).
+3.4. Sequential training via domain decomposition
+In this part, we present the sequential training scheme via domain decomposition. The reasons
+for applying domain decomposition are two-fold. Firstly, the scientiﬁc problems in geophysics are
+usually deﬁned in large physical domains, especially for seismic wave propagation. Thus, the com-
+putational cost of numerically estimating the solutions of such tasks could be extremely high, which
+poses a major challenge to PINNs. In addition, the global approximation property of PINNs would
+lead to a heavy burden on the computational memory of computers/servers. To overcome these
+computation bottlenecks in large-scale scientiﬁc problems, we propose a scalable sequential training
+strategy via domain decomposition, as shown in Fig. 3. The domain decomposition approach has
+been employed in prior research works [57–59] within spatial domains, where interface points are
+sampled to constrain the continuity of solutions. Nevertheless, diﬀerent from the aforementioned
+strategy, we adopt domain decomposition along the time dimension in this paper. This is because
+we observe more regularity in temporal interfaces compared with spatial domains. To be more
+speciﬁc, we keep the temporal interfaces between two sub-domains identical, which facilitates the
+generation of the interface points used for “stitching” PINNs. Furthermore, a particular PINN is
+employed to approximate the solution of each sub-domain, and the ﬁnal global solution is obtained
+by stitching each local solution from every PINN together.
+6
+
+--- Sayfa 7 ---
+x
+y
+t
+Subdomain #1
+Subdomain #2
+Subdomain #3
+Subdomain #4
+Interface
+Interface
+Interface
+Collocation 
+Points
+T3
+T2
+T1
+Figure 3: Schematic of temporal domain decomposition.
+As discussed in [58], there exist several beneﬁts of using the domain decomposition scheme, such
+as better representation capability, improved accuracy of solution due to the local approximation,
+the ﬂexibility of choosing hyperparameters for each sub-domain, and the convenience for multi-GPU
+parallelization. However, these beneﬁts are enjoyed at the cost of more coding work. Speciﬁcally,
+an additional loss component LT , interface loss that computes the discrepancy of solutions on
+interfaces from adjacent sub-domains, is included to guarantee the continuity of solutions on the
+interfaces, e.g., Ti (i “ 1, 2, 3) in Fig. 3. Hence, considering m subdomains, the overall loss function
+can be re-written as
+LpW, bq “ η0
+m
+ÿ
+i“1
+Li
+epWi, biq
+looooooomooooooon
+equation loss
+`η1
+m
+ÿ
+i“1
+Li
+cpWi, biq
+looooooomooooooon
+I/BC loss
+`η2
+m´1
+ÿ
+i“1
+Li
+T pWi, Wi`1, bi, bi`1q
+looooooooooooooooomooooooooooooooooon
+interface loss
+,
+(12)
+where η’s denote the loss weighting coeﬃcients; Li
+e and Li
+c represent the residual loss functions of
+governing equations and I/BCs, respectively, for the i-th sub-domain. The loss function for the
+i-th interface is expressed as
+Li
+T pWi, Wi`1, bi, bi`1q “
+NT
+ÿ
+j“1
+››zi`1
+T
+pWi`1, bi`1; tj, xjq ´ zi
+T pWi, bi; tj, xjq
+››2
+2,
+(13)
+Here, ttj, xju denotes the j-th collocation point on the interface, j “ 1, 2, ..., NT ; zi
+T and zi`1
+T
+represent the physical variables, e.g., tu, v, σu, for the i-th and the (i ` 1)-th sub-domains, re-
+spectively. Note that z can be also augmented to account for the time/spatial derivatives of the
+physical variables to further enhance the continuity condition at the interface.
+In genercal, our decomposition strategy on the time domain is easy to implement and retains
+excellent performance in forward analysis of seismic wave propagation. More details on numerical
+experiments and results can be found in Section 4.
+3.5. Surrogate modeling for parametric loading
+Previously, Sun et al. [17] presented a new direction for surrogate modeling of ﬂuid ﬂows using
+PINNs. However, the potential of PINNs for surrogate modeling in the ﬁeld of solid mechanics is
+7
+
+--- Sayfa 8 ---
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+⋮
+t
+x
+y
+xc
+σ
+t
+x
+y
+xc
+v
+t
+x
+y
+xc
+u
+Figure 4: The DNNs part of our proposed surrogate modeling scheme. Here we only consider the spatial variance
+in x-dimension of a 2D domain, which means xc “ rxc, yc “ 0s. In addition, tt, x, yu are spatiotemporal coordinates
+and tσ, v, uu denote the output variables. There are three diﬀerent DNNs for learning the corresponding solution
+variables.
+still under-explored though the vanilla PINN [14] shows promises for forward and inverse analysis
+of various PDE systems. To this end, we propose a new PINN strategy for surrogate modeling
+of elastic wave propagation. Our goal is to directly predict the corresponding seismic responses
+under diﬀerent loading scenarios based on the well-trained PINN model. In particular, we consider
+diﬀerent loading locations while keeping the load proﬁe the same. This is commonly seen in seismic
+wave inversion at the engineering scale (e.g., collecting waveforms given a pre-deﬁned load proﬁle
+applied at diﬀerent locations on the Earth surface [60]).
+The overview of our designed surrogate modeling scheme is illustrated in Fig. 4. Let us deﬁne
+a new variable xc to represent the spatial coordinate of the loading position. xc is also considered
+as an input variable apart from the spatiotemporal coordinate tx, y, tu used in Section 3.3. Then,
+PINNs are utilized to approximate the solutions with respect to the loading scenario in the training
+stage. Note that xc is also directly input to construct the residual loss of the essential BC on the
+loading area. After training the network, we directly infer the speciﬁc seismic responses by changing
+xc to other loading positions of interest. The inspiration of this scheme is that the loading positions
+at training and extrapolation stages share linear relationships and DNNs are capable of capturing
+the solution variances caused by the change of spatial information.
+Noteworthy, there may be multiple coordinate points for extracting the loading information.
+For example, for a Gaussian distribution load in 1D domain, it is reasonable to consider three
+loading points (i.e., xc “ rx1
+c, x2
+c, x3
+cs) as input information due to the complexity and irregularity
+of such loading information. However, it is also worthwhile to mention that the computational cost
+increases drastically when inputting more loading points.
+4. Numerical experiments and results
+In this section, a set of numerical examples are implemented to evaluate the capability of our
+designed PINN architectures for modeling elastic wave propagation in semi-inﬁnite domain. We
+consider 2D subsurface for all the numerical experiments. In particular, two distinctive material
+distributions (i.e., Case 1 and Case 2) are designed for solving the elastic wave equations within
+a truncated domain, and a parametric loading experiment (i.e., Case 3) is displayed for validating
+the eﬀectiveness of surrogate modeling. Moreover, the ABC described in Section 3.2 is adopted in
+PINNs to avoid wave reﬂection near the truncated boundaries. We also present the corresponding
+ﬁnite element solutions simulated in enlarged domains to examine the accuracy of PINN results.
+All the numerical experiments are programmed in TensorFlow [61] and conducted on an NVIDIA
+Tesla V100 GPU card (32G) in a standard workstation.
+8
+
+--- Sayfa 9 ---
+4.1. Domain deﬁnition
+To simplify, we consider the same physical domain and loading scenario for three numerical
+cases in this paper. The subsurface is excited by the normal traction of the Ricker wavelet type on
+the surface, which concentrates near the mid-line of the domain (i.e., x P r´8, 8s, unit: [m]). The
+analytical expression of the normal stress applied on the surface is
+tnpx, 0, tq “ T0
+“
+1 ´ 2π2pt ´ tsq2F 2
+r
+‰
+e´π2pt´tsq2F 2
+r ´p x
+L q2 [MPa],
+(14)
+where T0 is the amplitude of the normal traction, L is the length scale of the normal traction, ts is
+the oﬀset of the Ricker wavelet and Fr is the frequency of the excitation. To be more speciﬁc, we
+deﬁne T0 “ 2.0 [MPa], L “ 1.8 [m], ts “ 0.1 [s] and Fr “ 15 [Hz]. Moreover, the material density
+ρ and Poisson’s ratio ν are set to be 0.002 [g/mm3] and 0.25, respectively.
+Furthermore, the computational domain is truncated into x ˆ y P r´25, 25s ˆ r0, 50s (unit: [m])
+to avoid unnecessary computation. In addition to the surface under normal traction, the remaining
+three edges are modeled as absorbing boundaries with the ABC as shown in Eq. (6). Note that we
+adopt the unit system of [mm], [MPa], and [ms] in the simulation to ensure the output variables
+(i.e., displacement, velocity, and stress) having similar numerical scales. What’s more, the time
+duration for Case 1 and Case 2 is deﬁned as 400 [ms]. For parametric loading, we reduce it to
+200 [ms] since our main goal is to evaluate the performance of our framework in the context of
+surrogate modeling. It is noteworthy that the material distribution for each case is diﬀerent and
+described as follows.
+4.2. Evaluation metric
+We deﬁne an accumulative root-mean-square error (a-RMSE) to measure the error propagation
+between the learned waveforms and the ground truth, expressed as
+a-RMSEptiq “
+c
+MSE
+´
+pU
+p1:iq ´ Up1:iq
+ref
+¯
+(15)
+where pU
+p1:iq and Up1:iq
+ref
+denote the predicted and the reference solutions, respectively, from the 1st
+to the ith step. It describes the misﬁt of all snapshots before the time instance ti.
+4.3. Solving wave propagation equations
+4.3.1. Case 1 – Linear and Gaussian material distribution
+In the ﬁrst example, we consider a 2D subsurface with the material property following a com-
+bination of linear and Gaussian functions, where the Lam´e constants of the media are given by
+λpx, yq “ µpx, yq “ 80 ` 0.64y ` 38.4e´ py´25q2
+250
+[MPa].
+(16)
+The graphic illustration of the physical domain and the material distribution is exhibited in Fig. 5.
+Note that this material distribution is relatively simple and smooth. Therefore, domain decomposi-
+tion is not applied here since there is no harsh requirement for network size and collocation points.
+In speciﬁc, we employ two deep networks of r16 ` 3 ˆ 80s2 for learning the displacement u and the
+velocity v. Moreover, another independent network of r24 ` 3 ˆ 120s is designed for approximating
+the stress variable σ. We sample 218, 084 collocation points within the physical domain to enforce
+the governing equations, among which 50, 000 points are near the wave source. In addition, 10, 000,
+2It denotes the hidden layers with 16, 80, 80 and 80 neurons respectively.
+9
+
+--- Sayfa 10 ---
+¯tn
+50
+50
+λ, µ [MPa]
+Z [m]
+x
+Surface
+ABC
+ABC
+ABC
+a.
+b.
+Figure 5: The computational domain with a mixed material distribution of linear and Gaussian functions. a. The
+spatial domain is deﬁned with xˆy P r´25, 25sˆr0, 50s (unit: [m]). ABC denotes the absorbing boundary condition.
+b. The material distribution is presented along the depth y.
+58, 431, and 12, 000 points are sampled on IC, each absorbing boundary and the surface boundary,
+respectively. The sampling method for collocation points is slightly diﬀerent from the Latin hy-
+percube sampling (LHS) strategy [62], which is typically used in PINN applications. The related
+details are elaborated in Appendix A.
+Furthermore, we apply Adam [63] and L-BFGS-B [64] optimizers to sequentially train the
+networks. In Case 1, 2, 000 Adam and 20, 000 L-BFGS-B iterations are used. Note that we consider
+the sine activation function [65] in the networks. The selection of hyper-parameters is described
+in Appendix B. What’s more, to generate the reference solution, we also perform the numerical
+simulation of this problem by FEA using an enlarged computational domain (i.e., xˆy P r´75, 75sˆ
+r0, 100s, unit: [m]), where the waves propagate out the truncated domain naturally.
+The comparative results of snapshots are shown in Fig. 6. It is obvious that the solution of PINN
+matches the ground truth very well. The excellent performance is further validated by comparing
+the vertical velocity distributions on the surface (i.e., y “ 0 [m]) and the mid-line (i.e., x “ 0 [m]).
+The zoom-in results also exhibit a remarkable agreement between the prediction of PINN and the
+reference solution. In addition, we showcase the error propagation curves of stress σ and velocity
+v in Fig. 8. The errors increase mildly along with time marching and remain at a small-error level
+(i.e., 0.005). For Case 1 with a relatively simple material distribution (i.e., linear and Gaussian
+function), all of the numerical results prove the excellent solution accuracy of our proposed PINN
+architecture.
+4.3.2. Case 2 – Two-layer material distribution
+The second numerical case is a two-layer subsurface as shown in Fig. 9. More precisely, we
+prescribe the material property of the subsurface as
+λpx, yq “ µpx, yq “ 80 `
+80
+1 ` e´10py´25q ,
+(17)
+which is under the assumption of elasticity. In this case, due to the complexity of the material
+property, we consider using more collocation points than those in Case 1. Hence, in spite of being
+truncated, the computational domain is still very large and cannot ﬁt into the memory (i.e., 32GB)
+of one single Tesla V100 GPU. Therefore, we decompose the spatiotemporal domain into two parts
+10
+
+--- Sayfa 11 ---
+(a) t = 0.10 s
+(b) t = 0.20 s
+(c) t = 0.30 s
+PINN
+FEA
+PINN
+FEA
+PINN
+FEA
+Figure 6: The results of stress and velocity distributions obtained from our proposed PINN and FEA in Case 1. We
+select three representative snapshots (i.e., t “ 0.10, 0.20, 0.30) for comparison. v0, v1, and vM denote the horizontal
+velocity, the vertical velocity, and the magnitude respectively.
+along the time dimension (i.e., t P r0, 0.2s Y r0.2, 0.4s, unit: [s]). The solution of each subdomain is
+approximated by a separate PINN as described in Sub-section 3.4.
+Herein, we also design two networks of r16 ` 3 ˆ 80s for the variables of displacement u and the
+11
+
+--- Sayfa 12 ---
+Vertical velocity on surface
+Vertical velocity on mid-line
+(a) t = 0.10 s
+(c) t = 0.20 s
+(b) t = 0.15 s
+Figure 7: Vertical velocity distributions (i.e., v1) at various time steps on the surface (y “ 0, left) and mid-line (x “ 0,
+right) in Case 1. The synthetic measurement is obtained from FEA on an enlarged domain (xˆy P r´75, 75sˆr0, 100s,
+unit: [m]).
+velocity v, as well as a network of r24`3ˆ120s for the stress variable σ. Besides, 200, 188 collocation
+points are sampled within the domain to evaluate the residual of the governing equations. 4, 000
+points are sampled on each absorbing boundary while 8, 000 points are generated on the surface. In
+addition, 6, 135 interface points are used to guarantee the continuity of the solution. Each PINN is
+trained with 2, 000 epochs of Adam and 60, 000 iterations of L-BFGS-B. Note that the conﬁguration
+introduced in this part is speciﬁed for each sub-domain.
+12
+
+--- Sayfa 13 ---
+Stress variable
+Velocity variable
+Figure 8: Error propagation of our proposed PINN framework for stress and velocity variables in Case 1.
+¯tn
+50
+50
+x
+Surface
+ABC
+ABC
+160         120         80
+ABC
+λ, µ [MPa]
+Z [m]
+a.
+b.
+Figure 9: The illustrative diagram of the 2D subsurface with two layers of media. a. The spatial domain is deﬁned
+with x ˆ y P r´25, 25s ˆ r0, 50s (unit: [m]).
+ABC denotes the absorbing boundary condition.
+b. The material
+distribution is presented along the depth y.
+Fig. 10 presents the snapshots of the velocity and stress ﬁelds predicted by PINN and FEA at
+diﬀerent time steps. It can be seen that the overall prediction by PINN agrees with the reference
+solution (i.e., FEA) very well. It is interesting to point out that for t “ 0.30 [s], the reference
+solution of FEA is characterized by more details on the reﬂected wave compared with the learned
+solution by PINN. This is because the reﬂected wave has a much smaller scale than the incident
+wave, which poses a major challenge to the optimization of the loss function. This observation
+implies the limitation of the point-wise global approximation property of PINN. When scientiﬁc
+problems feature ﬁne-scale patterns, the PINN that leverages fully-connected NNs as approximator
+might be unable to capture some delicate phenomena. The comparisons of the velocity distribution
+on the surface (i.e., y “ 0 [m]) and mid-line (i.e., x “ 0 [m]) are shown in Fig. 11 to quantitatively
+examine the accuracy of the proposed PINN. We observe that the prediction of PINN matches
+perfectly with the reference solution, which demonstrates its excellent accuracy. Moreover, the
+error propagation is displayed in Fig. 12. The error evolutions are relatively larger than those of
+Case 1 due to a more complex material distribution, but the solution performance is still satisfactory
+thanks to the domain decomposition strategy.
+13
+
+--- Sayfa 14 ---
+(a) t = 0.10 s
+(b) t = 0.20 s
+(c) t = 0.30 s
+PINN
+FEA
+PINN
+FEA
+PINN
+FEA
+Figure 10: The results of stress and velocity distributions obtained from our proposed PINN and FEA in Case 2.
+We select three representative snapshots (i.e., t “ 0.10, 0.20, 0.30 [s]) for comparison. v0, v1, and vM denote the
+horizontal velocity, the vertical velocity, and the magnitude respectively.
+4.4. Case 3 – Parametric loading
+For the parametric loading case, we consider a homogeneous material in the physical domain,
+where the Young’s modulus E is deﬁned as 200 [MPa].
+The spatial domain size is also set as
+14
+
+--- Sayfa 15 ---
+(c) t = 0.20 s
+Vertical velocity on surface
+Vertical velocity on mid-line
+(a) t = 0.10 s
+(b) t = 0.15 s
+Figure 11: Vertical velocity distributions (i.e., v1) at various time steps on the surface (y “ 0, left) and mid-line
+(x “ 0, right) in Case 2. To obtain the PINN prediction, the truncated domain is decomposed into two parts along
+the time dimension. Each part is modeled with a separate PINN.
+x ˆ y P r´25, 25s ˆ r0, 50s (unit: [m]). The time duration for this case is 0.2 [s]. The domain
+decomposition is not applied here due to the relatively small domain size. Moreover, the loading
+follows the formulation of Eq. (14) with T0 “ ´2.0 [MPa], L “ 5.0 [m]. However, diﬀerent from
+solving seismic wave propagation, we incorporate three excitation positions in xc (e.g., r´5, 0, 5s,
+unit: [m]) in addition to the spatiotemporal coordinate information (i.e., tx, y, tu), which works as
+loading parameters for surrogate modeling. Each location is deﬁned as the center of loading area.
+15
+
+--- Sayfa 16 ---
+Stress variable
+Velocity variable
+Figure 12: Error propagation of our proposed PINN framework for stress and velocity variables in Case 2.
+¯tn
+50
+50
+Center of the loading area
+Surface
+x
+Figure 13: The illustrative diagram of the 2D subsurface with homogeneous material for parametric loading. The
+yellow stars denote the centers of the loading areas. The truncated boundaries are regarded as free boundaries due
+to the setting of homogenous material. The absorbing boundary condition is not required here.
+Three separate fully-connected NNs of 5 ˆ 100 are used to approximate the three variables
+tu, v, σu. We sample 152, 043 collocation points over the spatiotemporal domain and additional
+50, 000 points near the wave source to evaluate the residual of the governing equations. Moreover,
+10, 500 and 88, 236 points are sampled for IC and the surface boundary condition, respectively. We
+train the network with 2, 000 Adam iterations and 80, 000 L-BFGS-B epochs until convergence. In
+speciﬁc, we deﬁne three loading positions of xc “ t´5, 0, 5u (unit: [m]) to train the network. Based
+on the trained model, we directly infer/extrapolate the dynamics under other loading positions
+(e.g., xc “ 10, 15 [m]).
+The results of parametric loading are shown in Figs. 14 and 15. We show representative snap-
+shots (i.e., t “ 0.2 [s]) of two training (xc “ 0, 5 [m]) and two extrapolation scenarios (xc “ 10, 15
+[m]). As shown in Fig. 14, both the training and extrapolation results from our proposed PINN
+match the corresponding ground truth well. It is worthwhile to mention that the extrapolation
+of xc “ 15 [m] maintains excellent solution accuracy, which proves the capability of our method
+for surrogate modeling. In addition, the error propagation in Fig. 15 further validates the great
+performance in the context of solving the wave equations under parametric loading. In particular,
+16
+
+--- Sayfa 17 ---
+(a)
+(c)
+(d)
+PINN
+FEA
+(b)
+PINN
+FEA
+PINN
+FEA
+PINN
+FEA
+Figure 14: The snapshots of stress and velocity from our proposed PINN and FEA in Case 3.
+We present two
+interpolation (x “ 0, 5 [m]) and two extrapolation (x “ 10, 15 [m]) results. The time step is select at t “ 0.2 [s].
+17
+
+--- Sayfa 18 ---
+Stress variable
+Velocity variable
+Figure 15: Error propagation of our proposed PINN framework for stress and velocity variables in Case 3. Four
+loading scenarios are selected in the diagram, i.e., xc “ 0, 5, 10, 15 [m].
+the error propagations of extrapolation present similar evolving patterns as those of the training
+scenarios. The errors of the stress variable increase softly, while the errors of the velocity variable
+show relatively large increments but still acceptable.
+5. Discussions
+We herein discuss the current limitations of the proposed PINN framework and the outlook of
+our future work. Generally, the main potential concerns come from (1) the soft imposition scheme
+of enforcing I/BCs and (2) the scalability issue due to the setting of fully-connected NNs. More
+precisely, the typical PINNs consider the physical principles as loss regularizer terms in the opti-
+mization. However, it is challenging for such an implementation to guarantee the learned dynamics
+rigorously following the underlying physical laws. This observation is empirically validated by a
+recent work [66] which analyzes the failure modes of PINNs. Therefore, instead of using a soft en-
+forcement strategy, we would like to explore the possibility of encoding the known physics (e.g., the
+PDE structure) into the networks [40]. In addition, PINNs employ fully-connected NNs for approx-
+imating the solution of PDEs, which can be essentially regarded as a continuous learning scheme.
+They are excellent in capturing global patterns but show inferior performance in learning local
+details compared with discrete learning methods (e.g., convolution-based NNs) [21]. Moreover, ap-
+plying discrete learning has potential to mitigate the computation burden of learning seismic wave
+propagation in large domains. In the future, we will put more research eﬀorts into building discrete
+learning frameworks (e.g., convolutional and graph NNs) for forward analysis of spatiotemporal
+dynamics. In addition, our future work will also be placed on extending the proposed model to
+solve full wave inversion problems.
+6. Conclusions
+In this paper, we propose a new PINN architecture for forward modeling of seismic wave prop-
+agation in semi-inﬁnite domain. It is capable of both solving the elastic wave equations and para-
+metric surrogate modeling within truncated domains. There are three characteristics highlighted:
+(1) the introduction of the ABC into the network as a soft regularizer to eliminate boundary eﬀect
+and avoid expensive computation in semi-inﬁnite domains; (2) a new sequential training scheme
+via temporal domain decomposition to improve scalability and solution accuracy; (3) a paramet-
+ric surrogate modeling scheme to predict the seismic responses under diﬀerent loading scenarios.
+18
+
+--- Sayfa 19 ---
+Note that the entire network is trained without any labeled data. Furthermore, we evaluate the
+performance of our proposed PINN architectures on various numerical cases with diﬀerent material
+distributions. The results demosntrate the eﬀectiveness of our approach in the context of solution
+accuracy and extrapolation capability.
+Acknowledgement
+P. Ren would like to gratefully acknowledge the Vilas Mujumdar Fellowship at Northeastern
+University. Y. Liu would like to thank the support from the Fundamental Research Funds for the
+Central Universities. In addition, P. Ren also would like to sincerely acknowledge the constructive
+discussion with Dr. Jin-Yun Xie.
+Data Availability
+All the datasets and source codes to reproduce the results in this study are available on GitHub
+at https://github.com/paulpuren/seismic_modeling upon ﬁnal publication.
+Appendix A. The sampling of collocation points
+In this paper, we integrate the traditional LHS method and Gaussian Quadrature [67] in FEA
+for sampling collocation points. The reason for such a hybrid strategy is that we observe more
+uniformly distributed collocation points based on Gaussian Quadrature compared with the LHS
+method. Therefore, we discretize the entire spatiotemporal domain with quadrilateral and then
+sample Gaussian points. In addition, we consider using the LHS approach as a supplement for
+adding more collocation points near the source wave.
+Appendix B. The selection of hyper-parameters
+The general principle of selecting hyper-parameters (i.e., the weighting coeﬃcients for loss terms)
+is to ensure that each weighted loss term shares a similar numerical scale. In our implementation,
+we ﬁrst initialize the entire network with Xavier’s method [68] and then train the speciﬁc PINN
+with one iteration in order to see the magnitudes of loss terms. Next, the weighting coeﬃcients are
+deﬁned by making the products of the coeﬃcients and the corresponding loss terms close to ones.
+The hyper-parameters used in this study are presented in Table B.1. We extend the loss function
+in Eq. (11) to a more speciﬁc formulation, which is deﬁned as
+L “ η0Le ` η1Lic ` η2Ls ` η3Lv ` η4Lnb ` η5Lsrc ` η6Labc,
+(B.1)
+where tLic, Ls, Lv, Lnb, Lsrc, Labcu denote the loss terms for IC, displacement-stress equation, velocity-
+displacement equation, natural boundary condition, wave source condition and absorbing boundary
+condition, respectively. tη1, η2, η3, η4, η5, η6u are their corresponding hyper-parameters. Note that
+absorbing boundary condition is not required for homogenous material distribution [20] in Case 3
+(i.e., parametric loading experiment).
+19
+
+--- Sayfa 20 ---
+Table B.1: The details of hyper-parameters for three numerical cases.“N/A” represents being inapplicable to the
+speciﬁc index.
+η0
+η1
+η2
+η3
+η4
+η5
+η6
+Case 1
+10000
+1
+10000
+5
+10
+10
+10000000
+Case 2
+10000
+1
+10000
+5
+10
+10
+10000000
+Case 3
+4000000
+200
+1000000
+200
+400
+400
+N/A
+References
+[1] K. R. Kelly, R. W. Ward, S. Treitel, R. M. Alford, Synthetic seismograms: A ﬁnite-diﬀerence approach, Geo-
+physics 41 (1) (1976) 2–27.
+[2] J. Virieux, P-sv wave propagation in heterogeneous media: Velocity-stress ﬁnite-diﬀerence method, Geophysics
+51 (4) (1986) 889–901.
+[3] H. Bao, J. Bielak, O. Ghattas, L. F. Kallivokas, D. R. O’Hallaron, J. R. Shewchuk, J. Xu, Large-scale simula-
+tion of elastic wave propagation in heterogeneous media on parallel computers, Computer methods in applied
+mechanics and engineering 152 (1-2) (1998) 85–102.
+[4] D. Komatitsch, J.-P. Vilotte, The spectral element method: an eﬃcient tool to simulate the seismic response of
+2d and 3d geological structures, Bulletin of the seismological society of America 88 (2) (1998) 368–392.
+[5] D. Komatitsch, J. Tromp, Introduction to the spectral element method for three-dimensional seismic wave
+propagation, Geophysical journal international 139 (3) (1999) 806–822.
+[6] Z. E. Ross, M.-A. Meier, E. Hauksson, P wave arrival picking and ﬁrst-motion polarity determination with deep
+learning, Journal of Geophysical Research: Solid Earth 123 (6) (2018) 5120–5129.
+[7] W. Zhu, G. C. Beroza, Phasenet: a deep-neural-network-based seismic arrival-time picking method, Geophysical
+Journal International 216 (1) (2019) 261–273.
+[8] K. J. Bergen, P. A. Johnson, M. V. de Hoop, G. C. Beroza, Machine learning for data-driven discovery in solid
+earth geoscience, Science 363 (6433) (2019) eaau0323.
+[9] Q. Kong, D. T. Trugman, Z. E. Ross, M. J. Bianco, B. J. Meade, P. Gerstoft, Machine learning in seismology:
+Turning data into insights, Seismological Research Letters 90 (1) (2019) 3–14.
+[10] S. M. Mousavi, W. L. Ellsworth, W. Zhu, L. Y. Chuang, G. C. Beroza, Earthquake transformer—an attentive
+deep-learning model for simultaneous earthquake detection and phase picking, Nature communications 11 (1)
+(2020) 1–12.
+[11] S. M. Mousavi, G. C. Beroza, Deep-learning seismology, Science 377 (6607) (2022) eabm4470.
+[12] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, A. Anandkumar, Fourier neural
+operator for parametric partial diﬀerential equations, arXiv preprint arXiv:2010.08895 (2020).
+[13] Y. Yang, A. F. Gao, J. C. Castellanos, Z. E. Ross, K. Azizzadenesheli, R. W. Clayton, Seismic wave propagation
+and inversion with neural operators, The Seismic Record 1 (3) (2021) 126–134.
+[14] M. Raissi, P. Perdikaris, G. E. Karniadakis, Physics-informed neural networks: A deep learning framework for
+solving forward and inverse problems involving nonlinear partial diﬀerential equations, Journal of Computational
+physics 378 (2019) 686–707.
+[15] G. E. Karniadakis, I. G. Kevrekidis, L. Lu, P. Perdikaris, S. Wang, L. Yang, Physics-informed machine learning,
+Nature Reviews Physics 3 (6) (2021) 422–440.
+[16] Y. Zhu, N. Zabaras, P.-S. Koutsourelakis, P. Perdikaris, Physics-constrained deep learning for high-dimensional
+surrogate modeling and uncertainty quantiﬁcation without labeled data, Journal of Computational Physics 394
+(2019) 56–81.
+[17] L. Sun, H. Gao, S. Pan, J.-X. Wang, Surrogate modeling for ﬂuid ﬂows based on physics-constrained deep
+learning without simulation data, Computer Methods in Applied Mechanics and Engineering 361 (2020) 112732.
+[18] N. Geneva, N. Zabaras, Modeling the dynamics of pde systems with physics-constrained deep auto-regressive
+networks, Journal of Computational Physics 403 (2020) 109056.
+[19] H. Gao, L. Sun, J.-X. Wang, Phygeonet: Physics-informed geometry-adaptive convolutional neural networks
+for solving parameterized steady-state pdes on irregular domain, Journal of Computational Physics 428 (2021)
+110079.
+[20] C. Rao, H. Sun, Y. Liu, Physics-informed deep learning for computational elastodynamics without labeled data,
+Journal of Engineering Mechanics 147 (8) (2021) 04021043.
+[21] P. Ren, C. Rao, Y. Liu, J.-X. Wang, H. Sun, Phycrnet: Physics-informed convolutional-recurrent network for
+solving spatiotemporal pdes, Computer Methods in Applied Mechanics and Engineering 389 (2022) 114399.
+20
+
+--- Sayfa 21 ---
+[22] R. Wang, K. Kashinath, M. Mustafa, A. Albert, R. Yu, Towards physics-informed deep learning for turbulent
+ﬂow prediction, in: Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery
+& Data Mining, 2020, pp. 1457–1466.
+[23] M. Raissi, A. Yazdani, G. E. Karniadakis, Hidden ﬂuid mechanics: Learning velocity and pressure ﬁelds from
+ﬂow visualizations, Science 367 (6481) (2020) 1026–1030.
+[24] C. Rao, H. Sun, Y. Liu, Physics-informed deep learning for incompressible laminar ﬂows, Theoretical and Applied
+Mechanics Letters 10 (3) (2020) 207 – 212.
+[25] N. B. Erichson, M. Muehlebach, M. W. Mahoney, Physics-informed autoencoders for lyapunov-stable ﬂuid ﬂow
+prediction, arXiv preprint arXiv:1905.10866 (2019).
+[26] X. Jin, S. Cai, H. Li, G. E. Karniadakis, Nsfnets (navier-stokes ﬂow nets): Physics-informed neural networks for
+the incompressible navier-stokes equations, Journal of Computational Physics 426 (2021) 109951.
+[27] S. Wang, S. Sankaran, P. Perdikaris, Respecting causality is all you need for training physics-informed neural
+networks, arXiv preprint arXiv:2203.07404 (2022).
+[28] A. M. Tartakovsky, C. O. Marrero, P. Perdikaris, G. D. Tartakovsky, D. Barajas-Solano, Physics-informed
+deep neural networks for learning parameters and constitutive relationships in subsurface ﬂow problems, Water
+Resources Research 56 (5) (2020) e2019WR026731.
+[29] R. Zhang, Y. Liu, H. Sun, Physics-guided convolutional neural network (phycnn) for data-driven seismic response
+modeling, Engineering Structures 215 (2020) 110704.
+[30] R. Zhang, Y. Liu, H. Sun, Physics-informed multi-lstm networks for metamodeling of nonlinear structures,
+Computer Methods in Applied Mechanics and Engineering 369 (2020) 113226.
+[31] E. Haghighat, M. Raissi, A. Moure, H. Gomez, R. Juanes, A physics-informed deep learning framework for
+inversion and surrogate modeling in solid mechanics, Computer Methods in Applied Mechanics and Engineering
+379 (2021) 113741.
+[32] C.-T. Chen, G. X. Gu, Learning hidden elasticity with deep neural networks, Proceedings of the National
+Academy of Sciences 118 (31) (2021) e2102721118.
+[33] S. Cai, Z. Wang, L. Lu, T. A. Zaki, G. E. Karniadakis, Deepm&mnet: Inferring the electroconvection multi-
+physics ﬁelds based on operator approximation by neural networks, Journal of Computational Physics 436 (2021)
+110296.
+[34] C. Lin, Z. Li, L. Lu, S. Cai, M. Maxey, G. E. Karniadakis, Operator learning for predicting multiscale bubble
+growth dynamics, The Journal of Chemical Physics 154 (10) (2021) 104118.
+[35] Z. Mao, L. Lu, O. Marxen, T. A. Zaki, G. E. Karniadakis, Deepm&mnet for hypersonics: Predicting the coupled
+ﬂow and ﬁnite-rate chemistry behind a normal shock using neural-network approximation of operators, Journal
+of computational physics 447 (2021) 110698.
+[36] S. Cai, Z. Wang, S. Wang, P. Perdikaris, G. E. Karniadakis, Physics-informed neural networks for heat transfer
+problems, Journal of Heat Transfer 143 (6) (2021).
+[37] M. Raissi, Deep hidden physics models: Deep learning of nonlinear partial diﬀerential equations, The Journal
+of Machine Learning Research 19 (1) (2018) 932–955.
+[38] F. Sun, Y. Liu, H. Sun, Physics-informed spline learning for nonlinear dynamics discovery, arXiv preprint
+arXiv:2105.02368 (2021).
+[39] Z. Chen, Y. Liu, H. Sun, Physics-informed learning of governing equations from scarce data, Nature Communi-
+cations 12 (2021) 6136.
+[40] C. Rao, P. Ren, Y. Liu, H. Sun, Discovering nonlinear pdes from scarce data with physics-encoded learning,
+arXiv preprint arXiv:2201.12354 (2022).
+[41] S. Esmaeilzadeh, K. Azizzadenesheli, K. Kashinath, M. Mustafa, H. A. Tchelepi, P. Marcus, M. Prabhat,
+A. Anandkumar, et al., Meshfreeﬂownet: A physics-constrained deep continuous space-time super-resolution
+framework, in: SC20: International Conference for High Performance Computing, Networking, Storage and
+Analysis, IEEE, 2020, pp. 1–15.
+[42] C. Rao, H. Sun, Y. Liu, Embedding physics to learn spatiotemporal dynamics from sparse data, arXiv preprint
+arXiv:2106.04781 (2021).
+[43] P. Ren, C. Rao, Y. Liu, Z. Ma, Q. Wang, J.-X. Wang, H. Sun, Physics-informed deep super-resolution for
+spatiotemporal data, arXiv preprint arXiv:2208.01462 (2022).
+[44] H. Gao, L. Sun, J.-X. Wang, Super-resolution and denoising of ﬂuid ﬂow using physics-informed convolutional
+neural networks without high-resolution labels, Physics of Fluids 33 (7) (2021) 073603.
+[45] U. bin Waheed, E. Haghighat, T. Alkhalifah, C. Song, Q. Hao, Eikonal solution using physicsinformed neural
+networks, arXiv preprint arXiv:2007.08330 (2020).
+[46] J. D. Smith, K. Azizzadenesheli, Z. E. Ross, Eikonet: Solving the eikonal equation with deep neural networks,
+IEEE Transactions on Geoscience and Remote Sensing (2020).
+[47] C. Song, T. Alkhalifah, U. B. Waheed, Solving the frequency-domain acoustic vti wave equation using physics-
+informed neural networks, Geophysical Journal International 225 (2) (2021) 846–859.
+21
+
+--- Sayfa 22 ---
+[48] M. Rasht-Behesht, C. Huber, K. Shukla, G. E. Karniadakis, Physics-informed neural networks (pinns) for
+wave propagation and full waveform inversions, Journal of Geophysical Research: Solid Earth 127 (5) (2022)
+e2021JB023120.
+[49] G. Cybenko, Approximation by superpositions of a sigmoidal function, Mathematics of control, signals and
+systems 2 (4) (1989) 303–314.
+[50] K. Hornik, M. Stinchcombe, H. White, Multilayer feedforward networks are universal approximators, Neural
+networks 2 (5) (1989) 359–366.
+[51] A. G. Baydin, B. A. Pearlmutter, A. A. Radul, J. M. Siskind, Automatic diﬀerentiation in machine learning: a
+survey, Journal of Marchine Learning Research 18 (2018) 1–43.
+[52] B. Engquist, A. Majda, Absorbing boundary conditions for numerical simulation of waves, Proceedings of the
+National Academy of Sciences 74 (5) (1977) 1765–1766.
+[53] R. Clayton, B. Engquist, Absorbing boundary conditions for acoustic and elastic wave equations, Bulletin of the
+seismological society of America 67 (6) (1977) 1529–1540.
+[54] B. Engquist, A. Majda, Radiation boundary conditions for acoustic and elastic wave calculations, Communica-
+tions on pure and applied mathematics 32 (1979) 313–357.
+[55] D. Givoli, J. B. Keller, Non-reﬂecting boundary conditions for elastic waves, Wave motion 12 (3) (1990) 261–279.
+[56] J. N. Reddy, Energy principles and variational methods in applied mechanics, John Wiley & Sons, 2017.
+[57] A. D. Jagtap, G. E. Karniadakis, Extended physics-informed neural networks (xpinns): A generalized space-time
+domain decomposition based deep learning framework for nonlinear partial diﬀerential equations, Communica-
+tions in Computational Physics 28 (5) (2020) 2002–2041.
+[58] A. D. Jagtap, E. Kharazmi, G. E. Karniadakis, Conservative physics-informed neural networks on discrete
+domains for conservation laws: Applications to forward and inverse problems, Computer Methods in Applied
+Mechanics and Engineering 365 (2020) 113028.
+[59] E. Kharazmi, Z. Zhang, G. E. Karniadakis, hp-vpinns: Variational physics-informed neural networks with domain
+decomposition, Computer Methods in Applied Mechanics and Engineering 374 (2021) 113547.
+[60] P.-T. Trinh, R. Brossier, L. M´etivier, L. Tavard, J. Virieux, Eﬃcient time-domain 3D elastic and viscoelastic
+full-waveform inversion using a spectral-element method on ﬂexible Cartesian-based mesh, Geophysics 84 (1)
+(2019) R75–R97.
+[61] M. Abadi, P. Barham, J. Chen, Z. Chen, A. Davis, J. Dean, M. Devin, S. Ghemawat, G. Irving, M. Isard, et al.,
+tTensorFlowu: a system for tLarge-Scaleu machine learning, in: 12th USENIX symposium on operating systems
+design and implementation (OSDI 16), 2016, pp. 265–283.
+[62] M. D. McKay, R. J. Beckman, W. J. Conover, A comparison of three methods for selecting values of input
+variables in the analysis of output from a computer code, Technometrics 42 (1) (2000) 55–61.
+[63] D. P. Kingma, J. Ba, Adam: A method for stochastic optimization, arXiv preprint arXiv:1412.6980 (2014).
+[64] C. Zhu, R. H. Byrd, P. Lu, J. Nocedal, Algorithm 778: L-bfgs-b: Fortran subroutines for large-scale bound-
+constrained optimization, ACM Transactions on mathematical software (TOMS) 23 (4) (1997) 550–560.
+[65] V. Sitzmann, J. Martel, A. Bergman, D. Lindell, G. Wetzstein, Implicit neural representations with periodic
+activation functions, Advances in Neural Information Processing Systems 33 (2020) 7462–7473.
+[66] A. Krishnapriyan, A. Gholami, S. Zhe, R. Kirby, M. W. Mahoney, Characterizing possible failure modes in
+physics-informed neural networks, Advances in Neural Information Processing Systems 34 (2021) 26548–26560.
+[67] T. J. Hughes, The ﬁnite element method: linear static and dynamic ﬁnite element analysis, Courier Corporation,
+2012.
+[68] X. Glorot, Y. Bengio, Understanding the diﬃculty of training deep feedforward neural networks, in: Proceedings
+of the thirteenth international conference on artiﬁcial intelligence and statistics, JMLR Workshop and Conference
+Proceedings, 2010, pp. 249–256.
+22

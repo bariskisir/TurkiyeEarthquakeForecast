@@ -1,0 +1,1906 @@
+
+--- Sayfa 1 ---
+Testing the Potential of Deep Learning in Earthquake
+Forecasting
+Jonas K¨ohler,1,2,† Wei Li,1 Johannes Faber,1,3
+Georg R¨umpker,1,2 Nishtha Srivastava1,2,∗
+1Frankfurt Institute of Advanced Studies, Ruth-Moufang-Str. 1, 60438 Frankfurt am Main, Germany
+2Institute of Geosciences, Goethe-University Frankfurt, 60438 Frankfurt am Main, Germany
+3Institute for Theoretical Physics, Goethe Universit¨at, 60438 Frankfurt am Main, German
+Corresponding Authors; E-mail: †jkoehler@fias.uni-frankfurt.de, ∗srivastava@fias.uni-frankfurt.de.
+Abstract
+Reliable earthquake forecasting methods have long been sought after, and so the rise of modern
+data science techniques raises a new question: does deep learning have the potential to learn
+this pattern? In this study, we leverage the large amount of earthquakes reported via good
+seismic station coverage in the subduction zone of Japan. We pose earthquake forecasting as
+a classification problem and train a Deep Learning Network to decide, whether a timeseries of
+length ≥2 years will end in an earthquake on the following day with magnitude ≥5 or not.
+Our method is based on spatiotemporal b value data, on which we train an autoencoder to
+learn the normal seismic behaviour. We then take the pixel by pixel reconstruction error as input
+for a Convolutional Dilated Network classifier, whose model output could serve for earthquake
+forecasting. We develop a special progressive training method for this model to mimic real life
+use. The trained network is then evaluated over the actual dataseries of Japan from 2002 to
+2020 to simulate a real life application scenario. The overall accuracy of the model is 72.3%.
+The accuracy of this classification is significantly above the baseline and can likely be improved
+with more data in the future.
+1
+Introduction
+Earthquakes are some of the most destructive and unpredictable natural phenomena on earth,
+and their forecasting has posed a significant problem for seismologists. The ongoing exten-
+sive data collection coupled with a growing understanding of seismic processes could have the
+potential to improve this in the future.
+Previous forecasting attempts (Smith 1981; Main, Meredith, and Jones 1989; Smyth and
+Mori 2011; Gulia and Wiemer 2019) have frequently used the empirical Gutenberg Richter
+Law (Gutenberg and Richter 1944)
+log10 N = a −bM
+(1)
+which gives a logarithmic relation between the number of earthquakes N above a certain mag-
+nitude M. The b value, gives an estimate for the occurrence of large earthquakes compared
+1
+arXiv:2307.01812v1  [physics.geo-ph]  4 Jul 2023
+
+--- Sayfa 2 ---
+to smaller earthquakes. Furthermore, its spatial distribution can be interpreted as a proxy for
+the distribution of seismic stress. Therefore, the b value has long been considered suitable to
+be used for earthquake forecasting, e.g. b value time series anomalies are used as precursors
+to large events (Smith 1981; Main, Meredith, and Jones 1989), for earthquake rate forecasting
+(Smyth and Mori 2011), or to discriminate foreshocks from mainshocks (Gulia and Wiemer
+2019).
+Over the past decades, science has witnessed increased use of Deep Learning, especially
+leveraging the fast development in image processing (LeCun, Bengio, and Hinton 2015). With
+the ever increasing amount of seismic data over time, this shift is also well-received in seis-
+mology and is successfully applied in tasks such as event detection and magnitude estimation
+using seismogram data (Chakraborty et al. 2022) or GPS (HR-GNSS) data (Quinteros et al.
+2023), seismic phase picking (Li et al. 2022), synthetic waveform generation (Lehmann et al.
+2023) and more applications are likely to follow (Mousavi and Beroza 2022). Deep Learning
+for Earthquake forecasting has equally produced some promising results recently (Shan et al.
+2022; Velasco Herrera et al. 2022; Stockman, Lawson, and Werner 2023; Fox et al. 2022a).
+One of the most common methods in earthquake rate forecasting is the Epidemic Type
+Aftershock Sequence (ETAS) modelling (Ogata, Matsu’ura, and Katsura 1993). It is based
+on a point process to model the temporal activity, where a base rate of earthquakes generates
+aftershocks. While this model cannot be used to forecast main shocks, it is quite successful at
+estimating the rate of aftershocks.
+However, there are no studies which combine the power of advanced deep learning archi-
+tectures to handle larger data series and spatio-temporal b value distributions in order to do
+earthquake forecasting. In this work, we applied neural network architectures such as an au-
+toencoder, Temporal Convolution and 2D convolutions to test the potential of deep learning in
+earthquake forecasting.
+We use Japan as the study region which is visited by a high number of earthquakes every
+year, providing an ample amount of data to work with (Wakita 2013). Furthermore, it has
+an extensive network of seismic stations resulting in a good catalog completeness (Nanjo et
+al. 2010). The tectonics of Japan is primarily characterized by the eastward subduction of
+the Pacific Plate beneath the Okhotsk Plate to the north and the Philippine Plate to the south.
+Concurrently, the Philippine Plate also undergoes subduction beneath the Eurasian Plate(Bird
+2003). For the purpose of this study, we focus on the subduction zone of the Pacific and Okhotsk
+Plate.
+The problem posed by a forecast of this type is twofold: (i) the limited training data, and
+(ii) the change of the underlying system by the seismic progression of the region. To account
+for this, we develop a progressive training routine using temporal increments to train the model
+continuously with a constant learning rate. With this approach, we do not have dedicated testing
+and validation sets, but rather a new testing-and-validation set for every new period. As we only
+train once, sequentially forward in time, no future information seeps into the model.
+2
+
+--- Sayfa 3 ---
+2
+Materials and Methods
+2.1
+Catalog Preparation
+For this study we focus our attention on the region [20◦, 50◦] × [120◦, 150◦] around Japan, as
+well as its subset [35◦, 46◦] × [135◦, 146◦] (See Figure 1). This subset is chosen to simplify the
+system: it reduces the relevant plate boundaries from three to one, and limits the data to an area
+where most larger earthquakes occur in the shallow first 70 km.
+We use the ISC Catalog (Dmitry A. Storchak et al. 2013; D. Storchak et al. 2015; Di Gia-
+como, Engdahl, and D. A. Storchak 2018) from 1999-01-01 to 2019-12-31 to create our dataset
+(accessed date is March 11th, 2022). ISC has better completeness than USGS catalog for our
+area of interest.
+For our date and depth range, the catalog consists 3,111,016 events, recorded in a multitude
+of different magnitude types. We use the most common ones (MS, mb, MV, ML, MJMA) and
+convert them to moment magnitude Mw, which is not widely present in the catalog, using the
+relations given in (Sawires et al. 2019). If the magnitude is given in more than one of the listed
+magnitude types, we prioritize the magnitudes in the order mentioned in the the bracket earlier.
+By restricting the use to only those magnitude types, we only lose 1884 events of smaller mag-
+nitudes (≤3.5) for the whole region.
+Furthermore, we also limit the depth of earthquakes to 70 km, so only shallower earthquakes
+are considered. This has two main reasons: on the one hand, catalog completeness changes
+with depth and we deem it preferable to have a consistent catalog completeness, on the other
+hand, the b value empirically changes with the depth, which we do not take into account. Lim-
+iting the depth therefore should reduce the error we acquire by ignoring the depth in our b
+value calculation: We keep deep strong earthquakes from influencing the surface b value. The
+dataset contains the 2011 T¯ohoku Earthquake, a megathrust event which significantly changed
+the distribution of earthquakes in the area of interest. This is likely detrimental to the results but
+unavoidable, since the catalog before 1999 is less complete and the available time after 2011
+is too short and still filled with an increased seismicity due to the aftershocks of the T¯ohoku
+Earthquake.
+3
+
+--- Sayfa 4 ---
+Figure 1: Distribution of earthquakes with Magnitudes Mw≥5 from the beginning of our train-
+ing data in 2001-05-27 to 2019-12-31. The subplots show different magnitude bins. The inset
+pie chart shows the distribution of the depths, illustrating that the vast majority of stronger
+earthquakes happen in the shallow regions. The numbers n1 and n2 correspond to the number
+of earthquakes in the subplot or in the marked subregion of each plot. The red lines denoting
+the plate boundaries are taken from (Bird 2003).
+4
+
+--- Sayfa 5 ---
+0
+2
+4
+6
+8
+Magnitude
+100
+101
+102
+103
+104
+105
+106
+Cumulative Events
+Mw
+Mixed
+2.0
+2.5
+3.0
+3.5
+Completeness Magnitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+b Value
+A
+B
+Figure 2: Magnitude conversion results. In A the cumulative number of earthquakes above a
+threshold magnitude are shown: The unconverted magnitudes of the ISC catalog in red and the
+converted magnitudes in blue. The gray shaded area contains the options for the completeness
+magnitude, which are further analyzed in B: The b value is shown there as a fit to N = 10a−bM)
+with the standard deviation of b in the shaded ares. The converted magnitudes have a smaller
+standard deviation, making them the better choice for further analysis. While the rest of this
+publication uses Aki’s method (Aki 1965), here the b value is shown as an exponential fit,
+because this will make the error more pronounced as it is less dependent on the completeness
+magnitude. The dashed lines show the absolute standard deviation.
+The cumulative magnitude plot for converted and unconverted data is shown in Figure 2,
+which shows a clear improvement in the linear behavior postulated by the Gutenberg Richter
+law. This is an important property, as we depend on the stability of the b value for our further
+analysis.
+2.2
+b-Value Calculation
+Using the converted Mwcatalog we now calculate the b value on a fine 0.1◦by 0.1◦degree
+grid for each day after 2000-01-01. For each of those boxes, the b value is calculated using
+the relation from (Aki 1965) on the earthquakes which occurred within a 0.25◦radius of the
+location center and within the last 365 days, akin to a cylindrical stencil. This yields a b-value
+array of size 7305 × 300 × 300. If there are fewer than 2 earthquakes, we set the b value to 0,
+as well as in the case where all magnitudes for one cylinder have the same value. We clip the
+b value between 0 and 2, as there are some instances with three earthquakes and a very high
+b values. This method leads to unrealistic b-value results in the border regions of the seismic
+station coverage, as b=0 and b=2 cells border frequently, but empirically works well in this
+study.
+5
+
+--- Sayfa 6 ---
+Time
+Latitude
+Longitude
+120◦
+130◦
+140◦
+150◦
+50◦
+40◦
+30◦
+20◦
+2018-01-01
+2012-01-01
+2006-01-01
+2000-01-01
+Figure 3: Workflow of the b-value calculation. For any given time and date a cylinder with
+0.25◦radius going back one year in time is used to find the earthquakes from which this b
+value will be calculated. The different colored cylinders show different times and places. On
+the 2012 plane we try to visualize the cylinder rasterizing across the all the 3D distribution of
+magnitudes.
+Dataset Creation
+The creation of the dataset is represents an important step for a machine
+learning approach, because it embeds the information and format that the network should learn.
+For our classification problem, we define two classes, each referring to a timseries of spatial b
+value reconstructions:
+(1) an earthquake class (referred to as EQ ), defined by an earthquake of magnitude Mw≥5
+on the day after the series ends
+(2) an nEQ class, defined by the absence of such an event:
+– No earthquake with Mw≥4.2 within a 0.8◦L1 radius
+– No earthquake with Mw≥4.2 within ±7 days
+The stronger conditions on the nEQ class (as compared to “anything that is not EQ ”) was
+introduced to increase the contrast between the two classes. The classification is performed on
+our own defined Deep Learning architecture which we test against other published networks.
+6
+
+--- Sayfa 7 ---
+As our b-value block starts on 2000-01-01 and we require 512 days of history for our clas-
+sification later, the classification is limited to events after 2001-05-27 (2000-01-01 + 512 days)
+and 2019-12-31, in which time there are 4172 Mw≥5 events, 2328 of which fall in the area
+used for training (green box, Figure 1). For each of those events we carve a 512×32×32 shaped
+sample centered around the epicenter of the event out of the b value block, so that the earthquake
+would happen on the 513th day, exactly one day after the sample block ends. The hypothesis
+here is that there are characteristic patterns in the b value prior to a large event (Main, Meredith,
+and Jones 1989; Gulia and Wiemer 2019), and the network is supposed to find them. On the
+other side of the 4172 larger events, we also need a class that constitutes “calm” situations in
+which spatiotemporal sequences are not followed by a larger event.
+For non-earthquake class we calculate all position for which all the following criteria (later
+referred to as SC) are met:
+• Within one week before and after the selected point as well as within [−0.8◦, 0.8◦] ×
+[−0.8◦, 0.8◦] around the location there are no earthquakes with Mw≥4.5.
+• The b values in the 512 × 32 × 32 block to be considered is calculated using at least on
+average 10 earthquakes.
+From these possible locations we choose a number equal to the number of EQ class events to
+maintain a balanced dataset for each training instance.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10 11 13 14 15 17 19 22 23 29 32 70 555
+Earthquakes in Validation Data
+0
+20
+40
+Occurrence
+0
+25
+50
+75
+100
+125
+150
+175
+200
+225
+Meta Epoch
+101
+103
+Events in Meta Epoch
+A
+B
+Figure 4: Earthquake Distribution in Validation Data. How often a number of earthquakes
+appears in the validation data is shown in A. Most meta epochs (explained in section 2.3.4)
+contain 1 to 3 earthquakes, 4 to 6 are still common, and more earthquakes are rare. The very
+high numbers correspond to the T¯ohoku earthquakes and the months that follow. This can be
+seen in B, where the number of events in each meta epoch is shown with over the meta epochs.
+2.3
+Deep Learning Approach
+In principle we designed a two step approach similar to (Fox et al. 2022b) for the classification
+of the previously defined b value blocks. The idea is, that the autoencoder learns the “normal”
+state of the system, so when the system is in an abnormal state, the reconstruction error will be
+different. A second network, will then be used on the reconstruction error to classify the input
+between “normal” (nEQ ) and “abnormal” (EQ ) states. Empirically we have found, that using
+this two stage architecture works better than using the classifier immediately on the raw data.
+7
+
+--- Sayfa 8 ---
+In the first step we take the [32 × 32] b value array and run it through an autoencoder. We
+then take the difference between reconstruction and input to create an array of reconstruction
+error. This is done for all 512 instances per block to create the input for our second step. The
+process is also illustrated in Figure 5.
+The second step consists of a Convoluted Dilational Network (CDN), an architecture pre-
+sented here and developed specifically to deal with 2D spatial and 1D temporal data. The CDN
+is used to classify the b valued difference blocks into the two categories of “followed by a large
+earthquake” (class EQ ) and “not followed by a large earthquake” (class nEQ ). Both networks
+as well as their training processes are described in detail in the following two sections.
+a)
+0
+1
+2
+0
+1
+2
+b value
+reconstructed b value
+Autoencoder
+b)
+0
+1
+2
+0
+1
+2
+2
+0
+2
+−
+=
+c)
+t=0
+t=1
+t=2
+t=3
+t=4
+t=5
+t=6
+t=7
+d)
+t
+512 × 32 × 32
+Figure 5: Pipeline from the b value grid to the input of the classifier network. First (a) all
+relevant 32 × 32 maps of the b value are sent through the autoencoder. In the second step (b)
+we take the difference between reconstruction and input to get a difference map. In the third
+step (c), 512 different maps are assembled in a sequential manner to form the final input block
+shown in d.
+8
+
+--- Sayfa 9 ---
+2.3.1
+Autoencoder
+The autoencoder (AE) is trained on a dataset of 250,000 images of 32 × 32 pixel values of
+the b value from the whole region of which samples could be taken in for the classifier. This
+includes all 365+512 days before an earthquake at that location (which would then be centered
+in the 32 × 32 image) as well as all locations that can possibly be selected according to the SC
+criterion defined above. 80% of those images are used as training data, 20% are used for testing.
+The training is performed using mean squared error as the loss, and the model is trained
+until the validation loss does not improve for 50 epochs. We tried out different architectures for
+this task and a network based on dense layers, dropout, and skipped connections outperformed
+the alternatives (different variations of those three components and 2D Convolution layers).
+The final model is as follows: The input is flattened to 1024 dimensions, and each subse-
+quent dense layers cuts that in half. The smallest layer is 32, after which we double the dimen-
+sions until we reach 1024, which we reshape to 32 × 32. The first two layers have a dropout of
+0.5, the skipped connection is after the second dropout layer dropout layer (256 dimensions) to
+the second to last layer.
+Flatten 32 × 32
+Dense 1024
+Dropout 0.5
+Dense 512
+Dropout 0.5
+Dense 256
+Dense 128
+Dense 64
+Dense 32
+Dense 64
+Dense 128
+Dense 256
+Dense 512
+Dense 1024
+Reshape 32 × 32
+Reshape 32 × 32
+Figure 6: Autoencoder Architecture. This figure shows the autoencoder for the b value arrays,
+with skipped connections and dropout.
+2.3.2
+Classifier
+The second part of our forecasting pipeline consists of a classifier that takes a timeseries of the
+reconstruction error of the autoencoder. The data should be classified in two categories, referred
+to as EQ (earthquake with a magnitude ≥5 Mw) and nEQ (data selected according to SC).
+9
+
+--- Sayfa 10 ---
+This gives the network spatiotemporal information about the b value leading up to the point
+of interest, 1.6◦degrees in either direction and 512 + 365 days (with an overlap of 365 days) in
+the temporal axis.
+The architecture is the combination of 1D convolutional layers in time (TCN (Lea et al.
+2017)) and 2D convolutional layers in space. The spatial dimensions are reduced with 3D
+Convolutional layers (with a kernel of shape [1 × 2 × 2] in order to only act on the spatial di-
+mensions) and the temporal dimension is reduced using 1D Convolutional layer of increasing
+dilation. Between the different types of convolutions we apply the necessary reshaping oper-
+ations, and every 1D convolutional layer is followed by an activation layer (Leaky ReLu with
+α = 0.1). Due to the changing dimensions we did not use the skip connections as a ResNet(He
+et al. 2016) architecture would, although this could be implemented by way of a maxpooling
+layer as an alternative path to the convolutions. The arcitecture, as well as the intermittent di-
+mensionalities of the data are shown in Figure 7. After the final convolution layers we have 32
+channels, which are reduced to a single output using one dense layer.
+10
+
+--- Sayfa 11 ---
+512
+128
+[512 × 32 × 32 × 1]
+[128 × 16 × 16 × 2]
+[32 × 8 × 8 × 4]
+[8 × 4 × 4 × 8]
+[2 × 2 × 2 × 16]
+[1 × 1 × 1 × 32]
+[1]
+Model output
+Conv3D (Kernel & Stride [1 × 2 × 2])
+Dilation (First Dimension)
+Batch Normalization & Activation
+Dense Layer
+Figure 7: Architecture illustration for the Convolutional Dilated Network. The CDN is used to
+reduce the input data from 512 × 32 × 32 × 1 dimensions to 1. Since the second and third value
+for the dimensionality of that tensor are always the same, we collapse them to one dimension in
+the sketch. The 3D convolutional layer transforms its input dimensionality from i×j ×j ×k to
+t× j
+2 × j
+2 ×2k, while the dilation is a 1D convolutional layer with a dilation set to the powers of
+2. This reduces the dimensionality in the first value by a factor of 2 each time it is called. The
+model output is related to the probability of a large event occurring.
+11
+
+--- Sayfa 12 ---
+2.3.3
+Architecture Comparison
+The CDN architecture used in this paper was tested against several state-of-art deep neural
+networks for similar data structures. An overview of the results, parameters and speed is shown
+in figure 8.
+Temporal Convolutional Network (TCN) (Lea et al. 2017). This architecture consists of
+9 1D Convolutional layers with increasing dilation, reducing the temporal dimension from 512
+to 1. Initially, the input of a single day is flattened to a 1D array, which is retained throughout
+the Temporal convolution. As a last step, the 1024 dimensional array is reduced to one value.
+Long Short-Term Memory (LSTM) (Hochreiter and Schmidhuber 1997). For the LSTM
+Network we use 4 Layers with 1024, 256, 64, and 16 units, the first three of which return
+sequences. The last layer is a dense layer, reducing the output to one dimension.
+ResNet (He et al. 2016). Our 3D data with the temporal component is not an ideal input for
+ResNet, as the temporal component is not treated in an appropriate way. For this architecture
+we use 7 × 3 ResNet Blocks with the channels doubling every three blocks (starting with 1
+channel). One block consists of twice, a 2D Convolutional layer, batch normalization, and a
+ReLU activation. After each group of three dense ResNet Blocks, we use a Maxpooling layer
+to reduce the temporal extent by a factor of two (this is not in accord with the original network
+from cite (He et al. 2016), but necessary to reduce the dimension of the problem to accommodate
+hardware limitations). Each ResNet Block can be skipped.
+Dilated Recurrent network (DRN). With the Dilated Recurrent Network we combine the
+approaches of ResNet and TCN. For this we use 1D Convolutions in time (TCN-like) while
+also providing skipped connections via maxpooling in time. The DRN blocks consists of twice,
+a 1D convolution layer, batch normalization, and activation, while the skipped connection via
+maxpooling layer connects just before the last activation. To achieve the correct dimensions the
+maxpooling has a pool size of 2 and a stride of two. This DRN is not to be confused with the
+Dilated Recurrent Neural Networks from (Chang et al. 2017), but there are some similarities.
+Convolutional Dilated Network (CDN). The Convolutional Dilated Network is an im-
+provement on the Dilated Recurrent Network and the basis for the results presented in this
+paper. The goal while designing this network was to combine spatial reduction from the TCN
+while at the same time keeping the 2D spatial features of the data, instead of flattening the spa-
+tial dimensions as in the DRN. Reshaping the data between 1D Convolution from the TCN and
+the 3D Convolutions for the feature extraction adapts the network to the given problem. Similar
+to TCN and DRN, the CDN uses 9 blocks to reduce the 512 dimensional time axis to 1. At the
+same time, to reduce complexity, we reduce the spatial dimensions every second block (starting
+wit the first one). A CDN block starts with a 3D Convolutional layer with a (1,2,2) kernel and
+a (1,2,2) stride for the odd numbered blocks, and continues for all blocks with a reshape to
+enable the 1D Convolution, a reshape back, a batch normalization and an activation. The 3D
+convolution increases the number of channels by a factor of two, the 1D Convolution keeps it
+constant. The final 32 dimensional output is reduced to a scalar with one dense layer.
+12
+
+--- Sayfa 13 ---
+LSTM
+TCN
+ResNet
+DRN
+CDN
+Model
+0.50
+0.55
+0.60
+0.65
+0.70
+0.75
+0.80
+Accuracy / AUC
+acc
+AUC
+LSTM
+9.8 × 106
+.597
+.595
+.637
+.603
+.602
+.642
+280 s
+TCN
+1.9 × 107
+.649
+.652
+.658
+.649
+.651
+.659
+180 s
+ResNet 1.7 × 107
+.661
+.666
+.702
+.685
+.689
+.729
+1260 s
+DRN
+5.6 × 106
+.693
+.719
+.774
+.601
+.648
+.736
+170 s
+CDN
+1.4 × 106
+.686
+.686
+.723
+.723
+.721
+.772
+135 s
+Model Params
+acca
+accm
+acct
+AUCa AUCm AUCt
+tME : 225
+A
+B
+Figure 8: Architecture Comparison. Panel A shows the accuracy (acc, left) and area under
+the curve (AUC (Ling, Huang, and Zhang 2003), right ) for the different architectures. Every
+architecture was initialized with 10 different seeds. The individual results are shown as × for
+the accuracy and as + for the AUC. Panel B shows the number of parameters for the models, as
+well as the mean (acca), median (accm) and top (acct) values for the accuracy and the AUC.
+Even though the DRN has the highest overall accuracy, we use the CDN in this paper, for
+the following reasons:
+• The results are more stable between runs.
+• The training is faster.
+• The network uses less parameters.
+• The area under the curve (AUC) of the ROC is larger, which points to a more stable
+threshold and is generally regarded as a better measure for the evaluation of models (Ling,
+Huang, and Zhang 2003; Huang and Ling 2005).
+2.3.4
+Training the Classifier
+Training the classifier without violating causality and in a way that can be used in applications
+required an evolving training and testing set, Figure 9 shows how this is accomplished. The
+training process is divided in meta epochs. A meta epoch refers to both, a training cycle
+consisting of 20 epochs of normal training, and the temporal extent of the validation data, which
+is 30 days.
+In order to progressively train the model on newer data, each meta epoch trains and validates
+on new data, which is also why we do not use a dedicated testing set in this work. At the
+beginning the whole time domain is split in chunks of 30 days. Then training is performed on
+an increasing number of those 30 day chunks / meta epochs. Training starts with 6 such chunks
+(because starting with less means starting with an almost empty training set). Therefore the
+first meta epoch is labeled meta epoch 6, because it contains 6 chunks. Each meta epoch is
+trained for 20 normal epochs. The training and validation sets change each meta epoch (See
+Figure 9): The training data contains all EQ class events up to the current time, as well as a
+random selection of allowed nEQ class events from the possible locations allowed by the SC
+criteria defined above. This exposes the network to a wide variety of nEQ events over time. In
+order to prevent overfitting for older events, to which the network would be exposed more often
+compared to newer events, we weigh all samples from the training data that were not newly
+added this meta epoch using a weight so that the total new data equals (in weight) the old data.
+The validation set is the chosen from the next meta epoch. It contains all EQ events of that
+30 day period as well as an equal amount of randomly chosen nEQ events from the same period.
+13
+
+--- Sayfa 14 ---
+Meta Epoch 6
+Meta Epoch 7
+Meta Epoch 8
+Meta Epoch 9
+Meta Epoch 223
+Meta Epoch 224
+Meta Epoch 225
+Training Data
+Validation Data
+Events
+×
+×
+6 Months
+1 Month
+Trained for 20 Epochs
+Trained for 20 Epochs
+Skipped (no new events)
+Trained for 20 Epochs
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+××
+××
+×
+×
+×
+×
+×
+×
+××
+××
+×
+×
+×
+×
+×
+×
+××
+××
+×
+×
+×
+×
+×
+× ×
+×
+× ×
+×
+Figure 9: Training process illustration. This figure shows the changing datasets used for training
+and validation during the whole training process. The validation data of a previous meta epoch
+is added to the training data of the next meta epoch, if there are any large earthquakes in that
+data. Meta epochs without new EQ class events are skipped.
+14
+
+--- Sayfa 15 ---
+3
+Results
+The training and validation here are done in 30 day intervals, where the model is trained on
+some amount of data, validated on the next 30 days, and then trained on the combined data,
+and trained on the next 30 days. This training method is explained in more detail in Figure
+9. Owing to this specialized training procedure, giving a normal model evaluation such as the
+final accuracy is not as informative compared to other models. We therefore name the single
+training periods meta epochs and report the relevant results for those meta epochs instead of a
+total result.
+As the progressive training changes the model and the model is applied to new data for
+each determination of the accuracy, the overall accuracy of the model is difficult to determine.
+However, the accuracy is the most common metric to measure the model performance, so Figure
+10 shows the accuracy over time. The time intervals are given in increments of 30 days, which
+also correspond to the progressive training cycles and are referred to as meta epoch from now
+on. As the 30 day forecasting period (= 1 meta epoch) usually contains only one to three
+earthquakes (see Figure 4 for more details on the distribution), resulting in rather quantized
+accuracy values, Figure 10 shows the accuracy averaged over 5 meta epochs as well. Figure 10
+shows, that after a few meta epochs at the beginning the accuracy improves to 75% −80% and
+only declines during the last two years to around 60%.
+The optimal discriminating threshold between the EQ and nEQ classes is not necessarily
+0.5 (with a model output between 0 and 1), and the Receiver Operator Characteristic (ROC)
+(Bradley 1997) helps to determine the best value to classify the input by plotting the true positive
+rate against the false positive rate, allowing to find the optimal combination of both. Figure 11
+shows the ROC as well as the resulting best confusion matrix (Ting 2017), which displays
+the number of true/false positives/negatives. The overall accuracy of the model, including the
+caveats discussed above, is 72.3%, including the initial “untrained” phase. It is calculated on
+the final model of each meta epoch, with the validation data of that epoch.
+15
+
+--- Sayfa 16 ---
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Validation Accuracy
+aw   k=5
+a     k=5
+0
+25
+50
+75
+100
+125
+150
+175
+200
+225
+Meta Epochs
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Mean Model Output
+Mean Output EQ
+Mean Output
+Mean Output nEQ
+0
+10
+20
+30
+40
+50+
+Number of Samples in Validation Data
+2003
+2006
+2009
+2012
+2015
+2018
+2021
+Date
+Figure 10: Classification Accuracy for meta epochs. The markers each correspond to one meta
+epoch and are colored based on the number of samples in the validation set for that meta epoch,
+however we limited the color range from 0 to 50. There are single meta epochs with much
+higher counts, especially those following to the T¯ohoku Earthquake. A closer look at the Events
+in the validation data is provided in Figure 4. The lines show different running averages for the
+accuracy: The light blue is a weighted average (since the meta epochs contain different numbers
+of samples), the magenta lines are a non weighted average. The average is taken with a kernel
+of 5 meta epochs. The lower panels shows the model output (smoothed over 5 meta epochs and
+weighted) for the two classes and the validation set as a whole. Generally, the output for the EQ
+class is higher, as expected, however there are some instances where the three lines meet. The
+grey horizontal line corresponds to the best threshold (see 11) for discrimination between the
+classes.
+16
+
+--- Sayfa 17 ---
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+False Positive Rate
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+True Positive Rate
+0.715
+amax = 0.723
+ROC curve
+EQ
+nEQ
+Truth
+EQ
+nEQ
+Predicted
+1040
+360
+482
+1162
+Confusion Matrix
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Threshold
+A
+B
+Figure 11: ROC Curve and Confusion Matrix. This figure shows the ROC Curve (A) and the
+confusion matrix (B). Using a classification threshold of 0.715, the model yields the highest
+accuracy: 72.3%. The confusion matrix shows a slight bias towards the nEQ class, but an
+overall significant performance.
+120°
+130°
+140°
+150°
+Longitude
+20°
+30°
+40°
+50°
+Latitude
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+K
+A
+ 0.5
+11.4
+ 5.5
+ 5.5
+ 0.4
+ 4.0
+ 4.7
+ 5.4
+ 4.0
+ 4.4
+J
+B
+ 0.36
+11.9
+ 6.0
+ 6.0
+ 0.1
+ 4.5
+ 5.2
+ 5.9
+ 4.5
+ 4.3
+I
+C
+ 8.27
+ 8.63
+ 5.9
+ 5.9
+11.8
+ 7.4
+ 6.7
+ 6.0
+ 7.4
+ 8.0
+H
+D
+ 3.89
+ 4.24
+ 4.53
+ 3.0
+ 5.9
+ 2.7
+ 2.4
+ 1.7
+ 3.5
+ 4.5
+G
+E
+ 4.40
+ 4.68
+ 5.70
+ 2.12
+ 5.9
+ 1.5
+ 0.8
+ 1.3
+ 1.5
+ 2.1
+F
+F
+ 0.28
+ 0.10
+ 8.54
+ 4.17
+ 4.65
+ 4.4
+ 5.1
+ 5.8
+ 4.4
+ 4.4
+E
+G
+ 3.37
+ 3.64
+ 6.40
+ 2.18
+ 1.08
+ 3.61
+ 0.7
+ 1.4
+ 0.8
+ 1.8
+D
+H
+ 3.70
+ 3.99
+ 5.87
+ 1.79
+ 0.71
+ 3.96
+ 0.54
+ 0.7
+ 1.1
+ 2.1
+C
+I
+ 3.98
+ 4.30
+ 5.18
+ 1.20
+ 0.92
+ 4.25
+ 1.22
+ 0.70
+ 1.8
+ 2.8
+B
+J
+ 3.71
+ 3.95
+ 6.74
+ 2.69
+ 1.12
+ 3.93
+ 0.57
+ 0.92
+ 1.61
+ 1.0
+A
+K
+ 3.93
+ 4.10
+ 7.52
+ 3.51
+ 1.82
+ 4.11
+ 1.34
+ 1.75
+ 2.43
+ 0.82
+2004
+2008
+2012
+2016
+2020
+Time
+K
+J
+I
+H
+G
+F
+E
+D
+C
+B
+A
+Model Output at Earthquake Location
+0.999
+0.999
+0.999
+0.853
+0.999
+0.999
+0.649
+0.031
+0.997
+0.863
+0.871
+8
+6
+4
+2
+0
+2
+4
+6
+8
+10
+log10(NEQ)
+A
+B
+Figure 12: Location and Model output for earthquakes ≥7.0. Panel A shows the average
+number of earthquakes used to calculate any one b value at that location and the respective L1
+(lower left) and L2 (upper right) norm distances between the major earthquakes. Red marked
+distances imply an overlap in the input data for those earthquakes. Panel B shows the model
+output at the location of all earthquakes as well as the time of the major earthquake at that
+location and the model output for that day.
+Targeting the Mw≥7 Earthquakes
+Since forecasting earthquakes with Mw≥7.0 correctly is a priority from a hazard analysis point
+of view, we also target the 11 earthquakes with Mw≥7.0, listed in Table 1, in addition to the
+EQ class. Those earthquake locations are shown in panel A of Figure 12. In order to see how
+the model output changes over time for those locations, we also show the model output for
+the whole time domain at the earthquake’s location, with the model parameters being set to
+correspond to the time of the forecast, so that no future information is used. This is seen in
+the panel B of figure 12, together with the time of the earthquake (vertical line) and the model
+output for that day. This illustrates the abilities and drawbacks of the model: Generally the
+17
+
+--- Sayfa 18 ---
+output is quite high in high seismicity regions. In the beginning, the untrained model learns fast
+to increase the output , which can be seen in all traces from the beginning of 2002 to the end
+end of 2003. However, then the model adapts and the forecasts begin to differ. Earthquake C is
+captured quite well, the model output increases just before the earthquake occurs and decreases
+afterwards. The other earthquakes need closer examination, which is provided in Figure 13.
+Here, the model output for earthquakes E and G is shown in greater detail. The model output
+is augmented with the distance and magnitude of nearby earthquakes: the right scale shows
+the magnitude of nearby earthquakes, which are shown (if Mw> 5) as vertical lines in the
+respective model output, their height signifying their magnitude on the right scale. The color
+corresponds to the overlap in pixels for the [32 × 32] geographical location. Earthquakes with
+Mw> 6 are also marked again above the model output for greater color perception by the reader,
+with the color of the upper triangle corresponding again to the overlap between the presented
+earthquake and nearby earthquakes, and the lower triangle corresponding to the magnitude. The
+respective colormaps are on the left and consistent for the figure. A complete version for all 11
+Earthquakes can be found in the supplemental material, see Figure 14.
+2002
+2004
+2006
+2008
+2010
+2012
+2014
+2016
+2018
+2020
+Time
+G
+E
+Earthquake Location
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.649
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+6.0
+6.5
+7.0
+7.5
+8.0
+Magnitude
+1
+2
+4
+8
+16
+32
+64
+128
+256
+512
+Overlapping pixels
+Figure 13: Zoom-in visualization of the model output on Earthquakes E and G from Figure 12.
+The same figure for all earthquakes is in the supplemental material. The contiguous line corre-
+sponds to the model output (left scale). The vertical line with the numbers behind it denotes the
+timing of the large earthquake at that location. Smaller vertical lines signify earthquakes close
+to the the main earthquake, the height of the line corresponds to their magnitude (right scale),
+the color corresponds to the distance (right colorbar). The markings above the model output
+area illustrate again the earthquakes with Mw≥6, the color of the lower triangle corresponds to
+the magnitude (left colorbar), the upper triangle’s color to the overlap (right colorbar).
+18
+
+--- Sayfa 19 ---
+Day
+Date
+Mw(USGS)
+Mw(Converted)
+Name or (Region)
+1364
+2003-09-25
+8.3
+8.10
+2003 Tokachi Earthquake
+2641
+2007-03-25
+6.7
+7.04
+2007 Noto Earthquake
+3087
+2008-06-13
+6.9
+7.03
+2008 Iwate–Miyagi Nairiku earthquake
+3123
+2008-07-19
+7.0
+7.11
+(E of Namie)
+3177
+2008-09-11
+6.8
+7.02
+(SSE of Obihir)
+4086
+2011-03-09
+7.2
+7.49
+2011 T¯ohoku earthquake precursor
+4088
+2011-03-11
+9.1
+8.35
+2011 T¯ohoku earthquake
+4115
+2011-04-07
+7.1
+7.02
+April 2011 Miyagi earthquake
+4209
+2011-07-10
+7.0
+7.10
+(ESE of Ishinomaki)
+4725
+2012-12-07
+7.3
+7.30
+2012 Sanriku earthquake
+5047
+2013-10-25
+7.1
+7.09
+(East Coast of Honshu)
+Table 1: This Table shows the 11 earthquakes with Mw≥7.0, their day after the start of out
+data, the date, the USGS Magnitude Mw, our converted MwMagnitude and the Name or region
+of the earthquake. While there is some disagreement in the magnitudes due to the conversion
+using (Sawires et al. 2019), this is not expected to noticeably influence the results.
+19
+
+--- Sayfa 20 ---
+2002
+2004
+2006
+2008
+2010
+2012
+2014
+2016
+2018
+2020
+Time
+K
+J
+I
+H
+G
+F
+E
+D
+C
+B
+A
+Earthquake Location
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.853
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.999
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.649
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.031
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.997
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.863
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+0.871
+5
+6
+7
+8
+9
+0
+1
+Model Output
+Magnitude
+6.0
+6.5
+7.0
+7.5
+8.0
+Magnitude
+1
+2
+4
+8
+16
+32
+64
+128
+256
+512
+Overlapping pixels
+Figure 14: Position analysis for all M ≥7 Earthquakes. See Figure 13 for explanation.
+20
+
+--- Sayfa 21 ---
+4
+Discussion
+In order to investigate if the overall forecasting ability of the model is valid rather than an assort-
+ment of artifacts we will have a closer look at several possible sources for errors: magnitude,
+depth, quality (or the number of earthquakes used for the b Value calculation), and location.
+4.1
+Magnitude Dependence
+If the premise, that the probability of an earthquake happening can be forecast by using changes
+in b value, it would suggest, that larger events are easier to forecast, simply because there
+are innumerate small earthquakes with Mw< 3 that do not all have some large pattern of b
+value changes as a precursor. However, the model is trained mostly on forecasting smaller
+earthquakes, as the validation data contains mostly those (following the Gutenberg-Richter law
+(Gutenberg and Richter 1944)), so it is a priori unclear, if the model can work for large earth-
+quakes. In order to test this, we analyze the magnitude dependence of the networks model
+outputs, as shown in Figure 15 (A). The left plot shows the prediction value for all EQ samples,
+their magnitude and their meta epoch. While they cluster around 0 and 1, there is a clear trend
+towards 1. The mean prediction of EQ samples averages over five meta epochs is shown in Fig-
+ure 10 B, clearly showing good results for until roughly meta epoch 180. The right plot shows
+the prediction distributions for six magnitude bins, the center line is marked with the actual
+predictions, and the mean (colored) and average (black) for each bin are marked. It seems like
+smaller earthquakes are actually easier to forecast, which is probably due to two reasons: (1) the
+pattern that the network recognizes depends on the size of the earthquake, which seems likely,
+but since there are fewer large earthquakes, the network does not learn their pattern as well, or
+(2) smaller earthquakes are more commonly aftershocks and the networks just learns to predict
+more earthquakes in a periods after larger earthquakes. While (2) would be detrimental to our
+efforts, not all the performance could be explained away using this argument, because even the
+larger events (which are not aftershocks) are generally well predicted with significant accuracy.
+4.2
+Depth Dependence
+Earthquakes vary with depth and location, in our region they appear at higher depths in the
+subducting pacific plate, as well the shallow zones of the Okhotsk plate in the west and the
+pacific plate in the east. Depth is not a parameter the model is given in any way (apart from the
+depth limit of 70 km in the b value calculation), so in principle mixing different origins of earth-
+quakes could pose a problem. Figure 15 B shows the effect of the depth on the model output,
+which seems to be negligible, meaning there is no bias that only deep or shallow earthquakes
+are treated correctly.
+4.3
+Quality Dependence
+The quality of the b value data used for the forecasting process is bound to have an influence
+on the accuracy of the forecasting. Quality here is defined as the certainty which with the
+b value is determined. For this purpose we look the average number of earthquakes used to
+calculate all single values of b in the input array. A detailed explanation of who the b value is
+calculated can be found in 3. If the number is low, the b values will be calculated on only a few
+events, which leads to drastic changes between neighboring cells in the input data (even after the
+autoencoder is used), if a single earthquake is added or removed. Theoretically, better b values
+will correspond to a better prediction, however better b values will also correspond to either a
+higher seismicity region, or a region better covered by seismic stations. However, the quality
+21
+
+--- Sayfa 22 ---
+is not given to the model directly, is would have to be determined from the input data. The
+impact of the quality is shown in the bottom two panels in Figure 15. The forecasting is clearly
+dependent on the quality of the data, however, a higher quality does not translate to a higher
+model output, which is good, since a higher quality does relate to a higher general seismicity.
+That fact that this does not lead to an immediate higher model output shows the network learns
+more than just a seimicity estimate.
+22
+
+--- Sayfa 23 ---
+5.0
+5.5
+6.0
+6.5
+7.0
+7.5
+8.0
+8.5
+Magnitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+5.0
+5.5
+6.0
+6.5
+7.0
+7.5
+8.0
+8.5
+Magnitude Bins
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+1075
+331
+89
+16
+9
+2
+0
+10
+20
+30
+40
+50
+60
+70
+Depth [km]
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+0
+10
+20
+30
+40
+50
+60
+70
+Depth [km]
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+91
+361
+454
+271
+160
+96
+87
+101
+102
+103
+104
+nEQ for b value calculation
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+101
+102
+103
+104
+105
+nEQ for b value calculation
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Model Output
+1
+25
+69
+198 435 514 222
+57
+1
+5
+50
+100
+150
+200 225
+2003
+2006
+2009
+2012
+2015
+2018
+2021 Date
+Meta Epoch
+A
+B
+C
+Figure 15: Impacts of magnitude (A), depth (B), and quality (C) on the model output. Each
+quantity’s influence on the model output are shown, once over time and once in bins of that
+quantity. The gray horizontal lines corresponds to the optimal threshold from the ROC curve.
+In the left plots, the color corresponds to the meta epoch. In the binned plots, the colored bars
+correspond to the median, the black bars to the mean.
+4.4
+Location Dependence
+Another possible source of errors is the location. The network could learn where in the domain
+the sample was taken from and simply predict earthquakes in the regions where there are many
+23
+
+--- Sayfa 24 ---
+earthquakes. While the coordinates of the input are not given, some features can consistently
+be associated with certain locations, first and foremost the boundary of the area where the b
+value is calculated (this consistency can be seen in Figure 3). Figure 16 shows the relevant data
+to determine this has a slight impact: Figure 16 A shows the locations for the Training data
+sets, Figure 16 B the locations for for validation sets. Figure 16 C and D show the mean model
+output for Training and Validation instances respectively. Figure 16 C therefore shows very
+strong overfitting, but Figure 16 D shows a clear pattern of accurate forecasting. The number
+above each of these plots is the weighted mean value in the image. Figure 16 E and F illustrate
+the locations that are included in the validation and training set (at different times), and show.
+Counts (relative)
+Train EQ
+Train nEQ
+Valid EQ
+Valid nEQ
+Mean Model Output
+pmean = 0.998
+pmean = 0.256
+pmean = 0.815
+pmean = 0.281
+nmax = 12
+pdiff = 0.387
+135°
+140°
+145°
+Longitude
+35°
+40°
+45°
+Latitude
+Refence Map
+0
+Max
+Relative Ocurrence (linear)
+nEQ
+thr =
+0.715
+EQ
+Mean Model Output
+A
+C
+E
+B
+D
+F
+G
+Figure 16: Location related data for Training and Validation datasets. In the top row, the left two
+panels (A) show where the EQ and nEQ class events are selected from for the training dataset,
+the right to panels (B) show the same for the validation. Note that the validation data of one meta
+epoch will be in the training data of the next meta epoch. The middle row shows the average
+model output for the spacial and temporal selections above (C for training, D for validation),
+the number above the panels is the (count adjusted) average value of the whole panel. The color
+is scaled to conform to the optimal threshold determined before, while black represents a cell
+without any events in it. The last row shows from left to right: E) The locations where there
+are both, EQ and nEQ class events in the validation data, as well as their count in that location.
+F) The difference between the mean model output for the EQ class and the nEQ class in the
+validation data, with the pdiff, the weighted-by-events-per-cell average of this difference G) A
+reference map showing the geographical region corresponding to all 11 other panels.
+24
+
+--- Sayfa 25 ---
+4.5
+Reproducibility
+During the training process we noticed a heavy dependence on the initial conditions, even to
+the point of some models being unusable for some initial conditions. This can be seen for the
+DRN Network in Figure 8. Since a random initialization of the network is common practice,
+we conducted a study of different seeds to survey this behaviour and find a good seed to work
+with. For this, we iterated over a fixed seeds for numpy and TensorFlow. We trained a total
+of 10 model and chose the best one to conduct the analysis presented in this paper. The results
+of all of them are shown in the supplementary material, see Figure 17 A.
+Impact of the Autoencoder We repeated the same reproducibility study, only omitting the
+autoencoder, using the b value directly as an input to the classifier network and repeating this
+ten times. With the autoencoder the average accuracy is 68.6% with the best accuracy 72.3%,
+without the autoencoder the average accuracy is 65.0% with 68.7% as the best accuracy. The
+autoencoder therefore improves the performance by roughly 3.6 %. The idea behind using the
+autoencoder is, that it learns the normal b value images, and that by using the difference the
+abnormality of the system is highlighted. The results of both sets of 10 models are shown in
+Figure 17.
+25
+
+--- Sayfa 26 ---
+t = 0.240
+Run 01
+amax = 0.699
+t = 0.264
+Run 02
+amax = 0.690
+t = 0.999
+Run 01
+amax = 0.660
+t = 0.933
+Run 02
+amax = 0.626
+t = 0.036
+Run 03
+amax = 0.676
+t = 0.079
+Run 04
+amax = 0.667
+t = 0.933
+Run 03
+amax = 0.687
+t = 0.971
+Run 04
+amax = 0.632
+t = 0.057
+Run 05
+amax = 0.678
+t = 0.114
+Run 06
+amax = 0.693
+t = 0.999
+Run 05
+amax = 0.627
+t = 0.997
+Run 06
+amax = 0.630
+t = 0.045
+Run 07
+amax = 0.683
+t = 0.715
+Run 08
+amax = 0.723
+t = 0.997
+Run 07
+amax = 0.648
+t = 0.798
+Run 08
+amax = 0.662
+t = 0.288
+Run 09
+amax = 0.705
+t = 0.092 Run 10
+amax = 0.645
+t = 0.921
+Run 09
+amax = 0.651
+t = 0.771
+Run 10
+amax = 0.678
+0.0
+0.5
+1.0
+Threshold
+With Autoencoder
+Without Autoencoder
+True Positive Rate [0, 1]
+False Positive Rate [0, 1]
+Figure 17: This figure shows the ROC curve for the comparative runs with and without the
+autoencoder for all 10 different seeds for numpy and tensorflow. The autoencoder was used and
+the input to the classifier is AE(data) −data. For the autoencoderless runs, the b value was
+clipped between 0 and 2.
+4.6
+Comparison to other work
+There seems to be some possibility in using b value distributions to forecast earthquakes (Smith
+1981; Main, Meredith, and Jones 1989; Smyth and Mori 2011; Gulia and Wiemer 2019). While
+the aforementioned publications worked by manually (or by the use of classical statistics) look-
+ing for patterns in the data, this process is the core ability of deep learning, which makes it a
+promising approach. This shifts the problem of earthquake forecasting to one of data selection
+and preparation, where the pattern recognition is left to a deep learning network.
+26
+
+--- Sayfa 27 ---
+4.7
+Some Caveats
+Concerning the results shown in Figures 13 and 14, the model has the tendency to give long
+stretches of high outputs for high seismicity regions, however it does not always give a high
+output for these regions. There are several interpretations of this, the most charitable being,
+that the occurrence of the large earthquake is “ready” at some point (leading to high model
+output) and will stay there until the tension is released at a random point in time. This could
+also distribute the high model output spatially, as Mw> 7 earthquakes have large rupture areas,
+even exceeding 1000 km for Mw> 9(Thingbaijam, Martin Mai, and Goda 2017). Following this
+idea, the model output does not decrease immediately after a large earthquake, because there
+is still tension, whether new through the earthquake, or retained from before, and it will take a
+while to release it. Less charitable would be the interpretation that the model just always gives
+a high output in high seismicity regions, but this does not seem to be the case, e.g. earthquake
+D in Figure 12, but also the low model output times at the other locations – the earthquakes are
+in regions that should always be considered high seismicity.
+A problem with this dataset is the T¯ohoku Earthquake in the temporal center of the data
+(day 3576 of 6793). An earthquake of that magnitude has the potential to change the seismic
+behaviour of a region, and it produces a long sequence of significant aftershocks which must
+be part of a forecast (because they are big enough to be destructive themselves) but are so
+numerous that they can skew the results in a Machine Learning setting. The impact is visible
+in all temporal figures presented in this paper. This also has an impact on the previous point
+of the consistently high model outputs: Since the aftershock sequence is part of the forecast, a
+high output is somewhat desirable and necessary, if there are aftershocks, even though it would
+clearly be better to actually have a low model output in between the aftershocks.
+Apart from the data considerations, there is also a noticeable variability in the results even
+with smaller changes in the architecture (4 −5%). Even though many such changes were
+made in the process of this work, it is still likely that a better architecture, even of similar
+complexity, could be found. Especially since there many choices during this workflow that can
+with good reason be done different ways, optimizing the combination of all those choices can
+likely improve the overall performance considerably.
+5
+Conclusion
+While there are obvious challenges in our model, such as the location dependent overfitting,
+these do not account for all of the models forecasting performance. Using only roughly 2300
+Earthquakes to train the model shows, that with growing the dataset in the future, better forecasts
+should be possible. This work also shows the importance of improving the seismic network
+coverage in earthquake prone regions around the pacific ring of fire where the coverage, and
+consequently the magnitude of completeness is poorer, for example in Indonesia, Kamchatka,
+and the west coast of South America.
+While our results are quite promising for advancing the problem of earthquake forecasting,
+there are problems with the short time frame of the training data as well as validation against a
+fair baseline assumption remain. Training on more regions which don’t have extreme seismic-
+ity changing events and including more events from the more recent past as well as changing
+starting days will very likely improve the models performance in the future.
+27
+
+--- Sayfa 28 ---
+6
+Acknowledgements
+This research is supported by the “KI-Nachwuchswissenschaftlerinnen” – grant SAI 01IS20059
+by the Bundesministerium f¨ur Bildung und Forschung – BMBF. The calculations were per-
+formed at the Frankfurt Institute for Advanced Studies’ GPU cluster, funded by BMBF for the
+project Seismologie und Artifizielle Intelligenz (SAI). We thank Megha Chakraborty, Darius
+Fenner, Dr. Claudia Quinteros, Professor Geoffrey Fox and Dr. Kiran Thingbaijam for their
+helpful discussion. We acknowledge the help and advice from Prof. Dr. Horst Stoecker. The
+research has made extensive use of TensorFlow (Mart´ın Abadi et al. 2015), numpy (Harris et al.
+2020), and matplotlib (Hunter 2007). Geographical maps were made with Natural Earth. Free
+vector and raster map data @ naturalearthdata.com. The training was carried out on Nvidia
+A100 Tensor Core GPUs.
+References
+Aki, Keiiti (1965). “17. Maximum Likelihood Estimate of b in the Formula logN=a-bM and its
+Confidence Limits”. In: Bulletin of the Earthquake Research Institute 43.2, pp. 237–239.
+Bird, Peter (2003). “An updated digital model of plate boundaries”. In: Geochemistry, Geo-
+physics, Geosystems 4.3. DOI: https : / /doi . org / 10 . 1029 /2001GC000252.
+eprint: https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/
+2001GC000252. URL: https://agupubs.onlinelibrary.wiley.com/doi/
+abs/10.1029/2001GC000252.
+Bradley, Andrew P. (1997). “The use of the area under the ROC curve in the evaluation of ma-
+chine learning algorithms”. In: Pattern Recognition 30.7, pp. 1145–1159. ISSN: 0031-3203.
+DOI: https://doi.org/10.1016/S0031-3203(96)00142-2. URL: https:
+//www.sciencedirect.com/science/article/pii/S0031320396001422.
+Chakraborty, Megha et al. (2022). “CREIME—A Convolutional Recurrent Model for Earth-
+quake Identification and Magnitude Estimation”. In: Journal of Geophysical Research: Solid
+Earth 127.7. e2022JB024595 2022JB024595, e2022JB024595. DOI: https : / / doi .
+org/10.1029/2022JB024595. eprint: https://agupubs.onlinelibrary.
+wiley.com/doi/pdf/10.1029/2022JB024595. URL: https://agupubs.
+onlinelibrary.wiley.com/doi/abs/10.1029/2022JB024595.
+Chang, Shiyu et al. (2017). “Dilated recurrent neural networks”. In: Advances in neural infor-
+mation processing systems 30.
+Di Giacomo, D., E. R. Engdahl, and D. A. Storchak (2018). “The ISC-GEM Earthquake Cata-
+logue (1904–2014): status after the Extension Project”. In: Earth System Science Data 10.4,
+pp. 1877–1899. DOI: 10.5194/essd- 10- 1877- 2018. URL: https://essd.
+copernicus.org/articles/10/1877/2018/.
+Fox, Geoffrey Charles et al. (2022a). “Earthquake Nowcasting with Deep Learning”. In: Geo-
+Hazards 3.2, pp. 199–226. ISSN: 2624-795X. DOI: 10.3390/geohazards3020011.
+URL: https://www.mdpi.com/2624-795X/3/2/11.
+— (2022b). “Earthquake Nowcasting with Deep Learning”. In: GeoHazards 3.2, pp. 199–226.
+ISSN: 2624-795X. DOI: 10.3390/geohazards3020011. URL: https://www.
+mdpi.com/2624-795X/3/2/11.
+Gulia, Laura and Stefan Wiemer (Oct. 2019). “Real-time discrimination of earthquake fore-
+shocks and aftershocks”. In: Nature 574.7777, pp. 193–199. ISSN: 1476-4687. DOI: 10.
+1038/s41586-019-1606-4. URL: https://doi.org/10.1038/s41586-
+019-1606-4.
+28
+
+--- Sayfa 29 ---
+Gutenberg, B. and C. F. Richter (1944). “Frequency of Earthquakes in California”. In: Bulletin
+of the Seismological Society of America 34.4, pp. 185–188. eprint: https://authors.
+library.caltech.edu/47734/1/185.full.pdf.
+Harris, Charles R. et al. (Sept. 2020). “Array programming with NumPy”. In: Nature 585.7825,
+pp. 357–362. DOI: 10.1038/s41586-020-2649-2. URL: https://doi.org/
+10.1038/s41586-020-2649-2.
+He, Kaiming et al. (2016). “Deep Residual Learning for Image Recognition”. In: 2016 IEEE
+Conference on Computer Vision and Pattern Recognition (CVPR), pp. 770–778. DOI: 10.
+1109/CVPR.2016.90.
+Hochreiter, Sepp and J¨urgen Schmidhuber (Nov. 1997). “Long Short-Term Memory”. In: Neu-
+ral Computation 9.8, pp. 1735–1780. ISSN: 0899-7667. DOI: 10.1162/neco.1997.9.
+8.1735. eprint: https://direct.mit.edu/neco/article-pdf/9/8/1735/
+813796/neco.1997.9.8.1735.pdf. URL: https://doi.org/10.1162/
+neco.1997.9.8.1735.
+Huang, Jin and Charles X Ling (2005). “Using AUC and accuracy in evaluating learning algo-
+rithms”. In: IEEE Transactions on knowledge and Data Engineering 17.3, pp. 299–310.
+Hunter, J. D. (2007). “Matplotlib: A 2D graphics environment”. In: Computing in Science &
+Engineering 9.3, pp. 90–95. DOI: 10.1109/MCSE.2007.55.
+Lea, Colin et al. (2017). “Temporal convolutional networks for action segmentation and detec-
+tion”. In: proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+pp. 156–165.
+LeCun, Yann, Yoshua Bengio, and Geoffrey Hinton (2015). “Deep learning”. In: nature 521.7553,
+pp. 436–444.
+Lehmann, Fanny et al. (2023). Fourier Neural Operator Surrogate Model to Predict 3D Seismic
+Waves Propagation. arXiv: 2304.10242 [cs.LG].
+Li, Wei et al. (2022). “EPick: Attention-based Multi-scale UNet for Earthquake Detection and
+Seismic Phase Picking”. In: Frontiers Earth Science, p. 2075.
+Ling, Charles X, Jin Huang, and Harry Zhang (2003). “AUC: a better measure than accuracy in
+comparing learning algorithms”. In: Advances in Artificial Intelligence: 16th Conference of
+the Canadian Society for Computational Studies of Intelligence, AI 2003, Halifax, Canada,
+June 11–13, 2003, Proceedings 16. Springer, pp. 329–341.
+Main, Ian G., Philip G. Meredith, and Colin Jones (Jan. 1989). “A reinterpretation of the pre-
+cursory seismic b-value anomaly from fracture mechanics”. In: Geophysical Journal Inter-
+national 96.1, pp. 131–138. ISSN: 0956-540X. DOI: 10.1111/j.1365-246X.1989.
+tb05255.x. eprint: https://academic.oup.com/gji/article-pdf/96/1/
+131/1613982/96-1-131.pdf. URL: https://doi.org/10.1111/j.1365-
+246X.1989.tb05255.x.
+Mart´ın Abadi et al. (2015). TensorFlow: Large-Scale Machine Learning on Heterogeneous Sys-
+tems. Software available from tensorflow.org. URL: https : / / www . tensorflow .
+org/.
+Mousavi, S. Mostafa and Gregory C. Beroza (2022). “Deep-learning seismology”. In: Science
+377.6607, eabm4470. DOI: 10.1126/science.abm4470. eprint: https://www.
+science.org/doi/pdf/10.1126/science.abm4470. URL: https://www.
+science.org/doi/abs/10.1126/science.abm4470.
+Nanjo, K. Z. et al. (Dec. 2010). “Analysis of the Completeness Magnitude and Seismic Network
+Coverage of Japan”. In: Bulletin of the Seismological Society of America 100.6, pp. 3261–
+3268. ISSN: 0037-1106. DOI: 10 . 1785 / 0120100077. eprint: https : / / pubs .
+geoscienceworld.org/ssa/bssa/article-pdf/100/6/3261/2654329/
+3261.pdf. URL: https://doi.org/10.1785/0120100077.
+29
+
+--- Sayfa 30 ---
+Ogata, Yosihiko, Ritsuko S. Matsu’ura, and Koichi Katsura (1993). “Fast likelihood computa-
+tion of epidemic type aftershock-sequence model”. In: Geophysical Research Letters 20.19,
+pp. 2143–2146. DOI: https://doi.org/10.1029/93GL02142. eprint: https:
+//agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/93GL02142.
+URL: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/
+93GL02142.
+Quinteros, Claudia Cartaya et al. (2023). Exploring a CNN Model for Earthquake Magnitude
+Estimation using HR-GNSS data. arXiv: 2304.09912 [physics.geo-ph].
+Sawires, Rashad et al. (Oct. 2019). “An updated and unified earthquake catalog from 1787 to
+2018 for seismic hazard assessment studies in Mexico”. In: Scientific Data 6.1, p. 241. ISSN:
+2052-4463. DOI: 10.1038/s41597-019-0234-z. URL: https://doi.org/10.
+1038/s41597-019-0234-z.
+Shan, Weifeng et al. (Oct. 2022). “EPM–DCNN: Earthquake Prediction Models Using Deep
+Convolutional Neural Networks”. In: Bulletin of the Seismological Society of America 112.6,
+pp. 2933–2945. ISSN: 0037-1106. DOI: 10.1785/0120220058. eprint: https://
+pubs.geoscienceworld.org/ssa/bssa/article- pdf/112/6/2933/
+5740040 / bssa - 2022058 . 1 . pdf. URL: https : / / doi . org / 10 . 1785 /
+0120220058.
+Smith, Warwick D. (Jan. 1981). “The b-value as an earthquake precursor”. In: Nature 289.5794,
+pp. 136–139. DOI: 10.1038/289136a0. URL: https://doi.org/10.1038/
+289136a0.
+Smyth, Christine and Jim Mori (Mar. 2011). “Statistical models for temporal variations of seis-
+micity parameters to forecast seismicity rates in Japan”. In: Earth, Planets and Space 63.3,
+p. 7. DOI: 10.5047/eps.2010.10.001. URL: https://doi.org/10.5047/
+eps.2010.10.001.
+Stockman, Samuel, Daniel J. Lawson, and Maxmilian J. Werner (2023). Forecasting the 2016-
+2017 Central Apennines Earthquake Sequence with a Neural Point Process. DOI: 10 .
+48550/ARXIV.2301.09948. URL: https://arxiv.org/abs/2301.09948.
+Storchak, D.A. et al. (2015). “The ISC-GEM Global Instrumental Earthquake Catalogue (1900–2009):
+Introduction”. In: Physics of the Earth and Planetary Interiors 239. ISC-GEM Catalogue,
+pp. 48–63. ISSN: 0031-9201. DOI: https://doi.org/10.1016/j.pepi.2014.
+06.009. URL: https://www.sciencedirect.com/science/article/pii/
+S003192011400154X.
+Storchak, Dmitry A. et al. (Sept. 2013). “Public Release of the ISC–GEM Global Instrumental
+Earthquake Catalogue (1900–2009)”. In: Seismological Research Letters 84.5, pp. 810–815.
+ISSN: 0895-0695. DOI: 10.1785/0220130034. eprint: https://pubs.geoscienceworld.
+org/ssa/srl/article-pdf/84/5/810/2766785/810.pdf. URL: https:
+//doi.org/10.1785/0220130034.
+Thingbaijam, Kiran Kumar S., P. Martin Mai, and Katsuichiro Goda (Sept. 2017). “New Empir-
+ical Earthquake Source-Scaling Laws”. In: Bulletin of the Seismological Society of America
+107.5, pp. 2225–2246. ISSN: 0037-1106. DOI: 10.1785/0120170017. eprint: https:
+//pubs.geoscienceworld.org/ssa/bssa/article-pdf/107/5/2225/
+3712063 / BSSA - 2017017 . 1 . pdf. URL: https : / / doi . org / 10 . 1785 /
+0120170017.
+Ting, K. M. (2017). “Confusion Matrix”. In: Encyclopedia of Machine Learning and Data Min-
+ing. Boston, MA: Springer US, pp. 260–260. ISBN: 978-1-4899-7687-1. DOI: 10.1007/
+978-1-4899-7687-1_50. URL: https://doi.org/10.1007/978-1-4899-
+7687-1_50.
+Velasco Herrera, Victor Manuel et al. (2022). “Long-Term Forecasting of Strong Earthquakes
+in North America, South America, Japan, Southern China and Northern India With Machine
+30
+
+--- Sayfa 31 ---
+Learning”. In: Frontiers in Earth Science 10. ISSN: 2296-6463. DOI: 10.3389/feart.
+2022.905792. URL: https://www.frontiersin.org/articles/10.3389/
+feart.2022.905792.
+Wakita, Koji (2013). “Geology and tectonics of Japanese islands: A review – The key to un-
+derstanding the geology of Asia”. In: Journal of Asian Earth Sciences 72. Geological Evo-
+lution of Asia, pp. 75–87. ISSN: 1367-9120. DOI: https://doi.org/10.1016/j.
+jseaes.2012.04.014. URL: https://www.sciencedirect.com/science/
+article/pii/S1367912012001642.
+31

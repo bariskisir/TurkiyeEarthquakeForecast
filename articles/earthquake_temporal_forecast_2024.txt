@@ -1,0 +1,5951 @@
+
+--- Sayfa 1 ---
+Robust Discontinuous Galerkin Methods Maintaining Physical Constraints
+for General Relativistic Hydrodynamics⋆
+Huihui Caoa, Manting Penga, Kailiang Wua,b,∗
+aDepartment of Mathematics, Southern University of Science and Technology, Shenzhen 518055, China
+bShenzhen International Center for Mathematics, Southern University of Science and Technology, Shenzhen 518055, China
+Abstract
+Numerically simulating general relativistic hydrodynamics (GRHD) presents significant challenges, including han-
+dling curved spacetime, achieving non-oscillatory shock-capturing and high-order accuracy, and maintaining essential
+physical constraints (such as positive density and pressure, and subluminal fluid velocity) under strong nonlinear cou-
+pling. This paper develops high-order accurate, physical-constraint-preserving, oscillation-eliminating discontinuous
+Galerkin (PCP-OEDG) schemes with the Harten–Lax–van Leer flux for GRHD. To suppress spurious oscillations
+near discontinuities, we incorporate an oscillation-eliminating (OE) procedure after each Runge–Kutta stage. This
+OE procedure, based on the exact solution operator of a novel linear damping equation, is computationally efficient
+and avoids the need for complicated characteristic decomposition. It ensures effective oscillation suppression while
+preserving the high-order accuracy and conservation properties of the DG method. To further enhance the stability
+and robustness of the DG method, we develop fully physical-constraint-preserving (PCP) schemes. First, we utilize
+the W-form of GRHD equations, which reformulates the (3 + 1) Arnowitt–Deser–Misner formalism via the Cholesky
+decomposition of the spatial metric. This addresses the challenge of the non-equivalence of admissible state sets at
+different points in curved spacetime, enabling the construction of provably PCP schemes via convexity techniques.
+Second, we rigorously prove the PCP property of cell averages using highly technical estimates and the Geometric
+Quasi-Linearization (GQL) approach [K. Wu and C.-W. Shu, SIAM Review, 65:1031–1073, 2023], which equivalently
+casts complex nonlinear constraints into linear ones by introducing auxiliary variables. Our proof shows that, with the
+enforcement of a simple PCP limiter, the updated cell averages of the OEDG solutions remain physically admissible
+throughout the simulation. Finally, we present provably convergent PCP iterative algorithms for the robust recov-
+ery of primitive variables, ensuring that these variables, approximately recovered from the evolved variables, satisfy
+the physical constraints throughout the iterative process. The resulting PCP-OEDG method is validated through ex-
+tensive numerical experiments, including classical test problems in flat spacetime, axisymmetric ultra-relativistic jet
+flows, and accretion onto rotating black holes in the Kerr metric. These results demonstrate our method’s robustness,
+accuracy, and ability to handle extreme GRHD scenarios involving strong shocks, high Lorentz factors, and strong
+gravitational fields.
+Keywords: General relativistic hydrodynamics; Physical-constraint-preserving; Discontinuous Galerkin method; Os-
+cillation-eliminating procedure; Geometric quasilinearization; W-form
+⋆This work is partially supported by Shenzhen Science and Technology Program (Grant No. RCJC20221008092757098) and National Natural
+Science Foundation of China (Grant No. 12171227).
+∗Corresponding author.
+e-mail: caohh@sustech.edu.cn (Huihui Cao), 12232855@mail.sustech.edu.cn (Manting Peng), wukl@sustech.edu.cn (Kailiang
+Wu)
+arXiv:2410.05000v1  [math.NA]  7 Oct 2024
+
+--- Sayfa 2 ---
+2
+Huihui Cao, Manting Peng, Kailiang Wu
+1. Introduction
+In astrophysics and high-energy physics, scenarios often arise where the velocity of fluid approaches the speed
+of light and strong gravitational fields significantly influence hydrodynamics. These extreme conditions necessitate
+the consideration of special and general relativistic effects in the modeling of fluid dynamics. Relativistic hydrody-
+namics (RHD) extends beyond the capabilities of Newtonian mechanics, offering explanations for phenomena that
+are inaccessible to non-relativistic theories. Additionally, RHD describes a variety of critical astrophysical processes,
+such as accretion onto black holes, the coalescence of neutron stars, and core-collapse supernovae. As such, RHD is
+indispensable in the study of a wide range of astrophysical phenomena, from stellar to galactic scales, as well as in
+laboratory plasma experiments.
+The equations governing RHD are highly nonlinear, incorporating complex spacetime curvature and relativistic
+effects. Due to these complexities, obtaining analytical solutions is often extraordinarily challenging, making numeri-
+cal simulations the primary and most powerful tool for exploring the physical mechanisms in RHD. Early work in this
+field can be traced back to the pioneering efforts of May, White, and Wilson [36, 37, 50], who applied the finite dif-
+ference method combined with artificial viscosity techniques to solve the general relativistic hydrodynamics (GRHD)
+equations in either Lagrangian or Eulerian coordinates. Since the 1990s, there has been significant development in
+high-resolution shock-capturing schemes for RHD. These include, but are not limited to, finite difference methods
+[17, 66, 42, 23, 43, 58], finite volume methods [38, 48, 3, 7, 29], adaptive moving mesh methods [23, 24], and dis-
+continuous Galerkin (DG) methods [70, 65, 49, 40, 18]. For further information and additional methods, interested
+readers are referred to papers such as [53, 63, 33, 34, 19] and the references therein.
+The DG method is a class of finite element methods whose trial and test spaces consist of discontinuous piecewise
+polynomials. It was first introduced by Reed and Hill [44] to solve a steady linear hyperbolic equation in 1973. A
+major development of DG method was coupled with the Runge–Kutta (RK) time discretization for solving nonlinear
+hyperbolic conservation laws by Cockburn, Shu, and their collaborators [9, 10, 11, 12]. The foundational framework
+of the explicit RKDG method in one dimension was established in [11, 10], with subsequent extensions to multidi-
+mensional equations and systems in [9, 12]. Despite the widespread popularity of DG methods for solving a variety
+of hyperbolic equations due to their notable features—such as compactness, uniformly high-order accuracy, and high
+parallel efficiency—several key technical challenges remain in developing a robust high-order DG method for GRHD
+equations:
+(i) Robust Primitive Variables Recovery: The flux and the eigenvalues/eigenvectors of its Jacobian matrix can-
+not be explicitly expressed in terms of the conserved variables, due to the nonlinear coupling introduced by relativistic
+effects. Therefore, it is essential to recover the primitive variables (such as rest-mass density, velocity, and pressure)
+from the conserved variables. This recovery process typically requires solving complex nonlinear algebraic equations,
+either analytically or numerically. Several analytical algorithms for recovering the primitive variables were developed
+in [1, 8, 46]. However, these methods may pose risks of low accuracy and high computational cost. As for numerical
+method, iterative algorithms are usually used to compute an intermediate variable, which is then used to determine the
+remaining variables. For instance, a root-finding algorithm using density as the intermediate variable was introduced
+in [17]. The Newton–Raphson algorithms, based on other intermediate variables like pressure, velocity, and Lorentz
+factors, were proposed in [45]. Unfortunately, the convergence of these iterative methods was not yet rigorously
+proven or guaranteed in theory. In the special relativistic case, recent studies have explored robust linearly convergent
+iterative recovery algorithms in [7] and proposed three efficient Newton–Raphson methods with provable convergence
+in [6]. In the context of GRHD, the added complexity of spacetime curvature and stronger nonlinear couplings further
+complicates the recovery process. Extending the provably convergent recovery algorithms [6, 7] to the GRHD case
+are highly desirable but have not been explored yet.
+(ii) Controlling Spurious Oscillations: The Gibbs phenomenon associated with high-order polynomials in the
+
+--- Sayfa 3 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+3
+DG method can lead to spurious oscillations when solving nonlinear hyperbolic systems involving discontinuities
+such as shock waves. These oscillations can cause nonphysical wave structures, numerical instability, or even blowup
+solutions. Controlling such spurious oscillations is critical for designing robust DG methods for RHD equations.
+Over the years, various strategies have been developed to mitigate these oscillations, including monotonic schemes
+[21], different types of limiters [47, 41, 71], and artificial viscosity terms [72, 25, 64, 27]. However, these methods
+have limitations: monotonic schemes are only first-order accurate, limiter selection can be problem-dependent, and
+artificial diffusion terms often require parameter tuning. In recent work, Lu, Liu, and Shu introduced numerical
+damping terms into the semi-discrete DG formulation, resulting in the oscillation-free DG (OFDG) methods [32, 31]
+to control spurious oscillations. This approach retains many desirable properties of the classical DG method, such as
+conservation, L2-boundedness, and high accuracy. However, the OFDG method may suffer from excessive smearing
+or persistent spurious oscillations in problems involving large or small scales (wave speeds). In cases with strong
+discontinuities and highly stiff damping terms, the (modified) exponential RK methods [28] are necessary due to the
+very restrictive time step sizes required by explicit RK discretization [31]. Additionally, characteristic decomposition
+is often required for the OFDG method to solve hyperbolic systems. More recently, motivated by the damping
+technique of OFDG methods, the oscillation-eliminating DG (OEDG) method, equipped with a scale-invariant and
+evolution-invariant damping operator, was proposed in [39]. This method incorporates an oscillation-eliminating (OE)
+procedure after each RK stage, effectively suppressing nonphysical oscillations for problems with various scales and
+wave speeds. The OE procedure is independent of the RK stage update, enabling seamless integration into existing
+DG codes as a standalone module. Compared to the OFDG method, the OEDG method offers reduced computational
+cost and greatly simplifies implementation, as it does not require characteristic decomposition and allows for normal
+time step sizes. Extensions and applications of the OEDG method to ideal magnetohydrodynamics (MHD) and the
+Kapila five-equation two-phase flow model have been explored in [30, 62]. In this work, we further develop high-order
+robust OEDG schemes preserving physical constraints for GRHD in curved spacetime.
+(iii) Physical-Constraint-Preserving: In RHD, several critical physical constraints must be satisfied, such as the
+positivity of density and pressure and the requirement that fluid velocity remains subluminal. These constraints are
+crucial for ensuring the physical plausibility and relativistic causality of the solutions, as well as for maintaining the
+stability of numerical methods. Violating these constraints during numerical computations can result in the eigen-
+values of the Jacobian matrix becoming imaginary, leading to an ill-posed discrete problem and simulation failures.
+Recent progress has been made in developing high-order methods that preserve such bound constraints in hyperbolic
+conservation laws through two types of limiters. The first type is flux-correction limiters [26, 61, 58], which modify
+the high-order flux by incorporating a first-order bound-preserving flux, resulting in fluxes that maintain both physi-
+cal constraints and high-order accuracy. The second type is the simple scaling limiter, applicable to high-order finite
+volume and DG schemes. This approach was first proposed by Zhang and Shu in [67, 68], where a scaling limiter is
+applied to the numerical solution to ensure pointwise constraint preservation, if it can be proven that the updated cell
+averages remain within the admissible state set.
+For RHD equations, most existing physical-constraint-preserving (PCP) research has been primarily focused on
+the special relativistic case. Wu and Tang [58] were the first to provide an explicit characterization of the admissi-
+ble state set and proposed high-order PCP finite difference weighted essentially non-oscillatory (WENO) schemes
+with flux-corrected PCP limiters for special RHD. A PCP finite volume WENO method for special RHD on unstruc-
+tured meshes was later developed in [7], which also introduced three robust algorithms for recovering the primitive
+variables. Bound-preserving DG methods for special RHD were designed in [40]. Additionally, [53] established a
+minimum principle for specific entropy and developed high-order accurate invariant region-preserving schemes for
+special RHD with an ideal equation of state. PCP central DG schemes were constructed in [60] for special RHD
+with a general equation of state. In addition, a flux-limiting approach that preserves the positivity of the rest-mass
+
+--- Sayfa 4 ---
+4
+Huihui Cao, Manting Peng, Kailiang Wu
+density was introduced in [43]. A reconstruction technique enforcing the subluminal constraint on fluid velocity was
+proposed in [4]. A flux-limiting entropy-viscosity approach for RHD, based on a measure of the entropy generated
+by the solution, was developed in [22]. Furthermore, PCP schemes have also been investigated for special relativistic
+magnetohydrodynamics (MHD) in [59, 56], and for non-relativistic MHD in [52, 54, 55]. A robust adaptive-order
+positivity-preserving finite difference scheme for general relativistic MHD was recently proposed in [15]. More re-
+cently, inspired by the works in [59, 52, 54, 55, 56], a general framework known as Geometric Quasi-Linearization
+(GQL) was established in [57]. This framework transforms complex nonlinear constraints into equivalent linear forms,
+offering a novel and powerful method for studying the preservation of nonlinear constraints.
+Developing a genuinely PCP numerical method for GRHD equations presents several technical challenges, par-
+ticularly in three key aspects: i) Establishing a provable PCP property for cell averages throughout the evolution pro-
+cess; ii) Ensuring that the values of the polynomial numerical solution at critical points satisfy physical constraints;
+iii) Maintaining the physical constraints of the primitive variables during their recovery from the conserved variables.
+The main challenges arise from the nonlinear implicit relation between the conserved variables (the evolved variables
+of the numerical schemes) and the primitive variables (which directly define the physical constraints). This feature,
+absent in the non-relativistic case, significantly complicates the analysis and design of PCP schemes for RHD. More-
+over, the curved spacetime in the GRHD case further complicates the PCP study. High-order PCP methods for GRHD
+were only investigated in [51]. However, the schemes studied in [51] were limited to the simple Lax–Friedrichs
+numerical flux, and PCP convergent algorithms for recovering primitive variables have not yet been explored in the
+general relativistic case.
+The aim of this paper is to design and analyze high-order PCP-OEDG methods with the Harten–Lax–van Leer
+(HLL) numerical flux for the GRHD equations. The distinctive advantages of the proposed methods include their
+essentially non-oscillatory nature and its provable PCP properties, including preservation of physical constraints in
+cell-average updates, pointwise solution values, and primitive variable recovery. The contributions, novelty, and
+significance of this work are outlined as follows:
+• Robust DG Method for GRHD Equations in W-form: We develop a high-order robust DG method for the
+W-form of GRHD equations in arbitrary spacetimes. The W-form was initially proposed in [51], leveraging
+the Cholesky decomposition of the induced metric on each spacelike hypersurface to reformulate the (3 + 1)
+Arnowitt–Deser–Misner (ADM) formalism of the GRHD equations. The admissible state set for the evolved
+variables in the (3 + 1) ADM formulation is spacetime-dependent, varying at different points in curved space-
+time. This variation invalidates the key convexity of the set required for the analysis and design of PCP DG
+schemes. The W-form effectively addresses this challenge by ensuring that the admissible state set is invari-
+ant with respect to spacetime. This invariance is essential for constructing high-order provably PCP-OEDG
+schemes, guaranteeing robustness and stability.
+• Suppression of Spurious Oscillations: To mitigate spurious oscillations in DG solutions near discontinuities,
+we incorporate an OE procedure after each RK stage. The OE procedure is based on the solution operator of
+a novel linear damping equation, which can be solved exactly without the need for numerical discretization.
+Consequently, the OE procedure is simple to implement and computationally efficient, avoiding the need for
+characteristic decomposition, which is particularly complex and computationally expensive for GRHD equa-
+tions. Furthermore, the OE procedure is non-intrusive to the DG discretization and can be integrated into
+existing GRHD DG solvers as a separate, modular component. Since the OE procedure only involves the solu-
+tion data from the target and adjacent cells, the resulting OEDG method maintains the compactness and parallel
+efficiency of the original DG method, which is crucial for GRHD simulations in highly complex spacetimes,
+such as those involving black holes or complicated geometries.
+
+--- Sayfa 5 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+5
+• PCP Theory and Techniques: We develop fully PCP, high-order DG schemes through the following three
+approaches:
+– Prove the PCP Property of Cell Averages via GQL: We employ the GQL approach to rigorously prove
+that high-order OEDG schemes with appropriate HLL wave speeds satisfy the weak PCP property, mean-
+ing they preserve the PCP property of cell averages if the DG solution from the previous time step meets
+the required physical constraints. This ensures that the cell averages of the evolved variables remain
+within the physically admissible state set. The proof is quite nontrivial due to the strong nonlinearity of
+the GRHD equations.
+– PCP Limiter for Point Values: Building upon the weak PCP property, we present a PCP limiter to
+enforce the PCP property for the values of the OEDG solution polynomials at certain quadrature points.
+This limiter guarantees the satisfaction of conditions necessary for the cell averages to preserve the PCP
+property at the next time step.
+– PCP Recovery of Primitive Variables: Although the evolved variables are ensured to remain within the
+admissible state set, it is also necessary to ensure that the primitive variables, approximately recovered
+from the evolved variables, satisfy the physical constraints. To address this, we develop provably con-
+vergent, PCP iterative algorithms for robust recovery of primitive variables. These algorithms guarantee
+that the approximate primitive variables always respect the physical constraints throughout the recovery
+process.
+As a result, the numerical solutions evolved by the OEDG method remain in the admissible state set and satisfy
+the physical constraints throughout the entire simulation.
+• Validation and Simulation: To validate the robustness, accuracy, and effectiveness of our PCP-OEDG method,
+we perform extensive numerical experiments, including classical test problems such as the double Mach reflec-
+tion and shock-bubble interaction in the Minkowski spacetime, and axisymmetric ultra-relativistic jet flows in
+cylindrical coordinates. Additionally, we accurately simulate the accretion process onto rotating black holes
+within the Kerr metric and study the properties of the event horizon. The results demonstrate that the PCP-
+OEDG method is capable of successfully simulating extreme GRHD problems involving strong shocks, ex-
+tremely low densities/pressures, high Lorentz factors, and/or strong gravitational fields, providing a reliable
+numerical tool for studying complex physical phenomena in both special and general relativity.
+This paper is organized as follows. In Section 2, we introduce the governing equations of GRHD. Section 3
+presents the high-order PCP-OEDG method for GRHD equations in the W-form, including the semi-discrete DG
+formulation in Subsection 3.1, the fully-discrete OEDG method in Subsection 3.2, and the PCP theory and techniques
+in Subsection 3.3. In Section 4, we illustrate our PCP-OEDG method for RHD equations in various metrics and
+coordinate systems. Section 5 provides extensive numerical tests to validate the effectiveness of the PCP-OEDG
+method. Finally, we draw conclusions in Section 6.
+Throughout the paper, we employ the Einstein summation convention over repeated indices, and the geometrized
+unit system so that the speed of light in vacuum and the gravitational constant are equal to one.
+2. Governing Equations of Relativistic Hydrodynamics
+The (d + 1)-dimensional spacetime GRHD equations can be formulated in a covariant form as [19]:
+
+∂µ(ρuµ) = 0,
+∂µT µν = 0,
+(1)
+
+--- Sayfa 6 ---
+6
+Huihui Cao, Manting Peng, Kailiang Wu
+which represent the local conservation laws of baryon number density (the continuity equation) and the stress-energy
+tensor T µν (the conservation of energy and momentum). The Greek indices µ and ν in Eqs. (1) run from 0 to d. Here,
+ρ denotes the rest-mass density, and uµ = γ(1, v1, . . . , vd) represents the (d +1)-velocity of the fluid, where (v1, . . . , vd)
+is the d-dimensional spatial velocity of the fluid, and γ is the Lorentz factor, to be defined later. The operator ∂µ
+denotes the covariant derivative associated with the (d + 1)-dimensional spacetime metric gµν, with the line element
+given by ds2 = gµνdxµdxν. The coordinates in the (d + 1)-dimensional spacetime are xµ = (t, x1, . . . , xd).
+For an ideal fluid, neglecting the effects of viscosity and heat transfer, the stress-energy tensor is given by
+T µν = ρhuµuν + pgµν,
+(2)
+where p is the pressure, ρ is the rest-mass density, and h is the relativistic specific enthalpy, defined by
+h = 1 + e + p
+ρ ,
+(3)
+with e representing the specific internal energy. The metric tensor gµν is the inverse of gµν, and it satisfies the relation
+gµνgνλ = δµ
+λ,
+(4)
+where δµ
+λ is the Kronecker delta:
+δµ
+λ =
+
+1,
+if µ = λ,
+0,
+if µ , λ.
+The system is closed by an equation of state that relates the fundamental thermodynamic variables. In this study, we
+adopt the ideal equation of state:
+e =
+p
+(Γ −1)ρ,
+(5)
+where Γ is the adiabatic index, which satisfies Γ ∈(1, 2]. The condition Γ ≤2 ensures that the speed of sound remains
+less than the speed of light, thereby maintaining relativistic causality [58].
+In scenarios where the fluid’s self-gravity is negligible compared to the background gravitational field, the dynam-
+ics of the system are fully described by Eqs. (1) and (5). If the self-gravity cannot be neglected, the GRHD equations
+must be solved in conjunction with the Einstein field equations:
+Gµν = 8πT µν,
+which relate the curvature of spacetime to the energy-momentum distribution. In this paper, we assume that the
+spacetime metric gµν and its derivatives ∂gµν/∂xσ are either given or can be computed numerically using a solver for
+the Einstein equations at each time step. Furthermore, the metric tensor gµν is assumed to be a real, symmetric tensor
+with a signature (−, +, . . . , +).
+In numerical computations, it is often advantageous to reformulate the covariant equations (1) using the (3 + 1)
+formalism, also known as the ADM decomposition [2]. In this formalism, spacetime is decomposed into a series
+of non-intersecting spacelike hypersurfaces, each characterized by a unit normal vector given by (1/α, −βi/α). The
+lapse function α > 0 measures the proper time between adjacent hypersurfaces, and the shift vector βi describes
+the displacement of the hypersurfaces relative to each other over time. The line element in the (3 + 1) formalism is
+expressed as
+ds2 = −(α2 −βiβi)dt2 + 2βidxidt + χi jdxidx j,
+
+--- Sayfa 7 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+7
+where χij is the induced metric on each spacelike hypersurface. The components βi are the covariant components
+of the shift vector, defined by βi = χijβj. The GRHD equations (1) can then be rewritten as a first-order hyperbolic
+system [5]:
+1
+√−g
+ ∂√χU
+∂t
++ ∂√−gGi(U)
+∂xi
+!
+= R(U),
+(6)
+where g = det(gµν) satisfies √−g = α √χ with χ = det(χi j). For curved spacetime, the source terms R(U) in Eq. (6)
+arise from the spacetime geometry. The conservative vector, flux vectors, and source term are given by
+U = (D, m, E)⊤,
+(7)
+Gi = (D˜vi, m˜vi + pei, E˜vi + pvi)⊤,
+i = 1, . . . , d,
+(8)
+R =
+
+0, T µνgνσΓσ
+µi, T µ0∂µα −αT µνΓ0
+µν
+⊤,
+(9)
+where ei denotes the ith row of the identity matrix of size d, ˜vi = vi−βi/α, and the fluid velocity vector v = (v1, . . . , vd)
+is defined by
+vi = ui
+αu0 + βi
+α .
+(10)
+In (9), Γσ
+µν are the (d + 1)-dimensional Christoffel symbols, defined by
+Γσ
+µν = 1
+2gσλ 
+∂µgνλ + ∂νgµλ −∂λgµν
+
+.
+(11)
+The conserved variables D, m = (m1, . . . , md), and E represent the mass density, the momentum vector, and the total
+energy, respectively. Let Q = (ρ, v, p)⊤denote the primitive variable vector. Then, U can be calculated from Q by
+D = ργ,
+m = Dhγv,
+E = Dhγ −p,
+(12)
+where the Lorentz factor γ = αu0 = 1/
+q
+1 −∥v∥2
+X, with ∥v∥2
+X = χi jvivj. The matrix X = (χi j)1≤i, j≤d is symmetric and
+positive definite, typically associated with the coordinates (t, xi). For simplicity, we denote ∥v∥I =: ∥v∥, where I is the
+identity matrix of size d.
+In addition to ensuring the positivity of density and pressure (internal energy), as in the non-relativistic case,
+another physical constraint is that the fluid velocity must remain subluminal. The physically admissible state set of U
+is defined by
+G(0) =
+n
+U = (D, m, E)⊤: D > 0, p(U) > 0, ∥v(U)∥X < 1
+o
+.
+(13)
+Preserving the conserved variables within the admissible state set is necessary for maintaining the hyperbolicity of
+the system. This ensures the existence of (d + 2) real eigenvalues for the Jacobian matrix ∂(niGi)/∂U [19]:
+λ(0)
+n =
+1
+1 −∥v∥2
+Xc2s
+
+nivi(1 −c2
+s) −csγ−1 q
+(1 −∥v∥2
+Xc2s)(nini) − 1 −c2s
+ (nivi)2
+
+−niβi
+α ,
+(14)
+λ(1)
+n = . . . = λ(d)
+n = nivi −niβi
+α ,
+(15)
+λ(d+1)
+n
+=
+1
+1 −∥v∥2
+Xc2s
+
+nivi(1 −c2
+s) + csγ−1 q
+(1 −∥v∥2
+Xc2s)(nini) − 1 −c2s
+ (nivi)2
+
+−niβi
+α ,
+(16)
+where n = (n1, . . . , nd) is any non-zero vector, and the local sound speed for the ideal equation of state is defined by
+cs =
+q
+Γp
+ρh .
+
+--- Sayfa 8 ---
+8
+Huihui Cao, Manting Peng, Kailiang Wu
+Due to the strong nonlinearity, p(U) and v(U) in the last two constraints in (13) are implicit functions of U without
+explicit formulas. Consequently, verifying these constraints for the solutions of a numerical scheme is challenging.
+This complexity makes it very difficult to study the properties of G(0) and to develop PCP schemes for (6) that ensure
+the numerical solution remains within G(0). Our previous work [51] discovered an equivalent but much simpler
+representation of G(0), which is explicitly expressed in terms of U:
+G(1)
+χ =
+n
+U = (D, m, E)⊤: D > 0, qχ(U) = E −
+√
+D2 + mXm⊤> 0
+o
+,
+(17)
+From the equivalent representation G(1)
+χ
+of G(0), one can discover that the admissible state set (17) is spacetime-
+dependent and varies across different points in a curved spacetime. Specifically, if X , ˆX, then G(1)
+χ
+, G(1)
+ˆχ . Conse-
+quently, the basic convexity of G(1)
+χ , which is typically required by existing PCP frameworks, cannot be utilized when
+studying PCP schemes for GRHD. This is because convexity techniques are not applicable between inequivalent ad-
+missible state sets. To address this challenge, we follow our previous work [51] and introduce a linear operator in the
+local spacetime that maps elements of G(1)
+χ to a spacetime-independent set G(2), given by
+W = √χLU ∈G(2),
+∀U ∈G(1)
+χ ,
+(18)
+where
+G(2) =
+W = (W0, . . . , Wd+1)⊤: W0 > 0, q(W) = Wd+1 −
+
+d
+X
+i=0
+W2
+i
+
+1/2
+> 0
+,
+(19)
+is a spacetime-independent admissible state set expressed in terms of W. Here, the square matrix L = diag{1, Θ, 1},
+and Θ is the Cholesky decomposition of the matrix X, satisfying Θ⊤Θ = X; see [51] for more details.
+The spacetime-independent admissible state set G(2) has the following properties.
+Lemma 2.1 (Convexity [51]). The function q(W) defined in (19) is concave with respect to W. The admissible set
+G(2) is an open convex set.
+Next, we introduce an equivalent form of the GRHD equations, called the W-form [51], by multiplying Eq. (6) by
+the invertible matrix L from the left. This transformation ensures that the admissible evolved variables in the W-form
+exactly match the set G(2):
+∂W
+∂t + ∂Hi(W)
+∂xi
+= S(W),
+(20)
+where
+W = √χ(D, mΘ⊤, E)⊤,
+(21)
+Hi(W) = √−gLGi,
+i = 1, . . . , d,
+(22)
+S(W) = √χ∂L
+∂t U + √−g
+ 
+LR + ∂L
+∂xi Gi
+!
+.
+(23)
+The spectral radius of the Jacobian matrix ∂(niHi)/∂W for any non-zero vector n = (n1, . . . , nd) is defined by
+ηn =
+α
+1 −∥v∥2
+Xc2s
+
+|nivi|(1 −c2
+s) + csγ−1 q
+(1 −∥v∥2
+Xc2s)(nini) −(1 −c2s)(nivi)2
+
++ |niβi|.
+(24)
+In flat spacetime, the line element is given by
+ds2 = −dt2 + (dx1)2 + · · · + (dxd)2,
+
+--- Sayfa 9 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+9
+where the spacetime metric gµν = diag{−1, 1, . . . , 1} is the Minkowski tensor. In this case, the (3+1) ADM formulation
+and the W-form of the special RHD equations coincide, both reducing to a system of conservation laws:
+∂U
+∂t + ∂Fi(U)
+∂xi
+= 0,
+(25)
+where the conservative vector and flux vectors are defined as
+U = (D, m1, . . . , md, E)⊤,
+(26)
+Fi = (Dvi, m1vi + pe1i, . . . , mdvi + pedi, mivi)⊤,
+i = 1, . . . , d,
+(27)
+with eij denoting the element in the i-th row and j-th column of the identity matrix of size d.
+3. Robust PCP-OEDG Schemes for GRHD Equations in W-Form
+In this section, we introduce the high-order PCP-OEDG method for solving the GRHD system in the W-form:
+∂W
+∂t + ∇· H(W) = S(W),
+(28)
+where H = (H1, . . . , Hd) denotes the fluxes. Without loss of generality, we consider numerical methods for a d-
+dimensional spatial domain Ω, where d = 1, 2, or 3. The spatial coordinate vector in the computational domain Ωis
+represented by x = (x1, . . . , xd).
+3.1. Semi-Discrete DG Formulation
+Let Th represent a partition of Ωinto a finite number of cells, where cells are polygons for d = 2 and polyhedra
+for d = 3, with disjoint interiors satisfying Ω= ∪K∈ThK. We denote by nE = (n1, n2, . . . , nd) the outward unit normal
+vector on the cell interface E. For any subset D ⊆Ω, the notation |D| denotes the d-dimensional Lebesgue measure of
+D.
+The Pm-based discontinuous finite element space on the mesh Th is defined as
+Vm
+h :=
+n
+v(x) ∈L2(Ω) : v(x)|K ∈Pm(K), ∀K ∈Th
+o
+,
+where Pm(K) represents the space of polynomials on cell K of degree at most m, specifically:
+Pm(K) = span
+n
+φ(a)
+K (x), |a| ≤m
+o
+with {φ(a)
+K (x)} denoting the local orthogonal basis functions on K. Here, the vector a = (a1, . . . , ad) is a multi-index
+with aj denoting the degree of φ(a)
+K (x) in the variable x j, and |a| = Pd
+j=1 a j denotes the total degree. In particular, we
+set φ(0)
+K (x) ≡1 for all x ∈K. The dimensionality of Pm(K) is denoted by N.
+Multiplying equation (28) by a test function vh(x) ∈Vm
+h , integrating by parts over each cell K, and approximating
+the exact solution W by Wh ∈[Vm
+h ]d+2, we obtain the semi-discrete DG formulation:
+Z
+K
+∂Wh(t, x)
+∂t
+vh(x) dx =
+Z
+K
+S(Wh(t, x))vh(x) dx +
+Z
+K
+H(Wh(t, x)) · ∇vh(x) dx
+−
+X
+E∈∂K
+Z
+E
+bH(Wh(t, x); nE)vh(x) ds,
+∀vh ∈Vm
+h ,
+(29)
+where bH(Wh(t, x); nE) represents a suitable numerical flux, often taken as
+bH(WK−
+h , WK+
+h ; nE),
+
+--- Sayfa 10 ---
+10
+Huihui Cao, Manting Peng, Kailiang Wu
+with WK−
+h
+and WK+
+h
+denoting the values of Wh on either side of the interface E from the interior and exterior of
+K, respectively. For clarity, we may omit the time dependence in subsequent expressions when it does not lead to
+confusion. In this work, we utilize the HLL flux:
+bHHLL(W−, W+; nE) := (s+H(W−) −s−H(W+)) · nE + s+s−(W+ −W−)
+s+ −s−
+,
+(30)
+with
+s−(W−, W+; nE) = α min
+n
+λ(0)
+nE (W−), λ(0)
+nE (W+), 0
+o
+,
+(31)
+s+(W−, W+; nE) = α max
+n
+λ(d+1)
+nE
+(W−), λ(d+1)
+nE
+(W+), 0
+o
+,
+(32)
+where α denotes the lapse function, and λ(0)
+nE and λ(d+1)
+nE
+represent the smallest and largest eigenvalues of the Jacobian
+matrix ∂G·nE
+∂U
+in the direction of nE, given by (14) and (16), respectively.
+Let Wh(t, x) =
+
+W(0)
+h , W(1)
+h , . . . , W(d+1)
+h
+⊤represent the DG solution. Let ϕ(q)
+K (x) ∈RNq×1 be the column vector
+formed by the basis functions
+n
+φ(a)
+K (x) : |a| = q
+o
+of total degree q, where Nq is the cardinality of the index set {a : |a| =
+q}. Each component W(r)
+h (t, x) ∈Vm
+h can be expanded as
+W(r)
+h (t, x) =
+m
+X
+q=0
+w(q)
+r (t)ϕ(q)
+K (x),
+∀x ∈K,
+r = 0, . . . , d + 1,
+where w(q)
+r (t) is a row vector of unknown modal coefficients corresponding to the basis vector ϕ(q)
+K (x). Thus, the
+approximate solution Wh ∈[Vm
+h ]d+2 can be expressed in matrix form:
+Wh(t, x) =
+m
+X
+q=0
+W(q)
+K (t)ϕ(q)
+K (x) = WK(t)ΦK(x),
+∀x ∈K,
+(33)
+where the modal coefficient matrix WK(t) and the basis matrix ΦK(x) are defined as
+W(q)
+K (t) =
+
+w(q)
+0 (t)
+w(q)
+1 (t)
+...
+w(q)
+d+1(t)
+
+(d+2)×Nq
+,
+WK(t) =
+
+w(0)
+0 (t)
+w(1)
+0 (t)
+· · ·
+w(m)
+0 (t)
+w(0)
+1 (t)
+w(1)
+1 (t)
+· · ·
+w(m)
+1 (t)
+...
+...
+...
+...
+w(0)
+d+1(t)
+w(1)
+d+1(t)
+· · ·
+w(m)
+d+1(t)
+
+(d+2)×N
+,
+ΦK(x) =
+
+ϕ(0)
+K (x)
+ϕ(1)
+K (x)
+...
+ϕ(m)
+K (x)
+
+N×1
+.
+(34)
+Given the arbitrariness of vh(x) ∈Vm
+h , the semi-discrete DG scheme (29) can be written as
+Z
+K
+∂Wh(t, x)
+∂t
+Φ⊤
+K(x) dx =
+Z
+K
+S(Wh(t, x))Φ⊤
+K(x) dx +
+Z
+K
+H(Wh(t, x))∇Φ⊤
+K(x) dx
+−
+X
+E∈∂K
+Z
+E
+bHHLL(W−
+h, W+
+h; nE)Φ⊤
+K(x) ds.
+(35)
+Substituting (33) into (35) and applying suitable quadrature rules to approximate the flux and source terms, we obtain
+the matrix formulation:
+dWK(t)
+dt
+=
+
+AS
+K + AH
+K −A
+b
+H
+K
+
+A−1
+K ,
+∀K ∈Th,
+(36)
+where the mass matrix AK ∈RN×N and the matrices AS
+K ∈R(d+2)×N, AH
+K ∈R(d+2)×N, and Ab
+H
+K ∈R(d+2)×N are defined as
+follows:
+AK :=
+Z
+K
+ΦK(x)Φ⊤
+K(x)dx = diag
+(Z
+K
+
+φ(a)
+K (x)
+2 dx : |a| ≤m
+)
+,
+(37)
+
+--- Sayfa 11 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+11
+AS
+K := |K|
+QK
+X
+p=1
+ωK,pS(WK(t)ΦK(xK,p))Φ⊤
+K(xK,p) ≈
+Z
+K
+S(Wh(t, x)) Φ⊤
+K(x) dx,
+AH
+K := |K|
+QK
+X
+p=1
+ωK,pH(WK(t)ΦK(xK,p))∇Φ⊤
+K(xK,p) ≈
+Z
+K
+H(Wh(t, x))∇Φ⊤
+K(x)dx,
+A
+b
+H
+K :=
+X
+E∈∂K
+K′∩K=E
+QE
+X
+p=1
+|E|ωE,pbHHLL(WK(t)ΦK(xE,p), WK′(t)ΦK′(xE,p); nE)Φ⊤
+K(xE,p)
+≈
+X
+E∈∂K
+Z
+E
+bHHLL(WK−
+h , WK+
+h ; nE)Φ⊤
+Kds.
+Here, |E| denotes the (d −1)-dimensional measure of the interface E, {xK,p}QK
+p=1 and {xE,p}QE
+p=1 are the quadrature nodes
+on K and E, respectively, and {ωK,p}QK
+p=1 and {ωE,p}QE
+p=1 are the corresponding quadrature weights.
+3.2. Fully-Discrete OEDG Method
+For simplicity, the time interval [0, T] is divided into non-uniform time steps at mesh points {tn}M
+n=0 such that: (i)
+t0 = 0; (ii) tn+1 = tn +∆tn; and (iii) tM = T. The time step size ∆tn is determined according to a suitable CFL condition
+to ensure stability.
+Let ΛK = {K} ∪{K′ : K′ ∩K = E ∈∂K} denote the set consisting of cell K and its adjacent cells that share a
+common interface with K. Due to the compactness property of DG schemes, the right-hand side of (36) depends only
+on the information from cell K and its adjacent cells. To make this dependence explicit, we define the operator
+LK
+
+{WK′}K′∈ΛK
+
+:=
+
+AS
+K + AH
+K −A
+b
+H
+K
+
+A−1
+K .
+Thus, the semi-discrete system (35) can be regarded as a system of ordinary differential equations (ODEs):
+dWK
+dt
+= LK
+
+{WK′}K′∈ΛK
+
+,
+∀K ∈Th.
+This ODE system can be discretized in time using explicit RK methods. When using conventional RKDG methods,
+numerical solutions of the GRHD system may suffer from spurious oscillations near discontinuities. To address this,
+following our recent work [39], we apply an OE procedure to suppress spurious oscillations. The OEDG method
+alternates between evolving the semi-discrete DG scheme and solving a damping equation:
+dWK
+dt
+= LK
+
+{WK′}K′∈ΛK
+
+,
+dWσ,K
+dt
+= −Wσ,KD
+
+{WK′}K′∈ΛK
+
+,
+(38)
+where the damping operator D(W) is a diagonal matrix of the form
+D(W) = diag d0(W), d1(W)IN1, . . . , dm(W)INm
+	 ,
+with INq being the identity matrix of size Nq, and damping coefficients {d j}1≤j≤m to be defined later. The second ODE
+system in (38) serves as a damping mechanism, evolving the DG solution to an essentially oscillation-free one. Since
+the damping operator D
+
+{WK′}K′∈ΛK
+
+is independent of Wσ, this ODE system is linear and can be solved exactly
+using an exponential operator:
+Wσ,K(τ) = Wσ,K(0) exp
+
+−τD
+
+{WK′}K′∈ΛK
+
+,
+τ ≥0.
+(39)
+The OEDG method retains the high-order accuracy of the original DG method, as the damping Wσ,KD
+
+{WK′}K′∈ΛK
+
+is a high-order term for smooth solutions. This will be confirmed by our numerical experiments.
+The fully-discrete OEDG method, integrating the OE procedure after each RK stage, is as follows:
+
+--- Sayfa 12 ---
+12
+Huihui Cao, Manting Peng, Kailiang Wu
+• Initialize Wn,0
+σ,K = Wn
+σ,K.
+• For ℓ= 0, 1, . . . , k −1, compute the intermediate modal coefficient matrices:
+– RK update:
+Wn,ℓ+1
+K
+=
+X
+0≤s≤ℓ
+
+cℓsWn,s
+σ,K + ∆tndℓsLK
+n
+Wn,s
+σ,K′
+o
+K′∈ΛK
+
+;
+– OE procedure:
+Wn,ℓ+1
+σ,K
+= Wn,ℓ+1
+K
+exp
+
+−∆tnD
+n
+Wn,ℓ+1
+K′
+o
+K′∈ΛK
+
+;
+(40)
+• Set Wn+1
+σ,K = Wn,k
+σ,K.
+Here, cℓs and dℓs are the RK coefficients, with P
+0≤s≤ℓcℓs = 1. The matrix Wn
+K represents the modal coefficient matrix
+of the numerical solution Wn
+h on cell K at time tn. Similarly, Wn,ℓ+1
+σ,K
+is the modal coefficient matrix after ℓRK stages
+and OE procedures.
+In fact, the OE procedure (40) is the solution to the damping equation (38), with τ = ∆tn and initial data Wσ,K(0) =
+Wn,ℓ+1
+K
+. It can be interpreted as a nonlinear filter. The OEDG method, originally proposed in [39], is the first to
+bridge damping and filtering techniques by decoupling the damping equations from the nonlinear DG schemes. This
+approach was motivated by the DG-coupled damping technique developed by Lu, Liu, and Shu in [32, 31].
+In [39], the OE procedure was originally derived by solving the following problem, using the original RKDG
+solution Wn,ℓ+1
+h
+after the ℓ-th RK stage as the initial value:
+
+d
+dτ
+Z
+K
+Wσvh dx +
+m
+X
+r=0
+δr
+K(Wn,ℓ+1
+h
+)
+Z
+K
+(Wσ −Pr−1
+h Wσ)vh dx = 0,
+∀vh ∈Vm
+h ,
+Wσ(0, x) = Wn,ℓ+1
+h
+(x),
+(41)
+where the damping coefficients δr
+K(Wn,ℓ+1
+h
+) will be defined later. Here, Pr
+h is the standard L2 projection operator onto
+Vr
+h for r ≥0, and P−1
+h is defined as P0
+h. Note that both Wn,ℓ+1
+h
+and Wσ belong to [Vm
+h ]d+2, and they can be expressed
+on K as
+Wσ(τ, x) =
+m
+X
+q=0
+W(q)
+σ,K(τ)ϕ(q)
+K (x),
+Wn,ℓ+1
+h
+(x) = Wσ(0, x) =
+m
+X
+q=0
+W(q)
+σ,K(0)ϕ(q)
+K (x).
+(42)
+By the orthogonality of the basis functions, we have
+Wσ −Pr−1
+h Wσ =
+m
+X
+q=max{1,r}
+W(q)
+σ,K(τ)ϕ(q)
+K (x).
+(43)
+Substituting (42)–(43) into (41), the solution Wσ is obtained as
+Wn,ℓ+1
+σ
+:= Wσ(τ, x) = W(0)
+σ,K(0)ϕ(0)
+K (x) +
+m
+X
+q=1
+exp
+−∆tn
+q
+X
+r=0
+δr
+K(Wn,ℓ+1
+h
+)
+W(q)
+σ,K(0)ϕ(q)
+K (x).
+(44)
+The modal coefficient matrix of Wn,ℓ+1
+σ
+is the matrix Wn,ℓ+1
+σ,K
+in (40) modified by the OE procedure. The damping
+coefficients are defined as
+d0
+n
+Wn,ℓ+1
+K′
+o
+K′∈ΛK
+
+:= 0,
+dq
+n
+Wn,ℓ+1
+K′
+o
+K′∈ΛK
+
+:=
+q
+X
+r=0
+δr
+K(Wn,ℓ+1
+h
+),
+1 ≤q ≤m.
+
+--- Sayfa 13 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+13
+The coefficient δr
+K(Wn,ℓ+1
+h
+), which depends on Wn,ℓ+1
+h
+, is a crucial factor. It must be small in smooth regions to
+maintain accuracy, but sufficiently large near discontinuities to effectively suppress oscillations. A highly effective,
+scale-invariant, and evolution-invariant damping coefficient was proposed in [39]:
+δr
+K(Wn,ℓ+1
+h
+) = max
+0≤i≤d+1
+
+X
+E∈∂K
+ηK
+nE
+σr
+E,K(W(i)
+h )
+hE,K
+,
+where ηK
+nE is the spectral radius of the matrix Pd
+i=1 ni
+∂Hi
+∂W(W
+n,ℓ+1
+K
+), with ni and Hi representing the i-th component of
+the outward unit normal vector nE and the flux vector H, respectively. Here, W(i)
+h is the (i+1)-th component of Wn,ℓ+1
+h
+,
+and W
+n,ℓ+1
+K
+is the cell average of Wn,ℓ+1
+h
+(x) over K. The quantity hE,K = supx∈K dist(x, E) is the maximum distance
+between points in K. The coefficient σr
+E,K(W(i)
+h ) is defined by
+σr
+E,K(W(i)
+h ) =
+
+0,
+if
+W(i)
+h ≡avgΩ(W(i)
+h ),
+(2r + 1)hr
+E,K
+2(2m −1)r!
+1
+|E|
+R
+E
+qP
+|a|=r[[∂aW(i)
+h ]]2 ds
+∥W(i)
+h −avgΩ(W(i)
+h )∥L∞(Ω)
+,
+otherwise,
+where avgΩ(v) =
+1
+|Ω|
+R
+Ωv(x) dx denotes the global average of v over the entire domain Ω, and [[∂aW(i)
+h ]] is the jump of
+∂aW(i)
+h across the cell interface E, with ∂aW(i)
+h (x) =
+∂|a|W(i)
+h (x)
+∂(x1)a1···∂(xd)ad .
+Remark 1. From (44) and the fact that d0 ≡0, we observe that the OE procedure only affects the higher-order moments
+of the DG solution. This implies that: (i) the cell average (zero moment) of the numerical solution remains unchanged
+during the OE procedure, preserving local mass conservation, and (ii) the OE procedure does not interfere with the
+DG spatial discretization or the RK time discretization, making it easily implementable in existing DG codes as an
+independent module. The OEDG method also has several desirable properties, including stability with normal time
+step sizes, scale invariance, evolution invariance, and high simplicity and efficiency, without requiring characteristic
+decomposition. More details on the OE procedure can be found in [39].
+3.3. Physical-Constraint-Preserving Numerical Approach
+In this subsection, we design fully PCP, high-order DG schemes via the following three steps:
+• Provable PCP Property of Cell Averages: We first employ the GQL approach to rigorously prove that the high-
+order OEDG schemes, with a suitable HLL flux, satisfy the weak PCP property, i.e., preserve the PCP property
+of the updated cell averages, if the DG solution at the previous time step satisfies the physical constraints. This
+ensures that the cell averages of the evolved variables remain within the admissible state set.
+• PCP Limiter for Point Values: Based on the weak PCP property, we then design a PCP limiter to enforce the
+PCP property of the OEDG solution polynomials at certain quadrature points. This limiter guarantees that the
+solution at these critical points remains in the admissible state set G(2), thereby ensuring that the conserved
+variables U remain in G(1)
+χ .
+• PCP Recovery of Primitive Variables: The final step involves developing provably convergent, iterative algo-
+rithms for robustly recovering the corresponding primitive variables Q = (ρ, v, p)⊤. These algorithms ensure
+that the approximate primitive variables always satisfy the physical constraints throughout the iterations.
+Consequently, the numerical solutions evolved by the OEDG method remain within the admissible state set and always
+respect the physical constraints throughout all the computational processes.
+
+--- Sayfa 14 ---
+14
+Huihui Cao, Manting Peng, Kailiang Wu
+3.3.1. Proof of PCP Property for Cell Averages
+The admissible state set G(1)
+χ in (17) or G(2) in (19) involves nonlinear constraints, whose preservation is difficult to
+analyze in theory. To facilitate the proof of the PCP property for cell averages, we first introduce the GQL technique
+[57], which transforms nonlinear constraints into a series of equivalent linear constraints.
+Lemma 3.1 (GQL representation). The admissible state set G(1)
+χ as defined in (17) is equivalent to
+G∗
+χ =
+n
+U = (D, m, E)⊤: U · ξ > 0 ∀ξ ∈Ξ∗
+o
+(45)
+with the vector set
+Ξ∗:= {ξ1} ∪
+
+ξ∗=
+
+−
+p
+1 −v∗Xv⊤∗, −v∗X, 1
+⊤: v∗∈Rd, ∥v∗∥X < 1
+
+,
+(46)
+where ξ1 = (1, 0, · · · , 0)⊤is the first column of the identity matrix of size (d+2), and v∗is referred to as the extra free
+auxiliary variable in the GQL framework. Note that ξ is independent of U, and all the constraints in the equivalent
+representation G∗
+χ become linear with respect to U.
+Proof. To show the equivalence between G(1)
+χ and G∗
+χ, we prove that these two sets are subsets of each other.
+Step 1: Show that G(1)
+χ ⊆G∗
+χ:
+For any U = (D, m, E)⊤∈G(1)
+χ , by definition, we have D > 0 and qχ(U) > 0. Using the Cauchy–Schwarz
+inequality, we obtain
+U · ξ∗= E −v∗Xm⊤−D
+p
+1 −v∗Xv⊤∗
+≥E −
+√
+mXm⊤+ D2 p
+v∗Xv⊤∗+ (1 −v∗Xv⊤∗)
+= E −
+√
+mXm⊤+ D2 = qχ(U) > 0.
+This together with U · ξ1 = D > 0 yields U ∈G∗
+χ.
+Step 2: Show that G∗
+χ ⊆G(1)
+χ :
+For any U ∈G∗
+χ, choose v∗=
+m
+√
+mXm⊤+D2 . This gives
+0 < U · ξ∗= E −v∗Xm⊤−D
+p
+1 −v∗Xv⊤∗= E −
+√
+mXm⊤+ D2 = qχ(U).
+Thus, U ∈G(1)
+χ . This completes the proof.
+Lemma 3.2. Given any U ∈G∗
+χ, for any unit vector n = (n1, . . . , nd) ∈Rd, if s+ ≥αλ(d+1)
+n
+(U) and s−≤αλ(0)
+n (U), then
+±s±U · ξ > ±αGn(U) · ξ
+∀ξ ∈Ξ∗,
+(47)
+where α > 0 is the lapse function, Gn = Pn
+i=1 niGi, and λ(0)
+n and λ(d+1)
+n
+are the smallest and largest eigenvalues of the
+Jacobian matrix ∂Gn/∂U.
+Proof. From the definition in (8), we can express the flux G(U) = (G1, . . . , Gd) as
+G(U) = U˜v +
+
+0
+pId
+pv
+
+,
+where ˜vi = vi −βi/α, and Id is the identity matrix of size d. For convenience, we introduce the following notations:
+vn = Pd
+i nivi, ˜vn = Pd
+i ni˜vi, and c+ := s+ −α˜vn. For any vector ξ = ξ∗in (46), we have
+h
+s+U −αGn(U)
+i
+· ξ∗=
+h
+(s+ −α˜vn)U −α(0, pn, pvn)⊤i
+· ξ∗
+
+--- Sayfa 15 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+15
+= c+U · ξ∗−α(0, pn, pvn)⊤· ξ∗
+= (c+E −αpvn) −v∗X(c+m −αpn)⊤−c+D
+p
+1 −v∗Xv⊤∗
+≥(c+E −αpvn) −
+q
+(c+m −αpn)X(c+m −αpn)⊤+ (c+)2D2.
+(48)
+We aim to prove
+(c+E −αpvn) −
+q
+(c+m −αpn)X(c+m −αpn)⊤+ (c+)2D2 > 0.
+(49)
+Consider the function
+f1(c) := (cE −αpvn)2 −
+h
+(cm −αpn)X(cm −αpn)⊤+ c2D2i
+= (E2 −mXm⊤−D2)c2 −2α(Epvn −pmXn⊤)c + [(vn)2 −nXn⊤]α2p2.
+Since U ∈G∗
+χ, we know E2 −mXm⊤−D2 > 0, implying f(c) is a quadratic polynomial with respect to c. Moreover,
+f1(0) = [(vn)2 −nXn⊤]α2p2 < 0,
+because (vn)2 = (vXn⊤)2 = vXv⊤nXn⊤< nXn⊤. Hence, f1(c) = 0 has a positive root (denoted by c1) and a negative
+root. This implies that the target inequality (49) is equivalent to
+c+ > c1.
+(50)
+Next, define
+c2 := α(λ(d+1)
+n
+−˜vn) =
+α
+
+−c2
+s(1 −∥v∥2
+X)vn + csγ−1 q
+(1 −c2s∥v∥2
+X)nXn⊤−(1 −c2s)(vn)2
+
+1 −∥v∥2
+Xc2s
+.
+We notice that c2 is the unique positive root of the following quadratic function
+f2(c) := α−2(1 −∥v∥2
+Xc2
+s) c2 + 2α−1vnc2
+s(1 −∥v∥2
+X) c + c2
+s(1 −∥v∥2
+X)[(vn)2 −nXn⊤].
+After careful investigation, we observe that the function f1(c) can be reformulated as
+f1(c) = δ1 f2(c) +
+δ2α2
+c2s(1 −∥v∥2
+X)
+
+1 −∥v∥2
+Xc2
+s
+α2
+c2 −f2(c)
+,
+(51)
+with
+δ1 := α2(E2 −mXm⊤−D2)
+1 −∥v∥2
+Xc2s
+,
+δ2 :=
+c2
+s
+h
+(ρh −p)2 −ρ2 −p2∥v∥2
+X
+i
+1 −∥v∥2
+Xc2s
+−p2.
+For the ideal gas, substituting c2
+s = Γp
+ρh and h = 1 +
+Γp
+(Γ−1)ρ, we deduce that
+δ2 = (Γ + 1)ρp
+Γ(Γ −1) + (2 −Γ)p
+(Γ −1)2 > 0,
+where we have used Γ ∈(1, 2]. Since f2(c2) = 0, it follows from (51) that
+f1(c2) = δ2(1 −∥v∥Xc2
+s)
+c2s(1 −∥v∥2
+X) c2
+2 > 0.
+(52)
+
+--- Sayfa 16 ---
+16
+Huihui Cao, Manting Peng, Kailiang Wu
+Recall that the quadratic function f1(c) has only one positive root c1, implying f1(c) > 0 for c > c1 and f1(c) < 0 for
+0 < c ≤c1. This fact, combined with (52), yields c2 > c1. Therefore, if s+ ≥αλ(d+1)
+n
+(U), then
+c+ = s+ −α˜vn ≥α(λ(d+1)
+n
+−˜vn) = c2 > c1,
+which satisfy (50), or equivalently (49). By combining (48) with (49), we obtain
+h
+s+U −αGn(U)
+i
+· ξ∗> 0.
+(53)
+Since U · ξ1 > 0, it holds that
+h
+s+U −αGn(U)
+i
+· ξ1 =
+h
+(s+ −α˜vn)U −α(0, pn, pvn)⊤i
+· ξ1 = (s+ −α˜vn)U · ξ1 > 0.
+(54)
+By combining (53) with (54), we have
+s+U · ξ > αGn(U) · ξ
+∀ξ ∈Ξ∗.
+Similarly, for s−≤αλ(0)
+n (U), we can prove that
+−s−U · ξ > −αGn(U) · ξ
+∀ξ ∈Ξ∗.
+The proof is completed.
+Lemma 3.3. Given any U ∈G∗
+χ, for any unit vector n = (n1, . . . , nd) ∈Rd, if s+ ≥αλ(d+1)
+n
+(U) and s−≤αλ(0)
+n (U), then
+±s±W · bξ > ±Hn(W) · bξ
+∀bξ ∈bΞ∗,
+(55)
+where W = √χLU, Hn = Pd
+i=1 niHi, and
+bΞ∗:= {ξ1} ∪
+
+bξ∗=
+
+−
+p
+1 −∥ˆv∗∥2, −ˆv∗, 1
+⊤: ˆv∗∈Rd, ∥ˆv∗∥2 < 1
+
+.
+(56)
+Proof. Let v∗= ˆv∗(Θ⊤)−1. Note that
+v∗Xv⊤
+∗= ˆv∗(Θ⊤)−1XΘ−1ˆv⊤
+∗= ∥ˆv∗∥2 ≤1,
+and
+ξ∗=
+
+−
+p
+1 −v∗Xv⊤∗, −v∗X, 1
+⊤=
+
+−
+p
+1 −∥ˆv∗∥2, −ˆv∗Θ, 1
+⊤= Lbξ∗.
+It follows, by simple algebraic manipulations, that
+U · ξ∗= √χ−1W · bξ∗,
+αGn(U) · ξ∗= √χ−1Hn · bξ∗.
+(57)
+Thanks to Lemma 3.2, we have ±s±U+ · ξ∗> ±αGn(U) · ξ∗, which together with (57) implies
+±s±W · bξ∗> ±Hn(W) · bξ∗.
+(58)
+Note that
+U · ξ1 = √χ−1W · ξ1,
+αGn(U) · ξ1 = √χ−1Hn(W) · ξ1.
+Recalling that Lemma 3.2 has shown ±s±U · ξ1 > ±αGn(U) · ξ1, we obtain
+±s±W · ξ1 > ±Hn(W) · ξ1,
+which together with (58) yields (55) and completes the proof.
+
+--- Sayfa 17 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+17
+Similar to Lemma 3.1, the GQL approach [57] can also be used to derive an equivalent yet linear representation
+of the admissible state set G(2) defined in (19), given by
+G∗=
+n
+W = (W0, W1, · · · , Wd)⊤: W · bξ > 0, ∀bξ ∈bΞ∗
+o
+.
+where bΞ∗is defined by (56).
+Remark 2. For the ADM form and the W-form, based on the relationships between their evolved variables U and W,
+along with the GQL representations of the admissible state sets, we establish the following equivalence relations:
+U ∈G(1)
+χ ⇐⇒U ∈G∗
+χ ⇐⇒W ∈G(2) ⇐⇒W ∈G∗.
+(59)
+Lemma 3.4. For any W ∈G∗, it holds that
+λWW · bξ ≥−S(W) · bξ
+∀bξ ∈bΞ∗.
+(60)
+Here, λW = 0 if q (S(W)) ≥0; otherwise λW is the unique positive solution to
+q
+
+W + λ−1
+WS(W)
+
+= 0.
+(61)
+Proof. Since the first component of S(W) is zero, we have
+λWW · ξ1 ≥0 = −S(W) · ξ1.
+Next, we focus on the case bξ = bξ∗, where bξ∗is defined in (56). Similar to Step 1 of the proof of Lemma 3.1, using the
+Cauchy–Schwarz inequality gives
+(λWW + S(W)) · bξ∗≥q(λWW + S(W)).
+(62)
+If q (S(W)) ≥0, then taking λW = 0 in (62) yields (60); otherwise equation (61) has a unique positive root due to the
+concavity of q(W) with respect to W, and using (62) and q(λWW+S(W)) = λWq
+
+W + λ−1
+WS(W)
+
+= 0 gives (60).
+Next, we will use the above lemmas to analyze the PCP property for the updated cell averages of the proposed
+(OE) DG schemes with the HLL flux. We focus on the forward Euler method for time discretization, while our
+analysis and conclusons are also valid for the high-order SSP time discretizations.
+Let W
+n
+K be the cell average of Wn
+h(x) on cell K at time tn. Taking the test function vh(x) = 1 and using the forward
+Euler time discretization, we obtain the evolution equation for the cell averages of our (OE) DG schemes:
+W
+n+1
+K
+= W
+n
+K −∆tn
+|K|
+X
+E∈∂K
+K′∩K=E
+QE
+X
+p=1
+|E|ωE,pbHHLL 
+Wn
+h(xE,p)
+K, Wn
+h(xE,p)
+K′; nE
+
++ ∆tn
+QK
+X
+p=1
+ωK,pS(Wn
+h(xK,p)).
+(63)
+On each cell K, we assume that there exists a positive quadrature with algebraic accuracy ≥m and the quadrature
+nodes including {xE,p : 1 ≤p ≤QE, E ∈∂K}. This quadrature leads to the following convex decomposition of a cell
+average on K:
+1
+|K|
+Z
+K
+f(x)dx =
+b
+QK
+X
+p=1
+bωK,p f(bxK,p) +
+X
+E∈∂K
+QE
+X
+p=1
+bωE,p f(xE,p)
+∀f ∈Pm,
+(64)
+where the weights bωE,p and bωK,p are all positive and satisfy
+b
+QK
+X
+p=1
+bωK,p +
+X
+e∈∂K
+QE
+X
+p=1
+bωE,p = 1.
+
+--- Sayfa 18 ---
+18
+Huihui Cao, Manting Peng, Kailiang Wu
+Such cell average decomposition (64) has been successfully constructed for Cartesian meshes in any space dimension
+and triangular meshes; see [67, 13, 14, 69, 16]. It will play an important role in the theoretical PCP proof. Define the
+point set
+SK =
+n
+xK,p
+oQK
+p=1 ∪
+n
+bxK,p
+ob
+QK
+p=1 ∪
+
+[
+E∈∂K
+n
+xE,p
+oQE
+p=1
+,
+(65)
+which includes all the quadrature nodes involved in (63) and (64). Assume that the DG solution Wn
+h(x) satisfies
+Wn
+h(x) ∈G∗
+∀x ∈SK,
+∀K ∈Th,
+(66)
+which can be enforced by a PCP limiter presented later if the OEDG solution does not automatically meet this
+condition. For convenience, denote
+Wn
+h(bxK,p) = b
+WK,p ∈G∗,
+Wn
+h(xK,p) = WK,p ∈G∗,
+Wn
+h(xE,p)|K′ = W+
+E,p ∈G∗,
+Wn
+h(xE,p)|K = W−
+E,p ∈G∗.
+(67)
+According to the quadrature for the source term and the cell average decomposition (64), we can split the cell average
+into a convex combination of several point values:
+W
+n
+K = 1
+|K|
+Z
+K
+Wn
+h(x) dx =
+QK
+X
+p=1
+ωK,pWK,p,
+(68)
+W
+n
+K =
+b
+QK
+X
+p=1
+bωK,p b
+WK,p +
+X
+E∈∂K
+QE
+X
+p=1
+bωE,pW−
+E,p.
+(69)
+Under the condition (66), Lemma 3.4 implies that
+S(WK,p) · bξ ≥−λWK,p WK,p · bξ
+∀bξ ∈bΞ∗.
+(70)
+Thanks to Lemma 3.3, if the HLL speeds satisfy
+s+
+E,p ≥α max
+n
+λ(d+1)
+nE
+(W−
+E,p), λ(d+1)
+nE
+(W+
+E,p), 0
+o
+,
+s−
+E,p ≤α min
+n
+λ(0)
+nE (W−
+E,p), λ(0)
+nE (W+
+E,p), 0
+o
+,
+∀p, E,
+(71)
+then
+±s±
+E,pW−
+E,p · bξ > ±HnE(W−
+E,p) · bξ,
+±s±
+E,pW+
+E,p · bξ > ±HnE(W+
+E,p) · bξ,
+∀bξ ∈bΞ∗.
+We then have the following estimate:
+−bHHLL(W−
+E,p, W+
+E,p; nE) · bξ
+= −
+s+
+E,pHnE(W−
+E,p) −s−
+E,pHnE(W+
+E,p) + s−
+E,ps+
+E,p
+
+W+
+E,p −W−
+E,p
+
+s+
+E,p −s−
+E,p
+· bξ
+=
+
+s−
+E,pW−
+E,p −HnE(W−
+E,p)
+
+· bξ −s−
+E,p
+
+s+
+E,pW+
+E,p −HnE(W+
+E,p)
+
++
+
+HnE(W−
+E,p) −s−
+E,pW−
+E,p
+
+s+
+E,p −s−
+E,p
+· bξ
+≥−
+
+s+
+E,p −s−
+E,p
+
+W−
+E,p · bξ
+∀bξ ∈bΞ∗.
+This, together with (70) and (63), yields
+W
+n+1
+K
+· bξ = W
+n
+K · bξ −∆tn
+|K|
+X
+E∈∂K
+QE
+X
+p=1
+|E|ωE,pbHHLL(W−
+E,p, W+
+E,p; nE) · bξ + ∆tn
+QK
+X
+p=1
+ωK,pS(WK,p) · bξ
+
+--- Sayfa 19 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+19
+> W
+n
+K · bξ −∆tn
+|K|
+X
+E∈∂K
+QE
+X
+p=1
+|E|ωE,p
+
+s+
+E,p −s−
+E,p
+
+W−
+E,p · bξ −∆tn
+QK
+X
+p=1
+ωK,pλWK,p WK,p · bξ.
+(72)
+Based on (69) and (68), we observe that
+X
+E∈∂K
+QE
+X
+p=1
+|E|ωE,p
+
+s+
+E,p −s−
+E,p
+
+W−
+E,p · bξ =
+X
+E∈∂K
+QE
+X
+p=1
+|E|
+ ωE,p
+bωE,p
+
+s+
+E,p −s−
+E,p
+!
+bωE,pW−
+E,p · bξ
+≤
+ 
+max
+E∈∂K max
+1≤p≤QE
+|E|ωE,p
+bωE,p
+
+s+
+E,p −s−
+E,p
+! X
+E∈∂K
+QE
+X
+p=1
+bωE,pW−
+E,p · bξ
+≤
+ 
+max
+E∈∂K max
+1≤p≤QE
+|K|ωE,p
+bωE,p
+
+s+
+E,p −s−
+E,p
+!
+W
+n
+K · bξ,
+(73)
+and
+QK
+X
+p=1
+ωK,pλWK,p WK,p · bξ ≤
+
+max
+1≤p≤QK λWK,p
+ QK
+X
+p=1
+ωK,pWK,p · bξ
+=
+
+max
+1≤p≤QK λWK,p
+
+W
+n
+K · bξ.
+(74)
+Combining (73) and (74) with (72), we have for any bξ ∈bΞ∗that
+W
+n+1
+K
+· bξ > W
+n
+K · bξ −∆tn
+|K|
+ 
+max
+E∈∂K max
+1≤p≤QE
+|E|ωE,p
+bωE,p
+
+s+
+E,p −s−
+E,p
+!
+W
+n
+K · bξ −∆tn
+
+max
+1≤p≤QK λWK,p
+
+W
+n
+K · bξ
+=
+ 
+1 −∆tn
+|K|
+ 
+max
+E∈∂K max
+1≤p≤QE
+|E|ωE,p
+bωE,p
+
+s+
+E,p −s−
+E,p
+!
+−∆tn max
+1≤p≤QK λWK,p
+!
+W
+n
+K · bξ,
+which is positive for any bξ ∈bΞ∗under the following CFL-type condition:
+∆tn
+ 
+max
+1≤p≤QK λWK,p + max
+E∈∂K max
+1≤p≤QE
+|E|ωE,p
+|K|bωE,p
+
+s+
+E,p −s−
+E,p
+!
+≤1
+∀K ∈Th.
+(75)
+In conclusion, we have proven the following weak PCP property for the updated cell average.
+Theorem 3.5. If the DG solution Wh(x) satisfies (66) and the HLL speeds satisfy (71) for all K ∈Th, then the updated
+cell averages W
+n+1
+K
+given by our scheme (63) belong to the admissible state set G∗or equivalently G(2), under the
+CFL-type condition (75).
+The condition (66) may not be always satisfied by the (OE) DG solutions and should be enforced by a PCP limiter,
+which will be introduced in Section 3.3.2. Although our above PCP analysis was focused on the forward Euler time
+discretization, it is also valid for the high-order SSP methods, which are formally the convex combination of forward
+Euler steps. When a high-order SSP RK method is used, the condition (66) should be enforced at each RK stage.
+3.3.2. PCP Limiter
+Although the high-order accurate OEDG method can effectively suppress spurious oscillations, it does not inher-
+ently guarantee that the numerical solution Wn
+h always satisfies (66), particularly in cases involving low density (or
+pressure) or a large Lorentz factor. Therefore, it is necessary to apply a PCP limiter to enforce the condition (66).
+Denote the OEDG solution at the n-th time level as Wn
+σ(x) =
+
+W(0)
+σ (tn, x), W(1)
+σ (tn, x), . . . , W(d+1)
+σ
+(tn, x)
+⊤. Let
+W
+n
+σ,K = (W
+(0)
+σ,K, W
+(1)
+σ,K, . . . , W
+(d+1)
+σ,K )⊤∈G(2) represent the cell average of Wn
+σ,K(x) over cell K. A PCP limiter is applied
+after each OE procedure to modify Wn
+σ(x) to f
+Wn
+σ(x). This modification ensures that the updated solution satisfies
+f
+Wn
+σ(x) ∈G(2) = G∗
+∀x ∈SK,
+∀K ∈Th,
+
+--- Sayfa 20 ---
+20
+Huihui Cao, Manting Peng, Kailiang Wu
+where SK denotes a set of critical points in cell K. According to Theorem 3.5, under the CFL-type condition (75), the
+updated cell-averaged OEDG numerical solution W
+n+1
+σ
+will remain in G(2). This then ensures the validity of the PCP
+limiter at the next time step.
+The PCP limiter [51] is an extension of the limiters for non-relativistic and special relativistic hydrodynamics
+[68, 58, 40, 60]. Specifically, the PCP limiting procedure on each cell K consists of the following two steps.
+Step 1: Enforcing the positivity of the first component of W.
+Define W(0)
+min = min
+x∈SK W(0)
+σ (tn, x). Set ϵ1 = min
+
+10−13, W
+(0)
+σ,K
+
+to avoid the effects of round-off errors. If W(0)
+min < ϵ1,
+modify the first component of the OEDG solution as follows:
+b
+W(0)
+σ (tn, x) = θ1
+
+W(0)
+σ (tn, x) −W
+(0)
+σ,K
+
++ W
+(0)
+σ,K,
+where the scaling factor θ1 is given by
+θ1 =
+W
+(0)
+σ,K −ϵ1
+W
+(0)
+σ,K −W(0)
+min
+.
+The limited solution is then denoted by b
+Wn
+σ(x) =
+b
+W(0)
+σ (tn, x), W(1)
+σ (tn, x), . . . , W(d+1)
+σ
+(tn, x)
+⊤.
+Step 2: Enforcing the positivity of q(W).
+Define qmin = min
+x∈SK q( b
+Wn
+σ(x)). Set ϵ2 = min
+n
+10−13, q(W
+n
+σ,K)
+o
+. If qmin < ϵ2, modify b
+Wn
+σ(x) as follows:
+f
+Wn
+σ(x) = θ2
+ b
+Wn
+σ(x) −W
+n
+σ,K
+
++ W
+n
+σ,K,
+where the scaling factor θ2 is defined as
+θ2 =
+q(W
+n
+σ,K) −ϵ2
+q(W
+n
+σ,K) −qmin
+.
+3.3.3. PCP Convergent Iteration Algorithms for Recovering Primitive Variables
+As seen in the DG formulation (35), it is necessary to evaluate the flux vectors Hi(W), the source term S(W),
+and the HLL wave speeds s± in each cell at every RK stage. These quantities depend on both the spacetime met-
+ric and the evolved variables W, as well as the primitive variables Q = (ρ, v, p)⊤. However, due to the nonlinear
+coupling introduced by relativistic effects, the primitive variables Q cannot be explicitly expressed in terms of the
+evolved variables W. Thus, it is essential to recover the primitive variables Q from the evolved variables W during
+the computation. Typically, this involves solving a nonlinear algebraic equation to obtain an intermediate variable
+(e.g., pressure p), followed by calculating the remaining primitive variables using this intermediate variable and W.
+This process is known as the primitive variable recovery problem, a challenging aspect encountered in almost all
+numerical schemes for RHD, but not present in the non-relativistic case, where the primitive variables can be directly
+derived from conserved quantities.
+In previous sections 3.3.1 and 3.3.2, we have discussed how to ensure the PCP property for the evolved variables
+W for both cell averages and point values. To guarantee that our schemes fully maintain the PCP property throughout
+the entire computational process, it is crucial to ensure that the recovered primitive variables also satisfy the physical
+constraints. In this subsection, we introduce efficient and provably PCP-convergent iteration algorithms, which extend
+those developed for the special relativistic case [7, 6]. The PCP convergent algorithms ensure the approximately
+recovered primitive variables always meet the physical constraints, provided that the given evolved variables W ∈G(2).
+
+--- Sayfa 21 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+21
+Given W = √χ(D, mΘ⊤, E)⊤=: (bD, bm, bE)⊤and the spacetime metric information, the corresponding conserved
+quantities in the ADM formulation (6) are computed as
+U = (D, m, E)⊤=
+
+bD
+√χ, 1√χ bm Θ⊤−1,
+bE
+√χ
+
+⊤
+∈G(1)
+χ .
+Using γ =
+
+1 −mXm⊤
+E+p
+−1
+2 and the inverse transformation of (12), the pressure p(U) is determined by solving the
+following nonlinear algebraic equation:
+ϕU(p) :=
+p
+Γ −1 −E + mXm⊤
+E + p + D
+s
+1 −mXm⊤
+(E + p)2 = 0.
+(76)
+Once the approximate p(U) is found, the velocity and rest-mass density are computed as
+v(U) =
+m
+E + p(U),
+ρ(U) = D
+q
+1 −∥v(U)∥2
+X.
+(77)
+Note that the function ϕU(p) has the following properties:
+ϕU(0) < 0,
+lim
+p→+∞ϕU(p) = +∞,
+ϕ′
+U(p) > 0
+∀p ∈[0, +∞).
+(78)
+Thus, ϕU(p) is monotonically increasing with a unique positive root for p ∈[0, +∞). Since obtaining an analytical
+expression for p(U) from the nonlinear equation (76) is generally intractable, iterative numerical methods are used.
+For a given W ∈G(2) or U ∈G(1)
+χ , an iterative algorithm is considered PCP if its iterative sequence {p(n)}n≥1
+satisfies the following conditions:
+1. The sequence converges to the physical pressure p(U), i.e., limn→+∞p(n) = p(U).
+2. The sequence remains non-negative, i.e., p(n) ≥0 for all n ≥1.
+The first condition ensures convergence, while the second guarantees stability and that the primitive variables remain
+PCP during the iterations. Indeed, if the recovered pressure p(U) > 0, then ∥v(U)∥X < 1 and ρ(U) > 0, meaning that
+maintaining a positive pressure is sufficient to ensure the PCP property for the recovered primitive variables.
+Inspired by our previous work on the special RHD case [6, 7], we extend several PCP convergent algorithms to
+the primitive variable recovery process for GRHDs.
+Algorithm I: Provably PCP, Linearly Convergent Hybrid Algorithm.
+This algorithm combines the bisection method with the fixed-point iteration method to recover primitive variables.
+Bisection Method: From (76), we know that
+p(U) = (Γ −1)
+E −mXm⊤
+E + p(U) −D
+s
+1 −
+mXm⊤
+(E + p(U))2
+≤(Γ −1)
+E −D
+r
+1 −mXm⊤
+E2
+=: p(0)
+R .
+This shows that p(U) lies within the interval [0, p(0)
+R ], which can be used as the initial range for the bisection method.
+Due to the monotonicity of ϕU(p), the bisection method is convergent and PCP. The error estimate is given by
+|p(n) −p(U)| ≤p(0)
+R
+2n+1 ,
+where p(n) is the midpoint of the n-th iteration interval. This indicates that the method converges linearly with a
+contraction rate of 0.5.
+
+--- Sayfa 22 ---
+22
+Huihui Cao, Manting Peng, Kailiang Wu
+Fixed-Point Iteration: By rearranging the nonlinear equation (76), we derive an equivalent form:
+p = p −(Γ −1)ϕU(p),
+which suggests the following fixed-point iteration scheme:
+p(n) = p(n−1) −(Γ −1)ϕU(p(n−1)),
+n = 1, 2, . . .
+(79)
+For any p > 0 and Γ ∈(1, 2], we have
+0 ≤1 −(Γ −1)ϕ′
+U(p) = (Γ −1) mXm⊤
+(E + p)2
+1 −
+D
+p
+(E + p)2 −mXm⊤
+≤(Γ −1)mXm⊤
+E2
+=: δ < 1.
+This shows that the iterative function p−(Γ−1)ϕU(p) is monotonically increasing for p ∈[0, +∞) and has a Lipschitz
+constant less than 1. By the Banach fixed-point theorem, the sequence {p(n)}n≥1 converges to p(U) at a rate of δ. In
+addition, p(n) remains positive as long as p(0) > 0.
+Hybrid Strategy: Both the bisection and fixed-point iteration methods converge linearly, with rates of 0.5 and δ,
+respectively. To improve convergence speed, we can construct a hybrid algorithm by selectively applying these two
+methods based on their contraction rates. Specifically:
+
+Apply the bisection method with initial interval [0, p(0)
+R ],
+if
+δ > 0.5,
+Apply fixed-point iteration (79) with p(0) = p(0)
+R /2,
+otherwise.
+The procedure for this hybrid iteration algorithm is summarized in Algorithm 1.
+Algorithm 1 Provably PCP, Linearly Convergent Hybrid Algorithm
+Input: Given W ∈G(2) or U = (D, m, E)⊤∈G(1)
+χ and the spacetime metric information. ϵr is the machine epsilon,
+and ϵtol is the tolerance for error.
+pL ←0;
+pR ←(Γ −1)
+
+E −D
+q
+1 −mXm⊤
+E2
+
+;
+p ←pR
+2 ;
+ϕ0 ←ϵtol + 1;
+Set r = min
+n
+0.5, (Γ −1) mXm⊤
+E2
++ ϵr
+o
+, n = 0, N = log(ϵr/p)
+log(r) ;
+while ϕ0 > ϵtol & n ≤N do
+Compute ϕU ←
+p
+Γ−1 −E + mXm⊤
+E+p + D
+q
+1 −mXm⊤
+(E+p)2 ;
+if r < 0.5 then
+p ←p −(Γ −1)ϕU;
+else
+if ϕU < 0 then
+pL ←p;
+else
+pR ←p;
+end if
+p ←pL+pR
+2
+;
+end if
+n ←n + 1;
+ϕ0 ←|ϕU|;
+end while
+Output: p is an approximation to p(U).
+
+--- Sayfa 23 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+23
+The above iterative algorithm is linearly convergent. Next, we introduce a PCP convergent Newton method, which
+converges quadratically.
+Algorithm II: Provably PCP, Quadratically Convergent Newton Algorithm
+Step 1: Reformulation of the Nonlinear Equation (76).
+By multiplying both sides of equation (76) by (E + p), we obtain
+bϕU(p) := mXm⊤+ (E + p)
+
+p
+Γ −1 −E
+
++ D
+q
+(E + p)2 −mXm⊤= 0.
+(80)
+Step 2: Providing a Robust Initial Value.
+The initial value for the Newton method is defined as
+p(0) =
+
+0,
+if
+DE + mXm⊤≥E2,
+p⋆,
+otherwise,
+(81)
+where
+p⋆=
+(Γ −2)E +
+q
+(2 −Γ)2E2 −4(Γ −1)
+
+mXm⊤+ D
+√
+E2 −mXm⊤−E2
+2
+.
+(82)
+Step 3: Iterative Formula.
+The iterative sequence is given by
+p(n+1) = p(n) −
+bϕU(p(n))
+bϕ′
+U(p(n))
+,
+(83)
+where
+bϕ′
+U(p) = 2p + E(2 −Γ)
+Γ −1
++
+D (E + p)
+q
+(E + p)2 −mXm⊤
+.
+Similar to the special RHD case [6], we can rigorously prove the following properties of the Newton iteration (83)
+for solving bϕU(p):
+• The Newton iteration (83) is always PCP convergent when the initial value is p(0) = 0. This ensures that the
+algorithm preserves the physical constraints from the start with this specific initial condition.
+• If DE + mXm⊤< E2, then the Newton iteration (83) is always PCP convergent for any non-negative initial
+value p(0) ≥0. In this case, the initial guess p⋆, as defined in (82), is typically closer to the true root p(U) and
+may serve as a more efficient starting point compared to p(0) = 0.
+Consequently, the Newton iteration (83), when initialized with the robust starting value (81), is provably PCP con-
+vergent. Moreover, if an iteration value p(n∗) ∈[p(U), +∞) appears, the subsequent sequence {p(n)}n≥n∗will converge
+monotonically to p(U). This monotonicity is crucial for detecting and preventing oscillations in the Newton iteration
+when the sequence approaches p(U). It can also be shown that p(U) is not a repeated root of bϕU(p). As a result, the
+Newton iteration (83) converges quadratically.
+For the reader’s convenience, the pseudo code for this Newton algorithm is summarized in Algorithm 2. Given its
+robustness and efficiency, this algorithm is highly recommended for practitioners and is employed in our simulations.
+
+--- Sayfa 24 ---
+24
+Huihui Cao, Manting Peng, Kailiang Wu
+Algorithm 2 Provably PCP, Quadratically Convergent Newton Algorithm
+Input: Given W ∈G(2) or U = (D, m, E)⊤∈G(1)
+χ with spacetime metric information. Set ϵtol = 10−14.
+if DE + mXm⊤≥E2 then
+p ←0.
+else
+p ←
+(Γ−2)E+
+q
+(2−Γ)2E2−4(Γ−1)
+
+mXm⊤+D
+√
+E2−mXm⊤−E2
+2
+.
+end if
+Set z ←ϵtol + 1, Nosc ←0, ϕ0 ←0.
+while |z| > ϵtol & Nosc < 3 do
+Compute ϕ ←mXm⊤+ (E + p)
+
+p
+Γ−1 −E
+
++ D
+q
+(E + p)2 −mXm⊤.
+Compute dϕ ←2p+E(2−Γ)
+Γ−1
++
+D(E+p)
+√
+(E+p)2−mXm⊤.
+Update z ←
+ϕ
+dϕ;
+p ←p −z.
+if ϕ0 × ϕ < 0 then
+Nosc ←Nosc + 1.
+end if
+Update ϕ0 ←ϕ.
+end while
+Output: p is an approximation to p(U).
+4. Illustrations and Applications of PCP-OEDG Schemes to RHD under Various Spacetime Metrics
+In this section, we demonstrate the application of the proposed PCP-OEDG method for the RHD equations under
+different spacetime metrics and coordinate systems.
+4.1. Application to Special RHD Equations under the Minkowski Metric in Cartesian Coordinates
+This subsection showcases the PCP-OEDG method applied to the special RHD equations in flat spacetime (Minkowski
+metric). For simplicity, we focus on 1D and 2D cases.
+4.1.1. 1D Case
+We consider the 1D special RHD system in the spatial domain Ω= [a, b]:
+∂U
+∂t + ∂F(U)
+∂x
+= 0,
+(84)
+where U = (D, m, E)⊤is the vector of conserved variables, and F = (Dv, mv + p, m)⊤is the flux. The computational
+domain Ωis divided into Nx uniform cells:
+a = x 1
+2 < x 3
+2 < · · · < xNx+ 1
+2 = b,
+(85)
+where the j-th cell is denoted by Kj = [xj−1
+2 , x j+ 1
+2 ]. The center of cell K j is xj =
+xj−1
+2 +x j+ 1
+2
+2
+, and the cell width is
+hx = b−a
+Nx . We define the Legendre polynomials {bϕ(q)(ξ) : 0 ≤q ≤m} on the reference cell bK = [−1, 1]:
+bϕ(0) = 1,
+bϕ(1) = ξ,
+bϕ(2) = 1
+2(3ξ2 −1),
+bϕ(3) = 1
+2(5ξ3 −3ξ),
+. . .
+Let FK j : bK →Kj be the linear mapping defined by x = FK j(ξ) := x j + hx
+2 ξ with ξ ∈bK. The basis functions on Kj are
+then given by ϕ(q)
+Kj (x) = bϕ(q)(F−1
+Kj (x)). In this 1D case, N = dim(Pm) = m + 1.
+
+--- Sayfa 25 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+25
+The semi-discrete DG scheme for (84) is to find Uh ∈[Vm
+h ]3 such that
+Z
+K j
+∂Uh(t, x)
+∂t
+vh(x) dx =
+Z
+K j
+F(Uh(t, x))v′
+h(x) dx −bF j+ 1
+2 vh(x−
+j+ 1
+2 ) + bFj−1
+2 vh(x+
+j−1
+2 ),
+∀vh ∈Vm
+h ,
+where the numerical fluxes are given by
+bFj+ 1
+2 = bF(U−
+j+ 1
+2 , U+
+j+ 1
+2 ),
+bFj−1
+2 = bF(U−
+j−1
+2 , U+
+j−1
+2 ),
+and U±
+j+ 1
+2 = Uh(t, x±
+j+ 1
+2 ) represent the left and right limiting values at x j+ 1
+2 . For the 1D case, the HLL flux is
+bFHLL(U−, U+) = s+F(U−) −s−F(U+) + s+s−(U+ −U−)
+s+ −s−
+,
+(86)
+where s−, s+ are the wave speeds, computed as degenerate versions of (31) and (32) with α = 1 and the eigenvalues
+λ(0)
+x =
+v−cs
+1−vcs and λ(2)
+x =
+v+cs
+1+vcs .
+The semi-discrete DG scheme can be written in matrix form as
+dUK j(t)
+dt
+=
+
+AF
+K j −A
+bF
+K j
+
+A−1
+K j,
+j = 1, 2, · · · , Nx,
+(87)
+where UK j(t) ∈R3×(m+1) contains the modal coefficients of Uh on Kj, and the mass matrix AK j is defined by
+AKj = diag
+(
+hx
+2i + 1
+)
+0≤i≤m
+.
+The matrices AF
+K j and AbF
+K j are
+AF
+K j = |Kj|
+Q
+X
+p=1
+ωpF(UK j(t)ΦKj(x j,p))(Φ′
+K j)⊤(xj,p) ≈
+Z
+K j
+F(Uh(t, x))(Φ′
+K j)⊤dx,
+(88)
+A
+bF
+K j = −bFj+ 1
+2 ΦKj(x−
+j+ 1
+2 ) + bFj−1
+2 ΦKj(x+
+j−1
+2 ),
+(89)
+where {xj,p}Q
+p=1 are the Gauss quadrature points and {ωp}Q
+p=1 are the corresponding weights.
+The scheme (87) on cell Kj can be expressed as an ODE system:
+dUK j(t)
+dt
+= LK j
+
+{UK}K∈ΛK j
+
+,
+ΛK j =
+n
+Kj−1, K j, Kj+1
+o
+,
+where LK j
+
+{UK}K∈ΛKj
+
+=
+
+AF
+K j −AbF
+K j
+
+A−1
+Kj. By discretizing this ODE system in time using a RK method and applying
+the OE procedure after each stage, we obtain the OEDG method. For example, using a third-order explicit RK scheme,
+the OEDG method reads:
+
+Un,0
+σ,K j = Un
+σ,K j,
+Un,1
+K j = Un,0
+σ,Kj + ∆tnLK j
+
+{Un,0
+σ,K}K∈ΛK j
+
+,
+Un,1
+σ,K j = Un,1
+K j exp
+
+−∆tnD
+
+{Un,1
+K }K∈ΛK j
+
+,
+Un,2
+K j = 3
+4Un,0
+σ,K j + 1
+4
+
+Un,1
+σ,K j + ∆tnLK j
+
+{Un,1
+σ,K}K∈ΛKj
+
+,
+Un,2
+σ,K j = Un,2
+K j exp
+
+−∆tnD
+
+{Un,2
+K }K∈ΛK j
+
+,
+Un,3
+K j = 1
+3Un,0
+σ,K j + 2
+3
+
+Un,2
+σ,K j + ∆tnLK j
+
+{Un,2
+σ,K}K∈ΛKj
+
+,
+Un,3
+σ,K j = Un,3
+K j exp
+
+−∆tnD
+
+{Un,3
+K }K∈ΛK j
+
+,
+(90)
+where
+D
+
+{Un,ℓ+1
+K
+}K∈ΛKj
+
+= diag
+n
+d0
+
+{Un,ℓ+1
+K
+}K∈ΛK j
+
+, . . . , dm
+
+{Un,ℓ+1
+K
+}K∈ΛK j
+o
+,
+ℓ= 0, 1, 2,
+with
+d0
+
+{Un,ℓ+1
+K
+}K∈ΛK j
+
+= 0,
+dq
+
+{Un,ℓ+1
+K
+}K∈ΛK j
+
+=
+q
+X
+r=0
+δr
+K j(Un,ℓ+1
+h
+),
+1 ≤q ≤m.
+
+--- Sayfa 26 ---
+26
+Huihui Cao, Manting Peng, Kailiang Wu
+The damping coefficient is
+δr
+K j(Un,ℓ+1
+h
+) = η j
+hx
+max
+0≤i≤2
+n
+σr
+K j(U(i)
+h )
+o
+,
+where U(i)
+h is the (i + 1)-th component of Un,ℓ+1
+h
+, η j is the spectral radius of the Jacobian matrix ∂F
+∂U(U
+n,ℓ+1
+j
+), and
+σr
+Kj(U(i)
+h ) =
+
+0,
+if
+U(i)
+h ≡avgΩ(U(i)
+h ),
+(2r + 1)hr
+x
+2(2m −1)r!
+[[∂r
+xU(i)
+h ]] j−1
+2
+ +
+[[∂r
+xU(i)
+h ]] j+ 1
+2
+
+∥U(i)
+h −avgΩ(U(i)
+h )∥L∞(Ω)
+,
+otherwise.
+For special RHD, the GQL representation of the admissible state set is
+G∗=
+n
+U = (D, m, E)⊤: U · bξ > 0 ∀bξ ∈bΞ∗
+o
+,
+with the vector set bΞ∗defined in (56). Let
+n
+xGL
+j,p
+oL
+p=1 represent the L-point Gauss-Lobatto quadrature nodes on Kj, where
+L = ⌈m+3
+2 ⌉. The corresponding weights are denoted by {ωGL
+p }L
+p=1. The cell average admits the convex decomposition
+U
+n
+j =
+L−1
+X
+p=2
+ωGL
+p Un
+h(xGL
+j,p) + ωGL
+1
+
+U+
+j−1
+2 + U−
+j+ 1
+2
+
+.
+(91)
+Thus, the point set in (65) becomes
+Sj =
+n
+xGL
+j,p
+oL
+p=1 ∪
+n
+xj,p
+oQ
+p=1 ,
+which includes all the quadrature points involved in (88) and (91).
+As a direct consequence of Theorem 3.5, we obtain the following result on the PCP property of our OEDG
+schemes for 1D special RHD.
+Corollary 4.1. Let s+
+j+ 1
+2 = max
+
+λ(2)
+x (U−
+j+ 1
+2 ), λ(2)
+x (U+
+j+ 1
+2 ), 0
+
+and s−
+j+ 1
+2 = min
+
+λ(0)
+x (U−
+j+ 1
+2 ), λ(0)
+x (U+
+j+ 1
+2 ), 0
+
+be the HLL wave
+speeds at x = x j+ 1
+2 . If the OEDG solution (with a PCP limiter) satisfies
+Un
+σ(x) ∈G∗
+∀x ∈Sj, ∀j,
+then the updated cell averages U
+n+1
+j
+, as computed by the OEDG scheme with the forward Euler time discretization,
+belong to the admissible state set G∗, or equivalently G(2), under the CFL-type condition
+∆tn
+hx
+max
+j
+
+s+
+j+ 1
+2 −s−
+j+ 1
+2
+
+< ωGL
+1 .
+4.1.2. 2D Case
+We consider the 2D special RHD system
+∂U
+∂t + ∂F1(U)
+∂x
++ ∂F2(U)
+∂y
+= 0,
+(92)
+where the vector of conserved variables is U = (D, m1, m2, E)⊤, and the fluxes in the x- and y-directions are
+F1 = (Dv1, m1v1 + p, m2v1, m1)⊤,
+F2 = (Dv2, m1v2 + p, m2v2 + p, m2)⊤.
+(93)
+The computational domain Ωis divided into Nx × Ny uniform rectangular cells Ki j = [xi−1
+2 , xi+ 1
+2 ]×[yj−1
+2 , yj+ 1
+2 ], for
+1 ≤i ≤Nx and 1 ≤j ≤Ny, where hx and hy represent the spatial step sizes in the x and y directions, respectively. The
+
+--- Sayfa 27 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+27
+center of cell Kij is denoted by (xi, y j), with xi = 1
+2(xi−1
+2 + xi+ 1
+2 ) and yj = 1
+2(y j−1
+2 + yj+ 1
+2 ). The basis function vectors
+{ ˆϕ(q)(ξ) : 0 ≤q ≤m} on the reference cell bK = [−1, 1]2 are given by
+ˆϕ(0) = (1)⊤,
+ˆϕ(1) =
+
+ξx, ξy
+⊤,
+ˆϕ(2) =
+ 
+ξ2
+x −1
+3, ξxξy, ξ2
+y −1
+3
+!⊤
+,
+. . .
+Let FKij : bK →Kij be the linear mapping defined by
+x = xi + hx
+2 ξx,
+y = yj + hy
+2 ξy,
+ξx, ξy ∈[−1, 1].
+The basis functions {ϕ(q)
+Kij(x) : 0 ≤q ≤m} of Pm(Kij) are obtained via this mapping. In the 2D case, the dimension of
+the polynomial space Pm is N = dim(Pm) = 1
+2(m + 1)(m + 2).
+The semi-discrete DG method for (92) is to find Uh ∈[Vm
+h ]4 such that
+Z
+Kij
+∂Uh(t, x)
+∂t
+vh(x) dx =
+Z
+Kij
+F(Uh(t, x)) · ∇vh(x) dx −
+X
+E∈∂Kij
+Z
+E
+bF(Uh(t, x); nE)vh(x) ds,
+∀vh ∈Vm
+h ,
+where E denotes the edges of the cell Kij and nE is the outward unit normal vector on E. The numerical flux bF is taken
+as the HLL flux. This scheme can be expressed in matrix form in terms of the modal coefficients UKij(t) ∈R4×N.
+Discretizing this system further in time using a RK method and applying the OE procedure after each RK stage results
+in a fully-discrete OEDG scheme.
+Similar to the 1D case, the 2D OE procedure at the ℓ-th RK stage is implemented as follows:
+Un,ℓ+1
+σ,Kij = Un,ℓ+1
+Kij
+exp
+
+−∆tnD
+
+{Un,ℓ+1
+K
+}K∈ΛKij
+
+,
+where the damping operator D
+
+{Un,ℓ+1
+K
+}K∈ΛKij
+
+is defined as
+D(U) = diag
+
+d0
+
+{Un,ℓ+1
+K
+}K∈ΛKij
+
+, d1
+
+{Un,ℓ+1
+K
+}K∈ΛKij
+
+IN1, . . . , dm
+
+{Un,ℓ+1
+K
+}K∈ΛKij
+
+INm
+
+,
+with INq being the identity matrix of size Nq, where Nq represents the number of basis functions of q degree ϕ(q)
+Kij(x).
+The components of the diagonal matrix D are defined as
+d0({Un,ℓ+1
+K
+}K∈ΛKij) = 0,
+dq({Un,ℓ+1
+K
+}K∈ΛKij ) =
+q
+X
+r=0
+δr
+Kij(Un,ℓ+1
+h
+),
+1 ≤q ≤m,
+where the damping coefficient δr
+Kij(Uh) is defined by
+δr
+Kij(Uh) = max
+0≤s≤3
+
+ηx
+ij
+
+σr
+i+ 1
+2 , j(U(s)
+h ) + σr
+i−1
+2 , j(U(s)
+h )
+
+hx
++
+ηy
+i j
+
+σr
+i,j+ 1
+2 (U(s)
+h ) + σr
+i, j−1
+2 (U(s)
+h )
+
+hy
+
+.
+Here, ηx
+ij and ηy
+ij represent the spectral radii of the Jacobian matrices in the x and y directions, respectively. The terms
+σr
+i+ 1
+2 , j(U(s)
+h ) and σr
+i, j+ 1
+2 (U(s)
+h ) are given by
+σr
+i+ 1
+2 , j(U(s)
+h ) =
+
+0,
+if
+U(s)
+h ≡avgΩ(U(s)
+h ),
+(2r + 1)hr
+x
+2(2m −1)r!
+1
+hy
+R y j+ 1
+2
+y j−1
+2
+qP
+|a|=r[[∂aU(s)
+h ]]2
+i+ 1
+2 , j dy
+∥U(s)
+h −avgΩ(U(s)
+h )∥L∞(Ω)
+,
+otherwise,
+
+--- Sayfa 28 ---
+28
+Huihui Cao, Manting Peng, Kailiang Wu
+σr
+i,j+ 1
+2 (U(s)
+h ) =
+
+0,
+if
+U(s)
+h ≡avgΩ(U(s)
+h ),
+(2r + 1)hr
+y
+2(2m −1)r!
+1
+hx
+R xi+ 1
+2
+xi−1
+2
+qP
+|a|=r[[∂aU(s)
+h ]]2
+i, j+ 1
+2 dx
+∥U(s)
+h −avgΩ(U(s)
+h )∥L∞(Ω)
+,
+otherwise.
+With the forward Euler time discretization, the evolution equation for the cell average on a rectangular cell Ki j
+can be written as:
+U
+n+1
+ij
+= U
+n
+ij −∆tn
+hx
+Q
+X
+p=1
+ωG
+p
+
+bF1
+
+U−
+i+ 1
+2 ,p, U+
+i+ 1
+2 ,p
+
+−bF1
+
+U−
+i−1
+2 ,p, U+
+i−1
+2 ,p
+
+−∆tn
+hy
+Q
+X
+p=1
+ωG
+p
+
+bF2
+
+U−
+p, j+ 1
+2 , U+
+p,j+ 1
+2
+
+−bF2
+
+U−
+p, j−1
+2 , U+
+p,j−1
+2
+
+,
+(94)
+where bF1 and bF2 are the HLL numerical fluxes in the x and y directions, respectively. After using the PCP limiter, the
+OEDG solution is guaranteed to satisfy the physical constraints at the cell interface quadrature points:
+U−
+i± 1
+2 ,p = Un
+h(x−
+i± 1
+2 , yG
+j,p) ∈G∗,
+U+
+i± 1
+2 ,p = Un
+h(x+
+i± 1
+2 , yG
+j,p) ∈G∗,
+U−
+p, j± 1
+2 = Un
+h(xG
+i,p, y−
+j± 1
+2 ) ∈G∗,
+U+
+p, j± 1
+2 = Un
+h(xG
+i,p, y+
+j± 1
+2 ) ∈G∗,
+where the superscripts ± on x, y, and U indicate the right/left-hand side limits; {xG
+i,p}Q
+p=1 and {yG
+j,p}Q
+p=1 denote the Q-
+point Gauss quadrature nodes in the intervals [xi−1
+2 , xi+ 1
+2 ] and [yj−1
+2 , y j+ 1
+2 ], respectively. The corresponding weights
+are denoted by {ωG
+p }Q
+p=1, satisfying PQ
+p=1 ωG
+p = 1. We choose Q = m + 1 for the standard Gauss quadrature.
+As demonstrated in Section 3.3.1, the convex decomposition of the cell averages, as given by (64), is essential
+in the analysis and design of PCP schemes. The feasible convex decomposition is not unique, and different decom-
+positions lead to different point sets SKij in the PCP limiter, resulting in varying theoretical PCP CFL conditions and
+impacting computational cost and efficiency. On rectangular meshes, a classical decomposition was proposed in [67],
+based on the tensor product of Gauss quadrature points and Gauss–Lobatto quadrature points. However, this decom-
+position is not optimal [13]. Recently, the optimal decomposition that achieves the largest PCP CFL number was
+systematically studied in [14].
+For P2 and P3 spaces, the optimal convex decomposition of cell averages is given as follows (for higher-degree
+polynomial spaces, see [14]):
+U
+n
+ij = µ1
+2
+Q
+X
+p=1
+ωG
+p
+
+U+
+i−1
+2 ,p + U−
+i+ 1
+2 ,p
+
++ µ2
+2
+Q
+X
+p=1
+ωG
+p
+
+U+
+p, j−1
+2 + U−
+p,j+ 1
+2
+
++ ω
+X
+r
+Un
+h(˜xr, ˜yr),
+(95)
+where the internal nodes are given by
+SCDW
+ij
+= {(˜xr, ˜yr)} =
+
+
+xi, y j ±
+hy
+2
+√
+3
+q
+ζ∗−ζ2
+ζ∗
+
+,
+if
+ζ1 ≥ζ2,
+
+xi ±
+hx
+2
+√
+3
+q
+ζ∗−ζ1
+ζ∗, y j
+
+,
+if
+ζ1 < ζ2,
+with
+ζ1 = ax
+hx
+,
+ζ2 = ay
+hy
+,
+ζ∗= max{ζ1, ζ2},
+ψ = ζ1 + ζ2 + 2ζ∗,
+µ1 = ζ1
+ψ ,
+µ2 = ζ2
+ψ ,
+ω = ζ∗
+ψ .
+The point set (65), involved in the PCP limiter, becomes
+Sij = SCDW
+ij
+∪
+n
+(xi± 1
+2 , yG
+j,p)
+oQ
+p=1 ∪
+n
+(xG
+i,p, yj± 1
+2 )
+o
+∪
+n
+xi,p
+oQ
+p=1 ⊗
+n
+y j,p
+oQ
+p=1
+
+.
+(96)
+
+--- Sayfa 29 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+29
+For 1 ≤p ≤Q, the HLL wave speeds are given by
+s+
+i± 1
+2 ,p = max
+
+λ(4)
+x (U−
+i± 1
+2 ,p), λ(4)
+x (U+
+i± 1
+2 ,p), 0
+
+,
+s−
+i± 1
+2 ,p = min
+
+λ(0)
+x (U−
+i± 1
+2 ,p), λ(0)
+x (U+
+i± 1
+2 ,p), 0
+
+,
+s+
+p, j± 1
+2 = max
+
+λ(4)
+y (U−
+p,j± 1
+2 ), λ(4)
+y (U+
+p,j± 1
+2 ), 0
+
+,
+s−
+p, j± 1
+2 = min
+
+λ(0)
+y (U−
+p,j± 1
+2 ), λ(0)
+y (U+
+p, j± 1
+2 ), 0
+
+.
+Following Theorem 3.5, we obtain the following weak PCP property for the updated cell averages.
+Corollary 4.2. If the OEDG solution (with a PCP limiter) satisfies
+Un
+σ(x, y) ∈G∗
+∀(x, y) ∈Si j, ∀i, j,
+then the updated cell averages U
+n+1
+ij , computed by the 2D P2- or P3-based OEDG scheme for (92) with the forward
+Euler time discretization , belong to the admissible state set G∗(or equivalently G(2)), under the CFL-type condition:
+∆tn
+ ax
+hx
++ ay
+hy
++ 2 max
+(ax
+hx
+, ay
+hy
+)!
+≤1
+2,
+where
+ax := max
+i,p
+
+s+
+i+ 1
+2 ,p −s−
+i+ 1
+2 ,p
+
+,
+ay := max
+j,p
+
+s+
+p,j+ 1
+2 −s−
+p,j+ 1
+2
+
+.
+4.2. Application to Axisymmetric RHD Equations in Cylindrical Coordinates
+The line element for the Minkowski metric in cylindrical coordinates is given by:
+ds2 = −dt2 + dr2 + r2dϕ2 + dz2.
+In this subsection, we discuss the application of the OEDG method to the axisymmetric RHD equations (with no
+dependence on the azimuthal angle ϕ) in cylindrical coordinates (r, z):
+∂U
+∂t + ∂F1
+∂r + ∂F2
+∂z = S(U, r),
+(97)
+where the source term is given by
+S(U, r) = −1
+r (Dv1, m1v1, m2v2, m1)⊤,
+and the definitions of the conservative vector U and fluxes Fi for i = 1, 2 are the same as in (93). The fluid variables
+retain their definitions from the 2D special RHD system, except that the coordinates x and y now correspond to the
+radial and axial directions in cylindrical coordinates (r, z).
+Assume the computational domain in the (r, z) plane is divided into uniform rectangular meshes. The OE and PCP
+techniques for the axisymmetric RHD equations (97) are analogous to those discussed in Section 4.1.2. To ensure the
+weak PCP property U
+n+1
+i j
+∈G∗, we consider the evolution equations for the cell averages of the OEDG solutions to
+(97), which read
+U
+n+1
+ij
+= U
+n
+ij −∆tn
+hr
+Q
+X
+p=1
+ωG
+p
+
+bF1
+
+U−
+i+ 1
+2 ,p, U+
+i+ 1
+2 ,p
+
+−bF1
+
+U−
+i−1
+2 ,p, U+
+i−1
+2 ,p
+
+−∆tn
+hz
+Q
+X
+p=1
+ωG
+p
+
+bF2
+
+U−
+p,j+ 1
+2 , U+
+p, j+ 1
+2
+
+−bF2
+
+U−
+p,j−1
+2 , U+
+p, j−1
+2
+
++ ∆tn
+Q
+X
+p=1
+Q
+X
+q=1
+ωG
+p ωG
+q S
+
+Un
+h(rG
+i,p, zG
+q, j), rG
+i,p
+
+,
+(98)
+where bF1 and bF2 are the numerical fluxes in the radial and axial directions, respectively. The optimal convex decom-
+position of the cell average U
+n
+ij and the point set Sij for the PCP limiter are analogous to (95) and (96), respectively.
+
+--- Sayfa 30 ---
+30
+Huihui Cao, Manting Peng, Kailiang Wu
+Corollary 4.3. Consider the 2D P2- or P3-based OEDG scheme. If the numerical solution (with a PCP limiter)
+satisfies
+Un
+σ(r, z) ∈G∗
+∀(r, z) ∈Si j, ∀i, j,
+then the updated cell averages U
+n+1
+ij , given by (98), belong to the admissible state set G∗(or equivalently G(2)), under
+the CFL-type condition:
+∆tn
+ 
+λ∗
+U + 2ar
+hr
++ 2az
+hz
++ 4 max
+(ar
+hr
+, az
+hz
+)!
+≤1,
+where
+λ∗
+U := max
+i,j,p,q λUij,pq,
+λUij,pq =
+min
+i, j,p,q∈Pv
+
+rG
+i,pq(Ui j,pq)
+
+p(Uij,pq) + q(Ui j,pq)
+ v1(Ui j,pq)
+
+,
+Ui j,pq = Un
+h(rG
+i,p, zG
+q, j),
+Pv =
+n
+(i, j, p, q) : v1(Uij,pq) > 0
+o
+,
+ar := max
+i,p
+
+s+
+i+ 1
+2 ,p −s−
+i+ 1
+2 ,p
+
+,
+az := max
+j,p
+
+s+
+p,j+ 1
+2 −s−
+p,j+ 1
+2
+
+.
+4.3. Application to GRHD Equations in Kerr–Schild Coordinates
+In this subsection, we consider the application of the PCP-OEDG method to GRHD simulations near a rotating
+Kerr black hole. Using the standard Boyer–Lindquist coordinates (t, r, θ, ϕ), we transform to the Kerr–Schild (KS)
+coordinates (˜t, r, θ, ˜ϕ) via the following coordinate transformations:
+d˜ϕ = dϕ +
+a
+r2 −2Mr + a2 dr,
+d˜t = dt +
+ 
+1 + Y
+1 + Y −Z
+!
+dr,
+where M is the mass of the black hole and a is its angular momentum per unit mass. In the KS coordinate system, the
+Kerr line element is expressed as [20]:
+ds2 = −
+ 
+1 −2Mr
+ϱ2
+!
+d˜t2 −4Mar sin2 θ
+ϱ2
+d˜t d˜ϕ + 4Mr
+ϱ2
+d˜t dr
++
+ 
+1 + 2Mr
+ϱ2
+!
+dr2 −2a
+ 
+1 + 2Mr
+ϱ2
+!
+sin2 θ dr d˜ϕ
++ ϱ2 dθ2 + sin2 θ
+"
+ϱ2 + a2
+ 
+1 + 2Mr
+ϱ2
+!
+sin2 θ
+#
+d˜ϕ2,
+(99)
+with
+ϱ2 = r2 + a2 cos2 θ,
+Y = a2 sin2 θ
+ϱ2
+,
+Z = 2Mr
+ϱ2 .
+The shift vector βi and the lapse function α are given by
+βi = (Z, 0, −a sin2 θ Z),
+α2 =
+1
+1 + Z .
+The symmetric spatial 3-metric in the (3+1) ADM formulation is expressed as
+X = (χij)1≤i, j≤3 =
+
+Z + 1
+0
+−a sin2 θ(Z + 1)
+0
+ϱ2
+0
+−a sin2 θ(Z + 1)
+0
+ϱ2 sin2 θ(1 + Y(1 + Z))
+
+,
+whose Cholesky decomposition is X = Θ⊤Θ with
+Θ =
+
+√
+Z + 1
+0
+(−a sin2 θ(Z+1))
+√
+Z+1
+0
+ϱ
+0
+0
+0
+Θ33
+
+,
+
+--- Sayfa 31 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+31
+where Θ33 =
+q
+ϱ2 sin2 θ(1 + Y(1 + Z)) −[−a sin2 θ(Z+1)]2
+Z+1
+.
+We restrict the hydrodynamic equations to the equatorial plane of the Kerr spacetime, θ = π
+2. In this case, the
+spacetime 3-metric gµν and its corresponding contravariant metric gµν, in units where the black hole mass M = 1, can
+be derived from (99) and the transformation rule for contravariant tensors:
+gµν =
+
+2−r
+r
+2
+r
+−2a
+r
+2
+r
+2+r
+r
+−a(r+2)
+r
+−2a
+r
+−a(r+2)
+r
+r3+ra2+2a2
+r
+
+,
+gµν =
+
+−2+r
+r
+2
+r
+0
+2
+r
+a2+r2−2r
+r2
+a
+r2
+0
+a
+r2
+1
+r2
+
+.
+(100)
+This type of metric is regular at the event horizon, facilitating the numerical computation of matter flows near the
+black hole. The spatial metric and its Cholesky decomposition simplify to
+X =
+
+2+r
+r
+−a(r+2)
+r
+−a(r+2)
+r
+r3+ra2+2a2
+r
+,
+Θ =
+
+q
+2+r
+r
+−a
+q
+2+r
+r
+0
+r
+.
+(101)
+From (100) and (101), we have
+χ = det(χij) = r(r + 2),
+g = det(gµν) = −r2.
+(102)
+In this setting, the (3+1) ADM form of the GRHD equations, as in (6), becomes
+∂U
+∂t + ∂(αGr(U))
+∂r
++ ∂(αG˜ϕ(U))
+∂˜ϕ
+= R(U),
+(103)
+where α = p r
+r+2 is the lapse function, and
+U = (D, mr, m˜ϕ, E)⊤,
+R(U) = (R1, R2, R3, R4)⊤,
+Gr = (D˜vr, mr˜vr + p, m˜ϕ˜vr, E˜vr + pvr)⊤,
+G˜ϕ = (D˜v˜ϕ, mr˜v˜ϕ, m˜ϕ˜v˜ϕ + p, (E + p)˜v˜ϕ)⊤.
+Detailed expressions of the source term R(U) = (R1, R2, R3, R4)⊤are provided in [20] and omitted here for brevity.
+The conservative vector U should remain in the physically admissible state set
+G(1)
+χ =
+n
+U = (D, mr, m˜ϕ, E)⊤: D > 0, qχ(U) > 0
+o
+,
+where
+qχ(U) = E −
+s
+D2 + r2m2
+˜ϕ +
+(r + 2)(mr −am˜ϕ)2
+r
+.
+Our PCP-OEDG schemes are based on the W-form of (103), which can be written as
+∂W
+∂t + ∂Hr
+∂r + ∂H˜ϕ
+∂˜ϕ = S,
+(104)
+with
+W =
+ p
+r(r + 2)D, (r + 2)(mr −am˜ϕ), r
+p
+r(r + 2)m˜ϕ,
+p
+r(r + 2)E
+⊤,
+Hr =
+
+αrD˜vr, r(mr˜vr + p −am˜ϕ˜vr), αr2m˜ϕ˜vr, αr E˜vr + pvr⊤,
+H˜ϕ =
+
+αrD˜v˜ϕ, r
+h
+mr˜v˜ϕ −a(m˜ϕ˜v˜ϕ + p)
+i
+, αr2(m˜ϕ˜v˜ϕ + p), αr(E + p)˜v˜ϕ⊤,
+S =
+
+rR1,
+p
+1/χ(am˜ϕ˜vr −mr˜vr −p) + √χ(R2 −aR3), r2R3 + rm˜ϕ˜vr, rR4
+⊤.
+
+--- Sayfa 32 ---
+32
+Huihui Cao, Manting Peng, Kailiang Wu
+For the W-form (104), the admissible state set for the evolved variables W is spacetime-independent and given by
+G(2) =
+
+W = (bD, bmr, bm˜ϕ, bE)⊤: bD > 0, q(W) = bE −
+q
+bD2 + bm2r + bm2
+˜ϕ > 0
+
+.
+Similar to Corollary 4.3, we have the following theoretical result.
+Corollary 4.4. Assume the computational domain in the (r, ˜ϕ) plane is divided into uniform rectangular meshes. If
+the OEDG solution (with a PCP limiter) satisfies
+Wn
+σ(r, ˜ϕ) ∈G∗
+∀(r, ˜ϕ) ∈Si j, ∀i, j,
+then the updated cell averages W
+n+1
+ij , computed by the 2D P2- or P3-based OEDG scheme for the W-form (104) of
+the GRHD equations in Kerr–Schild coordinates with the forward Euler time discretization, belong to the admissible
+state set G∗(or equivalently G(2)), under the CFL-type condition:
+∆tn
+ 
+λmax + 2ar
+hr
++ 2
+a˜ϕ
+h˜ϕ
++ 4 max
+(ar
+hr
+,
+a˜ϕ
+h˜ϕ
+)!
+≤1,
+where λmax is the maximum value of {λWijpq} over the Gauss points (rG
+i,p, ˜ϕG
+j,q) for all i, j, p, q, and λW is defined as in
+Lemma 3.4.
+5. Numerical Examples
+This section presents several examples of RHD problems to demonstrate the accuracy, effectiveness, and ro-
+bustness of the proposed high-order PCP-OEDG schemes on uniform Cartesian meshes. For accuracy tests involving
+smooth problems, we couple the Pm-based, (m+1)-th order OEDG method with a (m+1)-th order explicit RK method
+for temporal discretization. For problems with discontinuities, the classical third-order RK temporal discretization is
+employed. To ensure stability, we set the CFL numbers to Cc fl = 0.3, 0.16, 0.1 for the P1-, P2-, and P3-based OEDG
+schemes, respectively. All numerical experiments are implemented in C++ using double precision.
+5.1. 1D Special RHD Examples
+In this subsection, we present several benchmark tests, including a smooth problem, a shock heating problem, a
+blast wave interaction, two Riemann problems, and a low-density perturbation problem, to validate the accuracy and
+effectiveness of the PCP-OEDG schemes in flat spacetime.
+Example 5.1 (1D Smooth Problem). This first example is designed to verify the accuracy of the 1D PCP-OEDG
+schemes in the domain Ω= [0, 1], under conditions of low density and pressure. The exact solutions are given by
+Q(x, t) = (ρ(x, t), v(x, t), p(x, t))⊤= (1 + 0.9999 sin(2π(x −0.99t)), 0.99, 0.001)⊤.
+This example models a RHD sine wave propagating periodically, with the adiabatic index set to 5/3. Table 1 presents
+the L1, L2, and L∞errors, along with the corresponding convergence rates at time t = 1 for Pm-based OEDG schemes
+with m = 1, 2, 3. The results show that the errors decay at rates exceeding the optimal (m + 1)-th order convergence.
+This is due to the high-order damping effects, which dominate the numerical errors on coarse meshes. Additionally,
+the PCP limiting and OE procedures do not degrade the high-order accuracy of the schemes.
+
+--- Sayfa 33 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+33
+Table 1: Example 5.1: Errors and convergence rates for Pm-based OEDG method with N uniform cells.
+m
+N
+||u −uh||L1(Ω)
+rate
+||u −uh||L2(Ω)
+rate
+||u −uh||L∞(Ω)
+rate
+1
+64
+5.4734e-03
+2.741
+6.5562e-03
+2.718
+1.4939e-02
+2.595
+128
+9.1279e-04
+2.584
+1.1428e-03
+2.520
+3.0542e-03
+2.290
+256
+1.8557e-04
+2.298
+2.2268e-04
+2.360
+3.8916e-04
+2.972
+512
+4.5284e-05
+2.035
+5.1548e-05
+2.111
+8.1249e-05
+2.260
+1024
+1.1297e-05
+2.003
+1.2628e-05
+2.029
+1.8809e-05
+2.111
+2048
+2.8224e-06
+2.001
+3.1400e-06
+2.008
+4.5381e-06
+2.051
+2
+64
+3.7294e-05
+4.322
+4.6521e-05
+4.379
+2.0785e-04
+4.299
+128
+2.4704e-06
+3.916
+3.0860e-06
+3.914
+5.6182e-06
+5.209
+256
+2.6568e-07
+3.217
+3.1813e-07
+3.278
+5.4627e-07
+3.362
+512
+3.2043e-08
+3.052
+3.6819e-08
+3.111
+6.0373e-08
+3.178
+1024
+3.9489e-09
+3.021
+4.4633e-09
+3.044
+7.2314e-09
+3.062
+3
+96
+4.8395e-08
+4.924
+5.6041e-08
+4.893
+1.0730e-07
+4.747
+144
+6.7437e-09
+4.861
+8.0129e-09
+4.797
+1.6226e-08
+4.659
+216
+1.0012e-09
+4.704
+1.2177e-09
+4.647
+2.5526e-09
+4.562
+324
+1.7013e-10
+4.371
+2.0030e-10
+4.452
+4.4682e-10
+4.298
+Example 5.2 (Shock Heating Problem). In this example, we consider the shock heating problem. The initial condi-
+tions are set as
+Q(x, 0) =
+ 
+1, 1 −10−10, 10−4
+3
+!⊤
+,
+with a reflecting boundary condition at the right endpoint of the domain and an inflow boundary condition at the left
+endpoint. As the initial gas moves toward the reflecting boundary, it is compressed and heated due to the conversion
+of kinetic energy into internal energy. This process forms a strong reflected shock wave that propagates to the left
+with a speed given by vs = (Γ−1)W0|v0|
+W0+1
+, where Γ = 4/3, v0 = 1 −10−10, and W0 = (1 −v2
+0)−1/2 ≈70710.675. Behind the
+reflected shock wave, the gas comes to rest and attains a specific internal energy of W0 −1.
+Figure 1 shows the numerical solutions at t = 2 obtained using the third-order OEDG method (top row) and the
+third-order DG method without the OE procedure (bottom row) on a mesh of 200 uniform cells. For comparison, the
+exact solution is also provided. Both schemes sharply capture the shocks in this ultra-relativistic problem. The PCP
+limiter is critical for successfully simulating this challenging test. Without it, both the OEDG and conventional DG
+methods would break down. The OEDG method effectively eliminates spurious oscillations, though the well-known
+wall-heating phenomenon near the reflecting boundary at x = 1 is still observed, as also reported in [58, 60]. In
+contrast, the DG method without the OE procedure exhibits significant numerical oscillations, even when the PCP
+limiter is applied.
+Example 5.3 (Blast Wave Interaction). The initial data for this problem consist of three constant states:
+Q(x, 0) =
+
+(1, 0, 1000)⊤,
+0 ≤x ≤0.1,
+(1, 0, 0.01)⊤,
+0.1 < x ≤0.9,
+(1, 0, 100)⊤,
+0.9 < x ≤1,
+with outflow boundary conditions applied at both ends of the domain [0, 1]. This problem simulates the development
+and collision of two strong relativistic blast waves, governed by an adiabatic index Γ = 1.4. The interaction produces
+complex wave structures, including new contact discontinuities, in a narrow region.
+
+--- Sayfa 34 ---
+34
+Huihui Cao, Manting Peng, Kailiang Wu
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+1
+2
+1e5
+exact :
+OEDG :
+h
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+1
+2
+3
+1e5
+exact :
+DG :
+h
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+2
+4
+6
+1e9
+exact : p
+OEDG : ph
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+2
+4
+6
+1e9
+exact : p
+DG : ph
+Fig. 1: Example 5.2: Numerical solutions at t = 2 obtained using the third-order PCP DG method with OE procedure (left) and without OE
+procedure (right) on a mesh of 200 uniform cells. Top: ρ; bottom: p.
+Figure 2 presents the numerical solutions at t = 0.43, obtained using the third-order OEDG method and the
+DG method without the OE procedure on a mesh of 4000 uniform cells. The results show that the OEDG scheme
+effectively resolves the discontinuities and accurately captures the complex relativistic wave configurations in the
+collision region. In contrast, the DG method suffers from persistent spurious oscillations, highlighting the importance
+of the OE procedure in ensuring stability.
+Example 5.4 (1D Riemann Problem I). The initial data for this Riemann problem are given by
+Q(x, 0) =
+
+(10, 0, 103)⊤,
+x < 0.5,
+(1, 0, 0.01)⊤,
+x > 0.5,
+with the domain Ω= [0, 1] and outflow boundary conditions. The adiabatic index is set to Γ = 5/3.
+In this problem, a highly curved profile for the rarefaction fan is observed due to relativistic effects. The region
+between the contact discontinuity and the right-moving shock wave is very narrow, making it challenging to resolve
+these waves accurately. Figure 3 presents the numerical results at t = 0.4, obtained using the proposed PCP-OEDG
+method on a uniform mesh of 400 cells. As expected, the higher the order of the PCP-OEDG method, the better the
+resolution of the shock wave and contact discontinuity. Notably, no spurious oscillations are observed in the OEDG
+solutions.
+
+--- Sayfa 35 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+35
+0.50
+0.51
+0.52
+0.53
+0
+25
+50
+75
+100
+exact :
+OEDG :
+h
+0.50
+0.51
+0.52
+0.53
+0
+25
+50
+75
+100
+125
+exact :
+OEDG :
+h
+0.50
+0.51
+0.52
+0.53
+0
+100
+200
+300
+exact : p
+OEDG : ph
+0.50
+0.51
+0.52
+0.53
+0
+100
+200
+300
+exact : p
+OEDG : ph
+Fig. 2: Example 5.3: Close-up in [0.5, 0.53] of the numerical solutions at t = 0.43, obtained using the third-order PCP DG method with OE
+procedure (left) and without OE procedure (right) on a mesh of 4000 uniform cells. Top: ρ; bottom: p.
+Example 5.5 (1D Riemann Problem II). The initial data for this Riemann problem are given by
+Q(x, 0) =
+
+(1, 0, 104)⊤,
+x < 0.5,
+(1, 0, 10−8)⊤,
+x > 0.5,
+with the adiabatic index Γ = 5/3 in the domain [0, 1]. The initial discontinuity evolves into a strong left-moving
+rarefaction wave, a rapidly right-moving contact discontinuity, and a rapidly right-moving shock wave.
+The flow pattern in this example is similar to that of Example 5.4, but this problem is more computationally chal-
+lenging due to the ultra-relativistic effects. The PCP limiter is crucial for this example; without it, nonphysical states
+exceeding the admissible set would be produced, leading to simulation failure. Both the contact discontinuity and the
+shock wave move at speeds close to the speed of light, and the region between them has a width of approximately
+0.00424 at the end of the simulation. Figure 4 shows the numerical results at t = 0.45 using 800 uniform cells. The
+results demonstrate that the high-order PCP-OEDG method provides excellent resolution and accurately captures the
+wave configuration without any nonphysical oscillations.
+Example 5.6 (Density Perturbation Problem). This example validates the ability of the OEDG schemes to resolve
+high-frequency waves. The initial data are given by
+Q(x, 0) =
+
+(1, 0, 50)⊤,
+x < 0.5,
+(2 + 0.3 sin(50x), 0, 10)⊤,
+x > 0.5,
+
+--- Sayfa 36 ---
+36
+Huihui Cao, Manting Peng, Kailiang Wu
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+2
+4
+6
+8
+10
+exact :
+OEDG :
+h
+(a) P1, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+2
+4
+6
+8
+10
+exact :
+OEDG :
+h
+(b) P2, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+2
+4
+6
+8
+10
+exact :
+OEDG :
+h
+(c) P3, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(d) P1, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(e) P2, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(f) P3, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+200
+400
+600
+800
+1000
+exact : p
+OEDG : ph
+(g) P1, p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+200
+400
+600
+800
+1000
+exact : p
+OEDG : ph
+(h) P2, p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+200
+400
+600
+800
+1000
+exact : p
+OEDG : ph
+(i) P3, p
+Fig. 3: Example 5.4: Numerical results for ρ, v, p obtained using the Pm-based PCP-OEDG method with 400 uniform cells at t = 0.4.
+with an adiabatic index of Γ = 5/3. The computational domain is Ω= [0, 1], with outflow boundary conditions.
+Figure 5 shows the numerical results at t = 0.35, using the Pm-based OEDG method with m = 1, 2, 3, on a mesh
+of 200 uniform cells. The reference solution is produced by the first-order local Lax–Friedrichs scheme with 100, 000
+uniform grids. The results indicate that the OEDG methods effectively resolve the small perturbation waves. Higher-
+order polynomial approximations (P2 and P3) demonstrate better resolution of high-frequency waves compared to the
+lower-order approximation (P1).
+5.2. 2D Special RHD Examples
+In this subsection, we present several benchmark tests, including a smooth problem, two 2D Riemann problems,
+the double Mach reflection problem, and the shock-bubble interaction problem, to validate the accuracy and effective-
+ness of the 2D PCP-OEDG schemes in flat spacetime.
+Example 5.7 (2D Smooth Problem). The accuracy of the 2D PCP-OEDG schemes is evaluated using a smooth
+problem in the domain Ω= [0, 1]2, where the wave propagates at a 45◦angle to the x-axis. The exact solution is given
+
+--- Sayfa 37 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+37
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+5
+10
+15
+exact :
+OEDG :
+h
+(a) P1, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+5
+10
+15
+exact :
+OEDG :
+h
+(b) P2, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+5
+10
+15
+exact :
+OEDG :
+h
+(c) P3, ρ
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(d) P1, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(e) P2, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+exact : v
+OEDG : vh
+(f) P3, v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+2000
+4000
+6000
+8000
+10000
+exact : p
+OEDG : ph
+(g) P1, p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+2000
+4000
+6000
+8000
+10000
+exact : p
+OEDG : ph
+(h) P2, p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0
+2000
+4000
+6000
+8000
+10000
+exact : p
+OEDG : ph
+(i) P3, p
+Fig. 4: Example 5.5: Numerical results for ρ, v, p obtained using the Pm-based PCP-OEDG method with 800 uniform cells at t = 0.45.
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1
+2
+3
+reference :
+OEDG :
+h
+(a) P1
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1
+2
+3
+reference :
+OEDG :
+h
+(b) P2
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1
+2
+3
+reference :
+OEDG :
+h
+(c) P3
+Fig. 5: Example 5.6: Numerical results for ρ obtained using the Pm-based OEDG method with 200 uniform cells at t = 0.35.
+by:
+Q(x, t) = (ρ, v1, v2, p)⊤(x, t) =
+ 
+1 + 0.9999 sin(2π(x + y −0.99
+√
+2t)), 0.99
+√
+2
+, 0.99
+√
+2
+, 0.01
+!⊤
+.
+The computational domain Ωis divided into Nx × Ny uniform cells, with periodic boundary conditions applied. The
+
+--- Sayfa 38 ---
+38
+Huihui Cao, Manting Peng, Kailiang Wu
+adiabatic index is set to 5/3. Table 2 lists the L1, L2, and L∞errors and the corresponding convergence orders obtained
+at t = 0.1 using the Pm-based OEDG method with m = 1, 2, 3, respectively. The convergence rate of the density ρ
+approaches the theoretical (m + 1)-th order as the mesh is refined.
+Table 2: Example 5.1: Errors and convergence rates for Pm-based OEDG method with Nx × Ny uniform cells.
+m
+Nx × Ny
+||u −uh||L1(Ω)
+rate
+||u −uh||L2(Ω)
+rate
+||u −uh||L∞(Ω)
+rate
+1
+32 × 32
+3.614E-02
+2.557
+4.356E-02
+2.524
+8.597E-02
+2.385
+64 × 64
+6.436E-03
+2.489
+7.758E-03
+2.489
+2.092E-02
+2.039
+128 × 128
+1.283E-03
+2.326
+1.550E-03
+2.323
+4.900E-03
+2.094
+256 × 256
+2.780E-04
+2.207
+3.439E-04
+2.172
+1.121E-03
+2.128
+512 × 512
+6.495E-05
+2.098
+8.233E-05
+2.063
+1.776E-04
+2.658
+2
+32 × 32
+2.193E-03
+5.431
+2.648E-03
+5.443
+6.188E-03
+5.641
+64 × 64
+1.306E-04
+4.070
+1.669E-04
+3.988
+5.073E-04
+3.609
+128 × 128
+1.098E-05
+3.572
+1.537E-05
+3.441
+5.605E-05
+3.178
+256 × 256
+1.218E-06
+3.172
+1.695E-06
+3.181
+6.530E-06
+3.102
+512 × 512
+1.481E-07
+3.040
+2.026E-07
+3.065
+7.852E-07
+3.056
+3
+32 × 32
+4.073E-04
+7.426
+5.153E-04
+7.354
+1.608E-03
+7.207
+64 × 64
+1.487E-05
+4.775
+1.814E-05
+4.828
+4.984E-05
+5.012
+128 × 128
+7.232E-07
+4.362
+8.883E-07
+4.352
+2.263E-06
+4.461
+256 × 256
+4.044E-08
+4.161
+5.133E-08
+4.113
+1.204E-07
+4.232
+512 × 512
+2.429E-09
+4.057
+3.141E-09
+4.030
+7.007E-09
+4.103
+Example 5.8 (2D Riemann Problems). In this example, we simulate three 2D Riemann problems, each with initial
+data consisting of four different constant states in the unit square Ω= [0, 1]2. The domain Ωis divided into 400 ×
+400 uniform cells with outflow boundary conditions. To demonstrate the importance and effectiveness of the OE
+procedure, we compare the results obtained using both the proposed OEDG method and the conventional DG method
+without the OE procedure.
+The initial states for the first 2D Riemann problem [23] are
+Q(x, y, 0) =
+
+(0.5, 0.5, −0.5, 5)⊤,
+x > 0.5, y > 0.5,
+(1, 0.5, 0.5, 5)⊤,
+x < 0.5, y > 0.5,
+(3, −0.5, 0.5, 5)⊤,
+x < 0.5, y < 0.5,
+(1.5, −0.5, −0.5, 5)⊤,
+x > 0.5, y < 0.5,
+with an adiabatic index Γ = 5/3. This problem models the interaction of four contact discontinuities (vortex sheets) in
+an ideal relativistic fluid. The second and third 2D Riemann problems [58] involve highly ultra-relativistic conditions
+with large velocities near the speed of light, making the proposed PCP technique essential for stable simulations.
+Their initial conditions are
+Q(x, y, 0) =
+
+(0.1, 0, 0, 0.01)⊤,
+x > 0.5, y > 0.5,
+(0.1, 0.99, 0, 1)⊤,
+x < 0.5, y > 0.5,
+(0.5, 0, 0, 1)⊤,
+x < 0.5, y < 0.5,
+(0.1, 0, 0.99, 1)⊤,
+x > 0.5, y < 0.5,
+
+--- Sayfa 39 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+39
+and
+Q(x, y, 0) =
+
+(0.1, 0, 0, 20)⊤,
+x > 0.5, y > 0.5,
+(0.00414329639576, 0.9946418833556542, 0, 0.05)⊤,
+x < 0.5, y > 0.5,
+(0.01, 0, 0, 0.05)⊤,
+x < 0.5, y < 0.5,
+(0.00414329639576, 0, 0.9946418833556542, 0.05)⊤,
+x > 0.5, y < 0.5,
+respectively.
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(a) PCP-OEDG
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(b) PCP-DG without OE
+Fig. 6: First 2D Riemann problem in Example 5.8: Contours of log ρ at t = 0.4 for the OEDG schemes and the DG schemes without the OE
+procedure on a mesh of 400 × 400 uniform cells.
+Figure 6 shows the contours of the density logarithm at t = 0.4 for the first 2D Riemann problem using both the
+third-order OEDG schemes and conventional DG schemes without the OE procedure. As time progresses, the four
+vortex sheets interact to form a spiral with low density around the center. The difference between the OEDG method
+and the DG method is evident: the DG method without the OE procedure exhibits significant spurious oscillations,
+whereas the OEDG solutions are free from such nonphysical oscillations, confirming the effectiveness of the OE
+process. The results for the second and third 2D Riemann problems are shown in Figures 7 and 8. Again, the OE
+procedure is crucial for eliminating spurious oscillations in the conventional DG method, while the proposed PCP-
+OEDG method demonstrates robustness for these challenging test cases. Without the PCP limiter, both the OEDG
+and conventional DG methods break down due to nonphysical states that exceed the admissible set.
+Example 5.9 (Double Mach Reflection). The double Mach reflection problem is a standard benchmark for assessing
+high-resolution shock-capturing methods (see, e.g., [23, 70]). Initially, a right-moving oblique shock wave, traveling
+at a velocity of vs = 0.4984, is positioned at (x, y) = (1/6, 0) and intersects the wall at a 60◦angle relative to the
+x-axis. The position of the shock front at time t is described by
+h(x, t) =
+√
+3
+ 
+x −1
+6
+!
+−2vst.
+The primitive variables for the states on either side of the shock are
+QL = (8.564, 0.4247 sin 60◦, −0.4247 cos 60◦, 0.3808)⊤,
+QR = (1.4, 0, 0, 0.0025)⊤.
+
+--- Sayfa 40 ---
+40
+Huihui Cao, Manting Peng, Kailiang Wu
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(a) PCP-OEDG
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(b) PCP-DG without OE
+Fig. 7: Second 2D Riemann problem in Example 5.8: Contours of log ρ at t = 0.4 for the third-order PCP DG schemes with and without the OE
+procedure on a mesh of 400 × 400 uniform cells.
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(a) PCP-OEDG
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+(b) PCP-DG without OE
+Fig. 8: Third 2D Riemann problem in Example 5.8: Contours of log ρ at t = 0.4 for the third-order PCP DG schemes with and without the OE
+procedure on a mesh of 400 × 400 uniform cells.
+The computational domain Ω= [0, 4] × [0, 1] is discretized into 960 × 240 uniform cells. The adiabatic index is
+set to Γ = 1.4. The boundary conditions are specified as follows. (i) Left boundary: The post-shock state QL is
+imposed. (ii) Right boundary: The pre-shock state QR is applied. (iii) Bottom boundary: For x ≤1/6, the left-side
+shock state is enforced, while for x > 1/6, a reflective boundary condition is used. (iv) Top boundary: For x > xs,
+the right-side shock state is applied, and for x < xs, the left-side shock state is imposed, where xs is determined by
+
+--- Sayfa 41 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+41
+solving h(x, t) = 1.
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+0.2
+0.4
+0.6
+0.8
+(a) P1
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+0.2
+0.4
+0.6
+0.8
+(b) P2
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+0.2
+0.4
+0.6
+0.8
+(c) P3
+Fig. 9: Example 5.9: Density logarithm contours at t = 4 using the Pm-based OEDG method with 960 × 240 grid cells.
+Figure 9 shows the density logarithm contours at t = 4 within the sub-domain Ω= [0, 3] × [0, 1]. The Pm-based
+OEDG method for m = 1, 2, 3 accurately captures the complex structures around the double Mach reflection region,
+including the shock waves and contact discontinuities.
+Example 5.10 (Shock-Bubble Interaction). This example [23] extends the classical shock-bubble interaction problem,
+commonly studied in non-relativistic hydrodynamics, to demonstrate the shock-capturing capabilities of the proposed
+OEDG schemes. The computational domain is Ω= [0, 325] × [−45, 45]. Reflective boundary conditions are enforced
+at y = ±45, with fluid states specified on either side of the shock wave. Initially, a left-moving relativistic shock wave
+is positioned at x = 265, with the left and right states defined as:
+Q(x, y, 0) =
+
+(1, 0, 0, 0.05)⊤,
+x < 265,
+(1.865225080631180, −0.196781107378299, 0, 0.15)⊤,
+x > 265.
+Ahead of the shock wave, a cylindrical bubble is centered at (215, 0) with a radius of 25. The initial state of the fluid
+inside the bubble is given by:
+Q(x, y, 0) = (0.1358, 0, 0, 0.05)⊤,
+q
+(x −215)2 + y2 ≤25,
+representing a lighter fluid compared to the surrounding medium.
+Figure 10 presents schlieren images of the rest-mass density at t = 90, 270, and 450, computed using the OEDG
+schemes on a 500×140 uniform mesh. The results demonstrate the OEDG method’s ability to capture the shock-wave
+dynamics and small-scale wave structures, such as the curling of the bubble interface during the interaction between
+the shock and the bubble. As expected, higher-order OEDG methods provide better resolution of shock waves and
+contact discontinuities, effectively eliminating spurious oscillations.
+5.3. Axisymmetric Relativistic Jets in Cylindrical Coordinates
+In this subsection, we simulate two high-speed relativistic jet flows relevant to extragalactic radio sources associ-
+ated with active galactic nuclei. These simulations feature ultra-relativistic regions, strong shock waves, shear flows,
+and interface instabilities, posing significant challenges for numerical codes. Without the proposed PCP technique,
+both the DG codes with and without the OE procedure would fail, producing nonphysical states that violate the ad-
+missible set. The relativistic jets are modeled by solving the axisymmetric RHD equations in cylindrical coordinates
+(r, z), as described in Section 4.2.
+Example 5.11 (Axisymmetric Relativistic Jet I). The first test case is based on the pressure-matched hot A1 model
+[35]. The initial conditions for the relativistic jet are given by
+Q(r, z, 0) = (1, 0, 0, 0.40611878453038897)⊤,
+
+--- Sayfa 42 ---
+42
+Huihui Cao, Manting Peng, Kailiang Wu
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(a) P1, t = 90
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(b) P2, t = 90
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(c) P3, t = 90
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(d) P1, t = 270
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(e) P2, t = 270
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(f) P3, t = 270
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(g) P1, t = 450
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(h) P2, t = 450
+0
+50
+100
+150
+200
+250
+300
+-40
+-20
+0
+20
+40
+(i) P3, t = 450
+Fig. 10: Example 5.10: Schlieren images of log ρ at different times for the Pm-based OEDG method with 500 × 140 uniform cells.
+with an adiabatic index of Γ = 4/3. The computational domain, in cylindrical coordinates (r, z), is [0, 7] × [0, 50],
+discretized into 210 × 1500 uniform cells. Symmetry boundary conditions are enforced at r = 0, a fixed inflow beam
+condition is applied at the nozzle {z = 0, r ≤1}, and outflow boundary conditions are set on the remaining boundaries.
+Initially, a light jet beam with ρb = 0.01 is injected parallel to the z-direction through the bottom boundary inlet
+(r ≤1, z = 0). The beam propagates at a speed of vb = 0.99, with relativistic effects from the high internal beam energy
+comparable to those from the near-light-speed velocity. The classical beam Mach number is Mb = vb/cs = 1.72, and
+the relativistic Mach number Mr := Mbγb/γs is approximately 9.97, where γb = 1/
+p
+1 −(vb)2 and γs = 1/
+p
+1 −c2s
+are the Lorentz factors for the jet speed and local sound speed, respectively.
+Figure 11 shows schlieren images of the rest-mass density logarithm log ρ in the domain [−7, 7] × [0, 50] at times
+t = 10, 20, 30, 40, 50, and 60, computed using the proposed PCP-OEDG schemes. The results demonstrate the ac-
+curate capture of the time evolution of a light, relativistic jet with high internal energy. The Mach shock at the jet’s
+head is consistently resolved throughout the simulation. The PCP-OEDG schemes clearly resolve the beam/cocoon
+interface, and higher-order methods better capture the development of Kelvin–Helmholtz-type instabilities at this in-
+terface. These results confirm the robustness and shock-capturing capabilities of the PCP-OEDG schemes in handling
+complex relativistic jet dynamics.
+Example 5.12 (Axisymmetric Relativistic Jet II). The second relativistic jet simulation involves the pressure-matched,
+highly supersonic C2 jet model [35], which has been extensively studied in the literature [66, 40, 58, 7]. The initial
+state of the jet is given by
+Q(r, z, 0) = (1, 0, 0, 1.70305 × 10−4)⊤.
+The computational domain is a 2D cylindrical box [0, 15] × [0, 45] in the (r, z) plane, discretized into 360 × 1080
+uniform cells. The initial relativistic jet shares the same rest-mass density and velocity as the hot A1 model but
+features a higher beam Mach number of Mb = 6, which corresponds to a relativistic Mach number of approximately
+Mr = 41.95. This model has an adiabatic index of 5/3. Highly supersonic jets, also referred to as cold jets, are
+
+--- Sayfa 43 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+43
+(a) P1, t = 10
+(b) P1, t = 20
+(c) P1, t = 30
+(d) P1, t = 40
+(e) P1, t = 50
+(f) P1, t = 60
+(g) P2, t = 10
+(h) P2, t = 20
+(i) P2, t = 30
+(j) P2, t = 40
+(k) P2, t = 50
+(l) P2, t = 60
+(m) P3, t = 10
+(n) P3, t = 20
+(o) P3, t = 30
+(p) P3, t = 40
+(q) P3, t = 50
+(r) P3, t = 60
+Fig. 11: Example 5.11: Schlieren images of log ρ at different times for the Pm-based PCP-OEDG method with 210 × 1500 uniform cells.
+
+--- Sayfa 44 ---
+44
+Huihui Cao, Manting Peng, Kailiang Wu
+(a) P1, t = 60
+(b) P1, t = 80
+(c) P1, t = 100
+(d) P2, t = 60
+(e) P2, t = 80
+(f) P2, t = 100
+(g) P3, t = 60
+(h) P3, t = 80
+(i) P3, t = 100
+Fig. 12: Example 5.12: Schlieren images of log ρ at different times for the Pm-based PCP-OEDG method with 360 × 1080 uniform cells.
+
+--- Sayfa 45 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+45
+dominated by relativistic effects due to their high beam speeds, leading to significant differences between cold and
+hot relativistic jets.
+Figure 12 presents schlieren images of the rest-mass density logarithm log ρ at t = 60, 80, and 100 within the
+symmetrical domain [−15, 15] × [0, 45]. As expected, a bow shock forms at the jet head, and Kelvin–Helmholtz
+instabilities develop, leading to the formation of large vortices that create turbulent structures. The morphology and
+dynamics of the relativistic jets depicted in Figure 12 align closely with those obtained using adaptive mesh refinement
+RHD codes in [66] and high-order PCP finite difference/volume WENO methods in [58, 7].
+5.4. Black Hole Accretion
+In this subsection, we apply the proposed PCP-OEDG schemes to simulate the evolution of matter accreting
+supersonically onto a rotating black hole in the general relativistic regime, as described in [20]. We follow the
+setups in [20], using the Kerr metric in Kerr–Schild coordinates, which avoids coordinate singularities at the black
+hole horizon. The PCP-OEDG schemes demonstrate robust shock-capturing capabilities for general relativistic fluid
+flows. In particular, we will use these schemes to explore how the morphology of the accretion flow depends on
+various parameters, including the black hole’s angular momentum, asymptotic flow velocity, Mach number, and
+the adiabatic index of the fluid. These simulations will highlight the efficacy of PCP-OEDG methods in accurately
+capturing the complex dynamics of black hole accretion flows, which include general relativistic shock waves and
+other challenging phenomena characteristic of extreme astrophysical environments.
+Table 3 summarizes the specific parameter values used in our simulations. Here, Γ represents the adiabatic index,
+v∞is the asymptotic flow velocity, and rmin and rmax are the minimum and maximum radial values of the computational
+domain, respectively. The asymptotic Mach number, M∞, is determined by v∞and the sound speed cs using the
+relation M∞= v∞/cs. The black hole’s angular momentum parameter a is positive, meaning the black hole rotates
+counter-clockwise. The location of the event horizon is given by r+ = 1 +
+√
+1 −a2. All distance measurements are
+expressed in terms of the black hole’s mass.
+The initial conditions for the accretion flow in Kerr–Schild coordinates (r, ˜ϕ) are defined as follows:
+
+ρ(r, ˜ϕ)
+= 1.0,
+vr(r, ˜ϕ)
+= f1(r)v∞cos ˜ϕ + f2(r)v∞sin ˜ϕ,
+v˜ϕ(r, ˜ϕ)
+= f3(r)v∞cos ˜ϕ −f4(r)v∞sin ˜ϕ,
+p(r, ˜ϕ)
+=
+ρc2
+s(Γ−1)
+Γ(Γ−1−c2s),
+where the functions f1, f2, f3, and f4 are given by
+f1(r) =
+1
+√grr
+,
+f3(r) = −
+2gr ˜ϕ
+√grrg˜ϕ˜ϕ
+,
+f4(r) =
+f1grr + f3gr ˜ϕ
+q
+(grrg˜ϕ˜ϕ −g2
+r ˜ϕ)(f 2
+1 grr + f 2
+3 g˜ϕ˜ϕ + 2f1 f3gr ˜ϕ)
+,
+f2(r) =
+f2 f4g˜ϕ˜ϕ + f1 f3gr ˜ϕ
+f1grr + f3gr ˜ϕ
+.
+Here, {gij : i = r, ˜ϕ; j = r, ˜ϕ} are the components of the Kerr metric tensor as defined in equation (100), with v∞and Γ
+provided in Table 3.
+For boundary conditions, outflow conditions are imposed at the inner boundary, while asymptotic initial values
+are applied at the outer boundary. The simulations are performed on a uniform grid with 600 radial zones and 250
+angular zones, with the simulations running up to time t = 500 for all cases. The results are presented in Cartesian
+coordinates, where x = r cos ϕ and y = r sin ϕ, transformed from Boyer–Lindquist coordinates.
+
+--- Sayfa 46 ---
+46
+Huihui Cao, Manting Peng, Kailiang Wu
+Table 3: Parameters in different test cases for Kerr black hole accretion.
+Cases
+Case 1
+Case 2
+Case 3
+Case 4
+Case 5
+Case 6
+Case 7
+Case 8
+Case 9
+Case 10
+Γ
+5/3
+5/3
+5/3
+5/3
+4/3
+2.0
+5/3
+5/3
+5/3
+5/3
+M∞
+5
+5
+5
+5
+5
+5
+5
+5
+20
+50
+v∞
+0.5
+0.5
+0.5
+0.5
+0.5
+0.5
+0.9
+0.99
+0.5
+0.5
+rmin
+1.8
+1.8
+1.4
+1.0
+1.0
+1.0
+1.0
+1.0
+1.0
+1.0
+rmax
+50.9
+50.9
+50.9
+50.9
+50.9
+50.9
+50.9
+50.9
+50.9
+50.9
+a
+0
+0.5
+0.9
+0.99
+0.99
+0.99
+0.99
+0.99
+0.99
+0.99
+Example 5.13 (Effects of Angular Momentum a for Kerr Black Hole Accretion). To illustrate the dependence of
+accretion patterns on the black hole’s angular momentum, we fix three parameters: Γ, M∞, and v∞, as shown in the
+first four cases listed in Table 3. The angular momentum parameter a varies as 0, 0.5, 0.9, 0.99 for cases 1 to 4,
+respectively. For a = 0, the black hole is non-rotating, corresponding to the Schwarzschild case where the spin effect
+is absent.
+(a) Case 1, a = 0.0
+(b) Case 2, a = 0.5
+(c) Case 3, a = 0.9
+(d) Case 4, a = 0.99
+Fig. 13: Example 5.13: Relativistic accretion onto Kerr black hole with different angular momentums.
+-20
+-10
+0
+10
+20
+-20
+-10
+0
+10
+20
+(a) Case 1, a = 0.0
+-20
+-10
+0
+10
+20
+-20
+-10
+0
+10
+20
+(b) Case 2, a = 0.5
+-20
+-10
+0
+10
+20
+-20
+-10
+0
+10
+20
+(c) Case 3, a = 0.9
+-20
+-10
+0
+10
+20
+-20
+-10
+0
+10
+20
+(d) Case 4, a = 0.99
+Fig. 14: Example 5.13: Contours of log ρ at different angular momentums for the second-order PCP-OEDG method in domain [−20, 20]2.
+Figure 13 shows the accretion patterns for the second-order PCP-OEDG method at the final stationary time. Red-
+yellow colors indicate high-density regions, while blue represents low-density zones. The black area in the center
+denotes the location of the event horizon r+. Figure 14 displays the contour lines of the logarithm of the rest-mass
+
+--- Sayfa 47 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+47
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(a) Case 1, a = 0.0
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(b) Case 2, a = 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(c) Case 3, a = 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(d) Case 4, a = 0.99
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(e) Case 1, a = 0.0
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(f) Case 2, a = 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(g) Case 3, a = 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(h) Case 4, a = 0.99
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(i) Case 1, a = 0.0
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(j) Case 2, a = 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(k) Case 3, a = 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(l) Case 4, a = 0.99
+Fig. 15: Example 5.13: Contours of log ρ in [−4, 4]2. From top to bottom: P1-, P2-, and P3-based PCP-OEDG schemes.
+density, scaled by its asymptotic value, up to an outer domain of r = 20. A close-up view of the domain extending
+from −4 to 4 is shown in Figure 15. In both figures, the dotted red line marks the location of the event horizon.
+The influence of the rotating black hole on relativistic accretion is clearly evident. The matter density is highest
+near the event horizon and decreases with distance from the center. The flow pattern includes a stable tail shock
+wave. The black hole’s angular momentum drags the accreting flow, causing the shock to curve around the event
+horizon, with the degree of wrapping increasing as the angular momentum parameter a grows. The numerical solution
+smoothly transitions across the event horizon, with the matter fields remaining regular at this boundary. The rotational
+effects are most prominent in the inner regions near the black hole, while the overall flow pattern in the outer regions
+remains largely unchanged for different values of a. The flow patterns and shocks are well captured by the PCP-OEDG
+schemes without any spurious oscillations, in good agreement with those reported in [20].
+Similar phenomena are observed in the numerical results of the higher-order PCP-OEDG schemes, showing no
+
+--- Sayfa 48 ---
+48
+Huihui Cao, Manting Peng, Kailiang Wu
+nonphysical oscillations in the numerical solutions. The corresponding contour lines of the logarithm of the rest-mass
+density for these cases are presented in Figures 15. These findings suggest that accurately modeling the behavior of a
+rotating black hole necessitates a detailed representation of its innermost regions. As a result, in the subsequent test
+cases, we only present the close-up views of areas within a distance of 4 units from the black hole’s center.
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(a) Case 5, Γ = 4/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(b) Case 4, Γ = 5/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(c) Case 6, Γ = 2
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(d) Case 5, Γ = 4/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(e) Case 4, Γ = 5/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(f) Case 6, Γ = 2
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(g) Case 5, Γ = 4/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(h) Case 4, Γ = 5/3
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(i) Case 6, Γ = 2
+Fig. 16: Example 5.14: Close-up views of contours of log ρ in [−4, 4]2. From top to bottom: P1-, P2-, and P3-based PCP-OEDG schemes.
+Example 5.14 (Effects of Adiabatic Index Γ for Kerr Black Hole Accretion). Cases 4 through 6 in Table 3 describe
+different thermodynamic flow configurations. The contours of the density logarithm for these cases are plotted in
+Figure 16, obtained by the proposed PCP-OEDG schemes. These plots clearly show the dependence of accretion
+patterns on the adiabatic index Γ of the fluid around a rapidly rotating black hole.
+The results indicate that as the value of Γ increases, the shock wave opening angle becomes larger around the
+accretor. Additionally, the shock opening angles become larger for higher values of Γ due to the increased pressure
+
+--- Sayfa 49 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+49
+within the shock “cone” as Γ increases. This indicates that the adiabatic index significantly influences both the
+structure of the shock and the overall morphology of the accretion flow.
+All flow structures are correctly resolved by the PCP-OEDG schemes, and the results obtained using different
+orders of the schemes are consistent with each other. The numerical results also match those presented in [20],
+demonstrating the accuracy and robustness of the proposed schemes.
+Example 5.15 (Effects of the Flow Velocity v∞for Kerr Black Hole Accretion). The PCP-OEDG schemes are em-
+ployed to further investigate the relationship between the accretion patterns of a rotating black hole and the fluid
+velocity. To this end, we examine cases with increasing velocities: v∞= 0.5, 0.9, 0.99, corresponding to Cases
+4, 7, and 8 in Table 3, respectively. The numerical results for the density logarithm obtained using the Pm-based
+PCP-OEDG scheme for m = 1, 2, 3 at t = 500 over the domain [−4, 4]2 are presented in Figure 17.
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(a) Case 4, v∞= 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(b) Case 7, v∞= 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(c) Case 8, v∞= 0.99
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(d) Case 4, v∞= 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(e) Case 7, v∞= 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(f) Case 8, v∞= 0.99
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(g) Case 4, v∞= 0.5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(h) Case 7, v∞= 0.9
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(i) Case 8, v∞= 0.99
+Fig. 17: Example 5.15: Close-up views of contours of log ρ in [−4, 4]2. From top to bottom: P1-, P2-, and P3-based PCP-OEDG schemes.
+From these results, we observe that while the shock wave wraps around the accretor, higher fluid velocities (larger
+
+--- Sayfa 50 ---
+50
+Huihui Cao, Manting Peng, Kailiang Wu
+Lorentz factors) have a relatively minor impact on the overall physical characteristics of black hole accretion. This
+suggests that the shock structure and accretion flow morphology are predominantly influenced by other parameters,
+such as the angular momentum and the adiabatic index, rather than the asymptotic flow velocity.
+Example 5.16 (Effects of the Mach Number M∞for Kerr Black Hole Accretion). In this final test, we use the PCP-
+OEDG method to explore the impact of different Mach numbers on the flow morphology around the black hole. Figure
+18 shows the contours of the rest-mass density logarithm under identical settings, with the exception of varying Mach
+numbers, simulated by the PCP-OEDG schemes.
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(a) Case 4, M∞= 5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(b) Case 9, M∞= 20
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(c) Case 10, M∞= 50
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(d) Case 4, M∞= 5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(e) Case 9, M∞= 20
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(f) Case 10, M∞= 50
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(g) Case 4, M∞= 5
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(h) Case 9, M∞= 20
+-4
+-2
+0
+2
+4
+-4
+-2
+0
+2
+4
+(i) Case 10, M∞= 50
+Fig. 18: Example 5.16: Close-up views of contours of log ρ in [−4, 4]2. From top to bottom: P1-, P2-, and P3-based PCP-OEDG schemes.
+The results clearly indicate that as the Mach number increases, the density contours become less smooth, reflecting
+the presence of more pronounced discontinuities and oscillations. This suggests that higher Mach numbers contribute
+to more turbulent and complex flow structures around the black hole, highlighting the role of compressibility in
+shaping the accretion dynamics.
+
+--- Sayfa 51 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+51
+Due to the large velocity and high Mach number, the simulation of Case 10 is very challenging. The proposed
+PCP-OEDG schemes perform robustly in this ultra-relativistic test, and the flow patterns are captured with high
+resolution.
+6. Conclusions
+In this paper, we have presented the development of high-order accurate, physical-constraint-preserving, oscillation-
+eliminating discontinuous Galerkin (PCP-OEDG) schemes for the simulation of general relativistic hydrodynamics
+(GRHD) in arbitrary spacetimes. Our work has addressed several critical challenges inherent in the numerical sim-
+ulation of GRHD within the DG framework, including handling curved spacetime, achieving high-order accuracy,
+suppressing spurious oscillations near discontinuities, and preserving key physical constraints such as positive den-
+sity, positive pressure, and subluminal fluid velocity.
+Our PCP-OEDG schemes are designed based on the W-form of the GRHD equations, which are obtained by
+reformulating the (3 + 1) Arnowitt–Deser–Misner formalism, leveraging the Cholesky decomposition of the spatial
+metric. This reformulation has effectively addressed the challenge of non-equivalent admissible state sets at different
+points in curved spacetime by ensuring a spacetime-independent convex admissible state set, enabling the design of
+robust, high-order PCP schemes via convexity techniques.
+To suppress nonphysical oscillations typically arising near shock waves and contact discontinuities, we have
+introduced a novel oscillation-eliminating (OE) procedure based on the exact solution of a linear damping equation.
+This procedure, which avoids using the complex characteristic decomposition, is computationally efficient and non-
+intrusive to the DG discretization. Its incorporation has proven to be an effective means of enhancing the stability of
+the DG method while maintaining high-order accuracy, local conservation, and compactness.
+Furthermore, we have rigorously proven the PCP property for cell averages using highly technical estimates and
+the geometric quasi-linearization approach. This approach transforms complex nonlinear constraints into linear ones
+through the introduction of auxiliary variables, simplifying the analysis. Additionally, a simple but effective PCP
+limiter has been introduced to enforce the PCP property of DG solution polynomials at certain critical points. We
+have also developed provably convergent PCP iterative algorithms for the recovery of primitive variables in GRHD,
+ensuring that these variables satisfy physical constraints during their recovery from evolved variables.
+The performance of the proposed PCP-OEDG method has been thoroughly validated through a series of extensive
+numerical experiments, including benchmark tests in flat spacetime, axisymmetric ultra-relativistic jet flows, and
+accretion processes around rotating black holes modeled by the Kerr metric. These experiments have demonstrated
+the method’s robustness, accuracy, and efficiency, particularly in extreme GRHD conditions involving strong shocks,
+low pressure or density, high Lorentz factors, and intense gravitational fields.
+In conclusion, the PCP-OEDG schemes developed in this work provide a reliable and efficient numerical frame-
+work for solving GRHD equations. These methods have proven to be highly effective in maintaining critical physical
+constraints while delivering high-order accurate and essentially oscillation-free solutions.
+References
+[1] M. Abramowitz, I. A. Stegun, and J. E. Romain. Handbook of Mathematical Functions. Physics Today, 19(1):120–121, 1966.
+[2] R. Arnowitt, S. Deser, and C. W. Misner. The dynamics of general relativity; gravitation: an introduction to current research. Chap,
+7:227–265, 1962.
+[3] D. S. Balsara and J. Kim. A subluminal relativistic magnetohydrodynamics scheme with ADER-WENO predictor and multidimensional
+Riemann solver-based corrector. Journal of Computational Physics, 312:357–384, 2016.
+[4] D. S. Balsara and J. Kim. A subluminal relativistic magnetohydrodynamics scheme with ADER-WENO predictor and multidimensional
+Riemann solver-based corrector. J. Comput. Phys., 312:357–384, 2016.
+
+--- Sayfa 52 ---
+52
+Huihui Cao, Manting Peng, Kailiang Wu
+[5] F. Banyuls, J. A. Font, J. M. Ibanez, J. M. Marti, and J. A. Miralles. Numerical {3+ 1} general relativistic hydrodynamics: A local character-
+istic approach. The Astrophysical Journal, 476(1):221–231, 1997.
+[6] C. Cai, J. Qiu, and K. Wu. Provably convergent Newton–Raphson methods for recovering primitive variables with applications to physical-
+constraint-preserving Hermite WENO schemes for relativistic hydrodynamics. Journal of Computational Physics, 498:112669, 2024.
+[7] Y. Chen and K. Wu. A physical-constraint-preserving finite volume WENO method for special relativistic hydrodynamics on unstructured
+meshes. Journal of Computational Physics, 466:111398, 2022.
+[8] E. Choi and D. Ryu. Numerical relativistic hydrodynamics based on the total variation diminishing scheme. New Astronomy, 11(2):116–129,
+2005.
+[9] B. Cockburn, S. Hou, and C.-W. Shu. The Runge–Kutta local projection discontinuous Galerkin finite element method for conservation laws.
+IV. The multidimensional case. Mathematics of Computation, 54(190):545–581, 1990.
+[10] B. Cockburn, S.-Y. Lin, and C.-W. Shu. TVB Runge–Kutta local projection discontinuous Galerkin finite element method for conservation
+laws III: one-dimensional systems. Journal of computational Physics, 84(1):90–113, 1989.
+[11] B. Cockburn and C.-W. Shu. TVB Runge-Kutta local projection discontinuous Galerkin finite element method for conservation laws. II.
+General framework. Mathematics of computation, 52(186):411–435, 1989.
+[12] B. Cockburn and C.-W. Shu. The Runge–Kutta discontinuous Galerkin method for conservation laws V: multidimensional systems. Journal
+of computational physics, 141(2):199–224, 1998.
+[13] S. Cui, S. Ding, and K. Wu. Is the classic convex decomposition optimal for bound-preserving schemes in multiple dimensions? Journal of
+Computational Physics, 476:111882, 2023.
+[14] S. Cui, S. Ding, and K. Wu. On optimal cell average decomposition for high-order bound-preserving schemes of hyperbolic conservation
+laws. SIAM Journal on Numerical Analysis, 62(2):775–810, 2024.
+[15] N. Deppe, L. E. Kidder, S. A. Teukolsky, M. S. Bonilla, F. H´ebert, Y. Kim, M. A. Scheel, W. Throwe, and N. L. Vu. A positivity-preserving
+adaptive-order finite-difference scheme for grmhd. Classical and Quantum Gravity, 40(24):245014, 2023.
+[16] S. Ding, S. Cui, and K. Wu. Robust DG schemes on unstructured triangular meshes: Oscillation elimination and bound preservation via
+optimal convex decomposition. arXiv preprint, arXiv:2409.09620, 2024.
+[17] A. Dolezal and S. Wong. Relativistic hydrodynamics and essentially non-oscillatory shock capturing schemes. Journal of Computational
+Physics, 120(2):266–277, 1995.
+[18] F. Fambri, M. Dumbser, S. K¨oppel, L. Rezzolla, and O. Zanotti.
+ADER discontinuous Galerkin schemes for general-relativistic ideal
+magnetohydrodynamics. Monthly Notices of the Royal Astronomical Society, 477(4):4543–4564, 2018.
+[19] J. A. Font. Numerical hydrodynamics and magnetohydrodynamics in general relativity. Living Reviews in Relativity, 11:1–131, 2008.
+[20] J. A. Font, J. M. Ib´a˜nez, and P. Papadopoulos. Non-axisymmetric relativistic Bondi–Hoyle accretion on to a Kerr black hole. Monthly Notices
+of the Royal Astronomical Society, 305(4):920–936, 1999.
+[21] S. Godounov. A difference method for numerical calculation of discontinuous solutions of the equation of hydrodynamics. Matematicheskii
+Sbornik, 47(89-3):271–306, 1959.
+[22] F. Guercilena, D. Radice, and L. Rezzolla. Entropy-limited hydrodynamics: a novel approach to relativistic hydrodynamics. Comput.
+Astrophys. Cosmol., 4(1):3, 2017.
+[23] P. He and H. Tang. An adaptive moving mesh method for two-dimensional relativistic hydrodynamics. Communications in Computational
+Physics, 11(1):114–146, 2012.
+[24] P. He and H. Tang. An adaptive moving mesh method for two-dimensional relativistic magnetohydrodynamics. Computers and Fluids,
+60:1–20, 2012.
+[25] A. Hiltebrand and S. Mishra. Entropy stable shock capturing space–time discontinuous Galerkin schemes for systems of conservation laws.
+Numerische Mathematik, 126:103–151, 2014.
+[26] X. Y. Hu, N. A. Adams, and C.-W. Shu. Positivity-preserving method for high-order conservative schemes solving compressible Euler
+equations. Journal of Computational Physics, 242:169–180, 2013.
+[27] J. Huang and Y. Cheng. An adaptive multiresolution discontinuous Galerkin method with artificial viscosity for scalar hyperbolic conservation
+laws in multidimensions. SIAM Journal on Scientific Computing, 42(5):A2943–A2973, 2020.
+[28] J. Huang and C.-W. Shu. Bound-preserving modified exponential Runge–Kutta discontinuous Galerkin methods for scalar hyperbolic equa-
+tions with stiff source terms. Journal of Computational Physics, 361:111–135, 2018.
+[29] D. Ling, J. Duan, and H. Tang. Physical-constraints-preserving Lagrangian finite volume schemes for one-and two-dimensional special
+relativistic hydrodynamics. Journal of Computational Physics, 396:507–543, 2019.
+[30] M. Liu and K. Wu. Structure-preserving oscillation-eliminating discontinuous galerkin schemes for ideal mhd equations: Locally divergence-
+free and positivity-preserving. arXiv preprint arXiv:2404.16794, 2024.
+[31] Y. Liu, J. Lu, and C.-W. Shu. An essentially oscillation-free discontinuous Galerkin method for hyperbolic systems. SIAM Journal on
+Scientific Computing, 44(1):A230–A259, 2022.
+[32] J. Lu, Y. Liu, and C.-W. Shu. An oscillation-free discontinuous Galerkin method for scalar hyperbolic conservation laws. SIAM Journal on
+Numerical Analysis, 59(3):1299–1324, 2021.
+[33] J. M. Mart´ı and E. M¨uller. Numerical hydrodynamics in special relativity. Living Reviews in Relativity, 6:1–100, 2003.
+
+--- Sayfa 53 ---
+Huihui Cao, Manting Peng, Kailiang Wu
+53
+[34] J. M. Mart´ı and E. M¨uller. Grid-based methods in relativistic hydrodynamics and magnetohydrodynamics. Living reviews in computational
+astrophysics, 1(1):1–182, 2015.
+[35] J. M. Mart´ı, E. M¨uller, J. Font, J. M. Z. Ib´a˜nez, and A. Marquina. Morphology and dynamics of relativistic jets. The Astrophysical Journal,
+479(1):151, 1997.
+[36] M. M. May and R. H. White. Hydrodynamic calculations of general-relativistic collapse. Physical Review, 141(4):1232–1241, 1966.
+[37] M. M. May and R. H. White. Stellar dynamics and gravitational collapse. Methods in Computational Physics, 7:219–258, 1967.
+[38] A. Mignone and G. Bodo. An HLLC Riemann solver for relativistic flows-I. Hydrodynamics. Monthly Notices of the Royal Astronomical
+Society, 364(1):126–136, 2005.
+[39] M. Peng, Z. Sun, and K. Wu. OEDG: Oscillation-eliminating discontinuous Galerkin method for hyperbolic conservation laws. Mathematics
+of Computation, in press, 2024. https://dx.doi.org/10.1090/mcom/3998, arXiv preprint, arXiv:2310.04807, 2023.
+[40] T. Qin, C.-W. Shu, and Y. Yang. Bound-preserving discontinuous Galerkin methods for relativistic hydrodynamics. Journal of Computational
+Physics, 315:323–347, 2016.
+[41] J. Qiu and C.-W. Shu. Runge–Kutta discontinuous Galerkin method using WENO limiters. SIAM Journal on Scientific Computing, 26(3):907–
+929, 2005.
+[42] D. Radice and L. Rezzolla. THC: a new high-order finite-difference high-resolution shock-capturing code for special-relativistic hydrody-
+namics. Astronomy & Astrophysics, 547:A26, 2012.
+[43] D. Radice, L. Rezzolla, and F. Galeazzi. High-order fully general-relativistic hydrodynamics: new approaches and tests. Classical and
+Quantum Gravity, 31(7):075012, 2014.
+[44] W. H. Reed and T. R. Hill. Triangular mesh methods for the neutron transport equation. Technical report, Los Alamos Scientific Lab., N.
+Mex.(USA), 1973.
+[45] G. Riccardi, D. Durante, et al.
+Primitive variable recovering in special relativistic hydrodynamics allowing ultra-relativistic flows.
+In
+International Mathematical Forum, volume 42, pages 2081–2111, 2008.
+[46] D. Ryu, I. Chattopadhyay, and E. Choi. Equation of state in numerical relativistic hydrodynamics. The Astrophysical Journal Supplement
+Series, 166(1):410, 2006.
+[47] C.-W. Shu. Discontinuous Galerkin methods: general approach and stability. Numerical solutions of partial differential equations, 201:149–
+201, 2009.
+[48] A. Tchekhovskoy, J. C. McKinney, and R. Narayan. WHAM: a WENO-based general relativistic numerical scheme–I. Hydrodynamics.
+Monthly Notices of the Royal Astronomical Society, 379(2):469–497, 2007.
+[49] S. A. Teukolsky. Formulation of discontinuous Galerkin methods for relativistic astrophysics. Journal of Computational Physics, 312:333–
+356, 2016.
+[50] J. R. Wilson. Numerical study of fluid flow in a Kerr space. Astrophysical Journal, 173:431–438, 1972.
+[51] K. Wu.
+Design of provably physical-constraint-preserving methods for general relativistic hydrodynamics.
+Physical Review D,
+95(10):103001, 2017.
+[52] K. Wu.
+Positivity-preserving analysis of numerical schemes for ideal magnetohydrodynamics.
+SIAM Journal on Numerical Analysis,
+56(4):2124–2147, 2018.
+[53] K. Wu. Minimum principle on specific entropy and high-order accurate invariant-region-preserving numerical methods for relativistic hydro-
+dynamics. SIAM Journal on Scientific Computing, 43(6):B1164–B1197, 2021.
+[54] K. Wu and C.-W. Shu. A provably positive discontinuous Galerkin method for multidimensional ideal magnetohydrodynamics. SIAM Journal
+on Scientific Computing, 40(5):B1302–B1329, 2018.
+[55] K. Wu and C.-W. Shu. Provably positive high-order schemes for ideal magnetohydrodynamics: analysis on general meshes. Numerische
+Mathematik, 142(4):995–1047, 2019.
+[56] K. Wu and C.-W. Shu. Provably physical-constraint-preserving discontinuous Galerkin methods for multidimensional relativistic MHD
+equations. Numerische Mathematik, 148(3):699–741, 2021.
+[57] K. Wu and C.-W. Shu.
+Geometric quasilinearization framework for analysis and design of bound-preserving schemes.
+SIAM Review,
+65(4):1031–1073, 2023.
+[58] K. Wu and H. Tang. High-order accurate physical-constraints-preserving finite difference WENO schemes for special relativistic hydrody-
+namics. Journal of Computational Physics, 298:539–564, 2015.
+[59] K. Wu and H. Tang. Admissible states and physical-constraints-preserving schemes for relativistic magnetohydrodynamic equations. Math-
+ematical Models and Methods in Applied Sciences, 27(10):1871–1928, 2017.
+[60] K. Wu and H. Tang. Physical-constraint-preserving central discontinuous Galerkin methods for special relativistic hydrodynamics with a
+general equation of state. The Astrophysical Journal Supplement Series, 228(3):1–23, 2017.
+[61] Z. Xu.
+Parametrized maximum principle preserving flux limiters for high order schemes solving hyperbolic conservation laws: one-
+dimensional scalar problem. Mathematics of Computation, 83(289):2213–2238, 2014.
+[62] R. Yan, R. Abgrall, and K. Wu. Uniformly high-order bound-preserving OEDG schemes for two-phase flows. Mathematical Models and
+Methods in Applied Sciences, in press, 2024. https://doi.org/10.1142/S0218202524500544.
+[63] Z. Yang, P. He, and H. Tang. A direct Eulerian GRP scheme for relativistic hydrodynamics: one-dimensional case. Journal of Computational
+
+--- Sayfa 54 ---
+54
+Huihui Cao, Manting Peng, Kailiang Wu
+Physics, 230(22):7964–7987, 2011.
+[64] J. Yu and J. S. Hesthaven. A study of several artificial viscosity models within the discontinuous Galerkin framework. Communications in
+Computational Physics, 27(5):1309–1343, 2020.
+[65] O. Zanotti, F. Fambri, and M. Dumbser. Solving the relativistic magnetohydrodynamics equations with ADER discontinuous Galerkin
+methods, a posteriori subcell limiting and adaptive mesh refinement. Monthly Notices of the Royal Astronomical Society, 452(3):3010–3029,
+2015.
+[66] W. Zhang and A. I. MacFadyen. RAM: a relativistic adaptive mesh refinement hydrodynamics code. The Astrophysical Journal Supplement
+Series, 164(1):255, 2006.
+[67] X. Zhang and C.-W. Shu. On maximum-principle-satisfying high order schemes for scalar conservation laws. Journal of Computational
+Physics, 229(9):3091–3120, 2010.
+[68] X. Zhang and C.-W. Shu. On positivity-preserving high order discontinuous Galerkin schemes for compressible Euler equations on rectan-
+gular meshes. Journal of Computational Physics, 229(23):8918–8934, 2010.
+[69] X. Zhang, Y. Xia, and C.-W. Shu. Maximum-principle-satisfying and positivity-preserving high order discontinuous galerkin schemes for
+conservation laws on triangular meshes. Journal of Scientific Computing, 50(1):29–62, 2012.
+[70] J. Zhao and H. Tang. Runge–Kutta discontinuous Galerkin methods with WENO limiter for the special relativistic hydrodynamics. Journal
+of computational physics, 242:138–168, 2013.
+[71] X. Zhong and C.-W. Shu. A simple weighted essentially nonoscillatory limiter for Runge–Kutta discontinuous Galerkin methods. Journal of
+Computational Physics, 232(1):397–415, 2013.
+[72] V. Zingan, J.-L. Guermond, J. Morel, and B. Popov. Implementation of the entropy viscosity method with the discontinuous Galerkin method.
+Computer Methods in Applied Mechanics and Engineering, 253:479–490, 2013.

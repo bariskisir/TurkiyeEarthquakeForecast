@@ -1,0 +1,577 @@
+
+--- Sayfa 1 ---
+QuChaTeR: A Hybrid Quantum-Chaotic Temporal
+Framework for Earthquake Prediction
+Accepted to IEEE ICASSP 2026 — IEEE Xplore
+1st Emir Kaan ¨Ozdemir
+˙Istanbul Erkek High School
+Ministry of National Education
+˙Istanbul, T¨urkiye
+emirkaanozdemir@gmail.com
+Abstract—Seismic prediction remains challenging due to the
+highly nonlinear and chaotic dynamics of earthquake signals.
+While classical deep learning models such as LSTMs and CNNs
+capture local temporal features, and quantum models offer
+richer state representations, their integration with chaos-driven
+mechanisms is underexplored. We introduce QuChaTeR, a hybrid
+architecture that combines wavelet-based preprocessing, chaotic
+maps, and variational quantum circuits with recurrent structures
+to enhance temporal feature extraction. Implemented in PyTorch
+and PennyLane, QuChaTeR is benchmarked against classi-
+cal (LSTM, GRU, RNN, 1D-CNN, Reservoir Computing) and
+quantum-inspired (Quantum LSTM) baselines. On real-world
+seismic datasets, QuChaTeR consistently converges faster and
+achieves superior performance across multiple evaluation crite-
+ria. Despite promising results, scalability and quantum hardware
+limitations remain challenges. Overall, this work demonstrates
+how quantum-chaotic hybridization provides a practical pathway
+toward more accurate and robust earthquake prediction.
+Index
+Terms—Quantum
+Computing,
+Quantum
+Machine
+Learning, Hybrid Quantum-Chaotic Networks, Seismic Predic-
+tion, Earthquake Forecast
+I. INTRODUCTION
+Accurate earthquake prediction is hindered by the nonlin-
+ear, nonstationary, and chaotic structure of seismic signals.
+Classical deep learning models struggle to capture long-range
+temporal dependencies and chaotic dynamics, while purely
+quantum approaches remain limited in scalability and noise
+resilience. This gap motivates the need for hybrid methods
+that can exploit both chaos theory and quantum computation.
+We propose QuChaTeR, a hybrid framework integrating
+wavelet-based multi-scale preprocessing, chaotic feature map-
+pings, and quantum recurrent layers. By coupling chaos-
+driven dynamics with variational quantum circuits, QuChaTeR
+enables richer temporal feature extraction and improved gener-
+alization. Experiments on seismic datasets show that the model
+significantly enhances forecasting accuracy compared to both
+classical and quantum-only baselines.
+II. RELATED WORKS
+Earthquake prediction has leveraged various computational
+techniques to capture the nonlinear and chaotic nature of
+seismic signals. Yi et al. [1] applied chaos theory to seis-
+mic time series, showing its predictive potential, while Ya-
+mamoto and Baker [2] used wavelet packet analysis to extract
+multi-scale temporal features for ground motion modeling.
+In deep learning, Hamdi et al. [3] found that Bi-LSTM
+outperformed LSTM for capturing long-term dependencies
+in earthquake occurrence prediction, and Sneka and Kan-
+chana [4] demonstrated that a hybrid CNN-LSTM frame-
+work improved geolocation-based earthquake risk forecasting.
+Quantum-inspired approaches have also emerged; Dutta et al.
+[5] proposed hybrid quantum neural networks for tsunami
+prediction via earthquake data fusion, illustrating the potential
+of quantum circuits to encode complex nonlinear relationships.
+These studies highlight the benefits of multi-scale, temporal,
+and hybrid quantum-classical modeling, yet none combine
+chaotic dynamics, wavelet preprocessing, and quantum recur-
+rent layers in a single framework, motivating our QuChaTeR
+model.
+III. DATASET AND PREPROCESSING
+We use the Earthquakes dataset from the Time Series
+Classification Archive1, collected by the Northern California
+Earthquake Data Center (1967–2003). The task is binary
+classification: predicting whether a major earthquake (Richter
+magnitude > 5) will occur based on the preceding 512-hour
+readings. Positive cases exclude prior major events, while
+negative cases have readings below 4 with at least 20 preceding
+non-zero values.
+The training set is imbalanced (264 negative, 58 positive),
+so we apply SMOTE to balance it. Time series are Min–Max
+normalized, missing values imputed, and enhanced using the
+Discrete Wavelet Transform (DWT) and sliding-window statis-
+tics to capture multi-scale temporal dynamics. Each signal x(t)
+is decomposed into approximation and detail coefficients using
+x(t) =
+X
+k
+aL,k ϕL,k(t) +
+L
+X
+l=1
+X
+k
+dl,k ψl,k(t),
+1https://www.timeseriesclassification.com/description.php?Dataset=
+Earthquakes
+arXiv:2605.16454v1  [cs.LG]  14 May 2026
+
+--- Sayfa 2 ---
+where ϕL,k and ψl,k denote the scaling and wavelet functions,
+and aL,k, dl,k are the corresponding coefficients capturing low-
+and high-frequency components [6], [7]. The concatenated
+coefficients form the feature vector, which is then standardized
+to zero mean and unit variance for stable model training.
+Figure 1 shows smoothed representative waveforms for
+both classes along with the class distribution, illustrating
+the difference in amplitude dynamics and the initial class
+imbalance. This dataset provides a realistic benchmark for
+evaluating classical and quantum-hybrid models for earthquake
+event detection.
+Fig. 1: Smoothed representative seismic waveforms for both classes
+and the class distribution of the Earthquakes dataset, illustrating the
+difference in amplitude dynamics and the initial class imbalance
+before resampling.
+IV. EVALUATED MODEL ARCHITECTURES
+To benchmark the performance of our proposed model, we
+evaluated several classical and quantum-hybrid architectures as
+baselines. Each model was trained and tested on the earthquake
+dataset to provide a comprehensive comparison. All classical
+and quantum-hybrid models except Reservoir Computing (RC)
+were trained using binary cross-entropy (BCE) loss with the
+Adam optimizer at a learning rate of 0.001. The RC baseline
+was trained with BCE and Adam at a learning rate of 0.01.
+A. Classical Temporal Models
+Recurrent Neural Networks (RNNs), Long Short-Term
+Memory networks (LSTMs), and Gated Recurrent Units
+(GRUs) were trained and tested as classical sequential base-
+lines. These architectures capture temporal dependencies in
+seismic signals by maintaining hidden states across time steps
+[8]–[10]. LSTMs use gated memory cells to effectively model
+long-range dependencies, while GRUs provide a simplified
+alternative with fewer parameters. All three models were
+optimized with BCE loss and Adam (lr=0.001) for consistency
+in evaluation.
+B. Convolutional Models
+One-dimensional Convolutional Neural Networks (1D-
+CNNs) [11] were trained and evaluated to capture local
+temporal patterns in seismic sequences. Temporal convolution
+filters extract short-term dependencies, while pooling layers
+aggregate features across the sequence. BCE loss with Adam
+(lr=0.001) was used during training.
+C. Reservoir Computing
+Reservoir Computing (RC) employs a fixed, randomly ini-
+tialized recurrent layer to project input sequences into a high-
+dimensional space, with only the output weights being trained
+[12]. This efficient temporal feature learning method was
+trained with BCE loss and Adam (lr=0.01) and serves as a
+lightweight baseline for comparison.
+D. Quantum-Based Approach: Quantum LSTM
+The Quantum LSTM (QLSTM) integrates a small quantum
+circuit into the standard LSTM cell. The classical hidden state
+ht is updated via standard LSTM equations:
+ct = ft ⊙ct−1 + it ⊙˜ct,
+ht = ot ⊙tanh(ct)
+A quantum layer Q(·) then transforms part of ht, and its
+output is mapped back to the hidden space via a learnable
+linear layer Wq [13], [14]:
+hnew
+t
+= ht + Wq Q(ht)
+QLSTM was trained and evaluated with BCE loss and Adam
+optimizer (lr=0.001), providing a hybrid quantum-classical
+baseline for sequential earthquake prediction.
+E. Mathematical Framework of the QuChaTeR Model
+The proposed QuChaTeR model integrates temporal convo-
+lutional operations, chaotic recurrent perturbations, and quan-
+tum variational embeddings to capture complex temporal and
+stochastic dependencies in time-series data. This subsection
+presents its formal mathematical underpinnings and stability
+properties.
+1) Temporal Convolutional Dynamics: Let the input signal
+be x = [x1, x2, . . . , xT ] ∈RT . The Temporal Convolutional
+Network (TCN) applies one-dimensional convolutions over
+time with kernel size k and dilation factor d [15]. The l-th
+layer output is expressed as
+h(l)
+t
+= σ
+ k−1
+X
+i=0
+W (l)
+i h(l−1)
+t−d·i + b(l)
+!
+,
+where σ(·) denotes a non-linear activation function (ReLU).
+By recursive expansion, TCN realizes a causal autoregressive
+operator of finite order kdL, ensuring bounded temporal de-
+pendency and stability in gradient propagation [16].
+2) Chaotic LSTM with Logistic and H´enon Perturbation:
+Let ht, ct ∈Rm denote the hidden and cell states of a standard
+LSTM cell [9], defined as
+it = σ(Wixt + Uiht−1 + bi),
+ft = σ(Wfxt + Ufht−1 + bf),
+ot = σ(Woxt + Uoht−1 + bo),
+˜ct = tanh(Wcxt + Ucht−1 + bc),
+ct = ft ⊙ct−1 + it ⊙˜ct,
+ht = ot ⊙tanh(ct).
+
+--- Sayfa 3 ---
+Following prior works on chaotic RNNs [17], [18], chaotic
+perturbations are applied to ht through the logistic map [19]:
+zt = r ht ⊙(1 −ht),
+where r ∈(0, 4) modulates the degree of chaos.
+The first two hidden dimensions are further updated through
+the H´enon transformation [20]:
+(
+xt+1 = 1 −ax2
+t + yt,
+yt+1 = bxt,
+with a = 1.4, b = 0.3.
+Proposition.
+The chaotic LSTM subsystem remains bounded for r < 4,
+a = 1.4, and b = 0.3 [17].
+Proof. For 0 < ht < 1, the logistic map satisfies 0 < zt < 1
+when r ∈(0, 4). In the H´enon map, for |xt|, |yt| < 1.5, the
+subsequent iterates satisfy |xt+1| ≤2.7 and |yt+1| ≤0.45.
+Hence, both components are bounded and the overall chaotic
+system exhibits Lyapunov stability within this parameter
+regime. □
+3) Quantum Variational Embedding and Recurrent Map-
+ping: Each temporal representation xt ∈Rn is projected into
+a quantum Hilbert space via a parameterized circuit [13], [14].
+Let θl,q denote the rotation parameters for layer l and qubit
+q. The variational embedding is given by
+U(xt, Θ) =
+L
+Y
+l=1
+" Q
+Y
+q=1
+RY (θl,q)
+·
+Q
+Y
+q=1
+RZ(xt,q)
+·
+Q
+Y
+q=1
+CNOT
+ q, (q + 1) mod Q
+
+#
+The corresponding quantum expectation values are mea-
+sured as
+qt = [⟨Z1⟩, . . . , ⟨Z6⟩]⊤,
+and serve as nonlinear embeddings of the classical state.
+The quantum recurrent update is expressed as
+h(q)
+t
+= h(q)
+t−1 + Wqqt,
+where differentiability is ensured by the parameter-shift rule
+for variational quantum circuits.
+4) Bayesian Optimization for Chaotic Parameter Selection:
+To balance chaotic richness and system stability, the control
+parameter r of the logistic map is optimized via Bayesian
+inference [21]. Let f(r) denote the validation loss. We assume
+a Gaussian Process prior:
+f(r) ∼GP(µ(r), k(r, r′)),
+and iteratively update its posterior after each evaluation. The
+optimal candidate r∗is chosen through Expected Improvement
+(EI):
+r∗= arg max
+r∈(0,4) E[max(0, fmin −f(r))] .
+5) Unified Dynamical Coupling:
+The overall recurrent
+transformation of QuChaTeR can be summarized as:
+ht = Q(H(r σ(TCN(xt)) ⊙[1 −σ(TCN(xt))])) ,
+where H represents the chaotic recurrent transformation and
+Q denotes the quantum embedding. This composite operator
+fuses deterministic temporal memory, controlled chaotic non-
+linearity, and quantum entanglement, yielding a high-capacity
+temporal representation with provable boundedness and opti-
+mized chaotic modulation.
+V. EXPERIMENTAL SETUP
+All models were trained for 50 epochs using the Adam
+optimizer with a learning rate of 0.001 (exception: see IV-C
+Reservoir Computing trained with lr=0.01) and Binary Cross-
+Entropy (BCE) loss. The dataset was divided into training
+(80%) and validation (20%) subsets, while evaluation was
+performed on an entirely independent test set containing iden-
+tical features but unseen samples, ensuring no data leakage.
+For the QuChaTeR model, the logistic map control parameter
+r∗was set to r∗= 3.8475, as determined through Bayesian
+optimization (see IV-E4 for details).
+For the quantum components, simulations were conducted
+using PennyLane’s default.qubit backend. Although ex-
+ecuted on a classical simulator, this approach guarantees full
+controllability, reproducibility, and noise-free quantum circuit
+behavior, allowing a fair comparison between quantum and
+classical architectures under idealized conditions.
+To determine the optimal number of qubits, we evaluated
+models with 2, 4, 6, and 8 qubits using a unified generalization
+stability metric defined as
+G = Atest −|Atrain −Atest|,
+a compact yet effective measure inspired by the generalization
+gap concept in statistical learning theory. The resulting G
+values for each qubit configuration are summarized in Ta-
+ble I. The 6-qubit configuration achieved the highest G value,
+indicating the most stable and generalizable performance.
+Consequently, all reported results for QuChaTeR correspond
+to this 6-qubit configuration.
+TABLE I: Generalization Stability Metric (G) for Different Qubit
+Configurations.
+Qubits
+Train Accuracy
+Test Accuracy
+|Train −Test|
+G
+2
+0.8813
+0.8542
+0.027
+0.827
+4
+0.9612
+0.8807
+0.081
+0.800
+6
+0.9902
+0.9634
+0.027
+0.937
+8
+0.9527
+0.9141
+0.039
+0.876
+All experiments were run on an NVIDIA L4 GPU with
+PyTorch [22] and PennyLane [14].
+VI. RESULTS
+The results of all evaluated models are summarized in
+Table II. The proposed QuChaTeR model consistently out-
+performs both classical and quantum baselines, demonstrating
+superior overall predictive capability. Classical architectures
+
+--- Sayfa 4 ---
+such as 1D-CNN and LSTM achieve competitive performance
+but are consistently surpassed by the hybrid model. While
+Quantum LSTM shows improved recall, indicating its potential
+for capturing rare positive events, it still falls short of the
+comprehensive performance achieved by QuChaTeR.
+Model
+Accuracy
+Recall
+Precision
+F1
+ROC-AUC
+QuChaTeR
+0.9634
+0.9682
+0.9501
+0.9590
+0.9785
+CNN1D
+0.9215
+0.9083
+0.9447
+0.9258
+0.9407
+LSTM
+0.9057
+0.8815
+0.9123
+0.8969
+0.9225
+Quantum LSTM
+0.8931
+0.9052
+0.8745
+0.8891
+0.9139
+GRU
+0.8553
+0.8415
+0.8624
+0.8519
+0.8829
+Reservoir
+0.8335
+0.8188
+0.8351
+0.8266
+0.8635
+RNN
+0.7918
+0.7710
+0.8035
+0.7869
+0.8323
+TABLE II: Performance comparison of all evaluated models.
+Figure 2 shows the training loss curves for all models. No-
+tably, models with quantum components, including QuChaTeR
+and Quantum LSTM, start with higher initial losses and
+gradually approach similar final values as the classical models.
+This behavior can be attributed to the inherent stochasticity and
+noise in the quantum simulations, which can temporarily in-
+crease loss values during early epochs. Despite the loss curves
+appearing close at the end of training, the relative ordering
+does not fully reflect the actual predictive performance as
+measured by evaluation metrics. Therefore, while loss trends
+provide insights into convergence dynamics, they should be
+interpreted alongside the quantitative metrics rather than as a
+standalone indicator of model effectiveness.
+Fig. 2: Training loss over 50 epochs for all evaluated models.
+QuChaTeR achieves the lowest final loss.
+VII. DISCUSSION
+The results demonstrate that the proposed QuChaTeR model
+consistently outperforms classical and quantum baselines
+across all evaluation metrics, highlighting the effectiveness
+of combining temporal convolutions, chaos-inspired dynamics,
+and quantum embeddings. Classical models such as 1D-CNN
+and LSTM remain competitive, yet they are consistently
+surpassed by the hybrid architecture, indicating that the inte-
+gration of multiple modeling paradigms can capture complex
+temporal dependencies in seismic time series more effectively.
+Quantum LSTM exhibits improved recall compared to
+purely classical LSTM, suggesting its ability to better identify
+rare positive events, which is crucial in earthquake prediction.
+However, its overall performance remains below that of the
+hybrid model, emphasizing that quantum components alone
+may not be sufficient for capturing the full temporal and
+multiscale structure of the data. These observations support
+the notion that carefully designed hybrid quantum-classical
+architectures can provide tangible benefits in practical time
+series forecasting tasks.
+Overall, the evaluation confirms that QuChaTeR offers a
+robust and generalizable approach for earthquake event predic-
+tion, combining the complementary strengths of classical deep
+learning techniques and quantum-enhanced representations.
+VIII. CONCLUSION
+In this work, we presented QuChaTeR, a hybrid quantum-
+classical model enhanced with chaos-inspired dynamics, for
+earthquake event prediction in time series data. Extensive
+experiments demonstrate that QuChaTeR consistently outper-
+forms classical and quantum baselines across multiple evalua-
+tion metrics, confirming the advantages of combining temporal
+convolutions, recurrent structures, and quantum embeddings.
+The results highlight the potential of hybrid architectures
+to capture complex temporal dependencies and rare event
+patterns more effectively than conventional models. Future
+work may explore larger quantum circuits, more diverse seis-
+mic datasets, and real-time deployment to further enhance
+predictive performance and practical applicability.
+REFERENCES
+[1] C. Yi, Z. Jinkui, and H. Jiaxin, “Research on application of earth-
+quake prediction based on chaos theory,” Proceedings - 2010 Inter-
+national Conference on Intelligent Computing and Integrated Systems,
+ICISS2010, 10 2010.
+[2] Y. Yamamoto and J. W. Baker, “Stochastic model for earthquake
+ground motion using wavelet packets,” Bulletin of the Seismological
+Society of America, vol. 103, no. 6, pp. 3044–3056, 10 2013. [Online].
+Available: https://doi.org/10.1785/0120120312
+[3] A. H. A. Hamdi, H. A. Nugroho, and B. Kusumoputro, “Comparative
+analysis of lstm and bi-lstm models for earthquake occurrence
+prediction in tokai-japan region,” International Journal of Electrical,
+Computer, and Biomedical Engineering, vol. 2, no. 4, p. 500–511, Dec.
+2024. [Online]. Available: https://ijecbe.ui.ac.id/go/article/view/87
+[4] M. Sneka and K. Kanchana, “Hybrid cnn-lstm approach for geolocation-
+based earthquake risk prediction using usgs data,” Journal of Artificial
+Intelligence and Capsule Networks, vol. 7, no. 1, pp. 65–77, 2025,
+open Access under CC BY-NC 4.0 License. [Online]. Available:
+https://irojournals.com/aicn/article/view/7/1/5
+[5] S. S. Dutta, S. Sandeep, N. D, and A. S, “Hybrid quantum
+neural networks: harnessing dressed quantum circuits for enhanced
+tsunami
+prediction
+via
+earthquake
+data
+fusion,”
+EPJ
+Quantum
+Technology, vol. 12, no. 1, p. 4, Jan 2025. [Online]. Available:
+https://doi.org/10.1140/epjqt/s40507-024-00303-4
+[6] S. Mallat, “A theory for multiresolution signal decomposition: the
+wavelet representation,” IEEE Transactions on Pattern Analysis and
+Machine Intelligence, vol. 11, no. 7, pp. 674–693, 1989.
+[7] J. C. i Roura and J. L. R. Mart´ınez, “Transient analysis and motor fault
+detection using the wavelet transform,” in Discrete Wavelet Transforms
+- Theory and Applications, J. T. Olkkonen, Ed.
+London: IntechOpen,
+2011, ch. 3. [Online]. Available: https://doi.org/10.5772/15377
+[8] J.
+L.
+Elman,
+“Finding
+structure
+in
+time,”
+Cognitive
+Science,
+vol.
+14,
+no.
+2,
+pp.
+179–211,
+1990.
+[Online].
+Available:
+https:
+//www.sciencedirect.com/science/article/pii/036402139090002E
+[9] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural
+Computation, vol. 9, no. 8, pp. 1735–1780, 1997.
+
+--- Sayfa 5 ---
+[10] K. Cho, B. van Merrienboer, C. Gulcehre, D. Bahdanau, F. Bougares,
+H. Schwenk, and Y. Bengio, “Learning phrase representations using
+rnn encoder-decoder for statistical machine translation,” 2014. [Online].
+Available: https://arxiv.org/abs/1406.1078
+[11] Y. Zheng, Q. Liu, E. Chen, Y. Ge, and J. L. Zhao, “Time series classifi-
+cation using multi-channels deep convolutional neural networks,” in In-
+ternational conference on web-age information management.
+Springer,
+2014, pp. 298–310.
+[12] H. Jaeger, “The “echo state” approach to analysing and training recurrent
+neural networks-with an erratum note,” Bonn, Germany: German na-
+tional research center for information technology gmd technical report,
+vol. 148, no. 34, p. 13, 2001.
+[13] M. Schuld and N. Killoran, “Quantum machine learning in feature
+hilbert spaces,” Physical Review Letters, vol. 122, no. 4, Feb. 2019.
+[Online]. Available: http://dx.doi.org/10.1103/PhysRevLett.122.040504
+[14] V. Bergholm, J. Izaac, M. Schuld, and et al., “Pennylane: Automatic
+differentiation
+of
+hybrid
+quantum-classical
+computations,”
+2022.
+[Online]. Available: https://arxiv.org/abs/1811.04968
+[15] S. Bai, J. Z. Kolter, and V. Koltun, “An empirical evaluation of generic
+convolutional and recurrent networks for sequence modeling,” 2018.
+[Online]. Available: https://arxiv.org/abs/1803.01271
+[16] C. Lea, M. D. Flynn, R. Vidal, A. Reiter, and G. D. Hager, “Temporal
+convolutional networks for action segmentation and detection,” 2016.
+[Online]. Available: https://arxiv.org/abs/1611.05267
+[17] J.-M. Kuo, J. Principle, and B. de Vries, “Prediction of chaotic time
+series using recurrent neural networks,” in Neural Networks for Signal
+Processing II Proceedings of the 1992 IEEE Workshop, 1992, pp. 436–
+443.
+[18] J.
+Valle
+and
+O.
+M.
+Bruno,
+“Forecasting
+chaotic
+time
+series:
+Comparative performance of lstm-based and transformer-based neural
+network,” Chaos, Solitons & Fractals, vol. 192, p. 116034, 2025.
+[Online]. Available: https://www.sciencedirect.com/science/article/pii/
+S0960077925000475
+[19] R. M. May, Simple mathematical models with very complicated
+dynamics.
+New York, NY: Springer New York, 2004, pp. 85–93.
+[Online]. Available: https://doi.org/10.1007/978-0-387-21830-4
+[20] M. H´enon, “A two-dimensional mapping with a strange attractor,”
+Communications in Mathematical Physics, vol. 50, no. 1, pp. 69–77,
+1976.
+[21] B. Shahriari, K. Swersky, Z. Wang, R. P. Adams, and N. de Freitas,
+“Taking the human out of the loop: A review of bayesian optimization,”
+Proceedings of the IEEE, vol. 104, no. 1, pp. 148–175, 2016.
+[22] A. Paszke, S. Gross, F. Massa, and et al., “Pytorch: An imperative style,
+high-performance deep learning library,” 2019. [Online]. Available:
+https://arxiv.org/abs/1912.01703

@@ -1,0 +1,1473 @@
+
+--- Sayfa 1 ---
+arXiv:2411.12345v1  [math.CO]  19 Nov 2024
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF
+TYPE RII
+JANG SOO KIM AND MINHO SONG
+Abstract. In 1995, Ismail and Masson introduced orthogonal polynomials of types RI and
+RII, which are deﬁned by speciﬁc three-term recurrence relations with additional conditions.
+Recently, Kim and Stanton found a combinatorial interpretation for the moments of orthogonal
+polynomials of type RI in the spirit of the combinatorial theory of orthogonal polynomials due
+to Flajolet and Viennot. In this paper, we push this combinatorial model further to orthogo-
+nal polynomials of type RII. Moreover, we generalize orthogonal polynomials of type RII by
+relaxing some of their conditions. We then prove a master theorem, which generalizes combi-
+natorial models for moments of various types of orthogonal polynomials: classical orthogonal
+polynomials, Laurent biorthogonal polynomials, and orthogonal polynomials of types RI and
+RII.
+1. Introduction
+A (classical) orthogonal polynomial sequence (Pn(x))n≥0 is a sequence of polynomials such that
+deg Pn(x) = n and L(Pn(x)Pm(x)) = κnδn,m with κn̸ = 0, for some linear functional L deﬁned
+on the space of polynomials. It is well known that (Pn(x))n≥0 is a (monic) orthogonal polynomial
+sequence if and only if it satisﬁes a three-term recurrence relation
+(1.1)
+Pn+1(x) = (x −bn)Pn(x) −λnPn−1(x),
+n ≥0,
+where P−1(x) = 0, P0(x) = 1 and λn̸ = 0 for n ≥1.
+In this paper, we focus on two quantities of orthogonal polynomials: moments and dual coef-
+ﬁcients. The values µn := L(xn) are called the moments of the orthogonal polynomials. By the
+combinatorial theory of orthogonal polynomials due to Flajolet [4] and Viennot [12], the moment
+µn is a generating function for the Motzkin paths from (0, 0) to (n, 0). More generally, Viennot
+[12] showed that the generalized moment
+(1.2)
+µn,r,s := L(xnPr(x)Ps(x))
+L(Ps(x)2)
+is a generating function for the Motzkin paths from (0, r) to (n, s).
+For a sequence (Pn(x))n≥0 of any polynomials with deg Pn(x) = n, the (generalized) dual
+coeﬃcients τn,r,s are deﬁned by
+xnPr(x) =
+X
+s≥0
+τn,r,sPs(x).
+If (Pn(x))n≥0 is a sequence of orthogonal polynomials, then, by the orthogonality, the dual coef-
+ﬁcient τn,r,s is equal to the generalized moment µn,r,s.
+In 1995, Ismail and Masson [5] introduced orthogonal polynomials of types RI and RII. Or-
+thogonal polynomials P I
+n(x) of type RI are deﬁned by the three-term recurrence
+(1.3)
+P I
+n+1(x) = (x −bn)P I
+n(x) −(anx + λn)P I
+n−1(x),
+n ≥0,
+where P I
+−1(x) = 0 and P I
+0 (x) = 1, and an̸ = 0 and P I
+n(−λn/an)̸ = 0 for n ≥1. Let
+dI
+m(x) =
+m
+Y
+i=1
+(aix + λi),
+QI
+m(x) = P I
+m(x)
+dIm(x) .
+1
+
+--- Sayfa 2 ---
+2
+JANG SOO KIM AND MINHO SONG
+Ismail and Masson [5, Theorem 2.1] (see also [10, Theorem 2.1]) showed that there is a unique
+linear functional LI on the vector space W I := span{xnQI
+m(x) : 0 ≤n < m} such that LI(1) = 1
+and LI(xnQI
+m(x)) = 0 for 0 ≤n < m.
+Kim and Stanton [10] presented a combinatorial theory of orthogonal polynomials of type
+RI. In particular, they found combinatorial interpretations of the moments µI
+n := LI(xn) and the
+generalized moments µI
+n,r,s := LI(xnP I
+r (x)QI
+s(x)) using Motzkin–Schr¨oder paths. This generalizes
+a result of Kamioka [8] that the moments of Laurent biorthogonal polynomials are generating
+functions for Schr¨oder paths.
+The main objective of this paper is to provide a combinatorial theory of orthogonal polynomials
+of type RII that generalizes the previous results on classical orthogonal polynomials, Laurent
+biorthogonal polynomials, and orthogonal polynomials of type RI. Orthogonal polynomials P II
+n (x)
+of type RII are deﬁned by P II
+−1(x) = 0, P II
+0 (x) = 1, and
+(1.4)
+P II
+n+1(x) = (x −bn)P II
+n (x) −(cnx2 + anx + λn)P II
+n−1(x),
+n ≥0,
+with the assumptions that cn̸ = 0, P II
+n (αn)̸ = 0, and P II
+n (βn)̸ = 0 for n ≥1, where αn and βn are
+the zeros of cnx2 + anx + λn. Let
+dII
+m (x) =
+m
+Y
+i=1
+(cix2 + aix + λi),
+QII
+m (x) = P II
+m (x)
+dII
+m (x) .
+Ismail and Masson [5, Theorem 3.5] showed that, for ﬁxed N0 and N1, there is a unique linear
+functional LII on the vector space
+(1.5)
+V II := span{xnQII
+m (x) : 0 ≤n < m}
+such that LII(1) = N0, LII(xQII
+1 (x)) = N1, and LII(xnQII
+m (x)) = 0 for 0 ≤n < m. See [6, 11]
+for recent work on speciﬁc orthogonal polynomials of type RII.
+There are two crucial diﬀerences between orthogonal polynomials of type RII and classical
+orthogonal polynomials, as well as orthogonal polynomials of type RI. The ﬁrst diﬀerence is that,
+unlike Pn(x) and P I
+n(x), deﬁned in (1.1) and (1.3), respectively, the orthogonal polynomials P II
+n (x)
+of type RII, deﬁned in (1.4), are not monic. This induces a signiﬁcantly diﬀerent behavior in their
+dual coeﬃcients, which will be explained shortly. The second diﬀerence is that the vector space
+W II, given in (1.5), does not contain xn for n ≥1. This means that the moments µII
+n = LII(xn)
+are not deﬁned, let alone the generalized moments µII
+n,r,s = LII(xnP II
+r (x)QII
+s (x)). Our strategy
+to overcome this limitation is to simply consider a linear functional deﬁned on the larger space
+(1.6)
+W II := span{xnQII
+m (x) : n, m ≥0}.
+It may seem somewhat artiﬁcial to consider the space W II only to include xn for n ≥1.
+However, this approach oﬀers two beneﬁts. First, it allows us to develop a combinatorial theory
+of orthogonal polynomials of type RII that generalizes previous results on classical orthogonal
+polynomials, Laurent biorthogonal polynomials, and orthogonal polynomials of type RI. Second,
+it enables us to discover a combinatorial interpretation for the dual coeﬃcients τ II
+n,r,s deﬁned below,
+which is similar to our combinatorial model for µII
+n,r,s.
+Let Pn(x) be the orthogonal polynomials deﬁned in (1.1). Since Pn(x) are monic, their dual
+coeﬃcients are polynomials in variables b = (b0, b1, . . . ) and λ = (λ1, λ2, . . .). Moreover, since
+τn,r,s = µn,r,s, the dual coeﬃcients τn,r,s are, in fact, polynomials with nonnegative integer coeﬃ-
+cients. See [3] and [2] for recent work on dual coeﬃcients of orthogonal polynomials.
+Now consider the polynomials P II
+n (x) deﬁned in (1.4) and let τ II
+n,r,s denote the their dual
+coeﬃcients. Since P II
+n (x) are not monic, we cannot expect their dual coeﬃcients to be polynomials.
+Indeed, we have
+x3 =
+P II
+3 (x)
+1 −c1 −c2
++
+A · P II
+2 (x)
+(1 −c1 −c2)(1 −c1) +
+B · P II
+1 (x)
+(1 −c1 −c2)(1 −c1) +
+C · P II
+0 (x)
+(1 −c1 −c2)(1 −c1),
+
+--- Sayfa 3 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+3
+where
+A = a1 + a2 + b0 + b1 + b2 −b2c1 −b0c2,
+B = a2b0c1 + b0b1c1 −a1b0c2 −b2
+0c2 −b0b1c2 + a2
+1 + a1a2 + 2 a1b0
++ b2
+0 + 2 a1b1 + a2b1 + b0b1 + b2
+1 −c1λ1 −c1λ2 + λ1 + λ2,
+C = a2b2
+0c1 + b2
+0b1c1 −a1b2
+0c2 −b3
+0c2 + a2
+1b0 + a1a2b0 + 2 a1b2
+0 + b3
+0
++ a1b0b1 −b0c1λ1 −b0c2λ1 + a1λ1 + a2λ1 + 2 b0λ1 + b1λ1.
+However, surprisingly, if we expand the dual coeﬃcient τII
+n,r,s as a formal power series, then the
+coeﬃcients are nonnegative integers. For example, the dual coeﬃcient τ II
+3,0,1 =
+B
+(1−c1−c2)(1−c1) is
+equal to
+λ1 + λ2 + a2
+1 + a1a2 + 2 a1b0 + b2
+0 + 2 a1b1 + a2b1 + b0b1 + b2
+1 + c1λ1 + c2λ1 + c1λ2 + c2λ2 + T,
+where T is a formal power series in which every term has total degree greater than 2.
+In this paper, we show that τII
+n,r,s is a formal power series with nonnegative integer coeﬃcients
+by giving its combinatorial interpretation. We note an interesting fact that, contrary to the case of
+classical orthogonal polynomials, for orthogonal polynomials of type RII (and also for orthogonal
+polynomials of type RI), the dual coeﬃcient τ II
+n,r,s is not equal to the generalized moment µII
+n,r,s.
+We will ﬁnd combinatorial models for τII
+n,r,s and µII
+n,r,s, which are closely related. In fact, this
+is how the authors discovered the combinatorial model for τ II
+n,r,s in the ﬁrst place; they found a
+combinatorial model for µII
+n,r,s and an identity, see (5.2), which naturally suggests a combinatorial
+model for τ II
+n,r,s.
+The structure of the paper is as follows. In Section 2, we provide basic deﬁnitions and review
+some known results. In Section 3, we ﬁnd some bases of the vector space W II = span{xnQII
+m (x) :
+n, m ≥0} and construct a linear functional on W II. We then give a combinatorial interpretation
+for the generalized moments µII
+n,r,s. In Section 4, we generalize orthogonal polynomials of type RII
+by relaxing some of their conditions. We prove a master theorem, which generalizes all combina-
+torial models for generalized moments of various types of orthogonal polynomials. In Section 5,
+we provide a combinatorial interpretation for the dual coeﬃcient τ II
+n,r,s. In Section 6, we propose
+two suﬃcient conditions for the convergence of µn,r,s. In Section 7, we consider the moments of
+orthogonal polynomials of type RII when (bn)n≥0, (λn)n≥1, (an)n≥1, and (cn)n≥1 are constant
+sequences. We show that, in this case, the moment of orthogonal polynomials of type RII can be
+written as the moment of some classical orthogonal polynomials and also as the moment of some
+orthogonal polynomials of type RI.
+2. Preliminaries
+In this section, we introduce basic deﬁnitions and known results. We start with the deﬁnition
+of orthogonal polynomials of type RII, introduced by Ismail and Masson [5].
+Deﬁnition 2.1. We say that (Pn(x))n≥0 is a sequence of orthogonal polynomials of type RII if
+P−1(x) = 0, P0(x) = 1, and
+(2.1)
+Pn+1(x) = (x −bn)Pn(x) −(cnx2 + anx + λn)Pn−1(x),
+n ≥0,
+for some sequences b = (b0, b1, . . .), λ = (λ1, λ2, . . .), a = (a1, a2, . . .), and c = (c1, c2, . . .) such that
+cn̸ = 0, Pn(αn)̸ = 0, and Pn(βn)̸ = 0 for n ≥1, where αn and βn are the roots of cnx2 + anx + λn.
+Given the polynomials Pn(x), we will use the following notation:
+dn(x) =
+n
+Y
+i=1
+(cix2 + aix + λi),
+Qn(x) = Pn(x)
+dn(x) ,
+en(x) =
+n
+Y
+i=1
+(x −αi),
+fn(x) =
+n
+Y
+i=1
+(x −βi).
+
+--- Sayfa 4 ---
+4
+JANG SOO KIM AND MINHO SONG
+0
+1
+2
+3
+4
+5
+6
+0
+1
+2
+3
+c2
+2
+a2
+a3
+c2
+λ1
+b0
+Figure 1. An RII path P = UUBUBUV UUV BDHU ∈R6,1 with wt(P) =
+a2a3b0c3
+2λ1. The thick segment from (1, 1) to (2, 2) represents UBUBU.
+Here, we use the standard convention that the empty product is deﬁned to be 1; for example,
+d0(x) = 1. We also deﬁne the vector space
+(2.2)
+W = span{xnQm(x) : n, m ≥0}.
+Ismail and Masson [5] showed that orthogonal polynomials of type RII have partial orthogo-
+nality as follows.
+Theorem 2.2. [5, Theorem 3.5] For the polynomials Pn(x) deﬁned in Deﬁnition 2.1 and for
+any numbers N0 and N1, there is a unique linear functional L on W such that L(1) = N0,
+L(xQ1(x)) = N1, and L(xnQm(x)) = 0 for 0 ≤n < m.
+Now we review known combinatorial properties of these orthogonal polynomials, which will be
+generalized to orthogonal polynomials of type RII in this paper. To put them all in one framework,
+we introduce RII paths.
+A lattice path is a sequence p = (p0, p1, . . . , pn) of points pi ∈Z × Z≥0. For i ≥1, the ith step
+si of p is deﬁned by si = pi −pi−1. We will also consider the path p as the sequence s1 . . . sn of
+its steps (together with its starting point p0).
+Deﬁnition 2.3. An RII path is a lattice path consisting of up steps U = (1, 1), horizontal
+steps H = (1, 0), down steps D = (1, −1), vertical-down steps V = (0, −1), and backward-down
+steps B = (−1, −1). Denote by Rn,r,s the set of RII paths from (0, r) to (n, s). We also write
+Rk,m = Rk,0,m and Rk = Rk,0,0.
+For later use, we also deﬁne restricted RII paths.
+Deﬁnition 2.4. A restricted RII path is an RII-path in Rn,r,s that immediately ends when it
+touches the line x = n. We denote by eRn,r,s the set of restricted RII paths in Rn,r,s. The additional
+condition used to deﬁne restricted RII paths from RII paths will be referred to as the restricted
+condition.
+For an RII path p = s1 . . . sk, we deﬁne the weight wt(p) of p by wt(p) = Qk
+t=1 wt(st), where
+(2.3)
+wt(st) =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1
+if st = U,
+bi
+if st = H starting at height i,
+λi
+if st = D starting at height i,
+ai
+if st = V starting at height i,
+ci
+if st = B starting at height i.
+See Figure 1. Note that steps U and B can be overlapped in an RII path as shown in Figure 1.
+Thus, there can be inﬁnitely many elements in Rn,r,s and P
+p∈Rn,r,s wt(p) is a formal power series
+in the variables in b, λ, a, and c.
+A Motzkin path is an RII path without vertical-down steps and backward-down steps.
+A
+Schr¨oder path is an RII path without down steps and backward-down steps. A Motzkin–Schr¨oder
+path is an RII path without backward-down steps. Let Motn,r,s (resp. Schn,r,s and MSn,r,s) denote
+the set of Motzkin paths (resp. Schr¨oder paths and Motzkin–Schr¨oder paths) from (r, 0) to (n, s).
+
+--- Sayfa 5 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+5
+We are now ready to state known results on various orthogonal polynomials. Note that for the
+case of classical orthogonal polynomials, by the well-known fact L(Pn(x)2) = λ1 · · · λn, we have
+Qn(x) = Pn(x)
+dn(x) =
+Pn(x)
+λ1 · · · λn
+=
+Pn(x)
+L(Pn(x)2).
+Theorem 2.5. [12, Proposition 17, pp. I–15] Let Pn(x) be the (classical) orthogonal polynomials
+given by (2.1) with c = a = 0. Then there is a linear functional L on W such that
+L(xnPr(x)Qs(x)) =
+X
+p∈Motn,r,s
+wt(p).
+Theorem 2.6. [8, Theorem 17] Let Pn(x) be the Laurent biorthogonal polynomials given by (2.1)
+with c = λ = 0. Then there is a linear functional L on W such that
+L(xnPr(x)Qs(x)) =
+X
+p∈Schn,r,s
+wt(p).
+We note that Theorem 2.6 is an equivalent statement of [8, Theorem 17]; see [10, Theorem 4.7].
+Theorem 2.7. [10, Theorem 3.12] Let Pn(x) be the orthogonal polynomials of type RI given by
+(2.1) with c = 0. Then there is a linear functional L on W such that
+L(xnPr(x)Qs(x)) =
+X
+p∈MSn,r,s
+wt(p).
+Finally, we introduce dual coeﬃcients of polynomials.
+Deﬁnition 2.8. Let (Pn(x))n≥0 be a sequence of polynomials such that deg Pn(x) = n for all
+n ≥0. The coeﬃcients ρn,k and dual coeﬃcients τn,k of the polynomials Pn(x) are deﬁned by
+Pn(x) =
+X
+k≥0
+ρn,kxk,
+xn =
+X
+k≥0
+τn,kPk(x).
+(2.4)
+We also deﬁne the (generalized) dual coeﬃcients τn,r,s by
+(2.5)
+xnPr(x) =
+X
+s≥0
+τn,r,sPs(x).
+Suppose that Pn(x) be the (classical) orthogonal polynomials given by (2.1) with c = a = 0
+and let L be the corresponding linear functional. By the orthogonality L(Pr(x)Qs(x)) = δr,s,
+multiplying Qs(x) both sides of (2.5) and taking L yields
+(2.6)
+L(xnPr(x)Qs(x)) = τn,r,s.
+Thus, Theorem 2.5 gives the following corollary.
+Corollary 2.9. Let Pn(x) be the (classical) orthogonal polynomials given by (2.1) with c = a = 0.
+Then
+τn,r,s =
+X
+p∈Motn,r,s
+wt(p).
+We note that (2.6) no longer holds for Laurent biorthogonal polynomials or orthogonal poly-
+nomials of type RI or RII. In Section 5, we will ﬁnd an analogous result of Corollary 2.9 for
+orthogonal polynomials of type RII using restricted RII paths.
+3. A combinatorial interpretation for generalized moments
+3.1. Vector space and linear functional. Throughout this section we follow the notation in
+Deﬁnition 2.1. Recall the vector space
+W = span{xnQm(x) : n, m ≥0}.
+In this subsection, we provide a basis for W as follows.
+
+--- Sayfa 6 ---
+6
+JANG SOO KIM AND MINHO SONG
+Theorem 3.1. The vector space W = span{xnQm(x) : n, m ≥0} has a basis
+B = {xn : n ≥0} ∪{Qn(x) : n ≥1} ∪{xQn(x) : n ≥1}.
+To prove this theorem, we consider
+W ′ = span{xn/dm(x) : n, m ≥0}.
+We will show that W = W ′. Since W is clearly contained in W ′, it suﬃces to show that a basis
+of W ′ is contained in W.
+Lemma 3.2. The vector space W ′ = span{xn/dm(x) : n, m ≥0} has a basis
+B′ = {xn : n ≥0} ∪{1/dm(x) : m ≥1} ∪{x/dm(x) : m ≥1}.
+Proof. Since 1/dm(x) ∼x−2m and x/dm(x) ∼x−2m+1 asymptotically up to constants, B′ is
+linearly independent. Since B′ ⊂W ′, it suﬃces to show that span(B′) = W ′. To see this, we
+claim that xn/dm(x) ∈span(B′) for any n, m ≥0. First, we write the fraction as
+xn
+dm(x) = q(x) + r(x)
+dm(x),
+(3.1)
+where q(x) and r(x) are polynomials and deg(r(x)) < 2m. Now it suﬃces to show that r(x)/dm(x) ∈
+span(B′). If deg r(x) ≤1, then we have r(x)/dm(x) ∈span(B′). Otherwise, we can write
+r(x)
+dm(x) = (cmx2 + amx + λm)r1(x) + c1(x)
+dm(x)
+=
+r1(x)
+dm−1(x) + c1(x)
+dm(x),
+(3.2)
+where r1(x) is a polynomial with deg r1(x) < 2m−2 and c1(x) is a polynomial with deg c1(x) ≤1.
+By iterating (3.2), we can express r(x)/dm(x) as a linear combination of the elements in B′, which
+completes the proof.
+□
+Lemma 3.3. Let W = span{xnQm(x) : n, m ≥0} and W ′ = span{xn/dm(x) : n, m ≥0}. Then
+we have W = W ′.
+Proof. Since W ⊆W ′ and xn ∈W for all n ≥0, by Lemma 3.2, it suﬃces to show that
+1/dm(x), x/dm(x) ∈W for m ≥0.
+We prove this by induction on m.
+First, the base case
+m = 0 is clear.
+Now, let m ≥1. We claim that 1/dm(x) ∈W. If rm(x) is the quotient of Pm(x) when divided
+by x −βm, then we have
+Pm(x)
+dm−1(x)(x −βm) =
+rm(x)
+dm−1(x) +
+Pm(βm)
+dm−1(x)(x −βm).
+Using (3.2) repeatedly, we can write rm(x)/dm−1(x) as a linear combination of 1/di(x) and x/di(x)
+for i < m, that is, rm(x)/dm−1(x) ∈W by the inductive hypothesis. Since Pm(βm)̸ = 0, we have
+1
+dm−1(x)(x −βm) =
+1
+Pm(βm)
+
+cmxQm(x) −cmαmQm(x) −
+rm(x)
+dm−1(x)
+
+∈W.
+(3.3)
+We also have 1/(dm−1(x)(x −αm)) ∈W in the same way.
+If αm̸ = βm, then
+1
+dm(x) =
+1
+cm(βm −αm)
+
+1
+dm−1(x)(x −βm) −
+1
+dm−1(x)(x −αm)
+
+∈W.
+If αm = βm, then we can write Qm(x) as
+Qm(x) = Pm(x)
+dm(x) = cm(x −αm)2Rm−2(x) + γcm(x −αm) + Pm(αm)
+dm(x)
+= Rm−2(x)
+dm−1(x) +
+γ
+dm−1(x)(x −αm) + Pm(αm)
+dm(x)
+
+--- Sayfa 7 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+7
+for some constant γ.
+Again using (3.2) repeatedly, we have
+Rm−2(x)
+dm−1(x) ∈W by the inductive
+hypothesis and hence
+1
+dm(x) =
+1
+Pm(αm)
+
+Qm(x) −Rm−2(x)
+dm−1(x) −
+γ
+dm−1(x)(x −αm)
+
+∈W,
+as claimed.
+Now it remains to prove x/dm(x) ∈W. We write Qm(x) as
+Qm(x) = (cmx2 + amx + λm)Um(x)
+dm(x)
++ c1(x)
+dm(x) =
+Um(x)
+dm−1(x) + c1(x)
+dm(x),
+(3.4)
+where c1(x) is a polynomial of degree at most 1.
+Note that, if m = 1, we have U0(x) = 0.
+Similarly to how we showed rm(x)/dm−1(x) ∈W, we use the same induction argument to obtain
+Um(x)/dm−1(x) ∈W. Together with 1/dm(x) ∈W, we obtain x/dm(x) ∈W, as desired.
+□
+Now we prove Theorem 3.1.
+Proof of Theorem 3.1. Since B ⊆W, it suﬃces to show that B contains 1/dm(x) and x/dm(x) for
+any m ≥1. It can be shown by induction. We suppose 1/dk(x), x/dk(x) ∈B for k ≤m−1. By (3.2)
+and (3.3), we inductively obtain 1/dm(x) ∈B. Moreover, using (3.4), we obtain x/dm(x) ∈B, as
+desired.
+□
+Remark 3.4. In [5, Theorem 3.5], Ismail and Masson implicitly use the fact (without providing
+a proof) that {Qn(x) : n ≥1} ∪{xQn(x) : n ≥1} is a basis for span{xnQm(x) : 0 ≤n ≤m < ∞}.
+This fact can be established by following the same argument as in the proofs of the preceding two
+lemmas and Theorem 3.1.
+3.2. Moments and generalized moments for orthogonal polynomials of type RII. In
+this subsection, we construct a linear functional L on W = span{xnQm(x) : n, m ≥0} that
+gives the partial orthogonality for orthogonal polynomials of type RII. Moreover, we provide a
+combinatorial description for the generalized moments L(xnPr(x)Qs(x)).
+By Theorem 3.1, we can deﬁne a linear functional on W as follows.
+Deﬁnition 3.5. The linear functional L on the vector space span{xnQm(x) : n, m ≥0} is deﬁned
+by
+L(xn) =
+X
+P ∈Rn
+wt(P),
+n ≥0,
+L(Qn(x)) = L(xQn+1(x)) = 0,
+n ≥1,
+L(xQ1(x)) =
+X
+P ∈R1,1
+wt(P).
+Deﬁnition 3.6. The generalized moment µn,r,s of orthogonal polynomials of type RII is given
+by
+µn,r,s = L(xnPr(x)Qs(x)).
+We also write µn,m = µn,0,m and µn = µn,0,0.
+By multiplying 1/dn(x) on both sides of (2.1), we have
+(3.5)
+(cn+1x2 + an+1x + λn+1)Qn+1(x) = (x −bn)Qn(x) −Qn−1(x).
+The next proposition provides a combinatorial interpretation for the values of L on the set
+{xnQm(x) : n, m ≥0}.
+Proposition 3.7. Suppose cn̸ = 0 for all n ≥0. Then we have
+µn,m =
+X
+p∈Rn,m
+wt(p).
+
+--- Sayfa 8 ---
+8
+JANG SOO KIM AND MINHO SONG
+Proof. Let µ′
+n,m be the right-hand side of the equation. We will prove µn,m = µ′
+n,m using induction
+on (n, m). By Deﬁnition 3.5, the statement holds for m = 0, n = 0, or n = 1.
+Now let n ≥2 and m ≥1, and suppose that the statement holds for all (n′, m′)̸ = (n, m) with
+n′ ≤n and m′ ≤m. By (3.5),
+(cmx2 + amx + λm)Qm(x) = (x −bm−1)Qm−1(x) −Qm−2(x).
+Multiply xn−2 on both sides and taking L yields
+(3.6)
+cmµn,m + amµn−1,m + λmµn−2,m = µn−1,m−1 −bm−1µn−2,m−1 −µn−2,m−2.
+On the other hand, considering the last step of p ∈Rn−1,m−1, we have
+µ′
+n−1,m−1 = cmµ′
+n,m + amµ′
+n−1,m + λmµ′
+n−2,m + bm−1µ′
+n−2,m−1 + µ′
+n−2,m−2,
+which is the same recurrence relation as (3.6). Thus, applying the inductive hypothesis to every
+term in (3.6) except cmµn,m gives cmµn,m = cmµ′
+n,m. Since cm̸ = 0, the statement also holds for
+(n, m), which completes the proof.
+□
+Remark 3.8. Using the recurrence (3.6) along with Deﬁnition 3.5, one can see that µn,m = 0 for
+0 ≤n < m. This shows the orthogonality of orthogonal polynomials of type RII.
+We are now ready to obtain a combinatorial description of µn,r,s.
+Theorem 3.9. For nonnegative integers n, r, and s, we have
+µn,r,s =
+X
+P ∈Rn,r,s
+wt(P).
+Proof. Let µ′
+n,r,s = P
+P ∈Rn,r,s wt(P). We will prove µn,r,s = µ′
+n,r,s by induction on r. The base
+step r = 0 follows from Proposition 3.7.
+For the inductive step, let k ≥0 and suppose that
+µn,r,s = µ′
+n,r,s holds for all r ≤k. Replacing n by k in (2.1), multiplying xnQs(x) to both sides of
+the resulting equation, and taking L, we obtain
+(3.7)
+µn,k+1,s = µn+1,k,s −bkµn,k,s −ckµn+2,k−1,s −akµn+1,k−1,s −λkµn,k−1,s.
+On the other hand, considering the ﬁrst step of p ∈Rn+1,k,s, we have
+µ′
+n+1,k,s = µ′
+n,k+1,s + bkµ′
+n,k,s + ckµ′
+n+2,k−1,s + akµ′
+n+1,k−1,s + λkµ′
+n,k−1,s,
+which is the same recurrence as (3.7). Thus, by the inductive hypothesis, µn,r,s = µ′
+n,r,s also holds
+for r = k + 1. By induction, we obtain the theorem.
+□
+4. Generalized orthogonal polynomials of type RII
+In this section, we extend the deﬁnition of orthogonal polynomials of type RII by relaxing some
+of their conditions.
+Deﬁnition 4.1. We say that (Pn(x))n≥0 is a sequence of generalized orthogonal polynomials of
+type RII, or RII polynomials for short, if P−1(x) = 0, P0(x) = 1, and
+Pn+1(x) = (x −bn)Pn(x) −(cnx2 + anx + λn)Pn−1(x),
+n ≥0,
+where a = (a1, a2, . . .), b = (b1, b2, . . .), c = (c1, c2, . . .), and λ = (λ1, λ2, . . .) are sequences such
+that, for all n ≥1, at least one of λn, an, or cn is nonzero. We will use the following notation:
+dn(x) =
+n
+Y
+i=1
+(cix2 + aix + λi),
+Qn(x) = Pn(x)
+dn(x) .
+Note that RII polynomials contain various types of orthogonal polynomials:
+• Orthogonal polynomials of type RII are RII polynomials such that cn̸ = 0, Pn(αn)̸ = 0,
+and Pn(βn)̸ = 0 for n ≥1, where αn and βn are the roots of cnx2 + anx + λn.
+• Orthogonal polynomials of type RI are RII polynomials such that cn = 0, an̸ = 0, and
+Pn(−λn/an)̸ = 0 for n ≥1.
+• Laurent biorthogonal polynomials are RII polynomials such that cn = λn = 0, an̸ = 0,
+and Pn(0)̸ = 0 for n ≥1.
+
+--- Sayfa 9 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+9
+• Classical orthogonal polynomials are RII polynomials such that cn = an = 0 and λn̸ = 0
+for n ≥1.
+Let
+W = span{xnQm(x) : n, m ≥0}.
+Recall from (3.5) that, for k ≥0,
+(4.1)
+(ck+1x2 + ak+1x + λk+1)Qk+1(x) = (x −bk)Qk(x) −Qk−1(x),
+where Q−1(x) = 0. If we multiply xℓ, we obtain
+(4.2)
+ck+1xℓ+2Qk+1(x) + ak+1xℓ+1Qk+1(x) + λk+1xℓQk+1(x)
+= xℓ+1Qk(x) −bkxℓQk(x) −xℓQk−1(x).
+Let S ⊆Z2
+≥0 and B = {xnQm(x) : (n, m) ∈S}. We say that xnQm(x) is obtained from B
+by a single application of (4.1) if there exist k, ℓ≥0 such that xnQm(x) appears in (4.2) with
+a nonzero coeﬃcient and, for every term xn′Qm′(x) in (4.2) with (n′, m′)̸ = (n, m), either its
+coeﬃcient is zero or it is contained in B. We say that xnQm(x) is obtained from B by multiple
+applications of (4.1) if there is a sequence (n1, m1), (n2, m2), . . . , (nt, mt) with (nt, mt) = (n, m)
+such that xniQmi(x) is obtained from Bi−1 by a single application of (4.1) for all i = 1, 2, . . ., t,
+where B0 = B and Bi = Bi−1 ∪{xniQmi(x)}.
+Deﬁnition 4.2. A basis B of W is said to be good if B = {xnQm(x) : (n, m) ∈S} for a subset
+S ⊆Z2
+≥0 and, for every n, m ≥0, xnQm(x) is obtained from B by multiple applications of (4.2).
+Theorem 4.3. Suppose that there is a good basis of W. Then there is a linear functional L on
+W such that, for all n, r, s ≥0,
+L(xnPr(x)Qs(x)) =
+X
+p∈Rn,r,s
+wt(p).
+Proof. Let B = {xnQm(x) : (n, m) ∈S} be a good basis of W. Deﬁne L on B by
+(4.3)
+L(xnQm(x)) = Rn,m,
+where Rn,m = P
+p∈Rn,m wt(p). Since B is a basis, we can extend the deﬁnition of L to W by
+linearity. We claim that (4.3) holds for all n, m ≥0.
+To prove the claim, ﬁrst suppose that xnQm(x) is obtained from B by a single application of
+(4.1). Applying L to both sides of (4.2) gives
+(4.4)
+ck+1R′
+ℓ+2,k+1 + ak+1R′
+ℓ+1,k+1 + λk+1R′
+ℓ,k+1 = R′
+ℓ+1,k −bkR′
+ℓ,k −R′
+ℓ,k−1,
+where R′
+i,j = L(xiQj(x)). By the construction of L, if xiQj(x) ∈B, then R′
+i,j = Ri,j. Considering
+the last step of any path p ∈Rℓ+1,k, we have
+(4.5)
+Rℓ+1,k = ck+1Rℓ+2,k+1 + ak+1Rℓ+1,k+1 + λk+1Rℓ,k+1 + bkRℓ,k + Rℓ,k−1.
+Since every term R′
+i,j with (i, j)̸ = (n, m) appearing in (4.4) satisﬁes R′
+i,j = Ri,j, comparing (4.4)
+and (4.5) gives R′
+n,m = Rn,m, hence L(xnQm(x)) = Rn,m.
+Now consider xnQm(x) for arbitrary n, m ≥0. Since B is a good basis, xnQm(x) is obtained
+from B by multiple applications of (4.2). Applying the previous argument iteratively, we obtain
+that L(xnQm(x)) = Rn,m. Therefore (4.3) holds for all n, m ≥0, as claimed.
+This shows the theorem for the case r = 0. The general case r ≥0 can be proved by induction
+by the same arguments in the proof of Theorem 3.9.
+□
+Since Rn,0,m = ∅for n < m, we obtain the following orthogonality.
+Corollary 4.4. Suppose that there is a good basis of W. Then there is a linear functional L on W
+such that L(1) is a power series in c = (c1, c2, . . . ) with constant term 1 and, for all 0 ≤n < m,
+L(xnQm(x)) = 0.
+
+--- Sayfa 10 ---
+10
+JANG SOO KIM AND MINHO SONG
+polynomials
+good bases
+orthogonal polynomials
+{(n, m) : m = 0}
+Laurent biorthogonal polynomials
+{(n, m) : n = 0 or m = 0}
+orthogonal polynomials of type RI
+{(n, m) : n = 0 or m = 0}
+orthogonal polynomials of type RII
+{(n, m) : 0 ≤n ≤1 or m = 0}
+Table 1. Orthogonal polynomials and their good bases.
+Since there are good bases as in Table 1, Theorem 4.3 implies the combinatorial models of
+generalized moments for classical orthogonal polynomials, Laurent biorthogonal polynomials, and
+orthogonal polynomials of types RI and RII in Theorems 2.5, 2.6, and 2.7. Theorem 4.3 also
+includes orthogonal polynomials that do not belong to any of these four classes of orthogonal
+polynomials; for example, one can consider the sequence c with c2n+1 = 0 and c2n̸ = 0.
+Note that in Theorem 4.3 we have the assumption that W has a good basis.
+It would be
+interesting to characterize the existence of a good basis.
+Problem 4.5. Find a characterization of the sequences a, b, c, and λ such that W has a good
+basis.
+5. A combinatorial interpretation for dual coefficients
+In this section, we provide a combinatorial interpretation of the (generalized) dual coeﬃcients
+τn,r,s of RII polynomials introduced in Section 4, which are orthogonal polynomials of type RII
+with relaxed conditions.
+We start with an observation on the combinatorial interpretation for generalized moments µn,r,s
+of RII polynomials. Let Pn(x) be RII polynomials deﬁned in the previous section. Recall that
+dual coeﬃcients τn,r,s are deﬁned by
+(5.1)
+xnPr(x) =
+X
+s≥0
+τn,r,sPs(x).
+Multiply Qℓ(x) and take L on both sides of (5.1) yields
+(5.2)
+µn,r,ℓ=
+X
+s≥0
+τn,r,sµ0,s,ℓ.
+By Theorem 4.3, µn,r,ℓis the generating function for all RII paths from (0, r) to (n, ℓ). Hence,
+the identity (5.2) naturally suggests that τn,r,s is the generating function for the restricted RII
+paths from (0, r) to (n, s) deﬁned in Deﬁnition 2.4. Indeed, such a generating function satisﬁes
+(5.2). However, to conclude that τn,r,s is equal to this generating function, it must be shown that
+there is a unique solution for τn,r,s to the equation (5.2). Unfortunately, this is not the case. For
+example, if τ ′
+0,0,1 = µ−1
+0,1,0µ0,0,0 and τ ′
+0,0,s = 0 for s̸ = 1, then we also have
+µ0,0,0 =
+X
+s≥0
+τ ′
+0,0,sµ0,s,0.
+Interestingly, however, the suggested generating function turns out to be equal to τn,r,s, which is
+the main result in this section.
+Theorem 5.1. For nonnegative integers n, r, and s, we have
+(5.3)
+τn,r,s =
+X
+p∈eRn,r,s
+wt(p).
+Note that in order to prove Theorem 5.1, it suﬃces to show that the right-hand side of (5.3),
+denoted τ ′
+n,r,s, satisﬁes the same relation (5.1) as τn,r,s, that is,
+(5.4)
+xnPr(x) =
+X
+s≥0
+τ ′
+n,r,sPs(x).
+
+--- Sayfa 11 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+11
+1
+2
+3
+4
+5
+6
+7
+8
+x
+−a2x
+−b3 −c5x2
+−λ7
+Figure 2. An example of T ∈DT8 with wt(T ) = a2b3c5λ7.
+We will prove (5.4) by giving combinatorial interpretations for both sides and ﬁnding a sign-
+reversing involution. To do this we introduce the following deﬁnition.
+Deﬁnition 5.2. Consider a 1 × n square board whose boxes are labeled 1 through n from left to
+right. Let Mi (resp. Di) be a monomino (resp. domino) with i dots inside. A dotted tiling of size
+n is a tiling of the board using tiles in {M0, M1, D0, D1, D2}. The set of dotted tilings of size n is
+denoted by DTn.
+For a dotted tiling T , we deﬁne the weight wt(T ) to be the product of the weights wt(τ) of the
+tiles τ in T , where
+wt(τ) =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+x
+if τ = M1,
+−bi−1
+if τ = M0 with label i,
+−λi−1
+if τ = D0 with label (i −1, i),
+−ai−1x
+if τ = D1 with label (i −1, i),
+−ci−1x2
+if τ = D2 with label (i −1, i).
+See Figure 2 for an example.
+By (2.1), it is immediate that
+(5.5)
+Pn(x) =
+X
+T ∈DTn
+wt(T ).
+We are now ready to prove Theorem 5.1.
+Proof of Theorem 5.1. As discussed before, it suﬃces to show (5.4). By (5.5), we can rewrite (5.4)
+as
+(5.6)
+X
+k≥0
+τ ′
+n,r,kPk(x) =
+X
+(p,T )∈X
+wt(p) wt(T ),
+where X is the set of pairs (p, T ) such that p ∈eRn,r,k and T ∈DTk for some k ≥0. To prove
+(5.4), we establish a sign-reversing involution on X such that the sum over its ﬁxed points is equal
+to xnPr(x).
+Consider (p, T ) ∈X with p ∈eRn,r,k and T ∈DTk. For m ≥1, we denote by pm the mth-to-
+last step in p, and by T m the mth-to-last tile in T . Let i (resp. j) be the maximum number of
+consecutive U’s (resp. M1’s) at the end of p (resp. T ). Here, if p1̸ = U, then i = 0, and if T 1̸ = M1,
+then j = 0. We deﬁne φ(p, T ) = (p′, T ′) considering the two cases i ≤j and i > j.
+Case 1: i ≤j. Note that pi+1 does not exist if and only if p consists only of up-steps, in which
+case i = n = k −r. We deﬁne p′ and T ′ in the following subcases.
+Case 1-1: pi+1 = H. Let p′ be the path obtained from p by replacing pi+1 with U. Let T ′
+be the dotted tiling obtained from T by inserting a new tile M0 after T i+1.
+Case 1-2: pi+1 = D. Let p′ be the path obtained from p by replacing pi+1 with U. Let T ′
+be the dotted tiling obtained from T by inserting a new tile D0 after T i+1.
+Case 1-3: pi+1 = V . In this case, we have i ≥1. Let p′ be the path obtained from p by
+removing pi+1. Let T ′ be the dotted tiling obtained from T by replacing T i with D1.
+Case 1-4: pi+1 = B. In this case, we have i ≥2. Let p′ be the path obtained from p by
+removing the pair of steps (pi+1, U), where U is the step following pi+1 . Let T ′ be the
+dotted tiling obtained from T by replacing the pair of tiles (T i, T i−1) with a single tile
+D2.
+
+--- Sayfa 12 ---
+12
+JANG SOO KIM AND MINHO SONG
+(0, 2)
+(5, 5)
+i = 2
+1
+2
+3
+4
+5
+j = 3
+(1-1)
+(2-1)
+(0, 2)
+(5, 6)
+i = 3
+1
+2
+3
+4
+5
+6
+j = 2
+Figure 3. An example of (P, T ) ∈eR5,2,5 × DT5 for Case 1-1 and its image
+(φ(P), φ(T )) ∈eR5,2,6 × DT6 corresponding to Case 2-1, described in the proof
+of Theorem 5.1.
+(0, 2)
+(5, 4)
+i = 2
+1
+2
+3
+4
+j = 4
+(1-2)
+(2-2)
+(0, 2)
+(5, 6)
+i = 3
+1
+2
+3
+4
+5
+6
+j = 2
+Figure 4. An example of (P, T ) ∈eR5,2,4 × DT4 for Case 1-2 and its image
+(φ(P), φ(T )) ∈eR5,2,6 × DT6 corresponding to Case 2-2, described in the proof
+of Theorem 5.1.
+Case 1-5: pi+1 does not exist. In this case, let (p′, T ′) = (p, T ).
+Case 2:
+i > j.
+In this case, the starting height k −i of the step pi is at least 1 because
+k −i > k −j ≥0. We deﬁne p′ and T ′ in the following subcases.
+Case 2-1: T j+1 = M0. Let p′ be the path obtained from p by replacing pi+1 with H. Let
+T ′ be the dotted tiling obtained from T by removing the tile T j+1.
+Case 2-2: T j+1 = D0. Let p′ be the path obtained from p by replacing pi+1 with D. Let
+T ′ be the dotted tiling obtained from T by removing the tile T j+1.
+Case 2-3: T j+1 = D1. Let p′ be the path obtained from p by inserting a step V before pi+1.
+Let T ′ be the dotted tiling obtained from T by replacing T j+1 with M1.
+Case 2-4: T j+1 = D2. Let p′ be the path obtained from p by inserting a pair of steps (B, U)
+before pi+1. Let T ′ be the dotted tiling obtained from T by replacing T j+1 with a pair of
+tiles (M1, M1).
+See Figures 3 to 6. It is straightforward to check that φ is a sign-reversing involution on X
+whose ﬁxed points are the pairs (p, T ), where p is the unique path in Rn,r,n+r consisting only of
+up-steps and T is a dotted tiling in DTn+r such that the last n tiles are all equal to M1. Since
+wt(p) wt(T ) = xn wt(T0), where T0 is the dotted tiling obtained from T by removing the last n
+tiles, we have
+(5.7)
+X
+(p,T )∈X
+wt(p) wt(T ) = xn
+X
+T0∈DTr
+wt(T0) = xnPr(x).
+Then (5.4) follows from (5.6) and (5.7), which completes the proof.
+□
+If cn = 0 in Theorem 5.1, we obtain the following corollary.
+
+--- Sayfa 13 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+13
+(0, 2)
+(5, 4)
+i = 2
+1
+2
+3
+4
+j = 2 (1-3)
+(2-3)
+(0, 2)
+(5, 5)
+i = 2
+1
+2
+3
+4
+5
+j = 1
+Figure 5. An example of (P, T ) ∈eR5,2,4 × DT4 for Case 1-3 and its image
+(φ(P), φ(T )) ∈eR5,2,5 × DT5 corresponding to Case 2-3, described in the proof
+of Theorem 5.1.
+(0, 2)
+(5, 4)
+i = 2
+1
+2
+3
+4
+j = 2 (1-4)
+(2-4)
+(0, 2)
+(5, 4)
+i = 1
+1
+2
+3
+4
+j = 0
+Figure 6. An example of (P, T ) ∈eR5,2,4 × DT4 for Case 1-4 and its image
+(φ(P), φ(T )) ∈eR5,2,4 × DT4 corresponding to Case 2-4, described in the proof
+of Theorem 5.1.
+Corollary 5.3. Let (P I
+n(x))n≥0 be the sequence of orthogonal polynomials of type RI deﬁned in
+(1.3) and let τ I
+n,r,s be their dual coeﬃcients. Then we have
+τ I
+n,r,s =
+X
+p∈eRIn,r,s
+wt(p),
+where eRI
+n,r,s is the set of restricted RII paths from (r, 0) to (n, s) without backward-down steps.
+Recall that a Motzkin path is an RII path without vertical-down steps and backward-down
+steps. Thus, there is no diﬀerence between Motzkin paths and restricted Motzkin paths. Therefore,
+if cn = an = 0 in Theorem 5.1, we obtain Corollary 2.9.
+Remark 5.4. One may try to prove Theorem 5.1 by induction on n. Once the base steps n = 0
+and n = 1 have been proved, we can easily apply the inductive argument as in the case of µn,r,s.
+The case n = 0 is immediate from the deﬁnition. However, the other case n = 1 is not obvious.
+Note that, for the case of µn,r,s, both cases n = 0 and n = 1 follow from the deﬁnition of L.
+6. Convergence of the moments and dual coefficients
+In Section 3, we found a combinatorial description for generalized moments µn,r,s in terms of
+the weight sum of RII paths. As there are inﬁnitely many RII paths from (0, r) to (n, s), we need
+to check whether the weight sum converges. In this section, we give suﬃcient conditions on the
+weights of steps for convergent weight sums of RII paths and restricted RII paths.
+Let Cn =
+1
+n+1
+ 2n
+n
+
+be the nth Catalan number.
+Lemma 6.1. Suppose bm = b, λm = λ, am = a, and cm = c for all m. Then
+µn =
+X
+i,j,k≥0
+Ci+j+k
+n + j + 2k
+n −2i −j
+i + j + k
+j
+i + k
+i
+
+bn−2i−jλiajck.
+
+--- Sayfa 14 ---
+14
+JANG SOO KIM AND MINHO SONG
+Proof. Suppose that p ∈Rn has u up-steps, h horizontal steps, i down steps, j vertical-down steps,
+and k backward-down steps. Then
+(n, 0) = u(1, 1) + h(1, 0) + i(1, −1) + j(0, −1) + k(−1, −1),
+which implies u = i + j + k and h = n −2i −j. Therefore
+(6.1)
+µn =
+X
+p∈Rn
+wt(p) =
+X
+i,j,k≥0
+fn(i, j, k)bn−2i−jλiajck,
+where fn(i, j, k) is the number of paths p ∈Rn with i down steps, j vertical-down steps, and k
+backward-down steps.
+Given a path p ∈Rn, deﬁne φ(p) to be the labeled Motzkin path obtained from p by replacing
+every vertical-down step with a down step labeled a, every backward-down step with a down step
+labeled c. If p has the given number of steps of each type as above, then φ(p) is a labeled Motzkin
+path from (0, 0) to (n + j + 2k) with n −2i −j horizontal steps, i (unlabeled) down steps, j down
+steps labeled a, and k down steps labeled c. Such a labeled Motzkin path can be obtained from a
+Dyck path from (0, 0) to (2i + 2j + 2k) by inserting n −2i −j horizontal steps in
+ n+j+2k
+n−2i−j
+
+ways,
+labeling j down steps by a in
+ i+j+k
+j
+
+ways, and labeling k down steps by c in
+ i+k
+k
+
+=
+ i+k
+i
+
+ways.
+This implies that
+(6.2)
+fn(i, j, k) = Ci+j+k
+n + j + 2k
+n −2i −j
+i + j + k
+j
+i + k
+i
+
+.
+By (6.1) and (6.2), we obtain the desired formula.
+□
+Lemma 6.2. Suppose bm = b, λm = λ, am = a, and cm = c for all m and |c| < 1/4. Then µn
+converges absolutely.
+Proof. By Lemma 6.1, we have µn = P
+i,j,k≥0 fn(i, j, k)bn−2i−jλiajck, where fn(i, j, k) is given in
+(6.2). Since fn(i, j, k) = 0 unless 2i + j ≤n, there are ﬁnitely many pairs (i, j) in this sum. Thus
+it suﬃces to show that, for ﬁxed i and j with 2i + j ≤n, the sum
+(6.3)
+X
+k≥0
+fn(i, j, k)ck
+converges.
+By Stirling’s formula, for ﬁxed m and large N, we have the asymptotic behaviors
+CN ∼
+4N
+N 3/2√π ,
+N
+m
+
+∼N m
+m! .
+Thus, for ﬁxed i, j, n and large k,
+fn(i, j, k)ck ∼
+4i+j+k
+(i + j + k)3/2√π · (n + j + 2k)n−2i−j
+(n −2i −j)!
+· (i + j + k)j
+j!
+· (i + k)i
+i!
+ck
+∼D · (4c)kkn−i−3/2,
+where D is a constant with respect to k. Since |4c| < 1, by the ratio test, (6.3) converges.
+□
+Theorem 6.3. Let (am)m≥0, (bm)m≥0, (cm)m≥0 and (λm)m≥0 be bounded sequences of complex
+numbers. Suppose |cm| < 1
+4 −ǫ for all m, where ǫ > 0 is a ﬁxed number. Then the generalized
+moments µn,r,s converge absolutely.
+Proof. Suppose |am| < a, |bm| < b, |λm| < r for all m. Let r = max(λ, 1) and c = 1/4 −ǫ. For
+p ∈Rn,r,s, let p′ be the RII path obtained from p by adding r up steps at the beginning and s
+down steps at the end. Then p′ ∈Rn+r+s and | wt(p)| = |λ−s wt(p′)| ≤| wt(p′)|. Thus
+X
+p∈Rn,r,s
+| wt(p)| ≤
+X
+p∈Rn+r+s
+| wt(p)| ≤
+X
+p∈Rn+r+s
+|c
+wt(p)|,
+where c
+wt(p) is the weight wt(p) with substitution (bi, λi, ai, ci) 7→(b, r, a, c) for all i. By Lemma 6.2,
+the rightmost side in the above inequalities converges, which implies that µn,r,s converges abso-
+lutely.
+□
+
+--- Sayfa 15 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+15
+µ(x) =
+1
++ bx µ(x)
++
+x
+µ(x)
+c
+x
+µ(x)
++
+x
+µ(x)
+a
+µ(x)
++
+x
+µ(x)
+λx
+µ(x)
+Figure 7. A visualization of the functional equation for µ(x).
+For the convergence of τn,r,s, we only need the condition on c.
+Corollary 6.4. Suppose that |cm| < 1
+4 −ǫ for all m, where ǫ > 0 is a ﬁxed number. Then the
+dual coeﬃcients τn,r,s converge absolutely.
+Proof. Recall that τn,r,s = P
+p∈eRn,r,s wt(p). Because of the restricted condition, each p ∈eRn,r,s
+cannot go over the line y = n + r. Thus
+(6.4)
+X
+p∈eRn,r,s
+| wt(p)| ≤
+X
+p∈Rn,r,s
+| wt′(p)|,
+where wt′(p) is the weight of p using the sequences a′, b′, c′, and λ′ obtained from a, b, c, and
+λ by substituting bi = ai = λi = ci = 0 for i > n + r. Then, by Theorem 6.3, we see that the
+right-hand side of (6.4) converges.
+□
+7. Moments with constant recurrence coefficients
+In this section, we assume that am = a, bm = b, cm = c, and λm = λ, for all m. The goal is to
+ﬁnd a formula for µn in this case.
+Let
+µ(x) =
+X
+n≥0
+µnxn.
+Considering the ﬁrst time each RII path returns to the x-axis as shown in Figure 7, we obtain the
+following functional equation:
+µ(x) = 1 + bxµ(x) + (c + ax + λx2)µ(x)2.
+Solving the equation yields
+µ(x) = 1 −bx −
+p
+(1 −4c) −(4a + 2b)x −(4λ −b2)x2
+2(c + ax + λx2)
+.
+We aim to show that (up to a constant) µn can be expressed as the moment of certain classical
+or type RI orthogonal polynomials. Recall that the moments of classical orthogonal polynomials
+(resp. orthogonal polynomials of type Ri) are equal to the weight sums of certain Motzkin paths
+(resp. Motzkin–Schr¨oder paths). Thus, the goal is to reinterpret the values hn in the framework
+of Motzkin or Motzkin–Schr¨oder path models. While there are inﬁnitely many RII paths from
+(0, 0) to (n, 0), the number of such Motzkin or Motzkin–Schr¨oder paths is ﬁnite. In this point of
+view, our results give useful ways of calculating µn. Note that this section generalizes the result
+on moments of RI polynomials in [10, Section 6.2].
+Let C be the generating function for the Catalan numbers Cn:
+C =
+X
+n≥0
+Cncn = 1 −√1 −4c
+2c
+.
+Proposition 7.1. Suppose that am = a, bm = b, cm = c, and λm = λ, for all m. We have
+µn = C · µn(B, Λ).
+Here, µn(B, Λ) is the nth moment for classical orthogonal polynomials given by
+pn+1(x) = (x −Bn)pn(x) −Λnpn−1(x), n ≥0,
+
+--- Sayfa 16 ---
+16
+JANG SOO KIM AND MINHO SONG
+where p−1(x) = 0, p0(x) = 1, and
+B0 = 1 −√1 −4c
+2c√1 −4c a +
+b
+√1 −4c,
+Λ1 = (b2c + a2 + ab −4cλ + λ)(1 −√1 −4c)
+2c√1 −4c
+3
+,
+Bn = 2a + b
+1 −4c,
+Λn+1 = b2c + a2 + ab −4cλ + λ
+(1 −4c)2
+,
+n ≥1.
+Proof. By Flajolet’s theory on continued fractions [4],
+(7.1)
+X
+n≥0
+µn(B, Λ)xn =
+1
+1 −B0x −Λ1x2 · g(x),
+where
+g(x) =
+1
+1 −B1x −
+Λ2x2
+1 −B2x −· · ·
+.
+Since B1 = B2 = · · · and Λ2 = Λ3 = · · ·, we see that
+g(x) =
+1
+1 −B1x −Λ2x2 · g(x).
+Solving this function equation gives
+(7.2)
+g(x) =
+2
+1 −B1x −
+p
+1 −2B1x + (B2
+1 −4Λ2)x2 .
+By (7.1) and (7.2),
+C
+X
+n≥0
+µn(B, Λ)xn =
+C
+1 −B0x −
+2Λ1x2
+1 −B1x −
+p
+1 −2B1x + (B2
+1 −4Λ2)x2
+=
+2
+1 −bx +
+p
+(1 −4c) −(4a + 2b)x −(4λ −b2)x2
+= µ(x),
+as desired.
+□
+As a corollary, we obtain a formula for the Hankel determinant det(µi+j)n
+i,j=0.
+Corollary 7.2. Suppose that am = a, bm = b, cm = c, and λm = λ, for all m. Then, we have
+det(µi+j)n
+i,j=0 =
+(b2c + a2 + ab −4cλ + λ)(n+1
+2 ) 
+1−√1−4c
+2c
+2n+1
+√1 −4c(2n+1
+2 )
+.
+Proof. By Proposition 7.1 and the fact that det(µi+j(B, Λ))n
+i,j=0 = Λn
+1Λn−1
+2
+· · · Λ1
+n, we have
+det(µi+j)n
+i,j=0 = Cn+1 det(µi+j(B, Λ))n
+i,j=0
+= Cn+1Λn
+1Λn−1
+2
+· · · Λ1
+n
+=
+(b2c + a2 + ab −4cλ + λ)(
+n+1
+2 ) 
+1−√1−4c
+2c
+2n+1
+√1 −4c(2n+1
+2 )
+.
+□
+Now we show that (up to a constant) µn can also be interpreted as the moment of orthogonal
+polynomials of type RI.
+
+--- Sayfa 17 ---
+COMBINATORICS OF GENERALIZED ORTHOGONAL POLYNOMIALS OF TYPE RII
+17
+Proposition 7.3. Suppose that am = a, bm = b, cm = c, and λm = λ, for all m. Then
+µn = C · µn(B, Λ, A).
+Here, µn(B, Λ, A) is the nth moment for orthogonal polynomials of type RI given by
+pn+1(x) = (x −Bn)pn(x) −(Anx + Λn)pn−1(x),
+n ≥0,
+where p−1(x) = 0, p0(x) = 1, and
+B0 =
+b
+√1 −4c,
+Bn =
+b
+1 −4c,
+n ≥1,
+Λ1 = (b2c −4cλ + λ)(1 −√1 −4c)
+2c√1 −4c
+3
+,
+Λn+1 = b2c −4cλ + λ
+(1 −4c)2
+,
+n ≥1,
+A1 = 1 −√1 −4c
+2c√1 −4c a,
+An+1 =
+a
+1 −4c,
+n ≥1.
+Proof. The proof is similar to the proof of Proposition 7.1. By a direct computation, we obtain
+C
+X
+n≥0
+µn(B, Λ, A)xn =
+C
+1 −B0x −
+A1x + Λ1x2
+1 −B1x −A2x + Λ2x2
+1 −B2x −· · ·
+=
+C
+1 −B0x −
+2A1x + 2Λ1x2
+1 −B1x +
+p
+1 −(4A2 + 2B1)x −(4Λ2 −B2
+1)x2
+= µ(x).
+□
+The moment µn(B, Λ) (resp. µn(B, Λ, A)) of (classical) orthogonal polynomials (resp. orthogo-
+nal polynomials of type RI) is the generating function for Motzkin paths (resp. Motzkin–Schr¨oder
+paths) from (0, 0) to (n, 0), which is a ﬁnite sum. Hence, Propositions 7.1 and 7.3 provide practical
+methods for computing µn. At this point, we can pose natural questions:
+(1) Are the path models in Propositions 7.1 and 7.3 applicable for µn,m or µn,r,s?
+(2) If not, are there Motzkin or Motzkin–Schr¨oder paths with diﬀerent weights that can be
+used for computing µn,m or µn,r,s?
+The answer to the ﬁrst question is “no”.
+For instance, one can verify that the coeﬃcient
+[c]µ2,1 of c in µ2,1 is equal to 10a + 8b. In contrast, let ˆµ2,1 be the weight sum of Motzkin paths
+(resp. Motzkin–Schr¨oder paths) from (0, 0) to (2, 1) with the weights given in Proposition 7.1
+(resp. Proposition 7.3). Then [c]ˆµ2,1 = 11a + 6b (resp. [c]ˆµ2,1 = 7a + 6b).
+Regarding the second question, we observe that µi,i = µi,0,i = Ci+1. This implies that it is
+impossible to ﬁnd classical or type RI orthogonal polynomials whose generalized moments eµn,r,s
+are the same as µn,r,s, since eµi,0,i = 1. One might consider introducing a scaling factor F such
+that µn,r,s = F · eµn,r,s as we have F = C when r = s = 0. However, we note that it is not possible
+to interpret µn,r,s as a weight sum of Motzkin–Schr¨oder paths. In fact, one can verify that
+(7.3)
+µ0,1,0 =
+1 −√1 −4c
+2c
+2
+· a + 2bc
+√1 −4c
+and
+µ0,2,1 = µ0,1,0 · 1 −c −√1 −4c
+c
+.
+To interpret these using Motzkin–Schr¨oder paths, µ0,i,i−1 must be the weight Ai of a vertical down
+step (0, −1) starting at height i. This implies that µ0,2,0 = A2A1 = µ0,2,1µ0,1,0, which does not
+contain any λ by (7.3). This contradicts the fact that µ0,2,0 must contain a term λc, since DB is
+an RII path from (0, 2) to (0, 0) whose weight is λc.
+Therefore, we need to consider combinatorial models diﬀerent from Motzkin–Schr¨oder paths.
+In the literature, there are other lattice path models for orthogonal polynomials. For example,
+Jang and Song [7] provide lattice paths called gentle Motzkin paths for their study of orthogonal
+polynomials on the unit circle.
+We end this section with the following open problem.
+
+--- Sayfa 18 ---
+18
+JANG SOO KIM AND MINHO SONG
+Problem 7.4. Find a lattice path model that can be used to calculate µn,m or µn,r,s in a ﬁnite
+process.
+References
+[1] M. Bousquet-M´elou and M. Mishna. Walks with small steps in the quarter plane. In Algorithmic probability
+and combinatorics, volume 520 of Contemp. Math., pages 1–39. Amer. Math. Soc., Providence, RI, 2010.
+[2] S. Corteel, B. Jonnadula, J. P. Keating, and J. S. Kim. Lecture hall graphs and the Askey scheme. Preprint,
+arXiv:2311.12761, 2023.
+[3] S. Corteel and J. S. Kim. Lecture hall tableaux. Adv. Math., 371:107266, 35, 2020.
+[4] P. Flajolet. Combinatorial aspects of continued fractions. Discrete Math., 32(2):125–161, 1980.
+[5] M. E. H. Ismail and D. R. Masson. Generalized orthogonality and continued fractions. J. Approx. Theory,
+83(1):1–40, 1995.
+[6] M. E. H. Ismail and A. Sri Ranga. RII type recurrence, generalized eigenvalue problem and orthogonal poly-
+nomials on the unit circle. Linear Algebra Appl., 562:63–90, 2019.
+[7] J. Jang and M. Song. Combinatorics of orthogonal polynomials on the unit circle. Preprint, arXiv:2407.07508,
+2024.
+[8] S. Kamioka. A combinatorial representation with Schr¨oder paths of biorthogonality of Laurent biorthogonal
+polynomials. Electron. J. Combin., 14(1):Research Paper 37, 22, 2007.
+[9] S. Kamioka. A combinatorial derivation with Schr¨oder paths of a determinant representation of Laurent
+biorthogonal polynomials. Electron. J. Combin., 15(1):Research Paper 76, 20, 2008.
+[10] J. S. Kim and D. Stanton. Combinatorics of orthogonal polynomials of type RI. Ramanujan J., 61(2):329–390,
+2023.
+[11] V. Shukla and A. Swaminathan. Chain sequences and zeros of polynomials related to a perturbed RII type
+recurrence relation. J. Comput. Appl. Math., 422:Paper No. 114916, 24, 2023.
+[12] G. Viennot. Une th´eorie combinatoire des polynˆomes orthogonaux g´en´eraux. Lecture Notes, UQAM, 1983.
+[13] A. Zhedanov. Biorthogonal rational functions and the generalized eigenvalue problem. J. Approx. Theory,
+101(2):303–329, 1999.
+Department of Mathematics, Sungkyunkwan University, Suwon, South Korea
+Email address: jangsookim@skku.edu
+Department of Mathematics, Sungkyunkwan University, Suwon, South Korea
+Email address: smh3227@skku.edu

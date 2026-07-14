@@ -1,0 +1,427 @@
+
+--- Sayfa 1 ---
+Draft version January 22, 2025
+Typeset using LATEX default style in AASTeX631
+The doubly librating Plutinos
+Renu Malhotra1 and Takashi Ito2
+1The University of Arizona
+1629 E University Boulevard
+Tucson, AZ 85718, USA
+2National Astronomical Observatory
+Osawa 2–21–1
+Mitaka, Tokyo 181–8588, Japan
+ABSTRACT
+Named for orbital kinship with Pluto, the Plutinos are a prominent group of Kuiper Belt objects
+whose orbital periods are in libration about the 3/2 ratio with Neptune’s. We investigate the long
+term orbital dynamics of known Plutinos, with attention to the additional libration (or lack thereof)
+of their argument of perihelion, g, a well-known characteristic of Pluto’s orbit. We show that the g
+librators amongst the Plutinos cluster around an arc in the eccentricity–inclination parameter plane.
+This previously unreported dynamical structure is owed to a family of periodic orbits of the third
+kind in the restricted problem of three bodies, identified by Poincar´e at the end of the 19th century.
+Approximately sixteen percent of the currently known Plutinos exhibit g librations, a far greater
+fraction than the ratios of the associated libration frequencies. These results may offer new constraints
+for theoretical models of the dynamical history of the Plutinos and of the orbital migration history of
+the giant planets.
+Keywords: Plutinos(1266) — Resonant Kuiper belt objects(1396) — Kuiper belt(893) — Orbital res-
+onances(1181)
+1. INTRODUCTION
+The Plutinos are a dynamical group of Kuiper Belt objects whose orbital period is in 3/2 resonant ratio with
+Neptune’s. Their existence and high abundance is amongst the strongest lines of evidence for the orbital migration of
+the giant planets during the late stages of planet formation in the ancient Solar system (see, e.g., reviews by Nesvorn´y
+2018; Malhotra 2019; Gladman & Volk 2021). The defining characteristic of the Plutinos is the libration of a critical
+resonant angle, σ, defined as
+σ = 3λ −2λ′ −ϖ,
+(1)
+where λ denotes mean longitude, ϖ denotes longitude of perihelion, and the primed quantities denote the parameters
+of Neptune. The critical resonant angle of every Plutino librates around a center at σ = 180◦, with libration periods
+of O(104) years.
+Like Pluto itself, some Plutinos exhibit the additional property that their argument of perihelion, g, librates around
+one of two centers, either g = +90◦or g = −90◦, with libration periods on the order of O(106) years; we call these
+the doubly librating Plutinos. (We denote the argument of perihelion with g, following the traditional notation of the
+canonical Delaunay elements of the Keplerian osculating ellipse, although ω is also commonly used in the literature for
+this element (e.g. Brouwer & Clemence 1961).) The libration of g is also known as the von Zeipel–Lidov–Kozai [vZLK]
+oscillation, a phenomenon that has historically been studied in the context of the secular (orbit-averaged) three body
+problem (e.g., Ito & Ohtsuka 2019; Tremaine 2023, note that the terms “Kozai resonance” or “Lidov–Kozai resonance”
+are also used in the literature). This classical model neglects the effects of mean motion resonances. For the case of
+g librations in the presence of a mean motion resonance and in the presence of additional planetary perturbers, the
+mathematical analysis of the vZLK phenomenon requires special care in the orbit-averaging procedure (e.g., Saillenfest
+2020; Lei et al. 2022; Ito & Malhotra 2023, and references therein).
+arXiv:2501.12345v1  [astro-ph.EP]  21 Jan 2025
+
+--- Sayfa 2 ---
+2
+Malhotra and Ito
+In the present work, we examine the dynamics of the Plutinos, with attention to the doubly librating subset. Section
+2 describes the observational data of the Plutinos and our methodology for identifying the doubly librating subset.
+In Section 3, we describe how the doubly librating Plutinos cluster around a specific structure in the eccentricity–
+inclination parameter space, and how this structure is related to a family of periodic orbits in the three body problem
+identified long ago by Poincar´e (1892), specifically the “periodic orbits of the third kind”. Section 4 summarizes and
+concludes with remarks on the relative abundance of the doubly librating Plutinos and possible implications for their
+origins and the nature of giant planet migration.
+2. NUMERICAL SIMULATIONS
+We retrieved the list of Plutinos identified and published in Volk & Van Laerhoven (2024). Then, we obtained the
+current orbital data of these objects from JPL Horizons System (https://ssd.jpl.nasa.gov/horizons/app.html#/). We
+also obtained from the Horizons System at the same time the data for solar system parameters (masses of the Sun and
+the eight major planets and the orbital parameters of the planets). We used these data as the inputs for numerical orbit
+propagation for a time span of 100 myr, with the SWIFT RMVS3 code (Levison & Duncan 1994). SWIFT RMVS3
+is a regularized mixed variable symplectic integrator optimized for fast and accurate propagation of planetary orbits.
+The Plutinos were treated as test particles in this numerical simulation. The initial propagation step size was chosen
+as 30 days, and we recorded the orbital evolution of planets and test particles every 500 years.
+From the time series of the orbit propagation results, we identified 441 long term stable Plutinos, using the criterion
+that the range of the critical resonant angle, σ modulo 360◦, over the 100 myr time span remained limited: max{σ} −
+min{σ} < 358◦. These identifications were verified by visual inspections of plots of σ(t). The reduction in the number
+of surviving Plutinos from the initial sample size of 453 to 441 is due to our longer integration time span (100 myr)
+compared to the 10 myr time span used in Volk & Van Laerhoven (2024). Even so, this sample size is significantly
+larger than in previous studies of the orbital characteristics of known Plutinos. For comparison, Lawler & Gladman
+(2013) and Volk et al. (2016) studied Plutino samples of less than 25, Balaji et al. (2023) worked with a Plutino sample
+of 85.
+Within this sample of 441 long term stable Plutinos we found 69 cases of g librators, that is a ∼16% fraction. A few
+words are in order regarding how we identified the g librators. Recall that g is defined as the angular measure from
+the longitude of ascending node to the direction of pericenter of the orbit. The longitude of ascending node depends
+upon the choice of reference plane. JPL Horizons adopts the J2000 ecliptic as the reference plane, a practical choice for
+observational solar system astronomy. However, on secular timescales, the orbital planes of the planets precess around
+the plane normal to the total angular momentum vector of the solar system, the so-called invariable plane (Murray
+& Dermott 1999; Souami & Souchay 2012). Considering that the giant planets are the major perturbers defining the
+long term dynamics of the Plutinos, we adopted this plane as the reference plane for all angular orbital elements. We
+computed all orbital elements relative to the solar system barycenter. We looked for cases in which the time series of a
+Plutino’s g showed persistent librations about a possible mean value. Guidance from the classical (non-resonant) vZLK
+theory of the circular restricted three body problem (e.g. Ito & Ohtsuka 2019) indicates that there are four possible
+centers of g libration: 0, 90◦, 180◦and 270◦. In the 3:2 exterior mean motion resonance, the g libration is expected to
+be centered at these same four values, but in other resonances the g librations can be centered at other values (Kozai
+1985; Saillenfest et al. 2016; Saillenfest 2020). We looked for g librations about all four centers, with the criterion that
+the range of g over the entire 100 myr span remains limited to a half-circle: max{g −gc} −min{g −gc} < 179◦, where
+gc takes one of the four values (0, 90, 180, or 270 degrees). The angular quantity g(t) −gc (modulo 360◦)) is taken to
+be in the range [−180◦, +180◦]. Of the 69 cases of g librators, none were found librating about 0 or 180 degrees. The
+g-librators were nearly equally divided between those centered at gc = 90◦(34 objects) and gc = 270◦(35 objects).
+From the time series of the orbit propagation results, we calculated the time-averaged values of the eccentricity and
+of the inclination of each Plutino over 100 myr. These results are discussed in the next section.
+3. RESULTS
+Our main results are illustrated in three figures (Figs. 1, 2, 3), and are as follows.
+Fig. 1 (left) show scatter plots of the osculating orbital elements (semimajor axis, a, eccentricity e, and inclination
+i) of the Plutinos at the initial epoch. In the histograms accompanying the scatter plots, it can be observed that
+eccentricities below about 0.1 are rare, there is a prominent peak near 0.25, and a cut-off above about 0.35. The
+inclinations are concentrated within a few degrees of the invariable plane, but there is a substantial tail of high
+
+--- Sayfa 3 ---
+The doubly librating Plutinos
+3
+0
+0.1
+0.2
+0.3
+0.4
+39
+39.2
+39.4
+39.6
+39.8
+0
+15
+30
+45
+60
+0
+20
+40
+60
+80
+0
+20
+40
+60
+80
+Figure 1. (Left) Scatter plots of osculating semimajor axis, eccentricity, inclination of the 441 Plutinos in the present study.
+(Right) Histograms of the osculating eccentricities and inclinations. The g librators are highlighted in green.
+inclinations reaching ∼30◦and a few larger values (up to ∼54◦). These features of the Plutino eccentricities and
+inclinations have been noted in previous studies, albeit with smaller sample sizes (e.g., Gomes 2003; Li et al. 2014;
+Nesvorn´y 2018; Gladman & Volk 2021).
+The eccentricity distribution declines sharply above ∼0.35. It is largely sculpted by long term stability, as higher
+eccentricity Plutinos are not protected from destabilizing perturbation at close encounters with Uranus when they reach
+perihelion. At low eccentricities, the relative population is limited by the relative phase space volumes in Neptune’s
+exterior 3:2 mean motion resonance, which has a narrow neck at low eccentricities in the (a, e) plane (e.g., Lan &
+Malhotra 2019; Balaji et al. 2023).
+The inclination distribution has been the subject of much commentary in the literature, particularly the difficulty
+of accounting for the abundance of higher inclinations with theoretical models (e.g., Gladman & Volk 2021). Many
+observational surveys for Kuiper belt objects have been concentrated on fields closer to the invariable plane (e.g.,
+Bernstein et al. 2004; Petit et al. 2011; Bannister et al. 2016). Consequently, the higher inclination objects are likely
+under-represented in the discovered population, underscoring the high abundance of the inclination distribution.
+The g librators amongst the Plutinos are highlighted in green as the filled points in the scatter plots in Fig. 1 (left),
+and as the green histograms in Fig. 1 (right). It can be observed that the g librators tend to have higher eccentricity
+and higher inclination, compared with the overall population of Plutinos.
+Fig. 2(a) shows a scatter plot of the osculating eccentricities and inclinations, and Fig. 2(b) shows a scatter plot
+of these time-averaged elements. A positive correlation between the osculating eccentricity and inclination of the g
+librators is apparent to the eye. In the time-averaged elements this correlation comes into sharper focus as a clustering
+along an approximately hyperbolic arc. Some Plutinos that are not g librators also hug the hyperbolic arc in Fig. 2(b).
+An examination of the time series of g(t) of these cases reveals that they exhibit intermittent g librations, sometimes
+
+--- Sayfa 4 ---
+4
+Malhotra and Ito
+0
+0.1
+0.2
+0.3
+0.4
+0
+15
+30
+45
+60
+0
+0.1
+0.2
+0.3
+0.4
+0
+15
+30
+45
+60
+Figure 2. Scatter plots of the Plutinos’ eccentricities and inclinations: (a) osculating elements, (b) time-averaged elements.
+
+--- Sayfa 5 ---
+The doubly librating Plutinos
+5
+0
+0.1
+0.2
+0.3
+0.4
+0
+15
+30
+45
+60
+doubly librating Plutinos
+CR3BP
+CR6BP
+Figure 3. The doubly librating Plutinos (green dots), and the locus of the g libration centers of Plutinos in two models: the
+red curve was computed for the circular restricted six body problem [CR6BP] of the Sun, the four giant planets and a (massless)
+Plutino whereas the black dot-dash curve was computed for the circular restricted three body problem [CR3BP] of the Sun,
+Neptune and a (massless) Plutino. For both models we averaged over the mean longitudes, while taking account of the mean
+motion resonance constraints, to find the location of the minima of the disturbing function.
+slipping between librating about a center at g = +90◦and at g = −90◦. This is why they are not identified with our
+criterion that demands persistent g librations over the whole 100 myr time span of the numerical simulations.
+To place the clustering of the g librators in a physical context, we plot two theoretical curves in Fig. 3, together with
+the green points indicating the g librators amongst the observed Plutinos. The red curve is the locus in the (eccentricity–
+inclination parameter plane) of the local minima of the disturbing function for Plutinos, in an approximate model of
+the circular restricted six body problem [CR6BP] of the Sun, the four giant planets and a (massless) Plutino. For
+the purpose of computing this curve in this model, the giant planets’ orbits were fixed as circular and co-planar.
+The orbit-averaged disturbing potential (averaged over the mean longitudes), is computed at the nominal center of
+the mean motion resonance, i.e., at a/aNeptune = (3/2)
+2
+3 , while taking account of the constraint σ = 180◦. We use
+numerical quadrature to carry out the orbit-averaging, for a wide range of the quantity (1 −e2) cos2 i of a Plutino.
+This is a conserved quantity for a test particle in the averaged model of the circular restricted three body problem
+and is widely used to characterize the vZLK oscillation, both in the resonant and non-resonant cases (e.g. Kozai 1962;
+Morbidelli 2002; Tremaine 2023). This procedure follows established methods in the literature (e.g., see Section 5 in
+Saillenfest 2020; Ito & Malhotra 2023, and references therein). From these calculations, we identified the local minima
+of the disturbing potential at g = 90◦. These minima are the same for g = −90◦owing to the symmetry of the model
+with respect to the common plane of the planets. The black dot-dashed curve is obtained similarly, but with the
+circular restricted three body model [CR3BP] of the Sun, Neptune and a Plutino; that is, it neglects Jupiter, Saturn
+and Uranus.
+
+--- Sayfa 6 ---
+6
+Malhotra and Ito
+In the well-known idealized model of the CR3BP (two massive primaries on circular orbits and a test particle), the
+conditions encapsulated in “σ = 180◦, g = 90◦” can be recognized as the conditions for periodic orbits of the third
+kind described in Poincar´e (1892). Periodic orbits are characterized by the property that they retrace their path in
+space. In Poincar´e’s classification, periodic orbits of the first kind are those that are familiar today as the five Lagrange
+points of the planar circular restricted three body problem; they are fixed points in the rotating frame. The periodic
+orbits of the second kind are also found in the planar geometry: rather than fixed points, they trace closed curves in
+the rotating frame; they have mean motion in exact integer ratio with the mean motion of the primaries. The periodic
+orbits of the third kind trace three-dimensional closed curves in the rotating frame. We can also see that the first
+kind represent five cases of the coplanar 1:1 mean motion resonance whereas the second kind represent coplanar mean
+motion resonances of all other integer ratios. The third kind encompass mean motion resonances of inclined orbits with
+the added constraint of a stationary argument of pericenter. Jefferys & Standish (1966) and Jefferys & Standish (1972)
+computed the trace in the eccentricity–inclination plane of such families of periodic orbits of the three-dimensional
+circular restricted three body problem, for many mean motion resonant ratios; in particular, the curve labeled “4”
+in Figure 10 in Jefferys & Standish (1972) is the trace in the eccentricity–inclination plane of the periodic orbit of
+the third kind for the exterior 3:2 mean motion resonance at g = ±90◦. Our independent computation of this curve
+is the black dot-dashed curve in our Fig. 3. We observe that the red curve in our Fig. 3 (which is the locus of the
+minima of the disturbing function for the Plutinos in the averaged circular restricted six body model) resembles the
+black dot-dashed curve, but it is displaced towards lower eccentricities. With numerical experimentation, we verified
+that the displacement toward lower eccentricities arises from the orbit-averaged effects of the inner three giant planets,
+Jupiter, Saturn and Uranus.
+In our computations for the red curve, we did not find any local minima of the averaged disturbing function for
+inclinations below ∼4.36◦and eccentricities below 0.242. However, we note one exceptional case of a doubly librating
+Plutino below these values and distinctly away from the red curve in Fig. 3. This object, 2015 VR164, has time-averaged
+inclination and eccentricty of ∼0.22 degrees and ∼0.206, respectively. Because its orbit plane nearly coincides with
+the reference (invariable) plane, we suspect that its g libration is not owed to dynamics but to a kinematic effect
+related to the reference plane. We leave detailed analysis of this case to a future investigation.
+4. SUMMARY AND DISCUSSION
+We summarize our work as follows.
+1. We have shown that the g librators amongst the Plutinos cluster along an approximately hyperbolic arc in the
+time-averaged eccentricity–inclination plane (Fig. 2b).
+2. We identified this structure with a local minimum of the orbit-averaged disturbing function for Plutinos, and
+also with a family of periodic orbits of the third kind in the circular restricted six-body problem of the Sun, the
+four giant planets and a (massless) Plutino. We showed that these periodic orbits are related to the family of
+the same name in the circular restricted three body problem, as classified by Poincar´e (1892, see also Jefferys &
+Standish (1972)), but they are shifted to lower eccentricities due to the orbit-averaged effects of the additional
+three planets (Jupiter, Saturn and Uranus).
+3. We obtained an updated estimate – 16% – for the fraction of g librators amongst the Plutinos.
+Previous estimates of the fraction of g librators amongst the observed Plutinos have reported values in the range
+8%–33%, based on sample sizes of 6–85 Plutinos (Nesvorn´y et al. 2000; Petit et al. 2011; Volk et al. 2016; Balaji
+et al. 2023). Our estimate of a 16% fraction is based on a much larger sample size of 441 Plutinos, and it is generally
+consistent with the previous results. Simulations of observational survey biases suggest that the true fraction is likely
+20%–40% higher, but is difficult to ascertain for the composite of many surveys that have contributed to the current
+catalog of all known Kuiper belt objects in the Minor Planet Center’s catalog (Lawler & Gladman 2013).
+The prominent clustering of the doubly librating Plutinos in the time-averaged eccentricity–inclination plane (Fig. 2b)
+suggests a local over-density. We ask if this is illusory. To answer this question, we must remember that for the three
+spatial degrees of freedom of a Plutino, its phase space is of six dimensions, so we must ask about the relative density
+in the full phase space. One can imagine that an approximate measure of the relative density would be obtained by
+considering the phase space volume for g librations relative to the phase space volume for σ librations (Eq. 1): if the
+doubly librating Plutinos were not over- or under-populated, then their population as a fraction of all Plutinos would
+
+--- Sayfa 7 ---
+The doubly librating Plutinos
+7
+be in the proportion of the phase space volume of the g libration zone within that of the σ libration zone. There is
+not a straightforward way of estimating these relative volumes without carrying out a very large number of numerical
+experiments and N-body simulations, because the shapes of these volumes are complex and include dynamical chaos
+effects (e.g., Wiggins 1990). Such complexity exists even in the simplified models, such as the CR3BP and the CR6BP,
+that we employed in computing the two theoretical curves in Fig. 3 for the g libration centers. We proceed to make
+a rough estimate as follows. In the reduced one-degree-of-freedom pendulum model for resonances, the phase space
+volume of the libration zone is proportional to the frequency of small amplitude librations, hence inversely proportional
+to the libration period (Tremaine 2023, section 6.1). We then make the ansatz that the phase space volume for the
+g librations as a fraction of the phase space volume for the σ librations is the inverse of the ratio of their respective
+libration periods. In our simulations, we found that the libration period of σ is typically ∼20 kyr and the libration
+period of g is typically ∼4 myr, similar to those periods for Pluto itself (e.g., Malhotra & Williams 1997). Thus, if the
+phase space of the Plutinos were populated randomly and uniformly, one would expect the fraction of g librators to be
+approximately 0.005. The observed fraction is larger by a factor ∼30, indicating that the g librators are more abundant
+than might be expected from a uniform random distribution within the mean motion resonance. We emphasize that
+this estimate of the over-density should be verified more rigorously in a future study.
+There are two effects in the dynamics of Plutinos that may have contributed to populating their g libration zone
+and producing the clustering in the time-averaged eccentricity–inclination plane.
+(i) Long term dynamical stability is favored for the g librators because their perihelion occurs well away from
+the invariable plane, thereby reducing perturbations from the giant planets. Consequently, long term chaotic
+diffusion out of the mean motion resonance, which affects all Plutinos, may be more effective in reducing the
+population of the g circulators relative to the g librators. This effect has been noted in a few previous studies
+of the dynamical stability of Plutinos on gigayear timescales (e.g. Kuchner et al. 2002; Tiscareno & Malhotra
+2009).
+(ii) The ancient period of orbital migration of the giant planets may have favored capture of the g librators during
+the later stages when the migration would have slowed, enhancing capture into weaker resonances (those with
+longer libration periods). This effect has been noted in numerical simulation studies of giant planet migration
+models (e.g., Chiang & Jordan 2002; Nesvorn´y & Vokrouhlick´y 2016; Pike et al. 2017; Balaji et al. 2023).
+It is worth mention that additional clusterings may exist in the parameter space of time-averaged elements, such
+as the apparent cluster of about 40 Plutinos (g circulators, not librators) centered at e ≈0.18, i ≈6◦in Fig. 2b.
+It would be interesting to assess the statistical significance of such clusterings in the future; if real, they may be
+indicative of collisional families analogous to those found in the main asteroid belt. Indeed, the primary context in
+which time-averaged elements have long been used is in the identification of collisional families of asteroids (e.g., Milani
+et al. 2014). We emphasize that in the present work, the cluster around the hyperbolic arc in Fig. 2b is owed not to a
+collisional family but to the resonant potential function whose local minima support a family of periodic orbits of the
+third kind and the associated g librations.
+In addition, mutual gravitational perturbations and collisions with other Kuiper belt objects have undoubtedly also
+contributed to the details of the distribution of Plutinos within Neptune’s exterior 3:2 mean motion resonance. Further
+studies would help assess the relative importance of these different dynamical effects. Future work could also investigate
+whether the g librators and the g circulators have systematic differences in their physical properties (such as their sizes,
+shapes and colors), to further constrain their origins. The observed abundance of the doubly librating Plutinos may
+offer new constraints on their provenance and dynamical history and on the nature of the orbital migration history of
+the giant planets.
+
+--- Sayfa 8 ---
+8
+Malhotra and Ito
+Acknowledgments The results reported herein benefited from collaborations and/or information exchange within
+the program “Alien Earths” (supported by the National Aeronautics and Space Administration under Agreement No.
+80NSSC21K0593) for NASA’s Nexus for Exoplanet System Science (NExSS) research coordination network sponsored
+by NASA’s Science Mission Directorate. The numerical quadrature and orbit integration carried out for this study
+was largely performed at Center for Computational Astrophysics (CfCA), National Astronomical Observatory of
+Japan. The authors acknowledge the FreeBSD Project for providing a reliable, open-source operating system that
+facilitated the computational tasks and data analyses required for this research. The authors used Overleaf to provide
+a collaborative and efficient online LaTeX environment, which facilitated the preparation and formatting of this
+manuscript. This study has used NASA’s Astrophysics Data System (ADS) Bibliographic Services.
+Data availability The data behind the figures is available at: 10.5281/zenodo.14635382 https://doi.org/10.5281/
+zenodo.14635382
+REFERENCES
+Balaji, S., Zaveri, N., Hayashi, N., et al. 2023, MNRAS,
+524, 3039, doi: 10.1093/mnras/stad2026
+Bannister, M. T., Kavelaars, J. J., Petit, J.-M., et al. 2016,
+AJ, 152, 70, doi: 10.3847/0004-6256/152/3/70
+Bernstein, G. M., Trilling, D. E., Allen, R. L., et al. 2004,
+AJ, 128, 1364
+Brouwer, D., & Clemence, G. M. 1961, Methods of Celestial
+Mechanics (New York: Academic Press),
+doi: 10.1016/C2013-0-08160-1
+Chiang, E. I., & Jordan, A. B. 2002, AJ, 124, 3430,
+doi: 10.1086/344605
+Gladman, B., & Volk, K. 2021, Annual Review of
+Astronomy and Astrophysics, 59, 203,
+doi: 10.1146/annurev-astro-120920-010005
+Gomes, R. S. 2003, Icarus, 161, 404,
+doi: 10.1016/S0019-1035(02)00056-8
+Ito, T., & Malhotra, R. 2023, in LPI Contributions, Vol.
+2851, Asteroids, Comets, Meteors Conference, 2391
+Ito, T., & Ohtsuka, K. 2019, Monographs on Environment,
+Earth and Planets, 7, 1,
+doi: 10.5047/meep.2019.00701.0001
+Jefferys, W. H., & Standish, Jr., E. M. 1966, AJ, 71, 982,
+doi: 10.1086/109993
+—. 1972, AJ, 77, 394, doi: 10.1086/111300
+Kozai, Y. 1962, AJ, 67, 591, doi: 10.1086/108790
+Kozai, Y. 1985, Celestial Mechanics, 36, 47,
+doi: 10.1007/BF01241042
+Kuchner, M. J., Brown, M. E., & Holman, M. 2002, AJ,
+124, 1221, doi: 10.1086/341643
+Lan, L., & Malhotra, R. 2019, Celestial Mechanics and
+Dynamical Astronomy, 131, 39,
+doi: 10.1007/s10569-019-9917-1
+Lawler, S. M., & Gladman, B. 2013, AJ, 146, 6,
+doi: 10.1088/0004-6256/146/1/6
+Lei, H., Li, J., Huang, X., & Li, M. 2022, AJ, 164, 74,
+doi: 10.3847/1538-3881/ac7c6a
+Levison, H. F., & Duncan, M. J. 1994, Icarus, 108, 18,
+doi: 10.1006/icar.1994.1039
+Li, J., Zhou, L.-Y., & Sun, Y.-S. 2014, Monthly Notices of
+the Royal Astronomical Society, 437, 215,
+doi: 10.1093/mnras/stt1872
+Malhotra, R. 2019, Geoscience Letters, 6, 12,
+doi: 10.1186/s40562-019-0142-2
+Malhotra, R., & Williams, J. G. 1997, Pluto’s Heliocentric
+Orbit (in Pluto and Charon, Stern, S. A. and Tholen,
+D. J. (eds.), University of Arizona Press, Tucson),
+127–157
+Milani, A., Cellino, A., Kneˇzevi´c, Z., et al. 2014, Icarus,
+239, 46, doi: 10.1016/j.icarus.2014.05.039
+Morbidelli, A. 2002, Modern celestial mechanics: aspects of
+solar system dynamics (Taylor & Francis London)
+Murray, C. D., & Dermott, S. F. 1999, Solar system
+dynamics, 1st edn. (New York, New York: Cambridge
+University Press)
+Nesvorn´y, D. 2018, ARA&A, 56, 137,
+doi: 10.1146/annurev-astro-081817-052028
+Nesvorn´y, D., Roig, F., & Ferraz-Mello, S. 2000, AJ, 119,
+953, doi: 10.1086/301208
+Nesvorn´y, D., & Vokrouhlick´y, D. 2016, ApJ, 825, 94,
+doi: 10.3847/0004-637X/825/2/94
+Petit, J.-M., Kavelaars, J. J., Gladman, B. J., et al. 2011,
+AJ, 142, 131, doi: 10.1088/0004-6256/142/4/131
+Pike, R. E., Lawler, S., Brasser, R., et al. 2017, AJ, 153,
+127, doi: 10.3847/1538-3881/aa5be9
+Poincar´e, H. 1892, Les m´ethodes nouvelles de la m´ecanique
+c´eleste: Solutions p´eriodiques. Non-existence des
+int´egrales uniformes. Solutions asymptotiques. 1892,
+Vol. 1 (Gauthier-Villars et fils)
+
+--- Sayfa 9 ---
+The doubly librating Plutinos
+9
+Saillenfest, M. 2020, Celestial Mechanics and Dynamical
+Astronomy, 132, 12, doi: 10.1007/s10569-020-9954-9
+Saillenfest, M., Fouchard, M., Tommei, G., & Valsecchi,
+G. B. 2016, Celestial Mechanics and Dynamical
+Astronomy, 126, 369, doi: 10.1007/s10569-016-9700-5
+Souami, D., & Souchay, J. 2012, Astronomy and
+Astrophysics, 543, A133,
+doi: 10.1051/0004-6361/201219011
+Tiscareno, M. S., & Malhotra, R. 2009, AJ, 138, 827,
+doi: 10.1088/0004-6256/138/3/827
+Tremaine, S. 2023, Dynamics of Planetary Systems
+(Princeton University Press)
+Volk, K., & Van Laerhoven, C. 2024, Research Notes of the
+AAS, 8, 36
+Volk, K., Murray-Clay, R., Gladman, B., et al. 2016, AJ,
+152, 23, doi: 10.3847/0004-6256/152/1/23
+Wiggins, S. 1990, Physica D Nonlinear Phenomena, 44,
+471, doi: 10.1016/0167-2789(90)90159-M

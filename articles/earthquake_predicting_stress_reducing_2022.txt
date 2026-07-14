@@ -1,0 +1,645 @@
+
+--- Sayfa 1 ---
+Stochastic Chaos and Predictability in Laboratory Earthquakes
+Adriano Gualandi∗
+Istituto Nazionale di Geoﬁsica e Vulcanologia, Osservatorio Nazionale Terremoti, Rome, Italy
+Davide Faranda
+Laboratoire des Sciences du Climat et de l’Environnement, UMR 8212 CEA-CNRS-UVSQ,
+Universit´e Paris-Saclay, IPSL, 91191 Gif-sur-Yvette, France
+London Mathematical Laboratory, London, UK and
+LMD/IPSL, Ecole Normale Superieure, PSL research University, Paris, France
+Chris Marone
+La Sapienza University of Rome, Department of Earth Sciences, Rome, Italy and
+Pennsylvania State University, Geosciences, USA
+Massimo Cocco
+Istituto Nazionale di Geoﬁsica e Vulcanologia, Sezione Roma 1, Rome, Italy
+Gianmarco Mengaldo
+National University of Singapore, Department of Mechanical Engineering, College of Design and Engineering, Singapore
+(Dated: April 7, 2022)
+Laboratory earthquakes exhibit characteristics of a low-dimensional random attractor with a
+dimension similar to that of natural slow earthquakes. A model of stochastic diﬀerential equations
+based on rate- and state-dependent friction explains the laboratory observations. We study the
+transition from stable sliding to stick-slip events and ﬁnd that aperiodic behavior can be explained
+by small perturbations (< 1‰) in the stress state. Friction’s nonlinear nature ampliﬁes small scale
+perturbations, reducing the predictability of the otherwise periodic macroscopic dynamics.
+Friction is a complex nonlinear phenomenon that can
+be modeled through many degrees of freedom (dofs) [1].
+Nonetheless, laboratory studies of friction in geomaterials
+led to the discovery of phenomenological laws to describe
+the behavior of sliding surfaces with a limited number of
+dofs. Rate- and state-dependent (RS) friction is today a
+standard framework to describe friction in a wide range
+of systems [2–5]. Within such formalism, the friction (µ)
+depends on the sliding rate (v) and an internal state vari-
+able (θ) that describes memory eﬀects. Stick-slip behav-
+ior, similar to that for the seismic cycle for earthquake
+faulting, is characterized by inter-seismic periods of load
+increase followed by failure events with fast or slow un-
+loading. Repeating failure events are explained by fault
+healing and changes in frictional state θ [2, 6].
+Stick-
+slip laboratory experiments have been used extensively
+to mimic the seismic cycle, for example, via a double di-
+rect shear apparatus [7, 8]. Our goal is to see if slow and
+fast labquakes live in the same phase space, and if they
+have the same number of dofs observed for slow earth-
+quakes in nature [9]. We use data from 14 stick-slip fric-
+tion experiments conducted at diﬀerent imposed normal
+stress (σn) conditions [10]. In the experiments, two lay-
+ers of quartz powder are put under σn and then sheared
+using an acrylic piston to modulate the elastic stiﬀness
+around a value of k = 14.8 MPa/µm [7] (Fig. 1a). The
+∗adriano.gualandi@ingv.it
+applied normal stress is used as a control parameter to
+systematically traverse the critical stability condition for
+which the stiﬀness of the loading apparatus (k) is equal
+to the critical stiﬀness of the system (kc ∝
+1
+σn ) [6, 11].
+We observe both slow and fast stick-slip motion, with
+slow/fast events occurring at low/high σn values. We de-
+duce from the observations the number of dofs governing
+the system at this transition regime and set up a model
+with the appropriate number of phase space dimensions
+to match laboratory data and explain the observed range
+of labquake behaviors.
+Each experiment includes several labquake cycles. We
+use data in a 200 s time window (Fig. 1 and Tab. S1) in
+order to have a suﬃcient number of cycles to perform dy-
+namical systems analysis. We do not extend further this
+window to limit friction evolution eﬀects associated with
+shear fabric development and wear. Throughout each ex-
+periment, the loading velocity v0 and the applied normal
+stress σn are kept constant to some precision using servo-
+control. Their mean values and standard deviations are
+reported in Tab. S1. The nominal loading velocity was
+v0 = 10 µm/s for all experiments.
+Data are sampled
+every ∆t = 0.01 s.
+To infer the dimensionality of the system we use the
+scalar time series of the frictional shear stress (τf, Fig. 1b-
+c) since it is the measure with the smallest noise contri-
+bution (Tab. S2). We calculate the Lyapunov dimension
+(DKY ) via the Kaplan-Yorke conjecture [12], using the
+Lyapunov spectrum calculated with the method of [13]
+(Fig. 2a-b). We also estimate the information dimension
+arXiv:2204.02763v1  [nlin.CD]  6 Apr 2022
+
+--- Sayfa 2 ---
+2
+(a)
+(b)
+(c)
+FIG. 1. (a) Sketch of the biaxial apparatus (BRAVA) used
+for the experiments [7]. (b) Frictional shear stress time series
+(τf). The system shows stick-slip behavior at diﬀerent values
+of applied normal stress σn0. Red/green dots represent local
+max/min values of τf.
+Orange dots are the closest points
+during a slip event to the average value of the shear stress ⟨τf⟩.
+(c) Zoom of the black dashed box of panel (b). Interevent
+times are taken between the orange dots to reduce sensitivity
+to measurement noise associated with using max/min values
+and deﬁne the returning of the trajectory to a well speciﬁed
+region of the phase space (i.e., the hyperplane τf = ⟨τf⟩).
+Note that the dynamics is richer when
+k
+kc ∼1 (intermediate
+values of σn), without the presence of a single characteristic
+labquake.
+(D1) as the average instantaneous dimension, exploiting
+recent results in extreme value theory applied to dynam-
+ical systems [14, 15]. With both techniques we ﬁnd in
+most cases relatively small dimensions (< 5) (Fig. 2b),
+suggesting that a reduced order model may suﬃce to ex-
+plain the observations. Details on the two approaches are
+provided in section S1 of the Supplementary Material.
+Remarkably, similar low dimensionality was observed for
+slow slip events in nature [9], suggesting that it might be
+a common feature of frictional faulting across multiple
+spatio-temporal scales.
+We can now seek a low-dimensional model to explain
+the observations. For a spring-slider model obeying RS
+friction, the number of variables needed to explain the
+dynamics (i.e., the number of dofs) is equal to 2 plus the
+number of internal state variables. We notice that the
+dimension of the system tends to decrease with higher
+σn, i.e. we observe smaller dimension for faster ruptures
+(Fig. 2b). This observation points towards the fact that
+inertial eﬀects can be neglected for the conditions of our
+experiments. In fact, if inertial eﬀects were important, we
+would expect fast labquakes to have a higher dimension
+FIG. 2. (a) Lyapunov spectrum estimated from τf labora-
+tory data. Legend is shared with panel (c). (b) Lyapunov
+dimension (DKY ) and information dimension (D1) estimated
+from τf time series. (c) and (d): bifurcation diagrams using
+the interevent times of the previous (Tpre) and next (Tnext)
+events.
+FIG. 3. Time evolution of shear stress (τf, top row), normal
+stress (σn, middle row), and layer thickness (H, bottom row)
+for experiments b726 (ﬁrst column), b698 (second column)
+and i417 (third column). Red line in the second row shows
+cumulative sum of the de-meaned σn and clearly reveals per-
+turbations associated with labquakes. Fourth column shows
+zoom (blue dashed lines in column 3) of experiment i417. Note
+drop in σn of ∼0.3 MPa and in H of ∼2 µm.
+than slow events. We thus deem reasonable to introduce
+a radiation damping approximation, where the inertial
+term is replaced by a viscous term to represent energy
+outﬂow as seismic waves [16].
+This approximation re-
+duces the number of dofs of the system by one. For a
+non-inertial spring-slider system with RS friction and a
+single state variable it is impossible to get a bifurcation
+in the slip behavior: the phase space is 2-dimensional,
+and a closed orbit cannot split into two slipping modes
+without trajectory intersections occurring in the phase
+space. An extra variable is needed.
+In the classic spring-slider analysis, σn is assumed to be
+
+--- Sayfa 3 ---
+3
+constant, but experimental data shows otherwise (Fig. 3).
+We notice a clear variation in σn when τf drops, followed
+by a relaxation to recover the imposed target value of
+σn0. Also the layer thickness (H) varies systematically
+over the labquake cycle, showing both a relaxation after a
+shear stress drop and a clear reduction (i.e., compaction)
+with time (Fig. 3). The variations in H are a function of
+relaxation of shear-induced dilation [17], layer thinning
+[18], and the drop in σn that occurs as the servo-control
+system responds to the labquake. The exact partition
+of layer compaction between these causes is unknown.
+Thus, we account for normal stress variations and di-
+lation using the formalism of [19] for porous materials,
+where the porosity (φ) and the pore pressure (p) are in-
+troduced as variables in the dynamics and linked to σn
+via Terzaghi’s principle [20]. The only diﬀerence that we
+introduce is the possibility for the characteristic distance
+over which the porosity relaxes (Lφ) to diﬀer from the
+RS friction characteristic slip distance (L). The model is
+summarized by the following set of non-dimensional or-
+dinary diﬀerential equations (ODE) (see section S2.1 for
+its derivation):
+˙x =
+ex [(β1 −1) x (1 + λu) + y −u] + κ
+
+v0
+v∗−ex
+−˙u 1+λy
+1+λu
+1 + λu + νex
+(1a)
+˙y = κ(v0
+v∗
+−ex) −νex ˙x
+(1b)
+˙z = −ρex(β2x + z)
+(1c)
+˙u = −α −γu + ˙z
+(1d)
+The
+state
+vector
+ζ,
+i.e.
+that
+vector
+that
+fully
+characterizes
+the
+state
+of
+the
+system,
+is
+made of the non-dimensional variables [x, y, z, u]
+=
+[ln
+
+v
+v∗
+
+, τf −τ0
+aσn0 ,
+1
+λβσn0 (φ −φ0) , −1
+λ
+p
+σn0 ], where v∗is a
+reference sliding velocity, τ0 = µ0σn0 is the product of the
+reference friction coeﬃcient µ0 and the reference normal
+stress σn0, λ is equal to
+a
+µ0 with a being the RS direct
+eﬀect parameter (i.e., the instantaneous response of the
+friction coeﬃcient to a sudden step in the sliding veloc-
+ity), β is the product of the elastic component of porosity
+and the combined compressibility of the ﬂuid (air) in the
+pores and the elastic pores, and φ0 is a reference poros-
+ity. The other parameters appearing in system (1) are the
+ratio between the RS evolutionary and direct eﬀect pa-
+rameters β1 = b
+a, the non-dimensional spring stiﬀness κ,
+viscous parameter ν, dilatancy coeﬃcient β2, pore pres-
+sure in the surrounding α, diﬀusivity γ, and the ratio
+ρ =
+L
+Lφ .
+We adopt values for the frictional parameters derived
+from [7] who used the same material as for our tests.
+We adjust the values of β2, γ, ρ and ν in order to repro-
+duce the period doubling as observed in our experiments
+(Fig. 1, section S2.2 and Tab. S4).
+For the used pa-
+rameters, the solution of the ODE system does not show
+chaotic behavior, and the shear stress drops repeat pe-
+riodically with either a single characteristic labquake or
+a characteristic sequence of slow and fast labquakes in a
+row (Fig. S2). In other words, with the adopted param-
+eters the system exhibits a cyclic attractor and a limit
+cycle. We notice that a quasi-static spring-slider system
+with two RS state variables is a particular case of the
+set of ODE previously derived (see section S2.3). Such a
+system shows the typical behavior of the route to chaos
+when suﬃciently reducing the stiﬀness of the system κ
+(i.e., when increasing the reference normal stress σn0)
+[21]. The range of values for which deterministic chaos
+is observed is quite narrow (0.06840 ≲κ ≲0.06864),
+and further reducing κ leads to unstable behavior and
+divergence of the solution [21]. We ﬁnd chaotic behav-
+ior for the system of eqs. (1) for only a narrow range of
+σn0 values. The window over which such chaotic behav-
+ior is observed depends on the selected parameters. For
+the adopted parameters, such range is smaller than the
+minimum step in σn0, so we do not further investigate
+this matter here, but we do not exclude that part of the
+observed complexity may be due to this transition to de-
+terministic chaos. We note that the radiation damping
+term allows one to explore a larger range of values with
+respect to the quasi-static case, and the modiﬁcations in-
+troduced in system (1) allow us to reproduce the major
+feature of the data consisting in period doubling followed
+by a return to a single characteristic labquake cycle as
+σn0 increases (Fig. S2). To obtain these results we had
+to use a radiation damping term 35 times larger than
+what is typically adopted to simulate earthquakes. The
+classically adopted value assumes an inﬁnite fault plane
+in an elastic full space and radiation due only to out-
+going planar shear waves [16]. These assumptions may
+be false in laboratory samples of few cm, and the results
+suggest that in the laboratory a larger fraction of energy
+is dissipated with respect to this idealized condition.
+Period doubling in the τf time series was obtained by
+[10] using a boundary integral software for seismic cycle
+simulations. Such model contains many more dofs with
+respect to the simple spring-slider model that we have
+implemented, and many more than those deducible from
+the observed time series. Nonetheless, our model better
+describes the actual shape of the frictional shear stress
+time series (compare Figs. S2a and S3 with Fig. 1b), re-
+produces the bifurcation at the same normal stress val-
+ues actually imposed in the laboratory, and takes into
+account variations in normal stress (even if not perfectly,
+see Fig. S4). We thus prefer to use the low-dimensional
+model to describe the observations.
+We further notice that, diﬀerently from the ODE sim-
+ulations, the laboratory data are not exactly periodic.
+This can be seen either directly from the time series of
+τf, or from Fig. 2 where we plot for each event the time to
+the next event (Tnext) vs the time since the previous event
+(Tpre) (panel c) and the ratio
+Tpre
+Tnext as a function of σn0
+(panel d). In those plots we clearly see a spread of points
+around the values that would represent periodic cycles of
+
+--- Sayfa 4 ---
+4
+loading and failure. Another way to measure the aperiod-
+icity of the cycles is via the Coeﬃcient of Variation (CV),
+deﬁned as the ratio between the standard deviation and
+the mean of the observed interevent times. The observed
+CV are reported in Fig. S5a. Experiments close to the
+transition regime (i.e.,
+k
+kc ∼1) show high CVs, indicat-
+ing a higher complexity than experiments more distant
+from such a critical state. Nonetheless, also experiments
+with a single characteristic labquake do not have a null
+CV. We notice that τf and σn are subject to noise ﬂuc-
+tuations (Fig. 3). These ﬂuctuations can be described by
+a Wiener process WT of intensity ετf and εσn, respec-
+tively. We estimate these intensities using the standard
+deviation of the time series relative to the experiment at
+σn0 = 13.6 MPa. In particular, we use ετf = std(τf −˜τf)
+and εσn = std(σn), where ˜τf is a cubic spline approxima-
+tion used to smooth the time series and ﬁlter out the low
+frequencies. We obtain values of ετf ≃0.004 MPa and
+εσn ≃0.006 MPa. Adding only observational noise to
+the ODE simulations does not explain the observed CV
+variability (Fig. S6). Introducing such noises in terms
+of y and u leads to a set of stochastic diﬀerential equa-
+tions (SDE) with eqs. (1b) and (1d) being modiﬁed into
+(section S2.1):
+dy =
+
+κ
+v0
+v∗
+−ex
+
+−νex ˙x
+
+dT + εydWT
+(2a)
+du = [−α −γu + ˙z] dT + εudWT
+(2b)
+The simulated time series are shown in Fig. S7. Of
+course, also v and φ (i.e., x and z) may be subject to
+noise that can perturb the dynamics of the system. Con-
+trary to τf and σn, we do not directly measure them.
+Before introducing further complications, we consider the
+noises on σn and τf as the most relevant ones. To mimic
+the laboratory time series, we ﬁnally add measurement
+noise of ετf to the SDE generated τf time series (Fig. 4a).
+The Lyapunov spectrum, the system dimension, and the
+interevent times are shown in Figs. 4b-e. We ﬁnd a Lya-
+punov spectrum similar to the one derived from the data,
+DKY between 3 and 4, and both DKY and D1 decreasing
+with increasing σn0 (see Fig. 2b for comparison). Fur-
+thermore, in the bifurcation diagrams we see a spread
+similar to the one observed in the laboratory time series.
+This result suggests that the aperiodicities in the return-
+ing time of laboratory earthquakes (of any type, either
+slow or fast or mixed) could be the result of a stochastic
+noise component that enters the dynamics and gets am-
+pliﬁed due to the nonlinearities of the equations. As a
+consequence, with the current available set up, stick-slip
+cycles near the critical transition regime obtained from
+laboratory experiments can be reproducible only statis-
+tically and not deterministically, in the sense that, with
+the same rocks and conditions applied, we can expect to
+reproduce similar average interevent times and standard
+deviations, but not the same exact sequence of ruptures.
+Similar observations were made for a diﬀerent frictional
+FIG. 4.
+(a) Frictional shear stress τf simulated using the
+system of SDE with stochastic terms added to y and u, and
+addition of observational noise ετf on τf.
+Imposed σn0 to
+mimic experiments b726, b698, b728, b721 and i417. (b)-(e):
+As Fig. 2, but for SDE simulated time series with stochastic
+terms added to y and u and the addition of observational
+noise ετf to τf.
+system of labquakes [22], and this type of feedback be-
+tween the apparatus’ vibrations and the system dynamics
+has been documented for turbulent ﬂows [14]. These be-
+haviors may be a more general characteristic of nonlinear
+frictional systems.
+Our results point towards the existence of a random
+attractor (Fig. 5) to describe the seismic cycle: minimal
+variations of the order of less than 1‰ on the shear and
+normal stresses applied to the fault (intended as the ex-
+perimental frictional interface) inﬂuence the large scale
+dynamics and the recurrence time of a rupture, induc-
+ing CV of a few percent points (> 3%, Fig. S5a). The
+implications on natural faults are quite relevant.
+At
+seismogenic depths (∼10 km), variations of less than
+1‰ of the lithostatic stress would correspond to hun-
+dreds of kPa or less. Possible causes that can generate
+stress perturbations of 10-100 kPa are: other tectonic
+sources (with both static and dynamic stress variations
+[23]), magmatic intrusions in volcano-tectonic environ-
+
+--- Sayfa 5 ---
+5
+ments [24], surface atmospheric loading [25, 26], anthro-
+pogenic activity, and solid tides [27]. The laboratory ex-
+periments here considered were conducted to explore the
+transition regime
+k
+kc ∼1, which corresponds to regions of
+transition between linearly stable to unstable behavior.
+Such a transition zone might be similar to the one where
+episodic tremors are observed in nature, since we found
+that labquakes at the transition regime have dimension
+similar to the one of slow earthquakes in Cascadia [9].
+Given that kc depends on σn [6], variations εσn can in-
+ﬂuence the stability of the system, making it sensitive to
+small stress perturbations. This suggests that we should
+not treat faults as isolated systems, especially when mod-
+eling the limits of the seismogenic zone in nature.
+The lack of an appropriate deterministic description of
+all the aforementioned stress perturbations may explain
+why earthquake forecast is a diﬃcult task and statistical
+methods are used [28, 29]. Nonetheless, the addition of
+the available physical information is a fundamental as-
+pect to improve our forecasts. For example, a commonly
+used statistical distribution to describe the recurrence of
+a characteristic earthquake is the one derived from the
+study of a Brownian Relaxation Oscillator (BRO). This
+is a time and slip predictable stick-slip system subject to
+a stochastic perturbation of its “load state”. The distri-
+bution that describes the expected waiting time of the
+next event, given the (physical) knowledge of the cur-
+rent “load state” of the system, is the so-called Brownian
+Passage Time (BPT) distribution [30]. Our results rely-
+ing on laboratory experiments may explain why a mix of
+physical knowledge and statistical methods like those ob-
+tained with a BPT model are often used for earthquakes
+forecast [31]. Compared to the BRO, here we have in-
+troduced the stochastic perturbations under a more rig-
+orous physical description of friction, i.e. under the RS
+framework using two length-scale parameters.
+Despite
+a low average dimension of the attractor, the maximum
+instantaneous dimension deduced from the data ranges
+from ∼12 (for experiment b727, σn0 = 24.017 MPa) to
+∼47 (for experiment b695, σn0 = 17.909 MPa). This
+suggests that extra dofs are needed to fully characterize
+the dynamics in some regions of the phase space. Supply-
+ing a stochastic term to the dynamics is an admittance
+of our ignorance on how to monitor and describe these
+extra dofs [32]. The maximum instantaneous dimension
+increases from ∼2 to ∼38 when perturbing the dynam-
+ics with a stochastic term, and it goes up to ∼83 when
+introducing also observational noise. The model we pro-
+pose is one of the possible candidates and it is based on
+the modelling of small scale ﬂuctuations via stochastic
+terms. This choice is not unique and deterministic de-
+scriptions could hold as well. Whether solids or ﬂuids
+should be phenomenologically modelled via stochastic or
+deterministic equations is still an open problem [33, 34]
+which aﬀects, for example, the quality of weather fore-
+casts and climate predictions [35]. Furthermore, another
+limitation may come from the fact that instabilities are
+introduced by inertial eﬀects, that certainly play a signif-
+icant role for natural earthquakes. Despite these limita-
+tions, the proposed description constitutes a step forward
+towards a model that can explain major features of the
+laboratory shear stress time series and reconcile the num-
+ber of dofs that can be deduced from the observations.
+Furthermore, this model can explain ﬂuctuations of the
+labquakes stress drop caused by the inclusion of stochas-
+tic perturbations to the dynamics, thus contributing to
+the debate on stress drop scaling with earthquake size
+[36]. Thanks to the ODE and SDE models, we can esti-
+mate the eﬀect of the stochastic term to the predictability
+of the dynamics. We calculate the Lyapunov time (tLyap)
+using the maximum Lyapunov exponent of the spectrum
+obtained from clean time series, i.e. without additional
+observational noise (Figs. S5b-c). The limited tLyap for
+ODE models is due to the ﬁnite ∆t. For SDE models
+tLyap < 1 s. While there exist model-free techniques ca-
+pable of predicting the behavior of chaotic systems up to
+8tLyap into the future [37], as future steps we envision the
+application of data assimilation approaches that can use
+the model here presented to advance the state of the sys-
+tem. Similar to weather forecast, we think that ensemble
+forecast is the most reasonable way to assess the future
+state of the system because of the unavoidable stochastic
+terms that aﬀect the dynamics. We do not exclude that
+this model may also be used to improve laboratory earth-
+quakes forecast with machine learning approaches, gen-
+erating at will synthetic data that resembles the major
+characteristics of the observed time series and reducing
+the shortcoming of limited training datasets.
+ACKNOWLEDGMENTS
+We thank Carolina Giorgetti, Luca Dal Zilio, Giacomo
+Pozzi, Lauro Chiaraluce and Marco Maria Scuderi for
+insightful discussions.
+[1] M. Urbakh, J. Klafter, and J. Gourdon, D. Israelachvili,
+The nonlinear nature of friction, Nature 430, 525–528
+(2004).
+[2] J. Dieterich, Modeling of rock friction, 1, experimental
+results and constitutive equations, J. Geophys. Res. 8,
+2161 (1979).
+[3] T. Baumberger and C. Caroli, Solid friction from
+stick–slip down to pinning and aging, Advances in
+Physics 55, 279 (2006).
+[4] Q. Li, T. Tullis, D. Goldsby, and R. Carpick, Frictional
+ageing from interfacial bonding and the origins of rate
+and state friction, Nature 480, 233 (2011).
+
+--- Sayfa 6 ---
+6
+FIG. 5. Phase space subregion xyu of the ODE (top) and SDE (bottom) simulations for the experiments b726, b698, b728,
+b721 and i417.
+[5] C. Scholz, The Mechanics of Earthquakes and Faulting,
+3rd ed. (Cambridge University Press, 2019).
+[6] J. Rice and L. Ruina, Stability of steady frictional slip-
+ping, J. Appl. Mech. 50, 343 (1983).
+[7] E. Tinti, M. Scuderi, L. Scognamiglio, G. Di Stefano,
+C. Marone, and C. Collettini, On the evolution of elastic
+properties during laboratory stick-slip experiments span-
+ning the transition from slow slip to dynamic rupture, J.
+Geophys. Res. Solid Earth 121, 8569 (2016).
+[8] J. Leeman, C. Marone, and D. Saﬀer, Frictional mechan-
+ics of slow earthquakes, J. of Geophys. Res. 123 (2018).
+[9] A. Gualandi, J.-P. Avouac, S. Michel, and D. Faranda,
+The predictable chaos of slow earthquakes, Sci. Adv. 6
+(2020).
+[10] D. Mele Veedu, C. Giorgetti, M. Scuderi, S. Barbot,
+C. Marone, and C. Collettini, Bifurcations at the stability
+transition of earthquake faulting, Geophysical Research
+Letters 47 (2020).
+[11] J.-C. Gu, J. Rice, A. Ruina, and S. Tse, Slip motion and
+stability of a single degree of freedom elastic system with
+rate and state dependent friction, J. Mech. Phys. Solids
+32, 167 (1984).
+[12] J. Kaplan and J. Yorke, Chaotic behavior of multidimen-
+sional diﬀerence equations, peitgen, h. o.; walther, h. o.
+ed., Functional Diﬀerential Equations and the Approx-
+imation of Fixed Points. Lecture Notes in Mathematics
+(Springer, p. 204–227, 1979).
+[13] M. Sano and Y. Sawada, Measurement of the lyapunov
+spectrum from a chaotic time series, Physical Review Let-
+ters 55, 1082 (1985).
+[14] D. Faranda,
+Y. Sato,
+B. Saint-Michel,
+C. Wiertel,
+V. Padilla, B. Dubrulle, and F. Daviaud, Stochastic chaos
+in a turbulent swirling ﬂow, Physical Review Letters 119
+(2017).
+[15] D. Faranda, G. Messori, and P. Yiou, Dynamical proxies
+of north atlantic predictability and extremes, Scientiﬁc
+Reports 7 (2017).
+[16] J. Rice, Spatio-temporal complexity of slip on a fault, J.
+of Geophys. Res. 98, 9885 (1993).
+[17] C. Marone, C. Raleigh, and C. Scholz, Frictional behavior
+and constitutive modeling of simulated fault gouge, J. of
+Geophys. Res. Solid Earth 95, 7007 (1990).
+[18] D. Scott, C. Marone, and C. Sammis, The apparent fric-
+tion of granular fault gouge in sheared layers, J. of Geoph.
+Res. 99, 7231 (1994).
+[19] P. Segall and J. Rice, Dilatancy, compaction, and slip in-
+stability of a ﬂuid-inﬁltrated fault, Journal of Geophysi-
+cal Research 100, 22155 (1995).
+[20] K. Terzaghi, Erdbaumechanik auf bodenphysikalischer
+grundlage (Wien: F. Deuticke, 1925).
+[21] T. Becker, Deterministic Chaos in two State-variable
+Friction Sliders and the Eﬀects of Elastic Interactions,
+Geocomplexitiy and the Physics of Earthquakes, Geo-
+physical Monograph 120 (AGU, 2000).
+[22] S. Karner and C. Marone, Eﬀects of Loading Rate and
+Normal Stress on Stress Drop and Stick-slip Recurrence
+Interval, Geocomplexitiy and the Physics of Earthquakes,
+Geophysical Monograph 120 (AGU, 2000).
+[23] A. Freed, Earthquake triggering by static, dynamic, and
+postseismic stress transfer, Annual Review of Earth and
+Planetary Sciences 33, 335 (2005).
+[24] K. Chen, J. Smith, J. Avouac, Z. Liu, Y. Song, and
+A. Gualandi, Triggering of the mw 7.2 hawaii earthquake
+of 4 may 2018 by a dike intrusion, Geophysical Research
+Letters 46, 2503 (2019).
+[25] N. D’Agostino, F. Silverii, O. Amoroso, V. Convertito,
+F. Fiorillo, G. Ventafridda, and A. Zollo, Crustal defor-
+mation andseismicity modulated by groundwaterrecharge
+of karst aquifers, J. Geophys. Res. Solid Earth 45, 12253
+(2018).
+[26] F. Pintori, E. Serpelloni, L. Longuevergne, A. Garcia,
+L. Faenza, L. D’Alberto, A. Gualandi, and M. Belar-
+dinelli, Mechanical response of shallow crust to ground-
+water storage variations:
+Inferences from deformation
+and seismic observations in the eastern southern alps,
+italy, J. Geophys. Res. Solid Earth 126 (2021).
+[27] J. Rubinstein, M. La Rocca, J. Vidale, K. Creager, and
+A. Wech, Tidal modulation of nonvolcanic tremor, Sci-
+ence 319, 186 (2008).
+[28] I. Main, Statistical physics, seismogenesis, and seismic
+hazard, Reviews of Geophysics 34, 433 (1996).
+
+--- Sayfa 7 ---
+7
+[29] I. Main, Earthquake prediction:
+Concluding remarks,
+Nature (1999).
+[30] M. Matthews, W. Ellsworth, and P. Reasenberg, A brow-
+nian model for recurrent earthquakes, Bulletin of the
+Seismological Society of America 92, 2233 (2002).
+[31] O. Y., Statistics of earthquake activity:
+Models and
+methods for earthquake predictability studies, Annu.
+Rev. Earth Planet. Sci. 45, 497 (2017).
+[32] D. Vere-Jones, Y. Ben-Zion, and R. Z´u˜niga, Statistical
+seismology, Pure appl. geophys. 162, 1023 (2005).
+[33] S. Nath, A. Raj, K. Thingbaijam, and A. Kumar, Ground
+motion synthesis and seismic scenario in guwahati city—a
+stochastic approach, Seismological Research Letters 80,
+233 (2009).
+[34] A. Cruzeiro, Stochastic approaches to deterministic ﬂuid
+dynamics: A selective review, Water 12, 864 (2020).
+[35] T. Palmer, Stochastic weather and climate models, Na-
+ture Reviews Physics 1, 463 (2019).
+[36] M. Cocco, E. Tinti, and A. Cirella, On the scale depen-
+dence of earthquake stress drop, Journal of Seismology
+20 (2016).
+[37] J. Pathak, B. Hunt, M. Girvan, Z. Lu, and E. Ott, Model-
+free prediction of large spatiotemporally chaotic systems
+from data: A reservoir computing approach, Physical Re-
+view Letters 120 (2018).

@@ -1,0 +1,610 @@
+
+--- Sayfa 1 ---
+Vol.:(0123456789)
+Natural Hazards (2025) 121:14531–14544
+https://doi.org/10.1007/s11069-025-07373-2
+ORIGINAL PAPER
+Multi‑class classification automated machine learning 
+for predicting earthquakes using global geomagnetic field 
+data
+Kasyful Qaedi1   · Mardina Abdullah1,2 · Khairul Adib Yusof1,3 · Masashi Hayakawa4,5 · 
+Nur Fatin Irdina Zulhamidi1
+Received: 8 February 2024 / Accepted: 8 May 2025 / Published online: 12 June 2025 
+© The Author(s) 2025
+Abstract
+The challenging task of earthquake (EQ) prediction has recently gained significant atten-
+tion, particularly with machine learning techniques. Geomagnetic field analysis has yielded 
+promising results in identifying EQ precursors. However, the complexity of the data has 
+made it difficult to create an accurate model for EQ prediction using this method. This 
+study presents an automated machine learning (AutoML) approach capable of handling the 
+complexity of geomagnetic data and selecting the most suitable model. A dataset contain-
+ing 50 years of geomagnetic field data was collected, of which the measurements were 
+taken in close proximity to M5.0+ EQs. The study demonstrated that sampling techniques 
+can overcome the problem of an imbalanced dataset from EQ events. Through statistical 
+analysis, important features were extracted and a multi-class classification model using 
+geomagnetic data was created. The extracted features were the input for AutoML, an auto-
+matic algorithm selection that was measured by Bayesian Optimization algorithm to select 
+the best performance model. The results indicate that the neural network model outper-
+formed eight other classifiers, achieved an accuracy of 81.19%, F1-score of 80.51%, and 
+a Matthews Correlation Coefficient (MCC) of 77.49%. It is concluded that the neural net-
+work multi-class classification model is capable of providing solutions to the challenges 
+faced when using geomagnetic data for EQ prediction.
+Keywords  Earthquake prediction · Automated machine learning · Geomagnetic field · 
+Neural network
+1  Introduction
+Earthquake (EQ) prediction is a critical task that has been the focus of much research in 
+recent years. The analysis of geomagnetic field data has emerged as a promising method 
+in the study of EQ precursors. Studies have shown that changes in the geomagnetic field 
+Mardina Abdullah, Khairul Adib Yusof, Masashi Hayakawa and Nur Fatin Irdina Zulhamidi are 
+contributed equally to this work.
+Extended author information available on the last page of the article
+
+--- Sayfa 2 ---
+14532
+	
+Natural Hazards (2025) 121:14531–14544
+can occur prior to an EQ (Yusof et al. 2021). These changes can be considered precursors 
+to EQs, which could emerge as a result of changes in Earth’s crust and rock stress before 
+an EQ. A finding by (Han et al. 2020) through a stochastic test showed that pre-EQ geo-
+magnetic anomalies are not random, suggesting that magnetic data may potentially have 
+relevant precursory information.
+However, the relationship between geomagnetic field data and EQs has not been fully 
+understood and developing accurate models for EQ prediction using geomagnetic data 
+remains a challenging task. This is due to the complexity of geomagnetic data, which can 
+contain non-linear patterns and relationships that are difficult to capture using mathemati-
+cal, computational, geological and even traditional machine learning methods (Balasis 
+et al. 2016). Furthermore, unsupervised machine learning has the capability to swiftly ana-
+lyze seismicity catalogues, and the technique can make more thorough representations of 
+seismic activity visible, allowing hidden patterns (to be detected) and seismic events to be 
+more accurately forecast (Beroza et al. 2021). Deep learning techniques enhance under-
+standing of the temporal and spatial evolution of EQ sequences that can efficiently repro-
+cess complex EQ data. These algorithms can efficiently and accurately spot intricate and 
+subtle patterns in seismic activity, aiding the understanding of the physics underpinning 
+EQs (Cianetti et  al. 2021). Deep learning approaches show great promise for identify-
+ing additional low-frequency EQ sources which could improve our understanding of EQs 
+(Thomas et al. 2021).
+Automated machine learning (AutoML) is a framework that automates several machine 
+learning tasks including model training and hyperparameter tuning. It can perform data 
+exploration and preprocessing, feature extraction and selection, model selection, and 
+hyperparameter tuning automatically (Feurer et al. 2015). It can also handle large volumes 
+of complex geomagnetic data and can find the best model among various machine learning 
+algorithms. AutoML has been found to improve the performance of models and reduce the 
+time required to develop them (Hutter et al. 2019). A number of studies have used various 
+conventional machine learning algorithms such as support vector machines (SVMs) (Akyol 
+et al. 2020), ensemble (Asim et al. 2018), and deep learning algorithms such as artificial 
+neural networks (ANNs) to predict EQs (Adeli and Panakkat 2009; DeVries et al. 2018).
+Being able to predict the magnitude of impending EQs is imperative (Ku et al. 2021); 
+therefore, a multi-class classification approach was adopted in this study. However, imbal-
+anced data across classes is a common problem in machine learning, where in this study, 
+the majority of the data corresponds to non-EQ events and low magnitude events (Chelidze 
+et al. 2022). This data imbalance can lead to model performance issues because machine 
+learning algorithms may be biased toward the majority class (moderate and strong EQs) 
+and not perform well on the minority class (great EQ). Imbalanced data can have a sig-
+nificant impact on the accuracy of machine learning algorithms and for this reason, proper 
+techniques are necessary for addressing the problem (He and Garcia 2009). Resampling 
+techniques such as Random Undersampling, Synthetic Minority Oversampling Technique, 
+and ratio sampling have been proposed to mitigate this issue (Chawla et al. 2002).These 
+methods aim to balance the distribution of the data between the different classes, reducing 
+the bias toward the majority class.
+In this study, the model was trained on a large geomagnetic field dataset and a com-
+bination of feature extraction with multi-class classification through AutoML techniques 
+to predict EQs. The performance of the model was then evaluated using a combination 
+of suitable classification metrics to understand non-linear and imbalanced EQ events. Per-
+formance metrics such as precision, recall, F1-Score and Matthew Correlation Coefficient 
+(MCC) were then used to evaluate the model’s performance.
+
+--- Sayfa 3 ---
+14533
+Natural Hazards (2025) 121:14531–14544	
+In summary, this research aimed to contribute to the field of EQ prediction by develop-
+ing a multi-class classification AutoML model that can accurately predict EQs using geo-
+magnetic field data so that better understanding of the relationship between geomagnetic 
+field data and EQs could be attained. The study sought to explore the challenges associated 
+with using geomagnetic data for EQ prediction and propose solutions to overcome these 
+challenges.
+2  Data and methodology
+In this study, geomagnetic data and EQ events that occurred between 1970 to 2020 were 
+used, covering a wide range of global EQ events of different magnitudes that were classi-
+fied into different classes. A vast dataset of 1-minute geomagnetic data was obtained from 
+the SuperMAG database (www.​super​mag.​jhuapl.​edu) which collects and consolidates 
+geomagnetic data from a network of 130 magnetometers stationed throughout the world. 
+The geomagnetic data were then collated with the EQ data which were obtained from the 
+United States Geological Survey (USGS) (www.​earth​quake.​usgs.​gov).
+A series of data processing procedures were applied to the EQ and the geomagnetic 
+field datasets. These procedures were applied to filter and decluster both datasets, preparing 
+them for further analysis and for developing the AutoML model. In order to obtain accu-
+rate findings for studies involving Earth’s magnetic field, data filtering is performed based 
+on global geomagnetic indices, such as the Ap and Dst indices. The Ap index measures 
+Earth’s magnetic field strength; values below 27 indicate quiet conditions. The Dst index 
+measures the ring current strength, using a cutoff of − 30 to exclude severe disturbances. 
+Both Ap and Dst thresholds are effective in filtering out days with disturbed magnetic field 
+conditions, providing a reliable dataset for further analysis (Xu et al. 2013). A comprehen-
+sive study database was established using the geomagnetic field data measurements and 
+the EQ magnitude which were defined to meet specific criteria. The criteria required that 
+the hypocentral location (the location where the EQ originated) should not be more than 
+200 km in depth, and the magnitude should not be lower than M5.0 (Hayakawa 2015). In 
+this study, only recorded occurrences of mainshock EQs were considered together with 
+geomagnetic field data that fell within a seven day window prior to the EQ event up to 
+seven days after the actual time of the EQ event.
+Statistical features help to capture important patterns and trends in the data that might 
+not be apparent from the raw features and this helps to improve the performance of 
+machine learning algorithms by providing additional information about the structure of the 
+data (Cawley and Talbot 2010). In this study, the statistical approach successfully gener-
+ated 120 features from the raw geomagnetic data that were calculated based on various 
+parameters including mean, median, minimum, maximum, variance, standard deviation, 
+kurtosis, and sum outliers. In this study, EQ events were categorized into multiple intensity 
+classes to enable multi-class classification modeling.The full statistical details are provided 
+in Supplementary Material 1. The classification scheme was derived from the Modified 
+Mercalli Intensity (MMI) scale and mapped according to EQ magnitude ranges. Specifi-
+cally, events were grouped as follows: class VI (M5.0−5.5), class VII (M5.5−6.0), class 
+VIII (M6.0−6.5), class IX (M6.5−7.0), class X (M7.0−7.5), class XI (M7.5−8.0), and class 
+XII (greater than M8.0). This refined classification approach allows for more granular dis-
+crimination of EQ intensity and provides a suitable framework for multi-class classification 
+using machine learning techniques (Wood and Neumann 1931).
+
+--- Sayfa 4 ---
+14534
+	
+Natural Hazards (2025) 121:14531–14544
+Random Undersampling, Synthetic Minority Oversampling Technique (SMOTE) and 
+ratio sampling were subsequently applied to balance the data distribution between the dif-
+ferent classes. Next, data were balanced proportionally to each earthquake magnitude class. 
+SMOTE is a method of oversampling the minority class (Major and Great EQ events) by 
+creating synthetic examples where the difference between the selected example and each 
+of its k-nearest neighbors are taken and multiplied by a random number between 0 and 1.
+T-Distributed Stochastic Neighbor Embedding (t-SNE) was used to identify feature 
+level patterns and interrelationships within the dataset. t-SNE can help identify clusters 
+or groups of data points that are similar to each other identifying patterns and trends in 
+the data, and providing better understanding the underlying structure of the data (van der 
+Maaten and Hinton 2008).
+Results of data visualization from t-SNE presented in as shown in Fig. 1 show that the 
+data distribution is skewed toward the majority class, with the minority class being under-
+represented. This can be observed in the t-SNE plot in Fig. 2, where the data were evenly 
+distributed. SMOTE and Random Undersampling can help improve the performance of 
+machine learning models by ensuring that the data distribution is more balanced. This can 
+be observed in the t-SNE plot, where the minority class is no longer underrepresented and 
+is now better separated from the majority class. It could be observed that the distribution 
+of data points within each class will also be more even, allowing for easier identification 
+of patterns and relationships within each class. When the data distribution is balanced, it 
+means that the number of instances in each class is roughly equal and not heavily skewed 
+toward one class.
+The balanced dataset was trained using AutoML that included automatic training and 
+tuning within a specific set of parameters. The data were split into 70% training and 30% 
+test sets to run the AutoML model. The model was trained using a combination of various 
+machine learning algorithms such as discriminant analysis, ensemble, kernel classification, 
+k-nearest neighbor, linear classification, naive bayes, neural network classifier, support vec-
+tor machine classifier, and binary decision tree classification that functioned as the Learner. 
+Fig. 1   Data distribution from t-SNE for the Raw dataset that shows biased distribution for majority class. 
+All geomagnetic measurements are expressed in nanotesla (nT)
+
+--- Sayfa 5 ---
+14535
+Natural Hazards (2025) 121:14531–14544	
+The best performing model was selected based on its performance on the training data by 
+Bayesian optimization. Bayesian optimization balances exploration and exploitation of the 
+model space, allowing for efficient and effective optimization of hyperparameters, which 
+are the parameters that control the learning process of a model using a combination of grid 
+search and random search. Bayesian optimization uses a probabilistic model of the under-
+lying function to guide the search for the optimum set of hyperparameters. The model is 
+updated after each iteration, allowing for an informed decision about the next set of hyper-
+parameters to evaluate. The iterations were optimized from 5-fold cross validation, where a 
+total of 850 iterations were used for the raw and sample dataset. Cross validation is a com-
+mon technique used to assess the performance of machine learning models. In k-fold cross-
+validation, the dataset is divided into k subsets, or "folds". The model is trained on k-1 of 
+these folds, and the remaining fold is used for testing. This process is repeated k times, 
+with each fold being used for testing exactly once. One way to use cross validation to deter-
+mine the number of iterations in a machine learning model is to perform cross validation 
+with different numbers of iterations and choose the number that gives the best performance 
+on the validation data (Yadav and Shukla 2016).
+The results of the model were evaluated using a combination of suitable classification 
+metrics that could account for the non linear and imbalanced data. Standard performance 
+metrics accuracy precision, recall and F1-Score were used. The following are the multi-
+class classification metrics in which class 1 (moderate EQs) is taken as an example:
+(1)
+Accuracy =
+∑N
+i=1 TPi
+Total number of samples
+(2)
+Recalli =
+TPi
+TPi + FNi
+Fig. 2   Data distribution from t-SNE for the Sample dataset that shows balanced distribution for all classes. 
+All geomagnetic measurements are expressed in nanotesla (nT)
+
+--- Sayfa 6 ---
+14536
+	
+Natural Hazards (2025) 121:14531–14544
+where TP = True Positive, TN = True Negative, FP = False Positive and FN = False 
+Negative.
+F1-score is the harmonic mean of precision and recall, which can effectively capture the 
+performance of a classifier when the classes are imbalanced. The best performance metric 
+to evaluate imbalanced dataset is MCC. MCC evaluation considers the true and false posi-
+tive and negative predictions. It ranges from − 1 to 1, with a value of 1 indicating perfect 
+prediction and a value of − 1 indicating completely incorrect prediction.
+Given a confusion matrix C ∈ℕK×K , define:
+Then, the multi-class MCC is given by:
+•	 Ci,j : number of instances with true class i and predicted class j
+•	 pk = ∑K
+j=1 Ck,j : total actual instances of class k
+•	 tk = ∑K
+i=1 Ci,k : total predicted instances of class k
+•	 c = ∑K
+k=1 Ck,k : total correctly predicted instances
+•	 s = ∑K
+i=1
+∑K
+j=1 Ci,j : total number of samples
+3  Results and discussion
+The results of the study showed that the Sample (shuffled) model achieved the best per-
+formance in terms of accuracy, precision, recall, F1-score, and MCC, making it the most 
+effective model for EQ prediction. The Raw model was trained using the original imbal-
+anced raw dataset and the Sample model was trained using a balanced sample dataset cre-
+ated through synthetic sampling. The Sample (shuffled) model demonstrated significant 
+improvement in predicting higher intensity EQ classes due to the application of data bal-
+ancing techniques using synthetic sampling.
+Bayesian optimization was applied to identify the best performing algorithm for each 
+dataset. This method optimizes the objective function by iteratively updating probabilities 
+to find optimal parameters. The Sample (shuffled) model identified a neural network as 
+the best learner through Bayesian optimization. The neural network achieved optimal per-
+formance using the ReLU activation function, no standardization, a regularization param-
+eter 휆= 8.0973 × 10−5 , and a two layer architecture with hidden layer sizes of 279 and 63. 
+The Raw (shuffled) model, Bayesian optimization selected an ensemble learner (Bagging 
+(3)
+Speciﬁcityi =
+TNi
+TNi + FPi
+(4)
+Precisioni =
+TPi
+TPi + FPi
+(5)
+Fi = 2 ⋅Precisioni ⋅Recalli
+Precisioni + Recalli
+(6)
+MCC =
+c ⋅s −∑K
+k=1 pk ⋅tk
+
+(s2 −∑K
+k=1 p2
+k) ⋅(s2 −∑K
+k=1 t2
+k)
+
+--- Sayfa 7 ---
+14537
+Natural Hazards (2025) 121:14531–14544	
+method) as the best performing algorithm, with 45 learning cycles and minimum leaf size 
+of 30 as shown in Table 1.
+The neural network model trained on the Sample (balanced) dataset demonstrated 
+strong capability in learning complex patterns and generalizing to unseen earthquake 
+events. Its use of the ReLU activation function enhanced computational efficiency and 
+supported faster convergence during training. Moreover, the standardized lambda regu-
+larization parameter contributed to mitigating overfitting by reducing sensitivity to the 
+scale of input features and stabilizing the optimization process (Srivastava et al. 2014). 
+Hyperparameters, including layer size, activation function, and regularization strength, 
+were optimally selected using Bayesian optimization. This enabled the network to achieve 
+high predictive accuracy for multi-class earthquake intensity classification based on Mer-
+calli scale labels. In contrast, the ensemble model optimized through Bagging exhibited 
+superior performance on the Raw (imbalanced) dataset. Bagging improved robustness by 
+aggregating predictions from multiple decision trees trained on different bootstrapped data 
+subsets, effectively reducing individual classifier biases. This approach proved particularly 
+beneficial under class imbalance, where the ensemble model generalized better than indi-
+vidual learners. Accordingly, while the neural network outperformed the ensemble method 
+on the balanced dataset due to its capacity for capturing non linear relationships in evenly 
+distributed data, the ensemble approach was more effective in handling skewed class dis-
+tributions. These results underscore the importance of aligning model selection with data 
+characteristics and highlight the utility of automated hyperparameter tuning for optimizing 
+earthquake prediction performance.
+The Sample (shuffled) model demonstrated the most reliable performance based on met-
+rics and validation loss as shown in Fig. 3. The confusion matrix demonstrated that the 
+Sample (shuffled) model was able to predict EQ events across all intensity classes, from 
+moderate to great EQs, with minimal bias toward any specific class. In contrast, the Raw 
+(shuffled) model, as shown in Fig. 4, exhibited strong bias toward the majority class (VI), 
+and failed to predict higher intensity events (classes IX to XII), resulting in sparse or zero 
+predictions for those categories.
+The confusion matrices revealed that the Sample (shuffled) model achieved broader 
+coverage and superior generalization across all seismic intensity classes compared to the 
+Raw (shuffled) model. This improvement is attributed to the balanced dataset obtained via 
+synthetic resampling, which enhanced predictive performance, particularly for underrepre-
+sented high magnitude earthquake classes.
+Although the Raw (shuffled) model reached an overall accuracy of 69.47%, it did so 
+by disproportionately predicting the dominant class. This resulted in zero F1-score and 
+MCC due to a complete lack of true positive predictions in minority classes-rendering 
+the model ineffective for practical multi-class earthquake classification. In contrast, the 
+Table 1   Comparison of best observed hyperparameters (shuffled data)
+Parameters
+Sample (shuffled)
+Raw (shuffled)
+Best observed model
+Neural network
+Ensemble
+Iterations
+850
+850
+ML hyperparameters
+Activations: ReLU
+Standardize: false
+Lambda: 8.0973 × 10−5
+Layer sizes: [279 63]
+Method: Bag
+NumLearningCycles: 45
+MinLeafSize: 30
+
+--- Sayfa 8 ---
+14538
+	
+Natural Hazards (2025) 121:14531–14544
+Sample (shuffled) model achieved a higher accuracy of 81.19%, along with balanced 
+recall (81.19%), high specificity (96.87%), a robust F1-score (80.51%), and a strong MCC 
+(77.49%). These metrics indicate that the classifier trained on the balanced dataset more 
+effectively captured complex, non linear patterns in earthquake occurrence and intensity, 
+offering greater utility for seismic risk assessment. This indicates that the model overly 
+predicted common events while missing rare, critical events
+MCC was especially informative in highlighting the differences between models. While 
+the Raw (shuffled) model showed a zero MCC due to the absence of minority class detec-
+tions, the Sample model achieved a valid MCC of 77.49%, reflecting its ability to balance 
+both false and true classifications. MCC includes all aspects of the confusion matrix, mak-
+ing it ideal for imbalanced classification..
+The F1-score further confirmed model effectiveness. The Raw model’s zero F1-score 
+emphasized its failure to predict minority classes, despite its superficially high accuracy. 
+Conversely, the Sample model’s F1-score of 80.51% demonstrated a favorable balance 
+between precision and recall. These findings collectively affirm that the Sample (shuffled) 
+model provided significantly more reliable predictions in the context of imbalanced, multi-
+class earthquake classification.
+To further assess model robustness under realistic deployment conditions, a non-shuf-
+fled data partitioning strategy was employed to preserve the temporal sequence of EQ 
+events as shown in Table  3. The model trained on the raw (imbalanced) dataset main-
+tained relatively stable performance between shuffled and non-shuffled settings, suggesting 
+Fig. 3   Confusion matrix for the Sample (shuffled) model trained on the balanced dataset
+
+--- Sayfa 9 ---
+14539
+Natural Hazards (2025) 121:14531–14544	
+Fig. 4   Confusion matrix for the Raw (shuffled) model trained on the unbalanced dataset
+Table 2   Performance comparison 
+of ML models trained on Sample 
+and Raw datasets under shuffled 
+and non-shuffled partitioning
+“0” indicates undefined values due to invalid true positive/negative 
+cases
+Metric
+Sample
+(shuffled)
+Raw
+(shuffled)
+Sample
+(non-shuffled)
+Raw
+(non-shuffled)
+Accuracy (%)
+81.19
+69.47
+4.76
+70.51
+Recall (%)
+81.19
+14.61
+0
+0
+Specificity (%)
+96.87
+85.80
+86.38
+85.70
+Precision (%)
+80.09
+0
+0
+0
+F1-score (%)
+80.51
+0
+0
+0
+MCC (%)
+77.49
+0
+0
+0
+Table 3   Comparison of best observed hyperparameters (non-shuffled data)
+Parameters
+Sample (non-shuffled)
+Raw (non-shuffled)
+Best observed model
+KNN
+Ensemble
+Iterations
+850
+850
+ML hyperparameters
+NumNeighbors: 1
+Distance: correlation
+Method: Bag
+NumLearningCycles: 147
+MinLeafSize: 19
+
+--- Sayfa 10 ---
+14540
+	
+Natural Hazards (2025) 121:14531–14544
+moderate resilience to temporal drift. In contrast, the model trained on the SMOTE-bal-
+anced Sample dataset exhibited severe performance degradation when temporal ordering 
+was preserved-accuracy dropped to 4.76%, with all key metrics (recall, precision, F1-score, 
+and MCC) falling to zero as shown in Table 2. This indicates a complete failure to identify 
+valid events.
+These findings imply that synthetic samples generated through SMOTE, while effective 
+at addressing class imbalance, may disrupt the intrinsic temporal patterns in geomagnetic 
+field data as shown in Fig. 5. The model struggled to generalize to temporally ordered test 
+data when synthetic data lacked realistic temporal dynamics. The Raw model under non-
+shuffled conditions retained 70.51% accuracy but failed to detect rare classes, as reflected 
+by zero recall and MCC, as shown in Fig. 6. This emphasizes that models trained and vali-
+dated on randomly shuffled data may appear robust but often collapse under realistic time-
+ordered evaluation. Therefore, EQ prediction models must ensure not only balanced data-
+sets but also temporal integrity to achieve reliable forecasting performance.
+The improved performance of the Sample model, particularly in predicting higher inten-
+sity EQ classes, may reflect the underlying physical processes associated with large seis-
+mic events. Prior studies have proposed that EQ preparation phases can generate observ-
+able anomalies in the geomagnetic field due to mechanisms such as piezomagnetic effects, 
+stress induced rock magnetization changes, and electromagnetic emissions from micro 
+fracturing in the crust. Although this study does not isolate individual geophysical mecha-
+nisms, the classification results align with theoretical expectations that large EQs produce 
+Fig. 5   Confusion matrix for the Sample (non-shuffled) model trained on the balanced dataset
+
+--- Sayfa 11 ---
+14541
+Natural Hazards (2025) 121:14531–14544	
+more detectable geomagnetic disturbances. This supports the potential of geomagnetic 
+data, when properly balanced and feature engineered, to contribute meaningfully on EQ 
+forecasting efforts.
+4  Conclusion
+In conclusion, class balancing through SMOTE and Random Undersampling significantly 
+improved the performance of a multi-class classification model for EQ intensity predic-
+tion using geomagnetic field data. The AutoML framework, optimized through Bayesian 
+Optimization (BO), consistently selected a neural network model for the balanced (Sam-
+ple) dataset, achieving 81.19% accuracy, 80.51% F1-score, and 77.49% MCC. In contrast, 
+the Raw (shuffled) model trained on imbalanced data yielded lower accuracy (69.47%) 
+and failed to detect minority classes. However, analysis using non-shuffled, time ordered 
+data revealed that the Sample (non-shuffled) model’s performance dropped drastically-
+accuracy fell to 4.76% with all key metrics collapsing-indicating that synthetic balancing 
+disrupted the temporal structure necessary for generalization. The Raw model maintained 
+moderate performance under the same condition, highlighting the need for balancing data 
+without compromising temporal integrity. These findings highlight that AutoML com-
+bined with proper feature engineering and validation strategies offers a promising path for 
+Fig. 6   Confusion matrix for the Raw (non-shuffled) model trained on the unbalanced dataset
+
+--- Sayfa 12 ---
+14542
+	
+Natural Hazards (2025) 121:14531–14544
+geomagnetic-based EQ forecasting, but must be carefully tuned for real world, time sensi-
+tive applications.
+Supplementary Information  The online version contains supplementary material available at https://​doi.​
+org/​10.​1007/​s11069-​025-​07373-2.
+Acknowledgements  The authors would like to extend their gratitude to SuperMAG and its collaborator for 
+generously contributing the magnetometer data, and the United States Geological Survey (USGS) Earth-
+quake Hazards Program for providing the EQ data.
+Author Contributions  The authors jointly participated in the analysis of the study. Material preparation, data 
+collection, and analysis were primarily conducted by Kasyful Qaedi, Khairul Adib Yusof, Mardina Abdul-
+lah, Masashi Hayakawa, and Nur Fatin Irdina Zulhamidi. Kasyful Qaedi drafted the initial manuscript, all 
+authors provided feedback, reviewed and approved the manuscript.
+Funding  Open access funding provided by The Ministry of Higher Education Malaysia and Universiti 
+Kebangsaan Malaysia. This study is supported by the Fundamental Research Grant Scheme, Ministry of 
+Higher Education, Malaysia (FRGS/1/2023/STG07/UPM/02/4)
+Declarations 
+Conflict of interest  The authors have no relevant financial or non-financial interests to disclose
+Open Access  This article is licensed under a Creative Commons Attribution-NonCommercial-NoDeriva-
+tives 4.0 International License, which permits any non-commercial use, sharing, distribution and reproduc-
+tion in any medium or format, as long as you give appropriate credit to the original author(s) and the source, 
+provide a link to the Creative Commons licence, and indicate if you modified the licensed material. You do 
+not have permission under this licence to share adapted material derived from this article or parts of it. The 
+images or other third party material in this article are included in the article’s Creative Commons licence, 
+unless indicated otherwise in a credit line to the material. If material is not included in the article’s Creative 
+Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted 
+use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, 
+visit http://creativecommons.org/licenses/by-nc-nd/4.0/.
+References
+Adeli H, Panakkat A (2009) A probabilistic neural network for earthquake magnitude prediction. Neural 
+Netw 22(7):1018–1024. https://​doi.​org/​10.​1016/j.​neunet.​2009.​05.​003
+Akyol AA, Arikan O, Arikan F (2020) A machine learning-based detection of earthquake precursors using 
+ionospheric data. Radio Sci 55(11):1–21. https://​doi.​org/​10.​1029/​2019R​S0069​31
+Asim KM, Idris A, Iqbal T et al (2018) Earthquake prediction model using support vector regressor and 
+hybrid neural networks. PLoS ONE 13(7):e0199004. https://​doi.​org/​10.​1371/​journ​al.​pone.​01990​04
+Balasis G, Potirakis SM, Mandea M (2016) Investigating dynamical complexity of geomagnetic jerks using 
+various entropy measures. Front Earth Sci 4:71. https://​doi.​org/​10.​3389/​feart.​2016.​00071
+Beroza GC, Segou M, Mostafa Mousavi S (2021) Machine learning and earthquake forecasting-next steps. 
+Nat Commun 12(1):4761. https://​doi.​org/​10.​1038/​s41467-​021-​24952-6
+Cawley GC, Talbot N (2010) On over-fitting in model selection and subsequent selection bias in perfor-
+mance evaluation. J Mach Learn Res 11:2079–2107
+Chawla NV, Bowyer KW, Hall LO, Kegelmeyer WP (2002) Smote: synthetic minority over-sampling tech-
+nique. J Artif Intell Res 16:321–357. https://​doi.​org/​10.​1613/​jair.​953
+Chelidze T, Kiria T, Melikadze G et al (2022) Earthquake forecast as a machine learning problem for imbal-
+anced datasets: example of Georgia, Caucasus. Front Earth Sci 10:847808. https://​doi.​org/​10.​3389/​
+feart.​2022.​847808
+Cianetti S, Bruni R, Gaviano S et al (2021) Comparison of deep learning techniques for the investigation 
+of a seismic sequence: an application to the 2019, mw 4.5 Mugello (Italy) earthquake. J Geophys Res 
+Solid Earth 126(12):e2021JB023405. https://​doi.​org/​10.​1029/​2021J​B0234​05
+
+--- Sayfa 13 ---
+14543
+Natural Hazards (2025) 121:14531–14544	
+DeVries P, Viégas F, Wattenberg M et al (2018) Deep learning of aftershock patterns following large earth-
+quakes. Nature 560(7720):632–634. https://​doi.​org/​10.​1038/​s41586-​018-​0438-y
+Feurer M, Klein A, Eggensperger K, et  al (2015) Efficient and robust automated machine learning 28. 
+https://​proce​edings.​neuri​ps.​cc/​paper_​files/​paper/​2015/​file/​11d0e​62872​02fce​d83f7​9975e​c59a3​a6-​
+Paper.​pdf
+Han P, Zhuang J, Hattori K et al (2020) Assessing the potential earthquake precursory information in ULF 
+magnetic data recorded in Kanto, Japan during 2000–2010: distance and magnitude dependences. 
+Entropy 22(8):859. https://​doi.​org/​10.​3390/​e2208​0859
+Hayakawa M (2015) Earthquake prediction with radio techniques. John Wiley & Sons Pte Ltd, Singapore. 
+https://​doi.​org/​10.​1002/​97811​18770​368.​ch3
+He H, Garcia EA (2009) Learning from imbalanced data. IEEE Trans Knowl Data Eng 21(9):1263–1284. 
+https://​doi.​org/​10.​1109/​TKDE.​2008.​239
+Hutter F, Kotthoff L, Vanschoren J (eds) (2019) Automated machine learning: methods, systems, challenges. 
+Springer eBooks Computer Science, Springer, Cham. https://​doi.​org/​10.​1007/​978-3-​030-​05318-5
+Ku B, Kim G, Ahn JK et al (2021) Attention-based convolutional neural network for earthquake event clas-
+sification. IEEE Geosci Remote Sens Lett 18(12):2057–2061. https://​doi.​org/​10.​1109/​LGRS.​2020.​
+30144​18
+Srivastava N, Hinton G, Krizhevsky A et al (2014) Dropout: a simple way to prevent neural networks from 
+overfitting. J Mach Learn Res 15(56):1929–1958
+Thomas AM, Inbal A, Searcy J et al (2021) Identification of low-frequency earthquakes on the San Andreas 
+fault with deep learning. Geophys Res Lett 48(13):e2021GL093157. https://​doi.​org/​10.​1029/​2021G​
+L0931​57
+van der Maaten L, Hinton G (2008) Visualizing data using t-SNE. J Mach Learn Res 9:2579–2605
+Wood HO, Neumann F (1931) Modified Mercalli intensity scale of 1931. Bull Seismol Soc Am 21(4):277–
+283. https://​doi.​org/​10.​1785/​BSSA0​21004​0277
+Xu G, Han P, Huang Q et al (2013) Anomalous behaviors of geomagnetic diurnal variations prior to the 
+2011 off the pacific coast of Tohoku earthquake (mw9.0). J Asian Earth Sci 77:59–65. https://​doi.​org/​
+10.​1016/j.​jseaes.​2013.​08.​011
+Yadav S, Shukla S (2016) Analysis of k-fold cross-validation over hold-out validation on colossal datasets 
+for quality classification. In: 2016 IEEE 6th international conference on advanced computing (IACC). 
+IEEE, pp 78–83. https://​doi.​org/​10.​1109/​IACC.​2016.​25
+Yusof KA, Abdullah M, Abdul Hamid NS et al (2021) Statistical significance of geomagnetic diurnal varia-
+tion anomalies prior to worldwide earthquakes. Malays J Soc Space 17(4):366–377. https://​doi.​org/​10.​
+17576/​geo-​2021-​1704-​25
+Publisher’s Note  Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+Authors and Affiliations
+Kasyful Qaedi1   · Mardina Abdullah1,2 · Khairul Adib Yusof1,3 · Masashi Hayakawa4,5 · 
+Nur Fatin Irdina Zulhamidi1
+ *	 Mardina Abdullah 
+	
+mardina@ukm.edu.my
+	
+Kasyful Qaedi 
+	
+qaedi96@gmail.com
+	
+Khairul Adib Yusof 
+	
+adib.yusof@upm.edu.my
+	
+Masashi Hayakawa 
+	
+hayakawa@hi-seismo-em.jp
+	
+Nur Fatin Irdina Zulhamidi 
+	
+fatinirdina1997@gmail.com
+
+--- Sayfa 14 ---
+14544
+	
+Natural Hazards (2025) 121:14531–14544
+1	
+Space Science Center, Institute of Climate Change, Universiti Kebangsaan Malaysia (UKM), 
+43600 Bangi, Selangor, Malaysia
+2	
+Department of Electrical, Electronic and Systems Engineering, Faculty of Engineering and Built 
+Environment, Universiti Kebangsaan Malaysia (UKM), 43600 Bangi, Selangor, Malaysia
+3	
+Department of Physics, Faculty of Science, Universiti Putra Malaysia (UPM), 
+43400 Seri Kembangan, Selangor, Malaysia
+4	
+Hayakawa Institute of Seismo Electromagnetics Co. Ltd. (Hi-SEM), UEC Alliance Center, #521, 
+1‑1‑1 Kojimacho, Chofu, Tokyo 182‑0026, Japan
+5	
+Advanced and Wireless Communications Research Center (AWCC), The University of Electro-
+Communications, 1‑5‑1 Chofugaoka, Chofu, Tokyo 182‑8585, Japan

@@ -1,0 +1,607 @@
+
+--- Sayfa 1 ---
+1 
+ 
+A computed 95% confidence interval does cover the true value with 
+probability 0.95 – epistemically interpreted 
+ 
+Dan Hedlin 
+Dept. of statistics 
+Stockholm University 
+106 91 Stockholm  
+Sweden 
+ 
+Abstract 
+Suppose the lifetime of a large sample of batteries in routine use is measured. A confidence interval is 
+computed to 394 ± 1.96 ⋅4.6 days. The standard interpretation is that if we repeatedly draw samples 
+and compute confidence intervals, about 95% of the intervals will cover the unknown true lifetime. 
+What can be said about the particular interval 394 ± 1.96 ⋅4.6 has not been clear. We clarify this by 
+using an epistemic interpretation of probability. The conclusion is that a realised (computed) 
+confidence interval covers the parameter with the probability given by the confidence level is a valid 
+statement, unless there are relevant and recognisable subsets of the sample. 
+ 
+Keywords and phrases: interpretation of confidence interval, epistemic probability, frequentist 
+inference, recognisable subsets. 
+ 
+1. Introduction 
+Burnham, Lafta, Doocy and Roberts (2006) estimated the excess mortality after the invasion of the 
+US-led coalition of Iraq in March 2003. Their estimate was 654,965 excess Iraqi deaths as a 
+consequence of the war with the 95 percent confidence interval 392,979–942,636. The estimate was 
+based on a probability sample with 1,849 responding households. The study was debated, sometimes 
+animatedly. Marker (2008) reviews the methods of the study. He also provides some references to for 
+example newspaper articles that scrutinised and criticised the study.  
+ 
+With this motivating example in mind, we focus on the interpretation of the confidence interval in a 
+frequency context. The method of confidence intervals is usually viewed as a process that results in a 
+relative frequency. We are now interested in the interpretation of the realised (computed) confidence 
+interval. One common interpretation starts with the fact that the true excess mortality, denoted by 𝜃, 
+and the end points of the interval 392,979, 942,636 are three numbers. As such, 𝜃 is either inside the 
+interval 392,979–942,636, or it is not. Or in other words, the probability that 𝜃 is inside the interval is 
+either 0 or 1. With this view on a confidence interval I cannot see any practical use of the concept of 
+confidence intervals, and, as a consequence, I would find it hard to gauge the accuracy of the estimate 
+654,965. Another common and fundamentally different interpretation is that the interval does say 
+something about the plausible error due to sampling. For example that the confidence interval provides 
+a set of plausible values of 𝜃. But then the question is: what do we mean by ‘plausible’ here? Despite 
+the lack of clarity the use of confidence intervals is ubiquitous. As an example of how confidence 
+intervals may be reported in practice, see Sturgis et al. (2018).  
+ 
+After Jerzy Neyman’s reading of his paper (Neyman, 1934) before the Royal Statistical Society, 
+Arthur Bowley famously called the confidence interval a ‘confidence trick’ and went on to say: ‘I 
+think we are in the position of knowing that either an improbable event has occurred or the proportion 
+in the population is within the limits. To balance these things we must make an estimate and form a 
+judgment as to the likelihood of the proportion in the universe’ (Bowley, 1934, p. 609).   
+ 
+Neyman focuses in his rejoinder (p. 623-625) first on Bowley’s comment on the likelihood (chance) 
+that the parameter is in the interval and notes that to say something about the probability of a 
+parameter calls for Bayesian analysis. Then Neyman goes on to focus on Bowley’s first comment, that 
+
+--- Sayfa 2 ---
+2 
+ 
+all we know from an estimated confidence interval is either that something has occurred or that it has 
+not occurred. Although Neyman acknowledges that Bowley is correct in saying that there is not much 
+to say about the probability of a realised confidence interval, he states that his method (my italics) of 
+confidence intervals should have a frequency interpretation.  
+ 
+Salsburg (2001, p. 122) believes that what is missing in the method of confidence intervals is the 
+answer to this question: ’probability of what?’ Salsburg captures the difficulty in one striking 
+sentence: ‘Bowley’s problem with this procedure is one that has bedevilled the idea of confidence 
+bounds since then’. 
+ 
+It is clear from Neyman’s rejoinder that he views the method of confidence interval as a process by 
+which a statement about the relative frequency is obtained. Neyman (1977, p. 118-119) gives two 
+examples of statements that are results of incorrectly substituting realised values for the random 
+variables in expression (1), which is given below: 𝑃(1 ≤5 ≤3|𝜃= 5) = 0.95  and 
+𝑃(1 ≤2 ≤3|𝜃= 2) = 0.95. Neyman (1977, p. 119) even spells out RELATIVE FREQUENCY in 
+capital letters. Still, Salsburg’s question is there: 𝑃(1 ≤𝜃≤3) = 0.95, probability of what? 
+ 
+It is embarrassing that the concept of confidence interval, which is so important and so often used for 
+the interpretation of statistical estimates, is still unclear 90 years after Neyman (1934) introduced both 
+the concept of and the term confidence interval. I shall give a number of examples of various 
+interpretations and vague statements. However, I believe the solution to the ambiguity and elusive 
+clarity is quite simple: we should view a computed (realised) confidence interval in the light of an 
+epistemic interpretation of probability while paying attention to the Fisherian concept of relevant and 
+recognisable subsets.  
+ 
+Episteme is explained in the Oxford English Dictionary as ‘scientific knowledge, a system of 
+understanding; spec. (Foucault's term for) the body of ideas which shape the perception of knowledge 
+in a particular period’ with the ancient Greek origin meaning knowledge, understanding, skill and 
+scientific knowledge. An anecdote illustrates the notion of epistemic probability. I decided to start a 
+talk on philosophy of probability in a theatre-like hall by throwing a dice on stage. I took a good look 
+at the outcome and asked the conferencier: ‘what’s the probability the outcome is 3?’ One sixth he said 
+(a tad anxiously). Then the next speaker, who the organisers had put in the first row right in front of 
+the stage, said that to him the probability was one fourth. From his position he could see that the side 
+of the dice had one single spot, and assuming that the dice was of standard construction, he could 
+deduce that the far side must have six spots. So only four possible outcomes remained to him. Thus we 
+had three probabilities, 1/6 (based on no knowledge), ¼ (based on partial knowledge) and 1 (because I 
+knew it). Note that our probabilities do not have to be viewed as subjective probabilities. Everyone did 
+a logical assessment based on facts (+ one assumption).  
+ 
+The idea to view confidence intervals in the light of epistemic probability is not new. Schweder (2018) 
+suggests that. Pawitan, Lee and Lee (2023) investigate the issue if and under what conditions a 
+nominal coverage probability applies to a realised confidence interval. They define the confidence 
+level 𝛼 to have the property ‘epistemic confidence’ if ‘it is protected from the Dutch book’ (see 
+Vineberg, 2012, for the concept of Dutch book), assuming common interest and flow of information 
+among people interested in the confidence interval at hand. What it basically means is that 𝛾= 1 −𝛼 
+must follow the laws of probability and that there is an intersubjective agreement of the value of 𝛾 
+(Gillies, 2000, p. 170-171). One condition is that there are no relevant subsets (we return to this in Sec. 
+6). The reasoning of Pawitan et al. (2023) is likelihood-based, in contrast to the current paper.  
+ 
+2. Definition of a confidence interval  
+ 
+We focus for simplicity on random sampling from finite populations and confidence sets that are in the 
+form of a single interval. Let 𝜃 be a real-valued parameter of interest, for example the finite population 
+average 𝜃= 𝑦̅𝑈= ∑
+𝑌𝑘∕𝑁
+𝑘∈𝑈
+, where 𝑌1, 𝑌2, … , 𝑌𝑁 are random variables and U is the population with 
+N units. The population vector is 𝐘= (𝑌1, 𝑌2, … , 𝑌𝑁)′. Let 𝐘𝑠 be the sample vector. A number of 
+
+--- Sayfa 3 ---
+3 
+ 
+subsets of U are possible samples through choice of sampling method. In the context here, it suffices 
+to say that there are B possible samples, B being a finite number. Define a confidence interval as 
+ 
+𝑃(𝐿(𝐘𝑠) ≤𝜃≤𝑈(𝐘𝑠)) = 1 −𝛼   
+(1) 
+ 
+where 𝐿(𝐘𝑠) and 𝑈(𝐘𝑠) are the random lower and upper confidence limits and 1 −𝛼 is the confidence 
+level. For simplicity we consider only 𝛼= 0.95. We denote the confidence interval by 𝐶(𝐘𝑠) =
+(𝐿(𝐘𝑠), 𝑈(𝐘𝑠)). A sample is collected, 𝐲𝑠 is observed and 𝐶(𝐘𝑠) is estimated with 𝐶(𝐲𝑠). We shall say 
+that 𝐶(𝐲𝑠) is the realised value of 𝐶(𝐘𝑠), and use the terms realised, estimated and computed 
+interchangeably. If (1) is true, what is the probability in (2)? Is it meaningful to talk about such a 
+probability? We assume that the sample is large; the focus here is on the interpretation of (2). 
+ 
+𝑃(𝐿(𝐲𝑠) ≤𝜃≤𝑈(𝐲𝑠)) = 1 −𝛼  
+(2) 
+ 
+In model-based frequentist inference, the random sample is conditioned on and the limits in (1) are 
+functions of the random variable 𝐘𝑠. In design-based survey sampling frequentist inference, moments 
+are taken over the random sample s. A 95% confidence interval 𝐶𝐼(𝑠) is an interval such that the 
+probability that 𝐶𝐼(𝑠) covers the unknown finite-population parameter 𝜃 is 𝑃(𝐶𝐼(𝑠) ∋𝜃) = 0.95. See 
+Särndal, Swensson and Wretman (1992, p. 55). The sampling design makes B samples possible to be 
+realised. If the sample is large for all B samples, approximately 95% of those would cover 𝜃, see 
+Särndal et al. (1992) and references therein. My arguments do not depend on whether we consider 
+model-based or design-based inference.  
+ 
+3. Interpretations of confidence intervals in the literature 
+ 
+A realised confidence interval, like the one in (2), is usually interpreted with its long-run relative 
+frequency in mind, as Example 1 illustrates. The texts in Examples 1-2 and 4-11 are close to the 
+source, although not necessarily direct quotations unless indicated. My interest in these example 
+focuses on how authors approach (2). 
+ 
+Example 1 
+Thompson (1997, p. 144) conveys the idea behind classical sampling inference by way of an example. 
+In an urn with N balls there are M white ones. A without-replacement simple random sample s of size 
+n is going to be drawn. The random number of white balls in s is 𝑚𝑠. The sample is drawn; it contains 
+𝑚𝑠0 white balls. With 𝑁= 100, 𝑛= 10, 𝑚𝑠0 = 4, Thompson estimates a 95% confidence interval for 
+M to [14,72] and goes on to say: ‘Such intervals have the property that if the sampling procedure is 
+repeated again and again, the long-run relative frequency of non-coverage will approximate [5%]’. 
+(Continued in Example 9). 
+ 
+Example 2 
+A sample is drawn in order to estimate 𝜃, and a confidence is estimated. In their section 9.2.4, with the 
+heading Bayesian intervals, Casella and Berger (2002) state that within classical statistics the 
+parameter 𝜃 is fixed and the random confidence interval is also fixed after having been realised. So, as 
+neither 𝜃 nor the realised interval moves, 𝜃 is either in the interval or it is outside. The probability that 
+𝜃 is inside is either 0 or 1. 
+ 
+Next example is taken from my own work as a statistician (modified and anonymised for simplicitly 
+and confidentiality). 
+ 
+Example 3  
+An entrepreneur in the health sector invoices a large hospital for a number of treatments of patients. 
+The hospital takes a random sample of invoices and inspects the associated health records that the 
+entrepreneur has written for each treatment. The hospital estimates that the entrepreneur has 
+incorrectly invoiced 10,000 ±1,000 money units where (9,000, 11,000) is a 99% confidence interval. 
+
+--- Sayfa 4 ---
+4 
+ 
+They also compute a 95% confidence interval. The hospital sues the entrepreneur with the aim of 
+salvaging at least the worth of the lower bound of the 99% interval. If the hospital had conducted a 
+census, and all invoices had passed through the legal system, a total of 𝜃 money units would have been 
+found to be incorrectly invoiced. However, following the interpretation of a confidence interval in 
+Example 1 and in particular Example 2, we cannot say much about the probability that the interval 
+(9,000, 11,000) contains 𝜃. So, is the confidence interval useless in this type of situation? And if it is 
+useless here, in what situation would it be useful? 
+ 
+The next few examples seem to express that interpretation of a confidence interval is a matter of 
+confidence or even hope.  
+ 
+Example 4 
+Cochran (1977, p. 12). If a probability sample of batteries in routine use in a large factory shows an 
+average life of 394 days, with a standard error 4.6 days, the chances are 99 in 100 that the average life 
+in the population of batteries lies between 394 ± 2.58 ⋅4.6 days.  
+ 
+One may be forgiven if one suspects that Cochran dodges the term ‘probability’ in ‘chances are’. 
+ 
+Example 5 
+Wooldridge (2013, p. 138-139). If random samples were obtained over and over again, with 𝐿(𝐘𝑠) and 
+𝑈(𝐘𝑠) computed each time, then the (unknown) population value 𝜃 would lie in the interval 𝐶(𝐘𝑠) for 
+95% of the samples. Unfortunately, for the single sample that we use to construct the confidence 
+interval, we do not know whether 𝜃 is actually contained in the interval. We hope we have obtained a 
+sample that is one of the 95% of all samples where the interval estimate contains 𝜃, but we have no 
+guarantee. 
+ 
+Example 6 
+Agresti (2002, p. 411). The sample proportions of approval of a prime minister’s performance are 0.59 
+and 0.55 in the first and second survey. Agresti suggests an estimator for the variance of dependent 
+proportions. Using this, he computes the confidence interval for the difference in approval rating as  
+(-0.06, -0.02) and formulates his conclusion in the following way: ‘The approval rating appears to 
+have dropped between 2 and 6 [percentage units]’. 
+ 
+However, in the next example, Foreman (1991) ventures to use the term probability. 
+ 
+Example 7 
+Foreman (1991, p. 42). Suppose the turnover of a business is estimated as ten million and that the 
+standard error of that estimate is half a million. ‘Then, on the supposition that the estimate is unbiased 
+and that its sampling distribution approximates a normal distribution, it may be stated with 95% 
+confidence (or probability 𝑝= 0.95) that the actual turnover… is within the interval’ 10 ⋅106 ±
+1.96 ⋅0.5 ⋅106. 
+ 
+Cox and Hinkley (1974) use in the next example the word ‘consistent’ (in the colloquial meaning) but 
+also seem to express some aversion in their use of the word ‘legalistic’. 
+ 
+Example 8 
+Cox and Hinkley (1974, p. 209) describe the procedure to construct a confidence interval as something 
+‘physical’, which in principle could be checked by experiments. Nowadays we often make simulation 
+studies where we draw a large number of samples and compute a coverage probability based on 
+variance estimates. Such a simulation does provide a ‘physical’ interpretation of a confidence interval. 
+Cox and Hinkley recommend that a system of confidence intervals is computed, in which the 
+confidence level is varied, as opposed to selecting one confidence level in advance and compute only 
+one interval. On p. 209 they say:  
+ 
+
+--- Sayfa 5 ---
+5 
+ 
+‘In many ways a system of confidence limits calculated from data corresponds to treating the 
+parameter as if, in the light of the data, it is a random variable Θ with cumulative distribution function 
+implicitly defined by 𝑃(Θ ≤𝑡𝛼) = 1 −𝛼’, where 𝑡𝛼 is the upper confidence limit in a one-sided 
+interval.  
+ 
+‘The distinction, emphasized in the standard treatments of confidence intervals, is that in the 
+hypothetical repetitions that give physical meaning to 𝑃(𝑋≤𝑥), where X is a random variable, we 
+regard x as a fixed arbitrary constant; more generally we consider the probability that X falls in some 
+fixed set. On the other hand, in [a computed confidence interval] it is 𝑡𝛼 that varies in hypothetical 
+repetitions, not 𝜃: hence it is not legitimate to treat 𝜃 as a random variable. Nevertheless, for many 
+purposes the distinction appears to be a rather legalistic one’.  
+   
+On page 214 Cox and Hinkley (1974) describe the procedure to construct a confidence interval from 
+an acceptance region and write that the procedure ‘suggests that we can regard confidence limits as 
+specifying those parameter values consistent with the data at some level’. One reason for data not 
+being consistent with the probability statement (1) is that (1) may not hold conditionally on ancillary 
+statistics.  
+ 
+Example 9 (continued from Example 1) 
+The realised confidence interval is ’a reasonable expression of inference about M. In intuitive terms, 
+the computed 95% confidence interval for M is compatible with the inference that, while we would 
+guess that M is in some interval around 40, we would be surprised to find it as low as 13 or as high as 
+73.’ (Thompson, 1997, p. 144). However, as Thompson points out, an important difference between 
+balls in an urn and, for example, an official statistics or a social survey is that the units in the latter are 
+to a larger extent distinguishable. Individuals in a social survey may have labels (civic number, 
+address) and auxiliary variables. The computed confidence interval may not be consistent with prior 
+information or belief about the population (see examples in Section 6 below). 
+ 
+I interpret ‘consistent’ in Example 8 as ‘given the data, there are no reasons not to believe that the 
+computed confidence interval covers the parameter with a probability approximately equal to 0.95’. 
+Example 9 provides one reason why we would not trust a realised confidence interval. We return to 
+this in Section 6. 
+ 
+Like Cox and Hinkley in Example 8, Cramér (1956) seems to come close to saying that the probability 
+by which a computed confidence interval covers 𝜃 is 0.95. 
+ 
+Example 10 
+Cramér (1956, p. 183). Suppose we conduct a series of experiments in which the parameters 𝜃, 𝜎 and 
+the number of units n vary arbitrarily from experiment to experiment. For each experiment we 
+compute a confidence interval and make the statement that 𝜃 is between the confidence limits. These 
+limits will in general vary from experiment to experiment. The probability that our statement is correct 
+is in each experiment 95%. If we consistently apply this rule, we would expect that 5% of our 
+statements are false. The computed confidence interval gives us therefore a rule for estimation of 𝜃 
+that works with a constant failure risk of 5%. 
+ 
+Example 2 contrasts in an interesting way with the following example. Examples 2 and 11, it seems to 
+me, capture the ambivalence in the interpretation of a confidence interval.  
+ 
+Example 11 
+Casella and Berger (2002, p. 421) : ‘...the confidence interval, the set in the parameter space with 
+plausible values of 𝜇…’ (my italics). 
+ 
+ 
+
+--- Sayfa 6 ---
+6 
+ 
+4. Theories of probability 
+ 
+Four broad theories (or interpretations) of probability are often mentioned (Gillies, 2000):  
+1. Logical. The degree of rational belief. The anecdote with the dice in Sec. 1 is one example. 
+2. Subjective, the degree of belief of a particular individual, and intersubjective, a consensus in a 
+group of people 
+3. Frequency 
+4. Propensity, which is wide and multifaceted class of theories. Popper (1959) advocated one 
+version. 
+ 
+Theories 1 and 2 are often called epistemic or subjective probabilities. The latter term is unfortunate as 
+the same term refers both to the group and to one member of the group. Theories 3 and 4 are referred 
+to as objective, scientific or aleatory (Gillies, 2000, p. 20). The division between epistemic and 
+objective probabilities makes many see probability as being Janus-faced.  
+ 
+Daston (1988, p. 197) gives this reason as to why no distinction was made between epistemic and 
+objective probability in the past: ‘Experience generated belief and probability by the repeated 
+correlation of sensations which the mind reproduced in associations of ideas. The more constant and 
+frequent the observed correlation, the stronger the mental association, which in turn intensified 
+probability and belief. Hence, the objective probabilities of experience and the subjective probabilities 
+of belief were, in a well-ordered mind, mirror images of one another.’ 
+  
+One way to understand subjective probability is to regard it as a degree of belief. It is ‘a causal 
+property … which we can express vaguely as the extent of which we are prepared to act on it’ (Frank 
+Ramsay, cited in Gillies, 2000, p. 54). Suppose you are tempted to bet on a game between teams A and 
+B. If you bet 𝑢2 money units on ‘A win’, and A come out victorious, then you obtain 𝑢1 money units 
+plus your own bet. A fair bet is characterised by a zero expected profit, that is, 𝑢1𝑝−𝑢2(1 −𝑝) = 0 
+where p is the probability for team A win, implying that the fair bet is characterised by  𝑝= 𝑢2 ∕
+(𝑢1 + 𝑢2) and hence that the fair (statistical) odds is 𝑝(1 −𝑝)
+⁄
+= 𝑢2 ∕𝑢1. Imagine that three odds, 
+𝑜𝑑𝑑𝑠1, 𝑜𝑑𝑑𝑠2 and 𝑜𝑑𝑑𝑠3, are offered to person D, who does not know the real value of p. Suppose 
+𝑜𝑑𝑑𝑠1 is higher than the fair one, that is, 𝑝1 (1 −𝑝1)
+⁄
+> 𝑝∕(1 −𝑝), where 𝑝1 is the probability that 
+corresponds to 𝑜𝑑𝑑𝑠1. If person D bets on 𝑜𝑑𝑑𝑠1, he effectively believes that A win with probability 
+𝑝1 and he will lose money in the long run. As discussed by Daston (1988), person D will with 
+experience learn that he plays too hard (ignoring that there are psychological gambling issues). 
+Suppose now that 𝑜𝑑𝑑𝑠2 and 𝑜𝑑𝑑𝑠3 are 𝑝2 (1 −𝑝2)
+⁄
+< 𝑝3 (1 −𝑝3)
+⁄
+< 𝑝∕(1 −𝑝). If he bets on 
+𝑜𝑑𝑑𝑠2 but not on 𝑜𝑑𝑑𝑠3, he is too risk averse. The rational choice is to play on an odds which is as 
+close as possible to the fair one, but not higher. This in turn implies that D is prepared to act on a 
+subjected probability up to p, but not further. See also Gillies (2000, p. 55) for a trick of how to tease 
+the subjective probability out of a person who is inclined to ‘cheat’ to make an expected profit. The 
+ratio 𝑝= 𝑢2 ∕(𝑢1 + 𝑢2) is called ‘betting quotient’. 
+ 
+As an argument why considering betting to be relevant to other decisions, Frank Ramsay writes: 
+‘Whenever we go to the station we are betting that a train will really run, and if we had not sufficient 
+degree of belief in this we should decline the bet and stay at home.’ (Cited in Gillies, 2000, p. 54). 
+ 
+Also, think of evidence e as observations or some assumed state of affairs (the trains are usually on 
+time, and there is this morning no reason to believe otherwise), and hypothesis h as a statement about 
+the unknown state of affairs (the train will run). If a person’s subjective probability of h given e is 
+high, then that would give that person good reasons for expecting the unknown facts described by h 
+(Carnarp, 1950, p. 164). Looking back to Example 4, Cochran (1977) seems to come close to a 
+subjective probability.  
+ 
+Not everybody accepts that a thrown dice has a probability of a certain outcome; if it is a 3, then it is 
+what it is, whether we have observed the outcome or not. However, the Royal Society (2020, p. 12) 
+disagree: ‘It is a common misapprehension that probabilities can only be used for future events with 
+
+--- Sayfa 7 ---
+7 
+ 
+some randomness. While it is true that an event has either happened or not, many statisticians will feel 
+that it is reasonable to assign probabilities to our personal uncertainty about unknown facts.’ The 
+document of the Royal Society addresses the use of probability in legal contexts. What is the 
+probability that a fragment of glass, which was found on a suspect’s clothing, came from a particular 
+broken window? If you do not accept that a thrown dice has a probability for a certain outcome (which 
+has already happened), then you cannot reasonably accept that there is a probability that the fragment 
+came from a specific window, because then you would rather think ‘either it did, or it did not’. 
+ 
+Fisher (1958, p. 386-387) clearly had an epistemic interpretation in mind when he wrote: ’Probability 
+is… a well specified state of logical uncertainty…. Let us consider any uncertain event. A child is 
+going to be born…[and being interested in the sex of the child] we are in a state of uncertainty’. A 
+parent finds out that in 51 per cent of births, the baby is a boy. Fisher goes on to say: ‘he [the 
+dad]…informs us that the probability of a boy is 51 per cent, having made reference to this measurable 
+reference set as the basis of his statement.’  
+ 
+5. The main argument and three counterarguments 
+ 
+Consider two experiments. In the first one you have 100 balls, 95 of which are blue and 5 are red, and 
+one ball is going to be selected at random. That is, 𝑃(𝑏𝑙𝑢𝑒) = 0.95. In the second experiment the balls 
+are behind a screen and one ball has already been selected at random. Most statisticians (and indeed 
+most non-statisticians) would now say the probability that the colour of the ball is blue is 0.95. Now 
+suppose the set of balls are B confidence intervals and 95% of them have the property E, where E is 
+the event that the confidence interval covers 𝜃. One confidence interval has been selected randomly.  
+There are two, or possibly three, reasons why one would not accept that a confidence interval which 
+has already ‘been selected’ (realised) has E with probability 0.95. The counterarguments are: 
+1. There is no such a thing as epistemic probabilities  
+2. We might gain some knowledge by inspecting the realised sample that would make us distrust 
+the confidence interval 
+3. We should not, or cannot, mix subjective probabilities with frequencies 
+I have said enough about counterargument 1. Next I shall discuss counterargument 3, and in Section 6 
+discuss the interesting counterargument 2.  
+ 
+A subjective probability may serve as an estimate of a relative frequency. A rigorous argument is 
+given by Carnarp (1950, §41), which is now summarised briefly, although recast to the confidence 
+interval problem. Denote the possible confidence intervals by 𝐶(𝑖)(𝐲𝑠), 𝑖= 1,2, … , 𝐵, and let 𝐸𝑖 be the 
+event that 𝐶(𝑖)(𝐲𝑠) covers 𝜃. Suppose all B confidence intervals have been realised. Let r be the 
+proportion of the B confidence intervals which cover 𝜃. Person A, with no knowledge of the property 
+𝐸𝑖 of any of the realised confidence intervals, believes that a fair odds for each 𝐸𝑖 is 𝑢2 ∕𝑢1, so her 
+subjective probability is the betting quotient 𝑞= 𝑢2/(𝑢1 + 𝑢2). If A places a bet on each one of the B 
+confidence intervals, her expected gain is 𝑟𝑢1 −(1 −𝑟)𝑢2 = 𝑟(𝑢1 + 𝑢2) −(𝑢1 + 𝑢2)𝑞=
+(𝑢1 + 𝑢2)(𝑟−𝑞). Thus, her betting quotient need be 𝑞= 𝑟 for it to be fair (for the expected gain to 
+be zero). In other words, her best subjective probability is also her estimate of the relative frequency r 
+of the 𝐶(𝑖)(𝐲𝑠) that cover 𝜃. Hence, a tenable subjective probability is also an estimate of the relative 
+frequency. This argument seems to be what Daston (1988), cited above, discusses. 
+ 
+ 
+6. Relevant and recognisable subsets 
+Now we turn to counterargument 2. A statistician may, and often does, identify relevant and 
+recognisable subsets (a term borrowed from R.A. Fisher) in the sample. Three examples follow. 
+ 
+The proportions of men and women in the sample may be very different from known population 
+proportions. If gender is associated with the study variable then the sample mean of a simple random 
+sample is in the presence of sample imbalance conditionally biased. In the Burnham et al. (2006) study 
+there were more violent deaths among men than women, so if the sample had contained an excess of 
+
+--- Sayfa 8 ---
+8 
+ 
+women, the estimate would have been biased low (unless successfully adjusted for with estimation, 
+e.g. poststratification). 
+ 
+Brewer (2002, p. 271) tells the story when he as a young statistician discovered that the two primary 
+sampling units in one stratum both were railway junctions and therefore were atypical in terms of their 
+workforce composition. Brewer’s supervisor told him to discard one of them and select another one 
+randomly. That is, the supervisor asked Brewer to tamper with a realised probability sample. But, 
+although the young Brewer had misgivings, the experienced Brewer believed that ‘it was better to 
+have a reasonably well-balanced sample that a pure probability sample that was obviously badly 
+balanced’ (p. 271). 
+ 
+When inspecting a computed confidence interval you might as an experience practitioner see that it is 
+very wide, and identify the reason: one large value of the study variable.  
+ 
+Fisher (1959, p. 23) requires two properties: ‘No subset can be recognized having a different 
+probability. Such subsets must always exist; it is required that no one of them shall be recognizable. 
+This is a postulate of ignorance’. Women form the subset in the first example. In the second example 
+the subset is all non-railway junctions, which was conspicuously empty. In the third example the large 
+value constitutes the subset. 
+ 
+The three examples illustrate reasons why there may be a gap between our prior knowledge and the 
+computed confidence interval. In all three examples we cannot have full confidence in the confidence 
+interval. Really, we should be reluctant to publish such confidence intervals (unless, again, we have 
+been able adjust for the issues, with estimation). 
+ 
+To define ‘recognisable and relevant subsets’ we first introduce a vector of auxiliary variables 𝐱𝑘 for 
+unit k, which could be for example sex and age. Suppose 𝑃(𝐿(𝒀𝑠) ≤𝜃≤𝑈(𝒀𝑠)) = 1 −𝛼 where 𝒀𝑠 
+is a stochastic vector of sample values, but 𝑃(𝐿(𝒀𝑠) ≤𝜃≤𝑈(𝒀𝑠)|𝑅(𝐲𝑠, 𝑓(𝐱𝑠), 𝑓(𝐱𝑈)) ≠1 −𝛼, 
+where 𝑅(⋅,⋅,⋅) is a statistic, which may depend on sample data 𝐲𝑠, 𝐱𝑠 auxiliary variables in the sample 
+and 𝐱𝑈, auxiliary variables in the population (or stratum or cluster depending on application). The 
+subscript U indicates that 𝐱𝑈 contains other information about the population than what could be 
+deduced from the sample. The statistic depends on auxiliary variables through a function 𝑓(⋅ ). If there 
+is such a statistic 𝑅(⋅,⋅,⋅), we say that it induces ’relevant and recognisable subsets’, similarly to 
+Buehler (1959) and Pawitan et al. (2023). In the Burnham et al’s (2006) study (in our thought-
+experiment with an identified excess of women) and in Brewer’s (2002) survey, 𝑥𝑘 is a binary that 
+takes value 1 if unit k is a woman or a non-railway junction, 𝑓(𝐱𝑠) is the proportion of women or non-
+railway junctions in the sample, respectively. In the study of excess mortality in Iraq, 𝑓(𝐱𝑈) is the 
+proportion of women in the country. In Brewer’s survey 𝑓(𝐱𝑈) is the known proportion of railway 
+junctions in the stratum, and the two induced subsets are the whole sample and the empty set. In 
+neither case 𝑓(𝐱𝑈) needed to be known with high accuracy for one to realise that the sample was 
+imbalanced. In the third example, where the sample contained a large value that made the confidence 
+interval very wide, the relation between 𝑓(𝐱𝑈) and 𝑓(𝐱𝑠) shows that the sample is imbalanced. Even 
+if there was in this third example no auxiliary variable, the statistician may still see that the sample is 
+imbalanced by making an experienced judgement of what the population mean 𝐲̅𝑈 should be compared 
+to the observed 𝐲̅𝑠. 
+ 
+Pawitan et al. (2023) proves that, under some conditions, there cannot be any relevant subsets. Here it 
+is interesting to note Fisher’s (1959) statement: “Such subsets must always exist”. The reason why 
+Pawitan et al. (2023) are able to prove their theorem is that they work with likelihoods, for example, 
+that a sample is drawn from a gamma distribution. Fisher on the other hand is thinking of a real-life 
+population. Suppose you have interviewed people in Iraq. In that case there may be unobserved 
+variables that, if known, would make you realise that the sample is imbalanced. Recall Thompson’s 
+remark in Example 9 above that there is a difference between official statistics or a social survey and 
+‘balls in an urn’.  
+
+--- Sayfa 9 ---
+9 
+ 
+ 
+Pawitan et al. go on to give conditions for 1 −𝛼 being epistemic.  
+ 
+7. Prosecutor’s fallacy in relation to this discussion 
+Suppose we are about to construct a 95% confidence interval from the null hypothesis 𝐻0:𝜃= 𝜃0. The 
+acceptance region 𝐴(𝜃0) is given by sample data 𝐲𝑠 that lead to a computed estimate 𝜃̂(𝐲𝑠) for which 
+ 𝜃0 −1.96√𝑉(𝜃̂(𝐲𝑠)) ≤𝜃̂(𝐲𝑠) ≤𝜃0 + 1.96√𝑉(𝜃̂(𝐲𝑠)) 
+ 
+ 
+(3) 
+ 
+We may invert (3) into a confidence interval in the usual way to 
+ 𝜃̂(𝐲𝑠) −1.96√𝑉(𝜃̂(𝐲𝑠)) ≤𝜃≤𝜃̂(𝐲𝑠) + 1.96√𝑉(𝜃̂(𝐲𝑠)).  
+ 
+(4) 
+ 
+Since (3) defines an acceptance region 𝐴(𝜃0), 𝑃(𝜃̂(𝐘𝑠) ∈𝐴(𝜃0)|𝜃= 𝜃0) = 0.95. However, if we now 
+claim that 𝑃(𝜃= 𝜃0|𝜃̂(𝐘𝑠) ∈𝐴(𝜃0)) = 0.95, then ‘prosecutor’s fallacy’ may come up in the mind of 
+a statistician (e.g. Taylor, 2018).  
+ 
+What is the difference between prosecutor’s fallacy and the probability referred to in Example 7? They 
+are probabilities of different events. In the fallacy it is the illegitimate interpretation of the parameter 𝜃 
+being a random number. In Example 7 and other examples above it is the probability (epistemically 
+interpreted) that we have obtained sample i and confidence interval 𝐶(𝑖)(𝐲𝑠). This may be the answer 
+to Salsburg’s (2001, p. 122) question ‘probability of what?’. 
+ 
+8. Discussion and conclusion 
+There are disparate interpretations of confidence interval in the literature, as shown in Examples 1-11. 
+These examples suggest that statisticians have an awkward relationship to the interpretation of 
+confidence intervals. 
+ 
+There are situations where the computed confidence interval is not convincing. Many of these are well 
+known to practitioners. In situations such as those given in Sec. 6, the computed confidence interval is 
+not consistent with our prior knowledge or belief. Quite simply: there is something wrong with the 
+confidence interval.  
+ 
+Unless there are relevant and recognisable subsets (as defined in Sec. 6), it is not incorrect to say that 
+computed 95% confidence interval covers the parameter with probability 0.95, that is, (2) is valid. 
+This epistemic interpretation of that probability has the additional advantage that it defines the term 
+‘confidence’.   
+ 
+One final thought about the 90 years of bewilderment since Neyman (1934): it might be a widely held 
+view in the statistical community that a probability should either be seen as subjective or viewed in a 
+frequency context that has created a barrier that made us fail to see the fairly simple solution.  
+ 
+References 
+Agresti, A. (2002). Categorical data analysis. 2nd ed. Hoboken: Wiley.  
+ 
+Bowley, A.L. (1934). Discussion on Dr Neyman’s paper. Meeting in the Royal Statistical Society, 
+June 19th, 1934. Journal of the Royal Statistical Society, 97(4), 607-610. 
+ 
+Brewer, K.R.W. (2002). Combined Survey Sampling Inference: Weighing Basu’s Elephants. London: 
+Arnold.  
+Buehler, R.J. (1959). Some validity criteria for statistical inferences. The annals of mathematical 
+statistics, 30(4), 845-863. 
+
+--- Sayfa 10 ---
+10 
+ 
+ 
+Burnham, G., Lafta, R., Doocy, S. and Roberts, L. (2006). Mortality after the 2003 invasion of Iraq: a 
+cross-sectional cluster sample survey. Lancet, 368, 1421–1428. 
+ 
+Carnarp, R. (1950). Logical foundations of probability. Chicago: The University of Chicago Press. 
+ 
+Casella, G. and Berger, R.L. (2002). Statistical inference, 2nd ed. Pacific Grove: Duxbury.  
+ 
+Cochran, W.G. (1977). Sampling Techniques, 3rd ed. New York: Wiley.  
+ 
+Cox, D.R. and Hinkley, D.V. (1974).Theoretical statistics. Cambridge: Cambridge University Press. 
+ 
+Cramér, H. (1956). Sannolikhetskalkylen och några av dess tillämpningar (in Swedish). 3rd ed. 
+Stockholm: Almqvist & Wiksell.  
+ 
+Daston, L. (1988). Classical probability in the Enlightenment. Princeton: Princeton University Press. 
+ 
+Fisher, R. (1958). The nature of probability. Centennial review, 2, 261-274. 
+ 
+Fisher, R.A. (1959). Mathematical probability in the natural sciences. Technometrics, 1(1), 21-29. 
+ 
+Foreman, E.K. (1991). Survey sampling principles. New York: Marcel Dekker.  
+ 
+Gillies, D. (2000). Philosophical theories of probability. New York: Routledge. 
+ 
+Lohr, S. (2022). Sampling: Design and Analysis, 3rd ed. Boca Raton: CRC Press.  
+ 
+Marker, D.A. (2008). Methodological Review of "Mortality after the 2003 Invasion of Iraq: A Cross 
+Sectional Cluster Sample Survey". Public Opinion Quarterly, 72(2), 345-363. 
+   
+Neyman, J. (1934). On the Two Different Aspects of the Representative Method: The Method of 
+Stratified Sampling and the Method of Purposive Selection. Journal of the Royal Statistical Society, 
+97(4), 558-606. 
+ 
+Neyman, J. (1977). Frequentist Probability and Frequentist Statistics. Synthese, 36(1), 97-131. 
+ 
+Pawitan, Y., Lee, H. and Lee, Y. (2023). Epistemic confidence in the observed confidence interval. 
+Scandinavian journal of statistics, 50, 1859-1883. 
+Popper, K.R. (1959 ). The Propensity Interpretation of Probability. The British Journal for the 
+Philosophy of Science, Vol. 10(37), 25-42. 
+ 
+Salsburg, D. (2001). The lady tasting tea. How statistics revolutionized science in the twentieth 
+century. New York: Henry Holt.  
+Särndal, C.-E., Swensson, B. and Wretman J. (1992). Model Assisted Survey Sampling. New York: 
+Springer-Verlag. 
+ 
+Schweder, T. (2018). Confidence is epistemic probability for empirical science. Journal of Statistical 
+Planning and Inference, 195, 116–125. 
+ 
+Sturgis, P., Kuha, J., Baker, N., Callegaro, M., Fisher, S., Green, J., Jennings, W., Lauderdale, B.E. 
+and Smith, P. (2018). As assessment of the causes of the errors in the 2015 UK general election 
+opinion polls. Journal of the Royal Statistical Society, Series A, 181(3), 757–781 
+
+--- Sayfa 11 ---
+11 
+ 
+ 
+Taylor, K. (2018). The prosecutor’s fallacy. Centre of evidence-based medicine. Views. 
+https://www.cebm.ox.ac.uk/news/views/the-prosecutors-fallacy. Viewed Feb 9, 2024. 
+The Royal Society (2020). The use of statistics in legal proceedings: a primer for the courts. ISBN: 
+978-1-78252-486-1. 
+Thompson, M.E. (1997). Theory of Sample Surveys. London: Chapman & Hall. 
+Vineberg, S. (2012). Dutch Book Arguments, The Stanford Encyclopedia of Philosophy (Fall 2022 
+Edition), Edward N. Zalta & Uri Nodelman (eds.). 
+https://plato.stanford.edu/archives/fall2022/entries/dutch-book. Viewed Feb 9, 2024. 
+ 
+Woolridge, J.M. (2013). Introductory Econometrics: A Modern Approach, 5th ed. Mason: South-
+Western.  

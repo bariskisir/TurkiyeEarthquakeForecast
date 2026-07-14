@@ -1,0 +1,681 @@
+
+--- Sayfa 1 ---
+Medical Speech Symptoms Classification via
+Disentangled Representation
+Jianzong Wang1†, Pengcheng Li1,2† , Xulong Zhang1B , Ning Cheng1, Jing Xiao1
+1Ping An Technology (Shenzhen) Co., Ltd.
+2University of Science and Technology of China
+jzwang@188.com, pechola.lee@outlook.com, zhangxulong@ieee.org,
+{chengning211, xiaojing661}@pingan.com.cn
+Abstract—Intent is defined for understanding spoken language
+in existing works. Both textual features and acoustic features
+involved in medical speech contain intent, which is important
+for symptomatic diagnosis. In this paper, we propose a medical
+speech classification model named DRSC that automatically
+learns to disentangle intent and content representations from
+textual-acoustic data for classification. The intent representations
+of the text domain and the Mel-spectrogram domain are extracted
+via intent encoders, and then the reconstructed text feature and
+the Mel-spectrogram feature are obtained through two exchanges.
+After combining the intent from two domains into a joint
+representation, the integrated intent representation is fed into
+a decision layer for classification. Experimental results show that
+our model obtains an average accuracy rate of 95% in detecting
+25 different medical symptoms.
+Index Terms—medical speech, multi-modal neural network,
+speech representation disentanglement
+I. INTRODUCTION
+The questioning ability of medical students needs to be
+accumulated for a long time [1], however, it is difficult for
+schools to allow students to study for decades to achieve a
+high level of questioning ability. The current solution is to
+recognize intent from doctor-patient interviews [2], by anno-
+tating the intent of the utterances in advance. Blackley et al.
+[3] point out that speech recognition for clinic documentation
+is increasingly common, but is also heterogeneous. Narayanan
+et al. [4] propose a speech system that focuses on speech
+recognition, translation and dialogue management, aiming to
+assist in medical communication.
+With the development of deep learning in recent years,
+various intelligent medical signal processing or healthcare
+systems based on deep learning are proposed [5]. The general
+idea behind these diagnosing symptoms is to convert speech
+to text via automatic speech recognition (ASR) models, and
+then perform sentence grammar analysis on the text.
+However, human speech contains not only textual informa-
+tion (i.e. linguistic information) but also a variety of acoustic
+information (e.g. pitch, rhythm and emotion) related to the
+intent [6]. But most early deep learning works ignore the
+acoustic feature of patients’ speeches. SpeechIC [6] is a
+intent classification model which extracts intent from text and
+audio domains. They design a model that uses both textual
+† Equal contribution.
+B Corresponding author.
+features and acoustic features for intent detection, and learns
+the embedding from textual and acoustic features through
+a convolutional neural network (CNN), then directly fuses
+the features of the two domains. But the success of these
+methods is due to the powerful feature extraction capabilities
+of CNN, which does not specifically analyze intent features
+related to medical symptoms speech. The extraction of intent
+for classification faces challenges, as the efficiency of the
+extraction process can only be restricted by the classification
+results.
+In order to effectively disentangle intent representations
+from medical speech and improve the accuracy of medical
+speech symptoms classification, we propose a model named
+DRSC which disentangles intent information from both text
+and Mel-spectrogram domains. The multi-modal model puts
+textual and acoustic features into the generative network sep-
+arately for disentanglement, the disentangled representations
+are then fused and sent to a classifier for medical symptoms
+classification. In this way, information related to symptoms is
+extracted from both textual and acoustic features of speech and
+then contributes to the diagnosis of symptoms. Experimental
+results show that DRSC achieves satisfactory performance,
+and the experiments on inaccurate transcriptions show that
+our model owns robustness. Our main contributions can be
+summarized as follows:
+• We introduce a multi-modal representation disentangling
+framework that factorizes domain-specific content fea-
+tures and domain-invariant symptom intent features.
+• Our proposed model achieves competitive performance in
+terms of accuracy and robustness on the Medical Speech,
+Transcription, Intent dataset.
+II. RELATED WORK
+A. Medical Speech Symptoms Classification
+A common solution for medical speech symptoms classifi-
+cation is to conduct feature engineering in the textual domain
+and combine neural networks for classification [7]. However,
+this series of methods only consider text but ignore the original
+acoustic information of speech. Because speech with the same
+text content may carry different intent information due to the
+speaking condition, these acoustic features are essential for
+understanding the underlying problems of patients. Previous
+arXiv:2403.05000v3  [cs.AI]  30 Apr 2024
+
+--- Sayfa 2 ---
+Ec
+Ei
+T
+“I feel a little 
+headache.”
+Ei
+Ec
+Gmel
+M
+u
+Gtext
+v
+Ec
+Ei
+Ei
+Ec
+Gmel
+Gtext
+Ei
+Ei
+intent (M)
+Fusion
+Classifier
+intent (T)
+text
+Mel-spectrogram
+#M
+#T
+cycle-consist loss
+distribution loss
+Fig. 1.
+Architecture and basic training objectives of DRSC, the model disentangles intent representations from text and Mel-spectrogram domains. Intent
+information extracted from the two domains is then fused for classification.
+studies [8], [9] show that the combination of textual features
+and acoustic features achieves good performance in speech
+emotion classification. With the development of deep learning,
+Mittal et al. [10] propose a multi-modal model named M3ER
+that extracts cues from face, text and speech for emotion
+recognition, and its test conducted on multi-modal datasets
+achieves good results.
+B. Generative Adversarial Network
+Generative Adversarial Network (GAN) [11] consists of a
+generator G and a discriminator D and its training approach
+is based on a game theory. In order to achieve the best
+performance, D is trained to distinguish a real sample x from
+a synthetic sample G(z) created by G with random noise z,
+and G is trained to synthesize samples as realistic as possible
+that can cheat D. In general, the adversarial relation between
+G and D is formulated in Eq. 1:
+min
+G max
+D V (D, G) = Ex∼p(x)[log D(x)]+
+Ez∼p(z)[log(1 −D(G(z)))]
+(1)
+where E represents the expected value and z follows sample
+distribution p(z). D is trained to minimize log D(x) while
+G is trained to minimize log(1 −D(G(z))) (i.e. maximize
+log(D(G(z)))). In other words, G and D are optimized by
+the following formulas respectively:
+max
+D VD(D, G) = Ex∼p(x)[log(D(x)]+
+Ez∼p(z)[log(1 −D(G(z)))]
+(2)
+max
+G VG(D, G) = Ez∼p(z)[log(D(G(x))]
+(3)
+Research on GAN can be divided into two categories. One
+is to enhance the stability of the training [12], and the other
+is to apply GAN to specific tasks [13], [14]. In this paper,
+we leverage GAN to disentangle speech representations for
+medical speech symptoms classification.
+C. Representation Disentanglement
+Learning the disentangled representations of interpretable
+generative factors of data is one of the foundations to allow
+artificial intelligence to think like people. Many types of
+research achieve successful representation disentanglement of
+image and speech for various low-level tasks, such as image
+translation [15] and voice conversion [16]. Mathieu et al.
+[17] combine conditional generative adversarial network and
+variational autoencoder for disentanglement. Odena et al. [18]
+introduce an auxiliary classifier, which can achieve class-
+related representation disentanglement. Lee et al. [15] intro-
+duces a novel cross-cycle consistency loss to embed images
+into two spaces for representation disentanglement, and DRVC
+[19] leverages this framework for voice conversion.
+III. METHOD
+The front-end framework of DRSC is inspired by an image
+style transferring model, DRIT [15]. Considering our multi-
+domain classification task, the key point to our method is the
+disentanglement of intent representations related to medical
+speech classification task from both text and Mel-spectrogram
+domains, and the disentangled information must be highly
+relevant to this medical task, in order to achieve efficient
+medical speech symptoms classification. We are going to
+introduce the proposed model and analyze its modules as well
+as loss functions.
+A. GAN-based Disentanglement
+As shown in Fig. 1, DRSC leverages GAN for speech
+representation disentanglement. In order to extract features
+highly correlated to the true intent, we use an operation
+called cross and restore for representation disentanglement
+and jointly use three designed loss functions to ensure the
+performance of disentanglement.
+
+--- Sayfa 3 ---
+Ei
+T
+“I feel a little 
+headache.”
+Ei
+M
+text
+Mel-spectrogram
+intent (M)
+Fusion
+Classifier
+intent (T)
+Fig. 2. In the inference stage, we only need to use the trained intent encoder
+to extract intent representations from two domains for classification.
+Our front-end framework consists of four groups of content
+encoders, intent encoders and generators. The network takes
+textual feature T (i.e. word vectors) and acoustic feature M
+(i.e. Mel-spectrogram) as inputs. Then disentangle the content
+and intent representations through the content encoder and
+intent encoder respectively. Firstly, exchange the intent repre-
+sentations between the text domain and the Mel-spectrogram
+domain, (i.e. the content representation from the text domain
+and the intent representation from the Mel-spectrogram do-
+main are fed into the generator to generator Gtext to obtain
+u, while the content representation from the Mel-spectrogram
+domain and the intent representation from the text domain
+are fed to generate v), then repeat the representation disen-
+tanglement and exchange the intent representations from two
+domains (i.e. intent representations extracted from u and v) for
+the second time, as well as feeding the content representations
+to the generators respectively. Finally, the text features ˆT and
+Mel-spectrogram features ˆ
+M are reconstructed.
+We embed the text domain and Mel-spectrogram domain en-
+coding into shared intent space Zi and domain-specific content
+spaces ZcT , ZcM , that is to say, the intent encoders disentangle
+intent representations from two domains into Zi, while the
+content encoders disentangle the remaining different content
+representations from two domains into ZcT and ZcM , as shown
+in Eq. 4. Our proposed method is based on an assumption that
+must be established: common intent information exists in both
+the text domain and the Mel-spectrogram domain, and it is
+indistinguishable.
+{zc
+text, zi
+text} = {Ec
+text(T), Ei
+text(T)}
+{zc
+mel, zi
+mel} = {Ec
+mel(M), Ei
+mel(M)}
+(4)
+where zc
+text is the content representation disentangled from
+the text domain, zi
+text is the intent representation in the text
+domain, and the same goes for zc
+mel and zi
+mel.
+During the inference stage, as shown in Fig. 2, we only
+need to use the parameter-trained intent encoder to disentan-
+gle the intent representations from the given text and Mel-
+spectrogram, and then perform feature fusion on these two
+extracted intent representations in the intent space, finally put
+the fused representation into the softmax layer for classifica-
+tion.
+The content encoder and intent encoder in DRSC are com-
+posed of a convolution bank which contains various kernels
+with different sizes, as well as multiple Conv1d blocks
+with residual connections. The intent encoder outputs intent
+representation through a dense block after convolution. The
+generator is also composed of several Conv1d blocks with
+residual connections.
+B. Feature Fusion Layer
+Since DRSC conducts classification according to multi-
+modal information, the fusion of intent information is nec-
+essary for its decision. We introduce feature-level fusion for
+DRSC as the representations from two domains disentangled
+via DRSC are both in the same space Zi, and can directly
+perform feature-level fusion. The feature fusion layer is simply
+composed of fully connected layers, which fuse intent repre-
+sentations extracted from the text and Mel-spectrogram into a
+joint representation.
+C. Loss Functions
+DRSC disentangles representations in the text domain and
+Mel-spectrogram domain into a shared intent space Zi and
+domain-specific content spaces ZcT , ZcM . Intent space aims
+to encode information related to intent classification from the
+two domains, while the content feature space aims to encode
+specific information remaining in each domain.
+1) Cycle-consist Loss: To classify medical conditions and
+use GAN for multi-modal decoupling representations, the
+premise is that the intent of the text domain and the intent
+of the Mel-spectrogram domain are theoretically exactly the
+same. Based on this assumption, as the intent encoders dis-
+entangle similar intent representations from the text domain
+and the Mel-spectrogram domain, we introduce a cyclic-
+consistency loss function to guide the re-extracted intent repre-
+sentation towards the previously extracted representation after
+two representation-exchange processes. The cyclic consistency
+constraint includes two stages:
+• Cross: Perform intent representation disentanglement and
+content representation disentanglement in text domain
+and Mel-spectrogram domain to obtain {zi
+text, zc
+text} and
+{zi
+mel, zc
+mel} respectively. Then exchange the intent rep-
+resentations, and generate {u, v} through generators.
+u = Gtext(zc
+text, zi
+mel), v = Gmel(zc
+mel, zi
+text)
+(5)
+• Restore: Exchange the intent representations again, and
+restore the original text feature and Mel-spectrogram
+feature through generators.
+ˆT = G(zc
+u, zi
+v), ˆ
+M = G(zi
+u, zc
+v)
+(6)
+After the cross and restore operation, the original text and
+Mel-spectrogram features are reconstructed. To strengthen this
+constraint, the cycle-consist loss is defined as follows:
+Lcc(T, M, ˆT, ˆ
+M) = Loss( ˆT, T) + Loss( ˆ
+M, M)
+(7)
+where T is the text feature, ˆT is the reconstructed text feature,
+M is the Mel-spectrogram feature and ˆ
+M is the reconstructed
+
+--- Sayfa 4 ---
+Mel-spectrogram feature. Loss(·) represents the proper cri-
+terion that measures the distance between two variables. As
+shown in Fig. 1, ˆT and ˆ
+M can be represented by Eq. 8.
+ˆT = Gtext(Ec
+text(u), Ei
+mel(v))
+ˆ
+M = Gmel(Ec
+mel(v), Ei
+text(u))
+(8)
+where the construction of u and v is shown in Eq. 5.
+2) Distribution Loss: In order to enable the intent en-
+coders Ei to learn the same feature from text domain and
+Mel-spectrogram domain, we let encoders encode the recon-
+structed features in text and Mel-spectrogram domain to obtain
+{Ei
+text( ˆT), Ei
+mel( ˆ
+M)} respectively, then use the distribution
+loss to facilitate approximation between them.
+Ldistri = Loss(Ei
+text( ˆT), Ei
+mel( ˆ
+M))
+(9)
+The purpose of Eq. 9 function is to minimize the distance
+between them.
+3) Classification Loss: After reconstructing the text domain
+and Mel-spectrogram domain features, we use the intent
+encoder to disentangle the intent representation from the
+reconstructed features { ˆT, ˆ
+M}, then fuse and classify the
+intent features of the two domains, where cross-entropy loss is
+used as the classification loss. Classification loss shown in Eq.
+10 ensures that the representations disentangled by the intent
+encoder are intent features related to the classification task.
+LCE = H(ˆy, y) = −
+X
+y log(soft max(ˆy))
+(10)
+where ˆy is the network prediction output, softmax(·) presents
+the prediction output ˆy in the form of probability, while y
+represents the ground-truth label.
+4) VAE Loss: To assist the reconstruction of text and Mel-
+spectrogram features, we use the latent variable space and
+encourage the representation from the latent variable space
+to be as close as possible to the prior Gaussian distribution,
+thus we leverage Kullback Leibler (KL) loss:
+LKL = E[DKL((zc)||Rs)]
+(11)
+where DKL(p||q) =
+nP
+i=1
+p(xi) log p(xi)
+q(xi), Rs is a random
+sample obeys distribution N(0, 1).
+5) Latent Regression Loss: We use latent space regression
+loss to encourage the invertible mapping between the text
+domain or Mel-spectrogram domain and the latent space. We
+randomly sample a content latent vector z from Gaussian
+distribution and try to reconstruct it via the generator G:
+Llr = Loss(Ec
+text(Gtext(Ei
+text(T), zc
+text), zc
+text)+
+Loss(Ec
+mel(Gmel(Ei
+mel(M), zc
+mel), zc
+mel)
+(12)
+where zc
+text is a randomly selected latent vector in text domain,
+zc
+mel is a randomly selected latent vector in Mel-spectrogram
+domain.
+6) Adversarial Loss: A domain adversarial loss Ladv is also
+provided, as text or Mel-spectrogram discriminator attempts
+to discriminate between real feature and generated feature
+(i.e. reconstructed feature) in each domain, and text or Mel-
+spectrogram generator tries to generate feature closer to reality.
+The last three losses are additional and optional. Combined
+with the above analysis and elaboration, it means that the
+overall objective function of our model is:
+min
+G,E max
+D λ1Lcc + λ2Ldistri + λ3LCE
++(λiLKL + λiiLlr + λiiiLadv)
+(13)
+IV. EXPERIMENTS
+A. Dataset and Data-Preprocessing
+We use pre-processed Medical Speech, Transcription, Intent
+dataset to evaluate the classification performance of DRSC.
+The dataset contains 6, 661 audio segments of varying lengths,
+including 25 types of symptom conditions, as shown in Fig. 3.
+Due to the low quality of some audio samples in the dataset,
+we apply a forward-backward digital filter to preserve filter
+characteristics from the unfiltered signals, thereby reducing
+their impact on the classification experiments [20]. These
+filters perform zero-phase filtering in both the forward and
+backward directions [21]. Short time Fourier transform is
+conducted to obtain Mel-spectrograms from waveforms. We
+randomly select 20% of the data from each symptom category
+as the test set, with approximately 35 ∼55 samples per
+category. To verify the robustness of our classification model,
+we additionally use the inaccurate text transcriptions obtained
+from a pre-trained ASR model as text input.
+Fig. 3. Statistics of symptom types in the dataset.
+B. Implementation Details
+A sampling of 16, 000 Hz is used for all the speech audio,
+256-bank Mel-spectrogram is generated through short-time
+Fourier transform (STFT). The experiment is conducted on
+a single Tesla V100. We use an Adam Optimizer [22] on a
+batch of size 16 with β1 = 0.9, β2 = 0.999, ϵ = 1 × 10−8
+and lr = 1×10−4, dropout is applied during training to avoid
+over-fitting. We experiment with equal weights for each loss
+component in Eq. 13.
+
+--- Sayfa 5 ---
+(a) SpeechIC (Mel-Txt-combined)
+(b) DRSC
+Fig. 4. Confusion matrixes of the baseline method’s and proposed method’s
+classification results. SpeechIC uses both Mel-spectrogram and text as input,
+obtaining better results than using Mel-spectrogram or text only.
+C. Compared Methods
+We use the speech intention classification (SpeechIC), a
+CNN model proposed by Gu et al. [6], as the baseline
+model, which takes either Mel-spectrogram, text, or both Mel-
+spectrogram and text as input. SpeechIC mainly consists of
+a multi-layer convolutional encoder, a feature fusion layer
+and a classification prediction layer. The original intention
+classification model is modified to complete symptoms classi-
+fication task. We evaluate the following models to compare the
+performance of the baseline method and our proposed method.
+SpeechIC Txt-only: only provide text as input for SpeechIC.
+SpeechIC Mel-only: only provide Mel-spectrogram as input
+for SpeechIC.
+SpeechIC Mel-Txt-combined: provide both Mel-spectrogram
+and text as input for SpeechIC.
+DRSC: The model we proposed takes in text and Mel-
+spectrogram to perform disentangling representation of symp-
+toms intent.
+D. Evaluation Results
+Firstly, we select different loss functions for Eq. 7, Eq. 9 and
+Eq. 12, and find out the proper distance criterion. As shown in
+Table I, L1(·) brings the best performance for DRSC, where
+L1 Loss=||a, b||1, L2 Loss=||a, b||2, KL Loss=DKL(a||b).
+Therefore, we choose L1(·) as the distance metric in our loss
+function for the subsequent experiments.
+TABLE I
+THE EFFECT OF DIFFERENT DISTANCE LOSS FUNCTIONS.
+Loss Function
+Accuracy (%)
+L1 (Manhattan distance)
+95.58
+L2 (Euclidean distance)
+94.34
+cosine distance
+94.66
+After determining the distance criterion of DRSC, we com-
+pare our proposed model with SpeechIC, using the confusion
+matrix and classification accuracy as evaluation indicators. The
+accuracy of each model is shown in Table II, and the confusion
+matrix is showcased in Fig. 4.
+TABLE II
+THE CLASSIFICATION ACCURACY OF VARIOUS METHODS IN THE
+CLASSIFICATION OF MEDICAL SPEECH SYMPTOMS.
+Method
+Accuracy (%)
+SpeechIC Txt-only
+67.65
+SpeechIC Mel-only
+73.04
+SpeechIC Mel-Txt-combined
+82.47
+DRSC
+95.58
+The results show that our proposed representation disentan-
+glement model has better accuracy than SpeechIC in medical
+speech symptoms classification. Our analysis of the confusion
+matrixes in Fig. 4 finds that our proposed model demonstrates
+a significant advantage in classification results compared to the
+baseline model SpeechIC, achieving almost 100% accuracy
+in the diagnosis of certain symptoms (e.g. stomachache, foot
+ache). However, the classification of certain symptoms like
+joint pain, is not so satisfactory.
+To verify the effect of the proposed additional optional
+loss functions, we conduct an ablation study to evaluate the
+additional loss functions mentioned. It can be easily seen from
+Table III that the additional loss functions bring significant
+improvement in classification accuracy.
+Finally, considering the difficulty of manually labelling
+speech text in practical scenarios, we explore the robustness
+
+--- Sayfa 6 ---
+TABLE III
+EXPLORE THE EFFECT OF THE ADDITIONAL LOSS FUNCTION.
+Method
+Accuracy (%)
+w/o additional optional loss
+81.19
+DRSC
+95.58
+of DRSC, we use the pseudo speech text automatically tran-
+scribed via an ASR model as the text input of DRSC, as the
+ASR model cannot produce a very accurate transcription from
+speech data, there is a 26% word error rate. However, our
+results from Table IV show that despite the use of imprecise
+transcriptions, DRSC is only 4% lower in prediction accuracy
+than using accurate text transcriptions. In the case of text-
+only for SpeechIC, the prediction accuracy is reduced by 9%,
+and the prediction accuracy of SpeechIC using both text and
+Mel-spectrogram is reduced by 8% in the case of inaccurate
+transcription of the text, which shows that our model is more
+robust, making accurate text transcription for medical intent
+classification is unnecessary.
+TABLE IV
+EXPLORE THE ROBUSTNESS OF THE MODEL.
+Method
+Text input
+Accuracy (%)
+SpeechIC (Txt-only)
+accurate
+67.65
+SpeechIC (Txt-only)
+inaccurate
+58.29
+SpeechIC (Mel-Txt-combined)
+accurate
+82.47
+SpeechIC (Mel-Txt-combined)
+inaccurate
+74.73
+DRSC
+accurate
+95.58
+DRSC
+inaccurate
+91.43
+V. CONCLUSION
+In this paper, we propose a medical classification model
+named DRSC which extracts intent information from both text
+and Mel-spectrogram domains for decision. With cross and
+restore operations, intent representations and content represen-
+tations are disentangled into the shared intent feature space
+and domain-specific content spaces, respectively. The intent
+representations from the text domain and the Mel-spectrogram
+domain are fused and used for medical classification. Experi-
+mental results show that DRSC outperforms existing methods
+in classification accuracy and owns robustness when facing
+inaccurate text transcriptions.
+VI. ACKNOWLEDGEMENT
+This paper is supported by the Key Research and De-
+velopment Program of Guangdong Province (grant No.
+2021B0101400003). Corresponding author is Xulong Zhang
+(zhangxulong@ieee.org) from Ping An Technology (Shen-
+zhen) Co., Ltd.
+REFERENCES
+[1] M. Daniel, J. Rencic, S. J. Durning, E. Holmboe, S. A. Santen,
+V. Lang, T. Ratcliffe, D. Gordon, B. Heist, S. Lubarsky et al., “Clinical
+reasoning assessment methods: a scoping review and practical guidance,”
+Academic Medicine, vol. 94, no. 6, pp. 902–912, 2019.
+[2] R. Rojowiec, B. Roth, and M. Fink, “Intent recognition in doctor-patient
+interviews,” in Language Resources and Evaluation Conference, 2020,
+pp. 702–709.
+[3] S. V. Blackley, J. Huynh, L. Wang, Z. Korach, and L. Zhou, “Speech
+recognition for clinical documentation from 1990 to 2018: a systematic
+review,” Journal of the American Medical Informatics Association,
+vol. 26, no. 4, pp. 324–338, 2019.
+[4] S. Narayanan, S. Ananthakrishnan, R. S. Belvin, E. Ettelaie, S. Gandhe,
+S. Ganjavi et al., “The transonics spoken dialogue translator: An aid
+for english-persian doctor-patient interviews.” in AAAI Technical Report
+(4), 2004, pp. 97–103.
+[5] G. Muhammad, F. Alshehri, F. Karray, A. El Saddik, M. Alsulaiman,
+and T. H. Falk, “A comprehensive survey on multimodal medical signals
+fusion for smart healthcare systems,” Information Fusion, vol. 76, pp.
+355–375, 2021.
+[6] Y. Gu, X. Li, S. Chen, J. Zhang, and I. Marsic, “Speech intention
+classification with multimodal deep learning,” Advances in Artificial
+Intelligence. Canadian Society for Computational Studies of Intelligence.
+Conference, vol. 10233, pp. 260–271, 2017.
+[7] K. R. Talbot, M.-T. Gruber, and R. Nishida, Eds., The Psychological
+Experience of Integrating Content and Language. Multilingual Matters,
+2021.
+[8] S. Yoon, S. Byun, and K. Jung, “Multimodal speech emotion recognition
+using audio and text,” in IEEE Spoken Language Technology Workshop,
+2018, pp. 112–118.
+[9] A. Christy, S. Vaithyasubramanian, A. Jesudoss, and M. A. Praveena,
+“Multimodal speech emotion recognition and classification using con-
+volutional neural network techniques,” International Journal of Speech
+Technology, vol. 23, no. 2, pp. 381–388, 2020.
+[10] T. Mittal, U. Bhattacharya, R. Chandra, A. Bera, and D. Manocha,
+“M3er: Multiplicative multimodal emotion recognition using facial,
+textual, and speech cues,” in AAAI Conference on Artificial Intelligence,
+vol. 34, no. 02, 2020, pp. 1359–1367.
+[11] I. J. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley,
+S. Ozair et al., “Generative adversarial nets,” in Advances in Neural
+Information Processing Systems, 2014, pp. 2672–2680.
+[12] M. Shahbazi, M. Danelljan, D. P. Paudel, and L. Van Gool, “Collapse
+by conditioning: Training class-conditional gans with limited data,” in
+International Conference on Learning Representations, 2021.
+[13] Y. Bai, Y. Zhang, M. Ding, and B. Ghanem, “Sod-mtgan: Small object
+detection via multi-task generative adversarial network,” in European
+Conference on Computer Vision, 2018, pp. 206–221.
+[14] N. K. Singh and K. Raza, “Medical image generation using generative
+adversarial networks: A review,” Health informatics: A Computational
+Perspective in Healthcare, pp. 77–96, 2021.
+[15] H. Lee, H. Tseng, J. Huang, M. Singh, and M. Yang, “Diverse image-to-
+image translation via disentangled representations,” in European Con-
+ference on Computer Vision, ser. Lecture Notes in Computer Science,
+vol. 11205, 2018, pp. 36–52.
+[16] S. Yang, M. Tantrawenith, H. Zhuang, Z. Wu, A. Sun, J. Wang et al.,
+“Speech representation disentanglement with adversarial mutual infor-
+mation learning for one-shot voice conversion,” in Annual Conference of
+the International Speech Communication Association, 2022, pp. 2553–
+2557.
+[17] M. Mathieu, J. J. Zhao, P. Sprechmann, A. Ramesh, and Y. LeCun, “Dis-
+entangling factors of variation in deep representation using adversarial
+training,” in Advances in Neural Information Processing Systems, 2016,
+pp. 5041–5049.
+[18] A. Odena, C. Olah, and J. Shlens, “Conditional image synthesis with
+auxiliary classifier gans,” in International Conference on Machine
+Learning, ser. Proceedings of Machine Learning Research, vol. 70, 2017,
+pp. 2642–2651.
+[19] Q. Wang, X. Zhang, J. Wang, N. Cheng, and J. Xiao, “DRVC: A
+framework of any-to-any voice conversion with self-supervised learn-
+ing,” in IEEE International Conference on Acoustics, Speech and Signal
+Processing, 2022, pp. 3184–3188.
+[20] H. A. Abdulmohsin, B. Al-Khateeb, S. S. Hasan, and R. Dwivedi,
+“Automatic illness prediction system through speech,” Computers and
+Electrical Engineering, vol. 102, p. 108224, 2022.
+[21] F. Gustafsson, “Determining the initial states in forward-backward
+filtering,” IEEE Transactions on Signal Processing, vol. 44, no. 4, pp.
+988–992, 1996.
+[22] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,”
+in International Conference on Learning Representations, 2015.

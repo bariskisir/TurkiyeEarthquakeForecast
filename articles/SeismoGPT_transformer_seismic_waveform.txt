@@ -1,0 +1,312 @@
+
+--- Sayfa 1 ---
+Forecasting Seismic Waveforms: A Deep Learning
+Approach for Einstein Telescope
+Waleed Esmail,𝑎,∗Alexander Kappes,𝑎Stuart Russell𝑏and Christine Thomas𝑏
+𝑎Institut für Kernphysik, Universität Münster,
+Wilhelm-Klemm-Straße 9, 48149, Münster
+𝑏Institut für Geophysik, Universität Münster,
+Corrensstraße 24, 48149, Münster
+E-mail: wesmail@uni-muenster.de
+We introduce SeismoGPT, a transformer-based model for forecasting three-component seismic
+waveforms in the context of future gravitational wave detectors like the Einstein Telescope. The
+model is trained in an autoregressive setting and can operate on both single-station and array-based
+inputs. By learning temporal and spatial dependencies directly from waveform data, SeismoGPT
+captures realistic ground motion patterns and provides accurate short-term forecasts. Our results
+show that the model performs well within the immediate prediction window and gradually degrades
+further ahead, as expected in autoregressive systems. This approach lays the groundwork for data-
+driven seismic forecasting that could support Newtonian noise mitigation and real-time observatory
+control.
+39th International Cosmic Ray Conference (ICRC2025)
+15–24 July 2025
+Geneva, Switzerland
+∗Speaker
+© Copyright owned by the author(s) under the terms of the Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0).
+https://pos.sissa.it/
+arXiv:2509.21446v1  [cs.LG]  25 Sep 2025
+
+--- Sayfa 2 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+1.
+Introduction
+Seismic noise is a critical consideration for ground-based gravitational wave (GW) detectors,
+especially when it comes to limiting their sensitivity in the low-frequency band. These detectors
+aim to measure tiny variations in relative length, so any other source of motion, such as seismic
+vibrations, can introduce significant noise into the system.
+Seismic noise refers to the persistent and variable ground vibrations that are present everywhere
+on Earth [1]. Seismic waves are classified into two main types: body waves (P and S waves that
+move through the interior of the Earth) and surface waves (Rayleigh and Love waves that travel
+along the surface and decay with depth).
+In GW detectors, seismic noise couples into the system in two main ways:
+• Mechanical transmission through suspensions and isolation systems: Ground motion directly
+shakes the optical components. Even in underground detectors, seismic motion at 10 Hz can
+still be many orders of magnitude stronger than a GW signal [1].
+• Newtonian Noise (NN): This is subtler. Seismic waves change the density of the surrounding
+ground and air, which causes fluctuations in the gravitational field, which in turn, pull directly
+the detector’s test masses. [2].
+Given the significant impact of seismic noise, especially in the 0.1–10 Hz frequency band,
+ground-based GW detectors rely on highly sophisticated isolation systems to keep it under control
+[1]. These systems are designed to prevent ground vibrations from coupling into the test masses,
+and they come in two main forms: passive isolation, which uses mechanical filtering through
+pendulums and springs, and active isolation, which involves sensors and actuators to detect and
+cancel vibrations in real time.
+For future third-generation GW detectors, such as the Einstein Telescope (ET) [3] and Cosmic
+Explorer (CE) [4], the plan is to extend the detection band below 10 Hz, which will require significant
+upgrades to the suspension systems to improve seismic attenuation in the low-frequency band.
+In this article, we introduce a deep learning-based approach for predicting seismic waveforms.
+While the primary focus is on forecasting, this method has potential applications in seismic noise
+mitigation, especially for future GW detectors operating in the low-frequency band. We have the
+ET particularly in mind, but the approach is general and could be applied to other observatories as
+well. Such predictions could support active control systems, help with NN subtraction, or improve
+detector scheduling by anticipating periods of high seismic activity.
+2.
+Deep Learning-Based Seismic Waveform Prediction
+2.1 Motivation and Background
+Traditional methods like Wiener filtering [5] have already been used in current detectors to
+subtract coherent seismic noise, especially in the context of NN mitigation. These filters rely on
+linear assumptions and require dense sensor arrays, and while they’ve shown promising results, they
+still have limitations. Their performance drops when the seismic field is non-stationary or when
+2
+
+--- Sayfa 3 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+the correlations between sensors and the target change over time, which is often the case in real
+environments.
+This is where deep learning can be a potentially significant enhancement. Instead of relying on
+fixed linear correlations, neural networks can learn non-linear patterns, handle complex temporal
+dynamics, and adapt better to changing conditions. The idea is not to replace existing systems, but
+to explore whether a data-driven approach can complement and enhance current noise mitigation
+strategies, especially in the low-frequency range where NN is expected to dominate.
+2.2 Model Architecture
+We developed a transformer-based architecture, SeismoGPT, shown in Figure 1, for seismic
+waveform forecasting. The core idea is to frame the task as sequence modeling, where the model
+predicts the future evolution of a waveform given a short context window. We implement two
+versions of the model: one for single-station input and one for seismic arrays. Both share the same
+core architecture but differ in how spatial context is handled.
+SeismoGPT is based on the transformer encoder [6], which uses self-attention to capture long-
+range dependencies. In our autoregressive setup, we use causal attention, where each token attends
+only to the current and past tokens, not the future.
+Given an input sequence 𝑋∈R𝑇×𝑑, causal self-attention is defined as:
+Attention(𝑋) = softmax
+𝑄𝐾⊤
+√𝑑𝑘
++ 𝑀
+
+𝑉,
+where 𝑄= 𝑋𝑊𝑄, 𝐾= 𝑋𝑊𝐾, 𝑉= 𝑋𝑊𝑉are linear projections with learnable weights, and 𝑀is a
+lower-triangular mask:
+𝑀𝑖𝑗=
+(
+0
+if 𝑗≤𝑖,
+−∞
+if 𝑗> 𝑖.
+This masking enforces the autoregressive property, ensuring predictions rely only on past and
+present context.
+2.2.1 Single-Station Model
+The single-station version of SeismoGPT forecasts three-component seismic waveforms using
+a short context window from a single sensor. The input is a waveform tensor 𝑋∈R𝑇×3, where 𝑇
+is the number of time steps and the last dimension represents the Z, N, and E components. This
+waveform is split into 𝑁non-overlapping tokens of length 𝐿, resulting in 𝑋tok ∈R𝑁×𝐿×3.
+Each token is flattened along the temporal and channel dimensions and passed through a 1D
+convolutional embedding block, producing a high-dimensional sequence 𝑍∈R𝑁×𝑑. To retain
+temporal structure, sinusoidal positional encoding [6] is added to 𝑍, and the result is fed into a stack
+of transformer encoder layers with causal attention.
+The encoded sequence 𝐻∈R𝑁×𝑑is projected back to the original token shape using a linear
+prediction head:
+ˆ𝑌tok ∈R𝑁×𝐿×3,
+which represents the predicted waveform for each token.
+3
+
+--- Sayfa 4 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+2.2.2 Array-Based Model
+The array-based version of SeismoGPT forecasts seismic waveforms by leveraging spatial
+correlations across a network of stations. It processes input data of shape 𝑋∈R𝐵×𝑆×𝑁×𝐿×3, where
+𝐵is the batch size, 𝑆is the number of stations, 𝑁is the number of tokens per station, 𝐿is the token
+length, and 3 denotes the waveform components (Z, N, E).
+Each token is flattened and embedded via a 2D convolutional network:
+𝑋flat ∈R𝐵×𝑆×𝑁×(𝐿·3) →𝑍∈R𝐵×𝑆×𝑁×𝑑,
+where 𝑑is the embedding dimension. The embedded sequence is then reshaped into two
+branches: temporal and spatial. For temporal modeling, each station is treated independently:
+𝑍temp ∈R(𝐵·𝑆)×𝑁×𝑑,
+and for spatial modeling, each time step across all stations is grouped:
+𝑍spat ∈R(𝐵·𝑁)×𝑆×𝑑.
+Each sequence is passed through its own positional encoding. The temporal branch uses causal
+self-attention, while the spatial branch applies full self-attention:
+𝐻temp = Transformertemp(𝑍temp),
+𝐻spat = Transformerspat(𝑍spat).
+The outputs are reshaped, summed, and projected back to waveform space using a linear head:
+ˆ𝑌tok ∈R𝐵×𝑆×(𝑁·𝐿)×3,
+which represents the predicted 3-component waveform for each station over time.
+2.3 Training
+2.3.1 Training Data
+To train and evaluate the proposed SeismoGPT models, we generated a synthetic dataset of
+noise-free seismic waveforms using physically realistic source parameters and a global 1D Earth
+model. Each event is simulated using the Instaseis framework [7] using the ak135f_2s database
+from Syngine1, which uses the ak135 1D velocity model [8].
+The source mechanisms are based on randomly generated moment tensors, created using
+a custom generator fitted to the statistical distribution of the Global Centroid Moment Tensor
+(GCMT) catalog2.
+For each event, a set of synthetic three-component seismograms is simulated for receivers
+located at random azimuths and angular distances in the range 21–49 degrees. This range cor-
+responds to teleseismic distances where waveform characteristics remain relatively stable across
+events. Limiting the source-receiver geometry to this controlled window helps reduce variability
+due to complex propagation effects and ensures more consistent training conditions for the model.
+1https://ds.iris.edu/ds/products/syngine/
+2https://www.globalcmt.org/
+4
+
+--- Sayfa 5 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+(a) Single-station SeismoGPT model architecture.
+(b) Array-based SeismoGPT model architecture.
+Figure 1: Overview of the SeismoGPT architectures for seismic waveform forecasting. The single-station
+model (left) uses causal attention over temporal tokens.
+The array-based model (right) leverages both
+temporal and spatial attention using separate transformer branches.
+The Instaseis interface returns velocity waveforms, which are then bandpass filtered according to the
+fundamental period of the database (2 s) and tapered to minimize edge effects. The simulation setup
+includes arrival time computation for 𝑃and 𝑆waves using the TauPyModel, ensuring consistency
+between waveform filtering and theoretical travel-time picking.
+For the single-station setup, both the source and receiver locations are randomized, with the
+angular distance mentioned above. For the array-based model, we simulate a 16-station seismic
+network positioned near the proposed ET site in the Euregio Meuse-Rhine (EMR) region. The
+stations are arranged in a controlled geometric layout: 12 are distributed symmetrically around the
+vertices of an equilateral triangle (with a 10 km side length), and four are placed centrally.
+2.3.2 Training Procedure
+To train the SeismoGPT models, we employed an autoregressive forecasting setup where the
+model learns to predict the next token. The input waveform is tokenized into non-overlapping
+segments using a token length of 16 samples. For both models—the single-station and the array-
+based version, a fixed context window of 64 tokens (corresponding to 1024 samples) is used as
+input. Each token is passed through a convolutional embedding network followed by a transformer
+encoder consisting of 6 layers and 8 attention heads per layer.
+During training, padding masks are randomly applied to the input token sequence, such that only
+a subset of the full context window is retained as input. This regularization technique encourages
+the model to generalize better by forcing it to perform predictions given variable context lengths.
+5
+
+--- Sayfa 6 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+Figure 2: Prediction results from the single-station model. The input context consists of 40 tokens, and the
+model autoregressively predicts the remaining 24 tokens. The predicted waveform (crosses) is overlaid on
+the ground truth (solid lines) for each component (Z, N, E).
+The target sequence is aligned accordingly, and the padding mask is used in the attention mechanism
+to ignore padded positions. The model is trained to minimize a simple mean squared error loss
+between the predicted and ground-truth waveform segments.
+Both model versions are trained using the Adam optimizer [9] with a learning rate of 5 × 10−4.
+Learning rate scheduling is applied using a StepLR scheduler with a decay factor of 0.8 every 5
+epochs. Training is performed for a maximum of 100 epochs with early stopping based on validation
+loss, using a patience of 3 epochs. The training runs are conducted on two NVIDIA RTX 4090
+GPUs.
+3.
+Results
+To assess the performance of SeismoGPT, we evaluate both the single-station and array-based
+architectures. As a representative example, the model is provided with a context window of 40
+tokens, each consisting of 16 samples, which corresponds to approximately 337.9 seconds of
+past waveform data (given a sampling rate of 1.9 Hz).
+Based on this context, the model then
+autoregressively forecasts the next 24 tokens (384 samples, or approximately 202.1 seconds). This
+setup is used here as a showcase to demonstrate the model’s capabilities, but other context and
+prediction lengths are also possible.
+As illustrated in Figures 2 and 3, the models demonstrate strong predictive accuracy during
+the initial forecast steps. This behavior is expected, as the model is still operating within a temporal
+range close to the input context.
+However, as prediction advances further into the future, the
+uncertainty increases and the accuracy gradually deteriorates. This is a direct consequence of the
+autoregressive decoding strategy: at each step, the model predicts a single token based on the
+previously observed. This predicted token is then appended to the context and used to forecast the
+next one. As a result, errors tend to accumulate over time, propagating from early inaccuracies and
+compounding with each subsequent step.
+Despite this challenge, both models are able to capture the general waveform structure, in-
+cluding phase arrivals and oscillatory features, with reasonable fidelity. Notably, the array-based
+6
+
+--- Sayfa 7 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+Station 1
+Station 2
+Station 3
+Station 4
+Station 9
+Station 10
+Station 11
+Station 12
+Station 13
+Station 14
+Station 15
+Station 16
+Station 5
+Station 6
+Station 7
+Station 8
+Z
+N
+E
+Figure 3: Prediction results from the array-based model for all 16 stations. Each station subplot shows the 3
+components (Z, N, E) with the ground truth in solid lines and predictions as overlaid crosses. Same context
+and forecast settings as in Figure 2.
+model benefits from the spatial redundancy across stations, which leads to more stable predictions
+compared to the single-station setting—especially in the later stages of the forecast window.
+4.
+Conclusion
+In this work, we introduced SeismoGPT, a transformer-based model designed to forecast seismic
+waveforms using both single-station and array-based input. The model operates autoregressively,
+using a fixed context window to generate future waveform segments token by token. While the core
+architecture remains the same in both settings, the array-based version takes advantage of spatial
+7
+
+--- Sayfa 8 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+correlations across the seismic network to improve long-term stability. Our results show that the
+model performs well in predicting the general structure of the waveforms, particularly in the early
+stages of the forecast window. As expected, prediction quality degrades further into the future due
+to the autoregressive nature of the setup, where small errors can accumulate over time. That said,
+the overall performance is encouraging. The network is able to learn key waveform features and
+produce realistic forecasts even several minutes ahead. This opens the door to future applications
+where seismic forecasting could assist in active noise mitigation strategies, NN subtraction, or even
+real-time operational planning for gravitational wave observatories like the ET.
+Acknowledgments
+This work is funded by the ErUM-WAVE project 05D2022, “ErUM-Wave: Antizipation 3-
+dimensionaler Wellenfelder”, which is supported by the German Federal Ministry of Education and
+Research (BMBF).
+References
+[1] L. Trozzo and F. Badaracco, “Seismic and Newtonian Noise in the GW Detectors” Galaxies
+10 (2022) no.1, 20 doi:10.3390/galaxies10010020
+[2] J. Harms,
+“Terrestrial gravity fluctuations” Living Rev. Rel. 22 (2019) no.1,
+6
+doi:10.1007/s41114-019-0022-2
+[3] M. Punturo, M. Abernathy, F. Acernese, B. Allen, N. Andersson, K. Arun, F. Barone,
+B. Barr, M. Barsuglia and M. Beker, et al. “The Einstein Telescope: A third-generation
+gravitational wave observatory” Class. Quant. Grav. 27 (2010), 194002 doi:10.1088/0264-
+9381/27/19/194002
+[4] E. D. Hall, “Cosmic Explorer: A Next-Generation Ground-Based Gravitational-Wave Obser-
+vatory” Galaxies 10 (2022) no.4, 90 doi:10.3390/galaxies10040090
+[5] S. Koley, J. Harms, A. Allocca, E. Calloni, R. De Rosa, L. Errico, M. Esposito, F. Badaracco,
+L. Rei and A. Bertolini, et al. “Adaptive algorithms for low-latency cancellation of seismic
+Newtonian-noise at the Virgo gravitational-wave detector” Phys. Rev. D 110 (2024) no.2,
+022002 doi:10.1103/PhysRevD.110.022002 [arXiv:2404.13170 [gr-qc]].
+[6] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser and
+I. Polosukhin, “Attention Is All You Need” [arXiv:1706.03762 [cs.CL]].
+[7] van Driel, M., Krischer, L., Stähler, S. C., Hosseini, K., and Nissen-Meyer, T. “Instaseis:
+instant global seismograms based on a broadband waveform database” Solid Earth, 6(2)
+(2015), 701–717. https://se.copernicus.org/articles/6/701/2015/.
+[8] Kennett, B.L.N. and Engdahl, E.R. and Buland, R. “Constraints on seismic velocities in the
+Earth from traveltimes” Geophysical Journal International, 122(1) (1995), 108–124.
+8
+
+--- Sayfa 9 ---
+Forecasting Seismic Waveforms: A Deep Learning Approach for Einstein Telescope
+Waleed Esmail
+[9] D. P. Kingma and J. Ba, “Adam: A Method for Stochastic Optimization” [arXiv:1412.6980
+[cs.LG]].
+9

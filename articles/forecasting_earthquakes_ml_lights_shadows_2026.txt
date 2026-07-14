@@ -1,0 +1,1360 @@
+
+--- Sayfa 1 ---
+RESEARCH
+Earth Science Informatics (2026) 19:24
+https://doi.org/10.1007/s12145-026-02078-x
+exact time, location, and magnitude– remains a scientifi­
+cally elusive and highly debated goal, the focus has increas­
+ingly shifted towards probabilistic earthquake forecasting. 
+In this domain, the goal is to estimate the probability of seis­
+mic occurrences within specific spatio-temporal windows, 
+a task theoretically more amenable to statistical modeling.
+In recent years, Machine Learning (ML) techniques have 
+been extensively adopted in seismology. It is crucial to dis­
+tinguish between two main applications: (1) the use of ML 
+for data processing, such as phase picking (Mousavi et al. 
+2020; Beroza et al. 2021) and catalog generation, which has 
+yielded robust results, and (2) the direct application of ML 
+for earthquake forecasting (Johnson et al. 2021). Although 
+the former has become a standard tool, the latter remains 
+controversial. Numerous studies have reported remarkable 
+success in forecasting seismic activity using complex algo­
+rithms, often achieving accuracy metrics exceeding 90% in 
+retrospective experiments (Yavas et  al. 2024; Asim et  al. 
+2017; Corbera Terrones et al. 2025; Asim et al. 2018; Hajik­
+hodaverdikhan et al. 2018).
+Nevertheless, a growing body of literature cautions against 
+these optimistic results. Significant concerns have been raised 
+Introduction
+Seismic events represent a persistent threat to global popu­
+lation safety and critical infrastructure integrity. Although 
+the deterministic prediction of earthquakes –specifying 
+Jesús Jover Alfaro, Enrique Arias Antúnez, and Jose Antonio Mateo 
+Cortés contributed equally to this work.
+Communicated by: H. Babaie.
+	
+ Jesús Jover-Alfaro
+jesus.jover@uclm.es
+Enrique Arias-Antúnez
+enrique.arias@uclm.es
+Jose Antonio Mateo-Cortés
+joseantonio.mateo@uclm.es
+1	
+Albacete Research Institute of Informatics, University of 
+Castilla-La Mancha, Paseo de los Estudiantes, s/n, 
+Albacete 02071, Albacete, Spain
+2	
+Computing Systems Department, University of Castilla-La 
+Mancha, Paseo de los Estudiantes, s/n, Albacete 02071, 
+Albacete, Spain
+Abstract
+Machine Learning techniques have gained traction in earthquake forecasting, with recent studies reporting exceptionally 
+high accuracy rates. However, concerns regarding the reliability of these models in real-world scenarios persist. This study 
+provides a critical reappraisal of a recently proposed Machine Learning workflow that originally reported >97% accuracy 
+in forecasting seismic events. We replicated the methodology using a new dataset from Tokyo, Japan, to assess its gener­
+alizability and robustness. While standard random train-test splits reproduced the originally reported high accuracy (>99%) 
+in this distinct tectonic setting, subsequent analysis revealed this performance to be an artifact of data leakage. When sub­
+jected to rigorous time-based validation and walk-forward testing, the model’s predictive performance dropped drastically 
+to near-baseline levels (24%). Furthermore, direct cross-location testing yielded results indistinguishable from random 
+chance (16%), confirming that the model relies on local artifacts rather than physical precursors. Our findings suggest that 
+the promising results often found in the literature may stem from improper handling of seismic data characteristics. We 
+conclude that the advance of ML-based earthquake forecasting requires a fundamental shift towards stricter methodologi­
+cal standards, prioritizing realistic validation protocols and domain-specific rigor over optimistic performance metrics.
+Keywords  Earthquake forecasting · Machine learning · Data leakage · Temporal validation
+Received: 10 December 2025 / Accepted: 26 January 2026 / Published online: 12 February 2026
+© The Author(s) 2026
+Forecasting earthquakes by Machine Learning techniques: lights and 
+shadows
+Jesús Jover-Alfaro1
+ · Enrique Arias-Antúnez2
+ · Jose Antonio Mateo-Cortés2
+1 3
+
+--- Sayfa 2 ---
+Earth Science Informatics (2026) 19:24
+regarding the "black box" nature of these models and, more 
+critically, the validation protocols employed. As highlighted 
+in similar debates within the physics community, complex 
+Deep Learning models can sometimes overfit simple physi­
+cal laws or exploit statistical artifacts if not rigorously tested 
+(Mignan and Broccardo 2019). This vulnerability becomes 
+particularly evident when models confront domain shifts. For 
+instance, recent work by Chatterjee et al. (2025) demonstrates 
+that deep learning architectures trained for specific tasks, 
+such as polarity picking, struggle to generalize across differ­
+ent tectonic environments without significant retraining and 
+adaptation. Reinforcing this issue of generalizability, there 
+is a well-founded concern that standard validation methods 
+(e.g., random k-fold cross-validation) fail to capture the non-
+stationary and causal nature of seismogenic processes, lead­
+ing to data leakage and a gross overestimation of predictive 
+efficacy in real-world scenarios.
+The present work addresses this discrepancy through a 
+critical reappraisal of Machine Learning-based earthquake 
+forecasting workflows (Yavas et al. 2024) . The objective 
+here is twofold: first, to evaluate the generalizability of the 
+model by replicating it in a fundamentally different tectonic 
+setting (Tokyo, Japan) compared to the original study (Los 
+Angeles, USA); and second, to dissect how experimental 
+conditions –specifically the violation of temporal causality– 
+inflate reported performance.
+This manuscript is organized as follows: Section “Back­
+ground” provides a background on the current state of ML 
+in seismology. Section 3 details the experimental replica­
+tion using the Tokyo dataset. Finally, Section “Forecasting 
+in real-world situations” and “Discussion” discuss the meth­
+odological flaws identified, demonstrating how enforcing 
+strict temporal validation collapses the model’s performance 
+to near-baseline levels, and offering recommendations for 
+future research directions.
+Background
+Seismic events represent one of the natural disasters with the 
+greatest socioeconomic impact worldwide. The economic 
+consequences are substantial. For example, a 2023 report 
+from the US Geological Survey (USGS) estimated that 
+earthquakes cost the United States an annual $14.7 billion 
+in building damage and related losses alone (Jaiswal 2023). 
+Regarding the impact in human lives, the figures are equally 
+alarming. The World Health Organization (WHO) reported 
+that in the 1998-2017 period, over 125 million people were 
+affected by earthquakes, resulting in injury, displacement, or 
+loss of their homes (Organization 2025). Furthermore, spe­
+cific tools exist for quantifying and forecasting the human 
+impact following a seismic event (Wang et al. 2024). Thus, 
+seismic forecasting is established as a priority research field. 
+Although predictive strategies must operate on a local scale 
+due to the high dependence on the seismotectonic charac­
+teristics of each region, the precise estimation of a future 
+earthquake’s magnitude is a crucial factor. This estimation 
+is fundamental for the design of effective mitigation plans 
+that allow for the reduction of the devastating social and 
+economic impact of these phenomena (Aksoy et al. 2024).
+The preceding evidence underscores the need to develop 
+seismic forecasting methods that encompass not only the 
+magnitude, but also the location, time of occurrence, and 
+its probability. However, the intrinsically chaotic and non-
+linear nature of seismogenic processes represents a formi­
+dable scientific challenge, often requiring adaptive signal 
+processing techniques to handle non-stationary data (Singh 
+and Roy 2025; Mache et al. 2022). Despite these difficul­
+ties, the scientific community has produced an extensive 
+amount of work in this area, proposing a diverse range of 
+methodologies (Tehseen et al. 2020; Mousavi and Beroza 
+2023; Chitkeshwar 2024).
+Existing approaches can be broadly classified into two main 
+categories: those based on Machine Learning models applied 
+to catalog data and those that employ time-series analysis of 
+continuous precursor signals. The following section describes 
+some of the most representative works in these areas.
+A notable study is the work of Wang et al. (2022), who 
+approaches the problem from the perspective of both time-
+series and non-time-series data. The aim of their work is 
+to create a system for monitoring and collecting anomalous 
+signals that act as earthquake precursors. Using this data, 
+the authors evaluate and compare classic predictive models 
+to determine the most suitable one. Their results conclude 
+that the LSTM (Long-Short Term Memory) model provides 
+the highest performance in their experimental framework.
+Similarly, Saad et al. (2023) proposed a framework based 
+on electromagnetic and geo-acoustic data from the AETA 
+network. Unlike typical retrospective analyses, they con­
+ducted a 30-week real-time forecasting test, achieving an 
+accuracy of 70%. This approach highlights the potential of 
+integrating physical precursor signals with Machine Learn­
+ing models under prospective evaluation conditions
+Within the machine learning-based approaches, a rep­
+resentative work is the work of Singh and Roy (2025), 
+focused on forecasting the magnitude of earthquakes in 
+India. The distinctive contribution of this study is the use 
+of geographical and meteorological data for the construc­
+tion of the input variables (features). The authors evaluate 
+and compare the performance of several algorithms, specifi­
+cally Gradient Boosting, Light Gradient Boosting Machine 
+(LightGBM), XGBoost, and Random Forest. Their findings 
+reveal that the optimal model varies according to the size of 
+the dataset: Gradient Boosting is more effective for small 
+1 3
+24 
+Page 2 of 15
+
+--- Sayfa 3 ---
+Earth Science Informatics (2026) 19:24
+datasets, XGBoost for medium-sized ones, and LightGBM 
+for large volumes of data. However, the maximum coeffi­
+cient of determination (R2) achieved is approximately 0.54, 
+a value that indicates limited predictive capability within 
+the proposed experimental framework.
+Following a similar approach, Yavas et al. (2024) propose 
+a methodology for estimating the maximum potential magni­
+tude of an earthquake within a 100-kilometer radius around 
+Los Angeles and within a 30-day time horizon. To do this, 
+the authors use 21 input variables derived from the Califor­
+nia Earthquake Data Center (SCEDC) catalog. The study 
+evaluates a broad spectrum of machine learning algorithms, 
+including Logistic Regression, Random Forest, XGBoost, 
+and Deep Learning techniques such as LSTM. The most 
+outstanding results were obtained with the Random Forest 
+model, achieving an accuracy of 97.97% and values close to 
+1 in other relevant metrics such as the F1-score and precision.
+Based on the review of the state-of-the-art, and in light 
+of the outstanding performance reported by Yavas et  al. 
+(2024), the present work focuses on a systematic evaluation 
+of this methodology. The objective is to analyze its robust­
+ness, transferability to different tectonic settings, and the 
+methodological validity regarding temporal causality.
+To guide this research, the following hypotheses are 
+proposed:
+Hypothesis 1  (Generalizability) The methodology pre­
+sented can be extended to other locations and maintain its 
+predictive capabilities. To corroborate this hypothesis, the 
+same experiment presented for Los Angeles has been rep­
+licated for the city of Tokyo, Japan. Given that Tokyo pres­
+ents a fundamentally different seismotectonic environment, 
+dominated by subduction zones compared to the strike-slip 
+regime of Los Angeles, this test evaluates whether the model 
+learns universal seismic precursors or site-specific artifacts.
+Hypothesis 2  (Temporal Causality) The employed method­
+ology respects the temporal structure of seismic time-series 
+during the training and validation process. To corroborate 
+this hypothesis, a rigorous “walk-forward” validation test 
+will be performed. Seismic events are causally linked (e.g., 
+mainshock-aftershock sequences following Omori’s Law Utsu 
+1961), meaning that the order in which the data is divided must 
+be preserved. If the original methodology failed to account for 
+this causality (inducing data leakage Kapoor and Narayanan 
+2022), the results under strict temporal validation should drop 
+significantly compared to the results presented by the authors.
+The empirical validation of these hypotheses constitutes 
+the fundamental contribution of this work, shedding light on 
+the real-world applicability and limitations of the evaluated 
+methodology for seismic forecasting.
+Experimental replication
+As previously mentioned, this work focuses on the critical 
+replication of the study by Yavas et al. (2024). In their work, 
+the authors aim to forecast the largest magnitude event in 
+the next 30 days, framing it as a multi-class classification 
+problem. Their study focuses on the Los Angeles area, a 
+densely populated region characterized by a transform plate 
+boundary system involving the Pacific and North Ameri­
+can plates, hosting major active faults such as San Andreas, 
+Puente Hills, and Santa Monica. This combination of high 
+population density and active faulting renders Los Angeles 
+one of the highest seismic risk urban areas globally.
+In the original work, authors utilized the earthquake cata­
+log provided by the Southern California Earthquake Data 
+Center (SCEDC), selecting events occurring within a 100 
+km radius of central Los Angeles from January 2012 to Sep­
+tember 2024. To ensure consistency, all magnitudes were 
+converted to a unified scale using empirical relationships. 
+The dataset comprises over 23,000 events, whose magni­
+tude range varies between 0.65 and 5.5 once converted.
+The remarkable performance reported by Yavas et al. 
+(2024), with metrics summarized in Table 1, motivates the 
+testing of their approach in other high-seismicity regions. 
+To evaluate the generalizability of this methodological 
+framework, this study extends its application to a distinct 
+tectonic setting: Tokyo, Japan. Although Los Angeles is 
+situated on a transform boundary, Tokyo is located near 
+a complex triple junction dominated by subduction pro­
+cesses. We intentionally apply the original study’s spa­
+tial criterion (a 100 km radius around the city center) to 
+this new environment. This allows us to assess whether 
+the claimed predictive capability is robust across different 
+seismotectonic regimes or if it is an artifact specific to the 
+original dataset constraints.
+The procedure defined by the original authors has been 
+rigorously followed, commencing with an exploratory data 
+analysis and the subsequent generation of input features. The 
+features used in this work correspond to a subset of those 
+proposed in the reference study, as detailed in Table 2. For 
+an exhaustive description of the calculation and rationale of 
+these variables, the reader is referred to the original article.
+Table 1  Performance metrics using Random Forest classifier for Los 
+Angeles dataset
+Metric
+Performance
+Accuracy
+0.9797
+Precision
+0.9797
+Recall
+0.9797
+F1-score
+0.9797
+ROC-AUC
+0.9989
+Source: Values extracted from the original work (Yavas et al. 2024)
+1 3
+Page 3 of 15 
+24
+
+--- Sayfa 4 ---
+Earth Science Informatics (2026) 19:24
+Dataset
+To replicate the experiment in Tokyo, authors used the 
+Japan Unified hI-resolution relocated Catalog for Earth­
+quakes (JUICE) (Yano et al. 2017), provided by the National 
+Research Institute for Earth Science and Disaster Resilience 
+(NIED). The events were spatially filtered using a 100 km 
+radius centered on Tokyo (Latitude 35.6977◦N, Longitude 
+139.6925◦E), strictly adhering to the spatial selection criteria 
+defined in the original study. The catalog covers the period 
+from 2001 to 2012, a timeframe comparable in duration to 
+the reference dataset. The final dataset comprises 60,942 
+seismic events with magnitudes ranging from 0 to 6.10. The 
+disparity in event counts –60,942 in Tokyo versus approxi­
+mately 23,000 in Los Angeles– is attributed to the superior 
+detection threshold of the Japanese Hi-net network, which 
+comprises high-sensitivity instruments in deep boreholes. 
+In contrast, the SCSN (Southern California Seismic Net­
+work) data utilized in the original study, while incorporating 
+high-precision instruments, reflects a more heterogeneous 
+instrumental composition. The specialized, high-resolution 
+relocation process of the JUICE catalog inherently results in 
+a lower network-wide detection threshold compared to the 
+regional catalog provided by the SCEDC.
+Exploratory data analysis
+First, the magnitude distribution is analyzed using a histo­
+gram with a Kernel Density Estimate (KDE), as shown in 
+Fig. 1. The distribution exhibits a strong positive skew, with 
+the frequency of events peaking around magnitude 0.8–1.0 
+and decreasing exponentially for higher magnitudes, consis­
+tent with standard seismicity models.
+Figure 2 illustrates the Frequency-Magnitude Distri­
+bution (FMD) of the catalog. The blue dots represent the 
+observed cumulative frequency, whereas the red line 
+Table 2  Input variables used (Yavas et al. 2024)
+No.
+Variable
+Explanation
+1
+Latitude
+Latitude of the earthquake epicenter
+2
+Longitude
+Longitude of the earthquake epicenter
+3
+di
+Rolling Mean of Depth
+4
+Magnitude
+Magnitude of the earthquake
+5
+Tsince last
+Time elapsed since the last earthquake
+6
+b-value
+Gutenberg-Richter b-value for the moment 
+magnitude
+7
+∆bi,i−2
+Incremental b-value between events i and 
+i −2
+8
+∆bi−2,i−4
+Incremental b-value between events i −2 
+and i −4
+9
+∆bi−4,i−6
+Incremental b-value between events i −4 
+and i −6
+10
+∆bi−6,i−8
+Incremental b-value between events i −6 
+and i −8
+11
+∆bi−8,i−10
+Incremental b-value between events i −8 
+and i −10
+12
+M last week
+max
+Maximum magnitude recorded during the 
+last week
+13
+Cclust
+Clustering Coefﬁcient
+14
+σmag,30
+Standard Deviation of Magnitude
+15
+η
+Sum of the mean square deviation from the 
+regression line
+16
+∆M
+Difference between the largest observed and 
+expected magnitudes
+17
+T
+Elapsed time between the last n events
+18
+µ
+Mean time between events
+19
+CV
+Coefficient of variation of the inter-event 
+times
+20
+√EΣ
+Square root of the cumulative seismic energy
+21
+Neq,30
+Number of Earthquakes in the Last 30 Days
+Note: Features in bold were removed by the authors to reduce mul­
+ticollinearity. Feature in red were not used in our experimental 
+replication. i corresponds with the i-th event in the catalog, sorted 
+chronologically
+Fig. 1  Number of earthquake by 
+magnitude
+ 
+1 3
+24 
+Page 4 of 15
+
+--- Sayfa 5 ---
+Earth Science Informatics (2026) 19:24
+observed subsequently. Three notable peaks occur in 2006 
+(∼9,500 events), 2009 (∼9,800 events), and 2011 (∼9,200 
+events). The 2009 peak suggests significant swarm activity 
+or aftershock sequences, while the 2011 peak is temporally 
+correlated with induced seismicity and aftershocks follow­
+ing the Tohoku-Oki earthquake (Mw 9.0).
+Finally, the geographical distribution of the events is 
+visualized in Fig. 5, which includes tectonic boundaries for 
+context. A high density of seismic activity is observed in the 
+central and southeastern sectors, particularly around Chiba 
+and Kanagawa. The spatial clustering combined with the 
+observed depth profile is consistent with the complex inter­
+action of the shallow crustal faults and the upper boundary 
+of the Philippine Sea Plate in the Kanto region.
+Features engineering
+Feature extraction was performed on the JUICE catalog 
+following the descriptions and mathematical formulations 
+provided by the original authors. The resulting input vari­
+ables are detailed in Table 2. However, one feature from 
+the original study was excluded: the global clustering coef­
+ficient (Cclust). This variable was omitted because the 
+original manuscript did not specify the distance threshold 
+parameter (ϵ) essential for its calculation. Introducing an 
+arbitrary threshold would rely on unverifiable assumptions, 
+potentially introducing bias into the model. Consequently, 
+to maintain methodological rigor and avoid artifacts, Cclust 
+indicates the best linear fit derived from the Gutenberg-
+Richter (GR) law, defined as log10 N = a −bM, where N 
+is the cumulative number of earthquakes with magnitude 
+≥M, and a and b are region-specific constants reflecting 
+seismicity rate and stress accumulation, respectively. Using 
+the maximum curvature method, the magnitude of com­
+pleteness was estimated at Mc = 1.2. The regression analy­
+sis yields an a-value of 5.35 and a b-value of 0.86, with a 
+determination coefficient of R2 = 0.99. This strong linear 
+correlation for M ≥Mc confirms that the catalog adheres 
+to the expected GR scaling within the detectable range, sup­
+porting the data quality for the analyzed thresholds (Wiemer 
+and Wyss 2000; Woessner and Wiemer 2005).
+Regarding the depth distribution (Fig. 3), the events 
+are primarily concentrated in the upper 40 km of the litho­
+sphere. The distribution is relatively uniform within this 
+range, with larger magnitude events occurring predomi­
+nantly below 15 km. It is important to note that this depth 
+range (0–40 km) captures crustal seismicity and events 
+associated with the upper interface of the subducting Phil­
+ippine Sea Plate. Deeper seismic activity associated with 
+the Pacific Plate slab, which subducts beneath the Kanto 
+region at greater depths, falls outside the primary scope of 
+this shallow-focus dataset.
+The temporal distribution of earthquakes from 2000 to 
+2012 is presented in Fig. 4, highlighting the non-stationary 
+nature of the seismic series. Although the period 2001–2005 
+shows relatively stable activity, significant fluctuations are 
+Fig. 4  Events distribution by year
+ 
+Fig. 3  Relationship between events magnitude and depth
+ 
+Fig. 2  Scatteplot of log10(N) of earthquakes by magnitude. Red line 
+represent best fit for a lineal regression with Mc = 1.2
+ 
+1 3
+Page 5 of 15 
+24
+
+--- Sayfa 6 ---
+Earth Science Informatics (2026) 19:24
+	
+●
+Quantile Intervals: Divide the data such that each class 
+contains approximately the same number of samples.
+	
+●
+Jenks Natural Breaks: An optimization method that mini­
+mizes within-class variance while maximizing between-
+class variance, identifying natural clusters in the data.
+Figure 6 illustrates the resulting class distributions. The 
+equal-width strategy (blue) yields a highly imbalanced dis­
+tribution, which could introduce significant bias towards 
+the majority class in standard classifiers. Although quantile 
+binning offers uniformity, it may group physically distinct 
+magnitudes together. The Jenks strategy, on the contrary, 
+adapts to the statistical distribution of the data, preserving 
+natural magnitude clustering.
+To maintain strict methodological consistency with the 
+reference study, the Jenks Natural Breaks strategy was 
+selected. The resulting class boundaries and event counts 
+for the Tokyo dataset are detailed in Table 3.
+was excluded from the analysis. This lack of parameter 
+specification highlights a reproducibility gap in the reference 
+methodology.
+Target variable
+Following the protocol established by Yavas et al. (2024), 
+the target variable was defined as the maximum magnitude 
+of any seismic event that occurred within a 30-day win­
+dow following each catalog entry. To frame the forecasting 
+task as a multi-class classification problem, the continuous 
+magnitude targets were discretized into six distinct classes. 
+We evaluated three discretization strategies to assess their 
+impact on class distribution:
+	
+●
+Equal-width intervals: Partitions the magnitude range 
+into intervals of equal size.
+Fig. 6  A visual breakdown of event 
+counts across six classes, generated 
+by three distinct discretization 
+techniques: equal interval, quantile, 
+and Jenks
+ 
+Fig. 5  Geographical distribution of earthquakes. Red lines 
+represent the boundaries between plates (Bird 2003). Blue lines 
+represents active faults (Styron and Pagani 2020)
+ 
+1 3
+24 
+Page 6 of 15
+
+--- Sayfa 7 ---
+Earth Science Informatics (2026) 19:24
+The performance metrics for the trained models using test­
+ing set are presented in Table 4. Consistent with the original 
+findings, the Random Forest classifier achieved the highest 
+accuracy, with the XGB classifier performing similarly but 
+with significantly lower computational cost.
+A detailed analysis of the Random Forest model (Table 5) 
+reveals performance metrics that are exceptionally high. The 
+model achieved accuracy, precision, recall, and F1-scores of 
+0.9952, figures that would typically indicate a near-perfect 
+predictive capability. Figure 9 displays the confusion matri­
+ces, showing negligible classification errors across all mag­
+nitude classes. The ROC-AUC of 0.9999 and a log-loss of 
+0.130 further underscore the statistical perfection of the fit 
+under these specific validation conditions. To further assess 
+the stability of the model and ensure the results were not an 
+artifact of a specific random seed, we additionally performed 
+a 10-fold cross-validation (CV) procedure using whole data. 
+This CV test yielded consistent accuracy between 0.9917 
+and 0.9956, confirming the stability of these results within 
+this experimental setup.
+Nevertheless, the interpretation of these results requires 
+caution. The fact that the model achieves >99% accuracy on 
+the Tokyo dataset –a region with a fundamentally different 
+subduction-driven tectonic regime compared to the trans­
+form faults of Los Angeles– challenges the first hypothesis. 
+In this work, authors initially hypothesized that applying 
+a model trained on local features to a completely different 
+geodynamic context would result in performance variance. 
+Instead, the replication of identical, near-perfect metrics 
+in two disparate tectonic environments suggests that the 
+model’s success may not stem from learning site-specific 
+seismogenic physics, but potentially from methodological 
+artifacts common to both experiments. This anomaly is crit­
+ically analyzed in the following section.
+Forecasting in real-world situations
+As demonstrated in the previous sections, the methodol­
+ogy proposed by Yavas et al. (2024) yielded near-perfect 
+performance metrics (>99% accuracy) in both Los Ange­
+les and Tokyo. It is important to note that the model was 
+retrained from scratch using Tokyo-specific data, allow­
+ing it to adapt to local seismic characteristics. However, 
+achieving >99% accuracy in this fundamentally different 
+tectonic setting–identical to the performance in Los Ange­
+les–warrants critical examination. This consistency sug­
+gests that the high performance is not driven by the model 
+capturing physical precursors, but potentially by method­
+ological artifacts inherent to the experimental workflow.
+A fundamental principle in Machine Learning is that 
+standard validation techniques, such as random k-fold 
+Model training and evaluation
+The authors of Yavas et al. (2024) develop an ML-based 
+approach to improve earthquake forecasting in the Los 
+Angeles region. Based on a dataset of over 23,000 seis­
+mic events (2012–2024), they evaluated 16 different algo­
+rithms, concluding that the Random Forest model achieved 
+the highest accuracy (97.97%) in forecasting the maximum 
+magnitude class for the subsequent 30-day window, fol­
+lowed closely by XGBoost.
+In this replication study, authors systematically tested the 
+Random Forest method, identified as the top-performing 
+model in the reference article. Additionally, to ensure a com­
+prehensive benchmark, the remaining classifiers using the 
+’LazyPredict’ library Pandala and Silva (2024) were evalu­
+ated. All models were assessed using the metrics defined in 
+the original study: accuracy, precision, recall, F1-score, and 
+Area Under the ROC Curve (ROC-AUC).
+Following the exact protocol of the reference study, we 
+employed a hold-out validation strategy. The dataset was 
+randomly split into a training set (80%) and a separate 
+testing set (20%), without imposing a temporal block con­
+straint. Crucially, since the objective of this work was to 
+strictly replicate the methodology proposed by Yavas et al. 
+(2024), we utilized the identical hyperparameters reported 
+in the original study. Consequently, no separate validation 
+subset was reserved for hyperparameter tuning or model 
+selection during the training phase. To verify that the rep­
+lication matches the distributional characteristics of the 
+original work, authors analyzed the subsets’ properties. As 
+detailed in Figs. 7, 8, the random split results in training 
+and test sets that are statistically identical across temporal 
+dimensions.
+	
+●
+Temporal distribution: The annual distribution of events 
+is uniform between training and test sets, meaning the 
+test set contains events interspersed throughout the en­
+tire catalog duration (2001–2012), rather than a future 
+time block.
+	
+●
+Feature and Spatial Distribution: The magnitude-depth 
+relationship and epicentral locations are consistent 
+across both subsets, preserving the global spatial pat­
+terns in both the training and evaluation phases.
+Table 3  Natural breaks classification for maximum magnitude of next 
+seismic event in the next 30 days for Tokyo dataset
+Class
+Boundaries
+Number of events
+Class 0
+0.9-2.8
+8711
+Class 1
+2.8-3.3
+9718
+Class 2
+3.3-3.8
+13390
+Class 3
+3.8-4.3
+12198
+Class 4
+4.3-5.0
+8663
+Class 5
+5.0-6.1
+8210
+1 3
+Page 7 of 15 
+24
+
+--- Sayfa 8 ---
+Earth Science Informatics (2026) 19:24
+does not learn to forecast; it merely interpolates between 
+known events, using future information that would be 
+unavailable in a real-time operational setting.
+This methodological oversight leads to three critical 
+consequences:
+	
+●
+Performance Overestimation: By allowing the model ac­
+cess to future correlations during training, metrics are ar­
+tificially inflated, failing to reflect true forecasting utility.
+	
+●
+Generalization Failure: Models trained on random splits 
+overfit to the specific temporal structure of the historical 
+catalog, resulting in poor performance when deployed 
+on truly unseen future data (Ying 2019).
+	
+●
+Misguided Risk Assessment: Unjustified confidence in 
+inflated metrics can lead to dangerous complacency in 
+disaster preparedness and decision-making.
+To accurately assess the utility of a forecasting model, 
+validation schemes must enforce strict temporal causal­
+ity. The most basic approach is a time-based split, where 
+cross-validation, rely on the assumption that data points 
+are Independent and Identically Distributed (I.I.D.). How­
+ever, seismic data inherently violates this assumption. 
+Earthquakes are stochastic processes governed by strong 
+temporal dependencies, most notably manifesting as seis­
+mic clustering and aftershock sequences (e.g., following 
+Omori’s Law). The occurrence of a mainshock significantly 
+alters the probability of subsequent events in its vicinity.
+When a dataset is split randomly without temporal con­
+straints –as inferred from the methodology in the reference 
+study– this causal structure is destroyed. Random split­
+ting allows events from the "future" (e.g., aftershocks) to 
+be assigned to the training set, while their causal "past" 
+(the mainshock) is assigned to the test set. This creates a 
+phenomenon known as data leakage (or look-ahead bias) 
+(Kapoor and Narayanan 2022). In this scenario, the model 
+Table 5  Performance metrics using Random Forest classifier for 
+Tokyo dataset
+Metric
+Performance
+Accuracy
+0.9952
+Precision*
+0.9952
+Recall*
+0.9952
+F1-score*
+0.9952
+Log loss
+0.1300
+ROC-AUC (ovr)
+0.9999
+* means weighted-averaged
+Fig. 7  Number of earthquake 
+by magnitude in train and test 
+dataset
+ 
+Fig. 8  Events distribution by year 
+in train and test dataset
+ 
+Table 4  Performance comparison of various classification models for 
+Tokyo dataset
+Model
+Accuracy
+Balanced 
+accuracy
+F1-score Exe­
+cution 
+time 
+(s)
+RandomForestClassifier
+0.99
+0.99
+0.99
+12.52
+XGBClassifier
+0.99
+0.99
+0.99
+1.26
+LGBMClassifier
+0.98
+0.98
+0.98
+2.24
+DecisionTreeClassifier
+0.96
+0.96
+0.96
+0.88
+KNeighborsClassifier
+0.66
+0.67
+0.67
+0.50
+SVC
+0.59
+0.58
+0.60
+53.92
+LogisticRegression
+0.41
+0.41
+0.40
+0.27
+AdaBoostClassifier
+0.35
+0.34
+0.35
+3.78
+GaussianNB
+0.35
+0.34
+0.34
+0.02
+1 3
+24 
+Page 8 of 15
+
+--- Sayfa 9 ---
+Earth Science Informatics (2026) 19:24
+First, authors applied a time-based split, designating the 
+first 80% of the catalog for training and the subsequent 20% 
+(the most recent events) for testing. Under these conditions, 
+using the identical hyperparameters as the original study, the 
+Random Forest classifier’s accuracy collapsed from 0.9797 
+to 0.2093 when evaluated on the test set. Table 6 provides 
+a stark comparison of performance metrics with and with­
+out temporal violations (TV). Figure 10 provides confusion 
+matrices, both absolute and normalized. Notably, under 
+strict temporal validation, the Logistic Regression classifier 
+marginally outperformed the Random Forest, achieving an 
+accuracy of 0.22, though still performing poorly.
+Subsequently, a walk-forward evaluation was conducted. As 
+the original provided dataset lacks explicit timestamps, event 
+indices were used as a proxy for time, preserving the sequential 
+order. The protocol utilized an initial training window of 1,900 
+events, testing against the subsequent 450 events. In each itera­
+tion, the window rolled forward by 450 events. Across the total 
+47 iterations covering the 22,899-event dataset, the accuracy 
+results are visualized in Fig. 11. The mean accuracy across all 
+iterations was 0.2595 (median: 0.2311).
+Crucially, this performance fails to surpass the ZeroR 
+baseline (the accuracy obtained by always predicting the 
+majority class), which was established by the original 
+authors at 0.2769. This indicates that, after removing data 
+a chronological cut-off point strictly separates training 
+(past) and testing (future) data. A more robust technique 
+is walk-forward evaluation (also known as rolling-origin 
+evaluation), which simulates the operational lifecycle of 
+a forecasting system. As utilized in this study (Koehler 
+et al. 2023), this method proceeds iteratively: 
+1.	 Train the model using historical data available up to 
+time t.
+2.	 Evaluate the forecasting performance on a future win­
+dow from t + 1 to t + n, where n is the length of the 
+evaluation period.
+3.	 Advance the time window (roll forward), incorporating 
+the observed data into the training set.
+4.	 Repeat the process across the entire timeline.
+The final performance is calculated as the aggregate of all 
+iterations, providing a realistic estimate of how the model 
+would perform in a live monitoring scenario.
+In the following sections, authors subject the Random 
+Forest model to these rigorous temporal validation pro­
+tocols using both the original Los Angeles dataset and the 
+Tokyo replication dataset. This stress-test serves to distin­
+guish between genuine predictive skill and artifacts of data 
+leakage.
+Impact of enforcing temporal causality in Los 
+Angeles
+Leveraging the original dataset provided by Yavas et al. 
+(2024), authors first assessed whether the reported high 
+performance holds when the chronological order of 
+events is preserved. This test specifically evaluates the 
+presence of look-ahead bias by ensuring the training set 
+strictly precedes the validation set.
+Table 6  Performance of the methodology presented for Los Angeles 
+dataset with Temporal Violation (events’ order not preserved) and 
+when Temporal Violation is not present. Values have been recomputed 
+using dataset provided by original authors in Yavas et al. (2024). * 
+means weighted-averaged
+Metric
+With TV
+Without TV
+Accuracy
+0.9766
+0.2093
+Precision*
+0.9766
+0.1821
+Recall*
+0.9766
+0.2093
+F1-score*
+0.9766
+0.1705
+Fig. 9  Confusion matrices (absolute and normalized) for the Random Forest classifier
+ 
+1 3
+Page 9 of 15 
+24
+
+--- Sayfa 10 ---
+Earth Science Informatics (2026) 19:24
+all classifiers tested under temporal constraints, AdaBoost 
+achieved the highest accuracy at 0.27.
+Finally, walk-forward evaluation was performed using 
+the explicit timestamps available in the JUICE catalog. 
+The initial training set comprised 12 months of data, fol­
+lowed by a 3-month evaluation window. The window 
+rolled forward in 3-month increments. Across the 60,891 
+samples, the mean accuracy was 0.2376 (median: 0.2353), 
+as shown in Fig. 12.
+To contextualize this performance, the baseline accuracy 
+for the Tokyo dataset was calculated using Eq. 1, resulting in 
+a value of 0.2198 (using ZeroR baseline Witten et al. 2011). 
+Although the Random Forest model slightly exceeds this 
+leakage, the Machine Learning model implemented follow­
+ing this specific workflow demonstrates no predictive skill 
+superior to a naive heuristic for short-term forecasting in the 
+Los Angeles region.
+Impact of enforcing temporal causality in Tokyo
+The analysis of the Tokyo dataset provides results consis­
+tent with the Los Angeles case study. First, applying the 
+strict 80%/20% chronological training/test split resulted in 
+a Random Forest accuracy of 0.2528 when evaluated on 
+the test set. Table 7 contrasts the performance between the 
+random (shuffled) and temporal splitting strategies. Among 
+Fig. 11  Accuracy of Random Forest classifier with the walk-forward 
+validation test for Los Angeles. Initial dataset of 1900 events with 450 
+events included in each iteration, maintaining temporal order. Blue 
+series represent iteration accuracy, while red series represents one-year 
+moving average
+ 
+Fig. 10  Confusion matrices (absolute and normalized) for the Random Forest classifier in Los Angeles dataset maintaining temporal order
+ 
+1 3
+24 
+Page 10 of 15
+
+--- Sayfa 11 ---
+Earth Science Informatics (2026) 19:24
+only fails to extract predictive signals but performs worse 
+than a static statistical distribution. This is likely due to the 
+model making confident but incorrect predictions on unseen 
+future data, which are heavily penalized by the log-loss 
+metric, whereas the baseline remains robust by adhering to 
+historical averages.
+The analyses conducted in these sections lead to the 
+definitive refutation of Hypothesis 2. It was postulated that 
+if the methodology respected temporal causality, its perfor­
+mance would remain stable under rigorous validation. How­
+ever, the dramatic performance degradation observed in 
+both tectonic settings –dropping from >99% to ∼20 −25%
+– demonstrates that the original results were heavily reliant 
+on data leakage.
+Evaluation on a temporally independent hold-out set
+To provide further confirmation that the reported high per­
+formance is an artifact of data leakage, an additional experi­
+ment was conducted using a strictly temporally independent 
+hold-out set. In this setup, the complete Tokyo catalog was 
+first sorted chronologically. The final 5% of the events were 
+reserved to serve as a fully unseen, future test set, simulat­
+ing a real-world forecasting scenario.
+The remaining 95% of the data was processed following 
+the original methodology: it was shuffled and split randomly 
+into training (80%) and testing (20%) sets. The model was 
+then trained using the identical hyperparameters described 
+in the reference study.
+baseline by approximately 1.8 percentage points, this mar­
+ginal gain is negligible in a practical forecasting context. 
+It suggests that the model captures minimal signal beyond 
+the background seismicity rate when denied access to future 
+information.
+Baseline Accuracy = Number of instances in the most frequent class
+Total number of instances
+
+(1)
+Finally, to interpret the likelihood-based performance rigor­
+ously, we benchmarked the model’s log-loss against a Prior-
+based Baseline. This baseline predictor assigns a constant 
+probability to each class equal to its historical frequency 
+in the training set. The contrast is stark. When temporal 
+violations are preserved, the model achieved a log-loss of 
+0.13 compared to a baseline of 1.774, resulting in a positive 
+Information Gain of 1.645. However, under strict tempo­
+ral validation, the model’s performance degraded to a log-
+loss of 4.08, significantly worse than the baseline log-loss 
+of 1.790. This yields a negative Information Gain (-2.306), 
+indicating that the complex Machine Learning model not 
+Table 7  Performance of the methodology presented for Tokyo dataset 
+with Temporal Violation (events’ order not preserved) and when Tem­
+poral Violation is not present. * means weighted-averaged
+Metric
+With TV
+Without TV
+Accuracy
+0.9952
+0.2528
+Precision*
+0.9952
+0.3022
+Recall*
+0.9952
+0.2528
+F1-score*
+0.9952
+0.2500
+Log-loss
+0.1300
+4.0800
+ROC-AUC (ovr)
+0.9999
+0.4847
+Fig. 12  Accuracy of Random Forest classifier with the walk-forward 
+validation test for Tokyo. Initial dataset of 12 months with 3-months 
+events inclusion in each iteration, maintaining temporal order. Blue 
+series represent iteration accuracy, while red series represents one-year 
+moving average
+ 
+1 3
+Page 11 of 15 
+24
+
+--- Sayfa 12 ---
+Earth Science Informatics (2026) 19:24
+Discussion
+The results of this study provide conclusive evidence that 
+the exceptional performance reported in recent Machine 
+Learning-based earthquake forecasting literature is, to a 
+significant extent, an artifact of data-leakage arising from 
+validation protocols that ignore the causal structure of seis­
+mic data. By strictly replicating a representative high-per­
+forming workflow, authors demonstrated that the reported 
+accuracy (>99%) is not a measure of predictive skill, but 
+rather a quantification of the ability to interpolate between 
+known events, using future information that would not be 
+available in a real-time operation–a phenomenon effectively 
+constituting overfitting.
+The breakdown of this performance under rigorous test­
+ing reveals the precise nature of the failure. First, the Cross-
+Location Generalization Assessment demonstrated that 
+models trained in one tectonic setting fail catastrophically 
+when applied to another (accuracy dropping to  16%). If 
+the models were truly learning universal physical precur­
+sors of seismicity, some degree of transferability would be 
+expected. The fact that they perform "perfectly" in their 
+native training environment but fail purely at random in a 
+new location indicates that the models are not learning seis­
+mology, but are instead overfitting to the specific statistical 
+idiosyncrasies and noise of their local catalog.
+Secondly, we addressed the concern that data leakage 
+might stem from specific input features, such as rolling 
+b-values or magnitudes, which can encode future informa­
+tion if defined loosely. However, our ablation study revealed 
+that even after removing all features potentially susceptible 
+to this leakage (e.g., b-values, rolling means), the model 
+trained with a random split still achieved >97% accuracy 
+on Tokyo dataset. This confirms that the leakage is not pri­
+marily feature-driven but methodology-driven. The ran­
+dom splitting strategy creates a training set rich in samples 
+temporally adjacent to the test samples. Given the high 
+autocorrelation of seismic time-series, the model learns to 
+interpolate these neighbors rather than forecast future states.
+This conclusion is solidified by the Temporally Indepen­
+dent Hold-out evaluation. The stark contrast between the 
+near-perfect accuracy (>99%) on the randomized test set 
+and the baseline performance (29%) on the strictly separated 
+future hold-out set serves as a definitive proof of look-ahead 
+bias. The model effectively operates as a sophisticated inter­
+polator within the known timeline but loses all utility when 
+forced to extrapolate to unseen future data.
+This study reinforces the warning that increased algo­
+rithmic complexity cannot compensate for a lack of 
+rigorous experimental design. When strict temporal cau­
+sality was enforced, the model’s performance collapsed to 
+The results of this experiment illustrate a stark contrast 
+in performance depending on the evaluation scheme. When 
+evaluated on the randomized test set, the model reproduced 
+the originally reported metrics, achieving an accuracy 
+exceeding 0.99. However, when the exact same model was 
+evaluated on the chronologically reserved hold-out set, the 
+performance collapsed drastically.
+The model achieved an accuracy of 0.29, with a weighted 
+precision of 0.46, a recall of 0.29, and an F1-score of 0.27. 
+These results are consistent with the baseline levels observed 
+in the walk-forward validation. This discrepancy confirms 
+that the model’s apparent success on the random split is due 
+to its ability to interpolate within the time series using future 
+information (leakage), rather than a genuine capability to 
+extrapolate and forecast future seismic events.
+Cross-location generalization assessment
+To definitively assess whether the models have learned 
+universal seismic precursors or merely memorized local 
+statistical structures (Hypothesis 1), a direct cross-location 
+generalization test was performed. In this experiment, the 
+model trained on the Los Angeles dataset was directly eval­
+uated on the Tokyo dataset without any retraining or fine-
+tuning, and vice versa.
+A methodological adjustment was necessary to ensure 
+compatibility between the distinct datasets. Since the Los 
+Angeles dataset provided by the original authors contained 
+only the discrete target class labels (and not the raw con­
+tinuous magnitude of the target event), it was not possible 
+to recalculate its classes to match the Tokyo distribution. 
+Therefore, we aligned the Tokyo dataset’s target classes to 
+strictly match the class boundaries and definitions used in 
+the Los Angeles model.
+The results of this cross-evaluation demonstrate a 
+complete collapse in the predictive capability of the 
+specific models generated by this workflow. The model 
+trained on Los Angeles data, which achieved an accu­
+racy of 0.9797 in its native environment, yielded an 
+accuracy of 0.16, precision of 0.12, recall of 0.16, and 
+F1-score of 0.08 when applied to Tokyo. Conversely, the 
+model trained on Tokyo data, with a native accuracy of 
+>0.99, dropped to an accuracy of 0.15, precision of 0.15, 
+recall of 0.15, and F1-score of 0.12 when tested on Los 
+Angeles data.
+These performance metrics, which fall below the level 
+of random chance for a six-class problem, strongly indicate 
+that the high accuracy reported in the original study is not 
+derived from transferable physical features of seismogene­
+sis, but rather from overfitting to site-specific characteristics 
+and local data artifacts.
+1 3
+24 
+Page 12 of 15
+
+--- Sayfa 13 ---
+Earth Science Informatics (2026) 19:24
+2.	 Information-Based Evaluation: Accuracy is often a mis­
+leading metric in imbalanced datasets like earthquake 
+catalogs. CSEP utilizes likelihood-based tests (e.g., 
+N-test, L-test) that penalize both missed events and 
+false alarms more robustly than simple classification 
+accuracy.
+Furthermore, any ML model claiming utility must be 
+benchmarked against operational baselines, most notably 
+the Epidemic-Type Aftershock Sequence (ETAS) model. 
+Since ETAS explicitly captures the temporal clustering and 
+triggering that ML models often exploit implicitly (or erro­
+neously via leakage), it remains the de-facto standard for 
+short-term seismicity forecasting. Demonstrating consistent 
+outperformance over ETAS within a CSEP-style framework 
+should be considered a minimum criterion before claiming 
+practical utility.
+Beyond strict validation protocols, there is a need to 
+reconsider the forecasting target itself. The framing of 
+earthquake forecasting as a simple classification task (e.g., 
+predicting "maximum magnitude" bins), as seen in the rep­
+licated study, often oversimplifies the seismogenic process. 
+Operational forecasting benefits significantly from esti­
+mating tangible physical parameters, such as stress field 
+variations and pressure changes, rather than relying solely 
+on discrete magnitude labels (Kroll and Sherman 2023). 
+Although metrics like log-loss can improve probabilistic 
+interpretation, future ML efforts should aim to integrate 
+with physical constraints, modeling these continuous state 
+parameters to directly inform hazard assessment.
+In conclusion, while Machine Learning offers powerful 
+tools for seismology, its application to forecasting requires 
+a fundamental shift towards stricter methodological stan­
+dards. Our analysis shows that ignoring the temporal nature 
+of seismic phenomena leads to illusory results that do not 
+generalize. Genuine progress will only be possible if the ML 
+community moves beyond optimizing accuracy on static 
+datasets and embraces the rigorous, prospective testing stan­
+dards championed by the seismological community through 
+frameworks like CSEP.
+Acknowledgements  The author acknowledges support from a pred­
+octoral contract at the University of Castilla-La Mancha (UCLM), co-
+funded by the European Union through the European Social Fund Plus 
+(ESF+) under the Castilla-La Mancha 2021-2027 Programme.
+Author Contributions  Conceptualization: J.A, E.A and J.M. Method­
+ology: J.A, E.A and J.M. Formal analysis and investigation: J.A. Writ­
+ing - original draft preparation: J.A. and E.A. Writing - review and 
+editing: E.A and J.M. Resources: J.A. Supervision: E.A and J.M.
+Funding  Open Access funding provided thanks to the CRUE-CSIC 
+agreement with Springer Nature. J.J.-A. acknowledges support from a 
+predoctoral contract at the University of Castilla-La Mancha (UCLM), 
+co-funded by the European Union through the European Social Fund 
+near-baseline levels, rendering it statistically indistinguish­
+able from a naive guess for this specific short-term forecast­
+ing task.
+These findings have profound implications for the field, 
+questioning the validity of numerous works (Yavas et  al. 
+2024; Asim et al. 2017; Corbera Terrones et al. 2025; Asim 
+et  al. 2018; Hajikhodaverdikhan et  al. 2018) that report 
+remarkable results without explicit temporal validation pro­
+tocols. The publication of such inflated metrics risks cre­
+ates a false sense of security and could lead to misguided 
+risk management policies if these models were deployed for 
+disaster preparedness.
+Ultimately, the disparity between inflated retrospective 
+metrics and operational reality is exemplified by contrasting 
+our findings with recent real-time efforts. For instance, the 
+prospective study by Saad et al. (2023) reported a realistic 
+accuracy of 70% using the AETA sensor network -a result 
+that exceeds the random baseline likely due to the incor­
+poration of physical precursors- yet remains significantly 
+below the >95% artifacts found in leakage-prone studies. 
+This comparison reinforces our final conclusion: accura­
+cies approaching 100% in catalog-based forecasting are 
+indicative of methodological flaws rather than predictive 
+breakthroughs. The future of the field lies not in chasing 
+impossible metrics on static datasets, but in adopting the 
+rigorous, prospective validation standards that distinguish 
+genuine predictive skill from statistical overfitting.
+The necessity of standardized testing frameworks
+The root cause of the discrepancies identified in this work is 
+the disconnection between standard ML validation practices 
+(e.g., k-fold cross-validation) and the specific requirements 
+of earthquake science. To bridge this gap, the community 
+must pivot from ad-hoc validation schemes to established, 
+rigorous testing environments. We argue that future ML-
+based forecasting research must align with well-known 
+established protocols, like those defined by the Collabo­
+ratory for the Study of Earthquake Predictability (CSEP) 
+(Zechar et al. 2010).
+By design, CSEP protocols enforce prospective (or 
+pseudo-prospective) testing, where models must issue fore­
+casts for future time windows without access to subsequent 
+data. This effectively eliminates the possibility of data leak­
+age. Specifically, authors recommend that ML practitioners 
+adopt two core CSEP principles: 
+1.	 Zero-Retraining on Test Data: In our replication, the 
+random split allowed the model to "peek" at future 
+events. CSEP standards require that model parameters 
+be fixed before the test period begins, ensuring that the 
+evaluation reflects true operational capability.
+1 3
+Page 13 of 15 
+24
+
+--- Sayfa 14 ---
+Earth Science Informatics (2026) 19:24
+Hajikhodaverdikhan P, Nazari M, Mohsenizadeh M et al (2018) Earth­
+quake prediction with meteorological data by particle filter-based 
+support vector regression. Engineering Applications of Computa­
+tional Fluid Mechanics 12(1):679–688. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​8​0​/​1​
+9​9​4​2​0​6​0​.​2​0​1​8​.​1​5​1​2​0​1​0
+Jaiswal K (2023) New usgs-fema study highlights economic earth­
+quake risk united states. ​h​t​t​p​s​:​/​/​w​w​w​.​u​s​g​s​.​g​o​v​/​n​e​w​s​/​n​a​t​i​o​n​a​l​-​n​e​
+w​s​-​r​e​l​e​a​s​e​/​n​e​w​-​u​s​g​s​-​f​e​m​a​-​s​t​u​d​y​-​h​i​g​h​l​i​g​h​t​s​-​e​c​o​n​o​m​i​c​-​e​a​r​t​h​q​u​a​k​
+e​-​r​i​s​k​-​u​n​i​t​e​d​-​s​t​a​t​e​s, accessed: 2025-11-25
+JohnsonPA, Rouet-Leduc B, Pyrak-Nolte LJ et al (2021) Laboratory 
+earthquake forecasting: A machine learning competition. Proc 
+Natl Acad Sci 118(5):e2011362118. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​7​3​/​p​n​a​
+s​.​2​0​1​1​3​6​2​1​1​8
+Kapoor S, Narayanan A (2022) Leakage and the reproducibility crisis 
+in ml-based science. arXiv:2207.07048
+Koehler J, Li W, Faber J et al (2023) Testing the Potential of Deep 
+Learning in Earthquake Forecasting. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​4​8​5​5​0​/​a​r​
+X​i​v​.​2​3​0​7​.​0​1​8​1​2
+Kroll K, Sherman C (2023) Orion: Operational forecasting of induced 
+seismicity. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​8​1​4​1​/​1​9​5​8​7​2​6
+MacheS, Chatterjee A, Rajendran K et al (2022) Hilbert–huang trans­
+form and energy rate functions for earthquake source charac­
+terization-a study from the japan trench. Bull Seismol Soc Am 
+112(6):2847–2858. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​7​8​5​/​0​1​2​0​2​2​0​0​9​9
+Mignan A, Broccardo M (2019) One neuron versus deep learning in 
+aftershock prediction. Nature 574(7776):E1–E3. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​
+0​.​1​0​3​8​/​s​4​1​5​8​6​-​0​1​9​-​1​5​8​2​-​8
+Mousavi SM, Beroza GC (2023) Machine learning in earthquake seis­
+mology. Annu Rev Earth Planet Sci 51:105–120. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​
+0​.​1​1​4​6​/​a​n​n​u​r​e​v​-​e​a​r​t​h​-​0​7​1​8​2​2​-​1​0​0​3​2​3
+Mousavi SM, Ellsworth WL, Zhu W et al (2020) Earthquake trans­
+former-an attentive deep-learning model for simultaneous earth­
+quake detection and phase picking. Nat Commun 11(1):3952. ​h​t​t​
+p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​3​8​/​s​4​1​4​6​7​-​0​2​0​-​1​7​5​9​1​-​w
+Organization WH (2025) Earthquakes. ​h​t​t​p​s​:​/​/​w​w​w​.​w​h​o​.​i​n​t​/​h​e​a​l​t​h​-​t​o​p​
+i​c​s​/​e​a​r​t​h​q​u​a​k​e​s, accessed: 2025-11-25
+Pandala S, Silva B (2024) lazypredict: Lazy Predict help build a lot 
+of basic models without much code and helps understand which 
+models works better without any parameter tuning. GitHub, ​h​t​t​p​s​
+:​/​/​g​i​t​h​u​b​.​c​o​m​/​s​h​a​n​k​a​r​p​a​n​d​a​l​a​/​l​a​z​y​p​r​e​d​i​c​t, online software
+Saad OM, Chen Y, Savvaidis A et al (2023) Earthquake forecasting 
+using big data and artificial intelligence: A 30-week real-time 
+case study in china. Bulletin of the Seismological Society of 
+America 113(6):2461–2478. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​7​8​5​/​0​1​2​0​2​3​0​0​3​1
+Singh R, Roy B (2025) Scalable earthquake magnitude predic­
+tion using spatio-temporal data and model versioning. Sci Rep 
+15(1):1–21. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​3​8​/​s​4​1​5​9​8​-​0​2​5​-​0​0​8​0​4​-​x
+Styron R, Pagani M (2020) The gem global active faults database. 
+Earthquake Spectra 36(1 (suppl)):160–180. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​
+7​7​/​8​7​5​5​2​9​3​0​2​0​9​4​4​1​8​2
+Tehseen R, Farooq MS, Abid A (2020) Earthquake prediction using 
+expert systems: A systematic mapping study. Sustainability 12(6). ​
+h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​3​3​9​0​/​s​u​1​2​0​6​2​4​2​0
+Utsu T (1961) A statistical study on the occurrence of aftershocks. 
+Geophysical magazine 30:521–605. ​h​t​t​p​s​:​/​/​a​p​i​.​s​e​m​a​n​t​i​c​s​c​h​o​l​a​r​.​
+o​r​g​/​C​o​r​p​u​s​I​D​:​1​2​8​5​5​7​5​9​2
+Wang C, Li C, Yong S et al (2022) Time series and non-time series 
+models of earthquake prediction based on aeta data: 16-week real 
+case study. Appl Sci 12:8536. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​3​3​9​0​/​a​p​p​1​2​1​7​8​
+5​3​6
+Wang C, Engler D, Li X et al (2024) Near-real-time earthquake-
+induced fatality estimation using crowdsourced data and large-
+language models. International Journal of Disaster Risk Reduction 
+111:104680. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​1​6​/​j​.​i​j​d​r​r​.​2​0​2​4​.​1​0​4​6​8​0
+Wiemer S, Wyss M (2000) Minimum magnitude of completeness in 
+earthquake catalogs: Examples from alaska, the western united 
+Plus (ESF+) under the Castilla-La Mancha 2021-2027 Programme. No 
+additional external funding was received.
+Data Availability  The dataset generated and analyzed during this study 
+of Tokyo, including the engineered features used for the Machine 
+Learning models, is publicly available on Zenodo at the following 
+link: ​h​t​t​p​s​:​/​/​z​e​n​o​d​o​.​o​r​g​/​r​e​c​o​r​d​s​/​1​5​9​1​0​7​9​9. The earthquake catalogue 
+“Japan Unified High-resolution Relocated Catalogue for Earthquakes” 
+has been obtained from: ​h​t​t​p​s​:​/​/​w​w​w​.​h​i​n​e​t​.​b​o​s​a​i​.​g​o​.​j​p​/​t​o​p​i​c​s​/​J​U​I​C​E​/. 
+The data from Los Angeles is available in Yavas et al.
+Declarations
+Competing Interests  The authors declare no competing interests.
+Ethical Approval  The authors declare no ethical concerns. This study 
+does not involve human participants or animals.
+Open Access  This article is licensed under a Creative Commons 
+Attribution 4.0 International License, which permits use, sharing, 
+adaptation, distribution and reproduction in any medium or format, 
+as long as you give appropriate credit to the original author(s) and the 
+source, provide a link to the Creative Commons licence, and indicate 
+if changes were made. The images or other third party material in this 
+article are included in the article’s Creative Commons licence, unless 
+indicated otherwise in a credit line to the material. If material is not 
+included in the article’s Creative Commons licence and your intended 
+use is not permitted by statutory regulation or exceeds the permitted 
+use, you will need to obtain permission directly from the copyright 
+holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​n​s​.​o​
+r​g​/​l​i​c​e​n​s​e​s​/​b​y​/​4​.​0​/.
+References
+Aksoy CG, Chupilkin M, Koczan Z et al (2024) Unearthing the impact 
+of earthquakes: A review of economic and social consequences. 
+J Policy Anal Manag 44:1450–1471. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​2​/​p​a​m​
+.​2​2​6​4​2
+Asim KM, Martínez-Álvarez F, Basit A et al (2017) Earthquake mag­
+nitude prediction in hindukush region using machine learning 
+techniques. Nat Hazards 85(1):471–486. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​
+/​s​1​1​0​6​9​-​0​1​6​-​2​5​7​9​-​3
+Asim KM, Idris A, Iqbal T et al (2018) Earthquake prediction model 
+using support vector regressor and hybrid neural networks. 
+PLoS ONE 13(7):1–22. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​3​7​1​/​j​o​u​r​n​a​l​.​p​o​n​e​.​0​
+1​9​9​0​0​4
+Beroza GC, Segou M, Mostafa Mousavi S (2021) Machine learning 
+and earthquake forecasting–next steps. Nature Communications 
+12(1):4761. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​3​8​/​s​4​1​4​6​7​-​0​2​1​-​2​4​9​5​2​-​6
+Bird P (2003) An updated digital model of plate boundaries. Geochem­
+istry, Geophysics, Geosystems 4(3). ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​2​9​/​2​0​0​1​
+G​C​0​0​0​2​5​2
+Chatterjee A, Pennington CN, Trugman DT et al (2025) A deep learn­
+ing-aided workflow for decoding the stress regime of southern 
+nevada. Seismol Res Lett 96(4):2418–2430. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​
+7​8​5​/​0​2​2​0​2​4​0​4​4​3
+Chitkeshwar A (2024) The role of machine learning in earthquake 
+seismology: A review. Archives of Computational Methods in 
+Engineering 31:3963–397. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​/​s​1​1​8​3​1​-​0​2​
+4​-​1​0​0​9​9​-​2
+Corbera Terrones J, Montalvo Olazabal J, Munive Mendoza A et al 
+(2025) Predicción de sismos en ica usando machine learning. ​h​t​t​
+p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​3​1​4​0​/​R​G​.​2​.​2​.​2​8​4​9​6​.​8​3​2​0​4
+1 3
+24 
+Page 14 of 15
+
+--- Sayfa 15 ---
+Earth Science Informatics (2026) 19:24
+Yavas C, Chen L, Kadlec C et al (2024) Improving earthquake predic­
+tion accuracy in los angeles with machine learning. Sci Rep 14. ​h​
+t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​3​8​/​s​4​1​5​9​8​-​0​2​4​-​7​6​4​8​3​-​x
+Ying X (2019) An Overview of Overfitting and its Solutions. J Phys: 
+Conf Ser 1168(2):022022. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​8​8​/​1​7​4​2​-​6​5​9​6​/​1​1​
+6​8​/​2​/​0​2​2​0​2​2. publisher: IOP Publishing
+Zechar JD, Schorlemmer D, Liukis M et al (2010) The collaboratory 
+for the study of earthquake predictability perspective on compu­
+tational earthquake science. Concurrency and Computation Prac­
+tice and Experience 22(12):1836–1847. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​2​/​
+c​p​e​.​1​5​1​9
+Publisher's Note  Springer Nature remains neutral with regard to juris­
+dictional claims in published maps and institutional affiliations.
+states, and japan. Bull Seismol Soc Am 90(4):859–869. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​7​8​5​/​0​1​1​9​9​9​0​1​1​4
+Witten IH, Frank E, Hall MA (eds) (2011) Data Mining: Practical 
+Machine Learning Tools and Techniques (Third Edition), third 
+edition edn. The Morgan Kaufmann Series in Data Management 
+Systems, Morgan Kaufmann, Boston, ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​1​6​/​B​9​
+7​8​-​0​-​1​2​-​3​7​4​8​5​6​-​0​.​0​0​0​2​3​-​7
+Woessner J, Wiemer S (2005) Assessing the quality of earthquake cata­
+logues: Estimating the magnitude of completeness and its uncer­
+tainty. Bull Seismol Soc Am 95(2):684–698. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​
+7​8​5​/​0​1​2​0​0​4​0​0​0​7
+Yano TE, Takeda T, Matsubara M et al (2017) Japan unified high-res­
+olution relocated catalog for earthquakes (juice): Crustal seismic­
+ity beneath the japanese islands. Tectonophysics 702:19–28. ​h​t​t​p​
+s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​1​6​/​j​.​t​e​c​t​o​.​2​0​1​7​.​0​2​.​0​1​7
+1 3
+Page 15 of 15 
+24

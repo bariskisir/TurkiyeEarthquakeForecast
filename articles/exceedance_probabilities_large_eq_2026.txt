@@ -1,0 +1,848 @@
+
+--- Sayfa 1 ---
+PROBABILISTIC AND ALARM-BASED EVALUATION OF A
+b-VALUE-DRIVEN DEEP LEARNING EARTHQUAKE FORECAST
+Jonas Köhler
+Frankfurt Institute of Advanced Studies
+Frankfurt am Main
+Wei Li
+Frankfurt Institute of Advanced Studies
+Frankfurt am Main
+Johannes Faber
+Frankfurt Institute of Advanced Studies
+Frankfurt am Main
+and
+Institute of Theoretical Physics
+Goethe-University Frankfurt
+Frankfurt am Main
+Georg Rümpker
+Frankfurt Institute of Advanced Studies
+Frankfurt am Main
+and
+Institute of Geosciences
+Goethe-University Frankfurt
+Frankfurt am Main
+Nishtha Srivastava
+Frankfurt Institute of Advanced Studies
+Frankfurt am Main
+and
+Institute of Geosciences
+Goethe-University Frankfurt
+Frankfurt am Main
+N.Srivastava@em.uni-frankfurt.de
+March 4, 2026
+ABSTRACT
+We evaluate the forecasting performance of a deep learning model, originally introduced as a pattern-
+extraction framework, that operates on the spatiotemporal evolution of seismic b-values in a short-
+term forecasting context. Model output is rescaled to account for training on balanced datasets and
+evaluated relative to a spatial base-rate model using the Brier Skill Score (BSS). Absolute skill val-
+ues are small, but mean BSS values are consistently positive, including at locations where MW≥5
+earthquakes occurred during the test period, indicating information content beyond historical seis-
+micity alone. Alarm-based evaluation using Molchan diagrams shows elevated event capture rates
+at low alarm fractions (5.88% of events captured at 1% area under alarm), indicating discrimination
+exceeding random and purely spatial reference models under constrained alarm conditions. Compar-
+ison with ETAS-derived triggered probabilities further reveals a weak positive correlation, suggest-
+ing partial sensitivity of the model output to seismic regimes characterized by enhanced clustering
+and recent activity, while remaining distinct from classical aftershock-based descriptions. Together,
+these results indicate that spatiotemporal variations in b-values contain a persistent, though limited,
+signal relevant to probabilistic earthquake forecasting, yielding marginal but consistent improve-
+ments over baseline models across complementary evaluation frameworks.
+1
+Introduction
+Earthquake forecasting remains a central challenge in seismology, not because seismicity lacks structure, but because
+that structure is subtle, scale-dependent, and embedded in highly imbalanced observational records. While long-
+arXiv:2603.03079v1  [physics.geo-ph]  3 Mar 2026
+
+--- Sayfa 2 ---
+A PREPRINT - MARCH 4, 2026
+term hazard assessments have achieved considerable maturity, short-term probabilistic forecasting-particularly at fine
+spatial and temporal resolution—continues to face fundamental limitations arising from data scarcity, non-stationarity,
+and the rarity of large events.
+A wide range of empirical and statistical approaches has been developed to describe regularities in earthquake occur-
+rence. One of the most enduring is the Gutenberg–Richter relation [8],
+log10(N) = a −bM
+(1)
+which characterizes the relative abundance of small and large earthquakes through the b-value . Variations in this
+parameter have been linked to changes in stress conditions and faulting behavior, motivating its use in diverse contexts
+such as anomaly detection, rate modeling, and event classification [29, 16, 30, 7]. In parallel, statistical point-process
+models, most prominently the Epidemic Type Aftershock Sequence (ETAS) framework [11, 12, 23, 22], have provided
+a principled description of earthquake clustering driven by triggering and aftershock decay. While ETAS models are
+highly effective at capturing short-term rate increases following large events, they are not designed to forecast the
+occurrence of mainshocks themselves.
+Recent advances in machine learning have opened new possibilities for extracting information from complex, high-
+dimensional geophysical data. In seismology, deep learning methods have proven successful in waveform-based tasks
+such as phase picking, event detection, and magnitude estimation, as well as in the analysis of geodetic observa-
+tions [15, 36, 20, 3, 25]. More recently, attention has shifted toward catalog-based forecasting approaches that aim
+to identify spatiotemporal patterns in seismicity itself. These include models based on binned seismic observables
+[5], auxiliary physical signals [26], neural point processes [31], and convolutional architectures operating on derived
+seismicity fields [13, 34, 35].
+Despite these developments, two issues remain central for practical forecasting applications. First, any learned signal
+must be evaluated against strong and well-understood baselines, such as spatial base-rate models or ETAS-derived
+expectations, to assess whether it captures information beyond historical seismicity and aftershock clustering. Second,
+forecast skill must be quantified using appropriate verification frameworks that account for the extreme class imbalance
+inherent in earthquake occurrence and allow meaningful comparison across models.
+In this study, we investigate whether the information contained in the spatiotemporal evolution of b-values can be ex-
+ploited to produce probabilistic short-term forecasts that exceed simple baseline expectations. Building on a previously
+developed deep learning framework [14], we focus here not on methodological innovation, but on application-level
+evaluation. Using Japan as a test region, owing to its high seismicity rate and well-documented catalog completeness
+[32, 21], we assess daily forecasts of MW≥5 earthquakes on a 0.1◦× 0.1◦grid.
+Forecast performance is examined using complementary evaluation strategies, including proper scoring rules and
+alarm-based measures, and is interpreted in relation to ETAS-derived triggered probabilities. By situating the results
+within established seismological forecasting benchmarks, this work aims to clarify both the potential and the current
+limitations of deep learning approaches based on evolving seismicity indicators.
+2
+Data and Base Model Summary
+This section summarizes the data set and the base deep-learning model used throughout this study. The presentation is
+intentionally concise; methodological details, design choices, and validation of the base model are described in [14].
+2.1
+Earthquake Catalog and Preprocessing
+We use the ISC earthquake catalog, restricted to the region 35◦−46◦N and 135◦−146◦E, covering the period from
+1999-01-01 to 2023-12-311. When moment magnitude MWis not directly reported, the magnitudes are converted to
+MWusing empirical relations from [27].
+Data up to 2019-12-31 are used for model selection and training, while the subsequent four years (2020 to 2023) form
+the primary analysis period of this work. Importantly, the model is not static during this interval: training continues
+progressively (see [14]), so that forecasts and scores always reflect the information available up to the respective
+evaluation time. During this time there are 125 events with MW≥5, which will be the targets of the forecasts here.
+1Access date is 2025-12-17. At that time, the completeness dropped off in January 2024, hence our testing period.
+2
+
+--- Sayfa 3 ---
+A PREPRINT - MARCH 4, 2026
+2.2
+Construction of b-Value Fields
+The input to the neural network consists of daily spatial fields of the Gutenberg-Richter b-value , computed on a
+0.1◦× 0.1◦grid. At each grid point, the b-value is estimated using the maximum-likelihood formulation [1] and the
+b-positive method [4], based on earthquakes occurring within a spatial radius r and a temporal lookback window t.
+The choice of r = 0.6◦and t = 365 are taken from [14] and conform to the Model4.9 therein.
+These daily b-value fields form a spatiotemporal data cube from which fixed-size blocks are extracted as model input.
+2.3
+Base Model Architecture
+The base model follows a hybrid convolutional architecture combining spatial feature extraction with temporal se-
+quence modeling. Spatial patterns in the b-value fields are captured by two-dimensional convolutional layers, while
+temporal evolution is modeled using one-dimensional temporal convolutional network (TCN) layers. The network is
+composed of repeated blocks of spatial convolution, temporal convolution, and normalization with nonlinear activa-
+tion, followed by a final dense layer producing a single scalar output. The input to the model is a b-value block of
+size 512 × 32 × 32, corresponding to 512 days of b-value history and a 3.2◦× 3.2◦spatial coverage. No architectural
+modifications are introduced in this paper; the exact layer configuration and design rationale are provided in [14].
+2.4
+Progressive Training Scheme
+Training is performed using a progressive scheme in which the available data set grows monotonically over time.
+Starting on 2001-05-21 (512 days after 2000-01-01), the model is updated by sequentially adding non-overlapping
+14-day periods to the training set. For each update, the newly added period contributes labeled samples, while earlier
+periods remain in the training pool.
+The training data are balanced at each stage: all samples associated with earthquakes of MW≥5 are included, together
+with an equal number of samples drawn from periods without such events. Although short-term validation on sub-
+sequent unseen intervals is used during training, model selection based on this validation performance is extensively
+discussed in [14] and is not central to the present study. In contrast to that work, the data here is from 1999 to 2023
+(inclusive), so we have four years of testing data (2020 to 2023) for this work. Consequently, training also continues
+further than in the previous work.
+2.5
+Base Model Output
+The base model produces a scalar output that can be interpreted as an anomaly score, reflecting whether a target region
+is associated with an elevated likelihood of an MW≥5 earthquake within the specified prediction window. Due to
+the enforced class balance during training, this output does not represent an absolute earthquake rate or a probability,
+and is therefore not directly suitable for forecasting applications. Converting this anomaly score into a calibrated
+rate-based forecast is the central focus of the remainder of this paper.
+3
+Theoretical Background
+This section introduces the theoretical framework used to evaluate and interpret the model output after rescaling. The
+goal is to motivate the choice of probabilistic and alarm-based verification tools, rather than to provide an exhaustive
+review.
+Probabilistic earthquake forecasts assign, for each space–time bin, a probability that at least one target event will occur.
+Evaluating such forecasts requires scoring rules that operate directly on probabilities. Proper scoring rules are con-
+structed such that the expected score is optimized when the forecast probabilities coincide with the true probabilities
+of the underlying process, thereby discouraging hedging and systematic over- or underconfidence.
+In the context of earthquake forecasting, verification is complicated by the rarity of target events and the strongly
+imbalanced nature of the binary outcome (event vs. no event). As discussed by [28], some commonly used performance
+measures can behave counterintuitively in such low-probability environments, in particular by favoring forecasts that
+systematically overestimate or underestimate the true event probability. This issue is especially critical because the
+underlying probability p∗is unknown in real forecasting experiments. Consequently, the choice of scoring rule must
+be made a priori. Otherwise, improper scoring rules may on average assign a higher score to biased forecasts than
+to the underlying process itself. Proper scoring rules avoid this pathology by construction, as they guarantee that the
+highest expected score is achieved when forecast probabilities are closest to p∗. Following this framework, we adopt
+the Brier score as our primary measure for probabilistic forecast evaluation.
+3
+
+--- Sayfa 4 ---
+A PREPRINT - MARCH 4, 2026
+In addition to probabilistic scores, earthquake forecasts are often evaluated using alarm-based approaches that assess
+the trade-off between missed events and space-time volume under alarm. Molchan diagrams fall into this category and
+serve a different purpose: rather than evaluating probabilistic calibration, they characterize the performance of thresh-
+olded alarms and their associated error rates. In the following, we therefore use the Brier score to assess probabilistic
+forecast quality, and Molchan diagrams to provide a complementary, alarm-based perspective.
+Brier Score
+One of the most widely used proper scoring rules for binary events is the Brier Score [2]. For a set of
+N forecasts, it is defined as
+sBS = 1
+N
+N
+X
+i=1
+(pi −ri)2 ,
+(2)
+where pi denotes the forecast probability for the i-th space-time bin and ri ∈{0, 1} is the corresponding observed
+outcome. The Brier Score ranges from 0 (perfect agreement) to 1 (maximal disagreement), measuring the mean
+squared deviation between forecast probabilities and observations.
+Brier Skill Score
+To assess forecast quality relative to a reference model, the Brier Skill Score (BSS) is commonly
+used:
+sBSS = 1 −smodel
+BS
+sbaseline
+BS
+.
+(3)
+A BSS of zero indicates performance equal to the baseline, positive values indicate improvement, and negative values
+indicate degradation. The baseline can in principle be any other model, common uses would be a simple stationary
+model, or a direct competitor that the model is supposed to outperform.
+The BSS is particularly suitable for rare-event forecasting, such as large earthquakes, because it evaluates the full
+probabilistic output rather than thresholded decisions. This avoids arbitrary alarm thresholds and allows improvements
+in both calibration and sharpness to be quantified, even when events occur infrequently.
+3.1
+Molchan Diagrams
+While probabilistic scores evaluate forecasts on an absolute scale, alarm-based methods focus on the trade-off between
+space-time coverage and event detection. These approaches are widely used in seismology and provide an alternative
+perspective on forecast performance.
+Molchan diagrams [19, 33] evaluate forecasts by comparing the fraction of missed target events to the fraction of
+the space-time domain declared to be under alarm. For a given alarm threshold, regions exceeding that threshold are
+labeled as alarms, and the missed event rate is plotted against the corresponding alarm fraction.
+In contrast to receiver operating characteristic (ROC) curves, which display true positive and false positive rates,
+Molchan diagrams emphasize the cost of missed events relative to the imposed alarm volume. Common summary
+measures include the capture rate at fixed alarm fractions (typically 1% or 5%) and the area under the Molchan curve,
+where smaller values indicate better performance. Uncertainty in these measures can be estimated by bootstrapping
+over observed events.
+Molchan diagrams are well suited to spatially and temporally extended forecasting problems, as they explicitly account
+for the fraction of the domain placed under alarm. However, they require binarization of the forecast through a
+threshold and therefore discard information contained in the full probability distribution. Their interpretation can also
+depend sensitively on how alarms are defined in space and time.
+Because of these properties, Molchan diagrams complement Brier-type metrics. Probabilistic scores assess calibration
+and overall accuracy, while Molchan diagrams highlight the operational trade-off between alarm coverage and missed
+events. Using both perspectives allows a more complete assessment of forecast performance, particularly when tran-
+sitioning from anomaly detection to rate-based earthquake forecasting.
+4
+Forecast Construction via Rescaling
+The model in the current form as presented in [14] outputs values that are not immediately useful for forecasting, as the
+imposed class balance during training strongly favors positive predictions. However, we want to provide a rescaling
+method to transform the original anomaly score into a usable probability or threshold output. To achieve this, we
+employ two different rescaling methods, one informed by experiment and one informed by theory.
+4
+
+--- Sayfa 5 ---
+A PREPRINT - MARCH 4, 2026
+All rescaling functions are calibrated exclusively on the training period and subsequently applied unchanged to the
+test period. The results of these rescaling curves are shown in Figure 1.
+4.1
+Brier-score–based rate rescaling
+In the first approach, locations (in space and time) are grouped into bins according to the mean number of earthquakes
+neq used for the local b-value estimation.2 For each bin, the network outputs are rescaled by a multiplicative factor
+spanning r ∈[10−5, 10−1]. For each candidate scaling factor, we compute the Brier Skill Score (BSS) relative to the
+historical spatial bin-event rate. This yields, for each neq bin, a continuous range of scaling factors for which the BSS
+is positive or locally maximized. We then fit a function of log neq to the midpoints of these ranges are regressed to
+obtain a smooth, monotonic rescaling function. This empirical calibration aligns the average forecast rate with the
+observed event rate while preserving spatial discrimination. The resulting scaling function is
+s(neq) = 1.8 × 10−5 × eneq
+0.120
+(4)
+4.2
+Logit-based rescaling
+As an alternative, we apply rescaling in logit space, which directly accounts for the mismatch between the balanced
+training prior and the true, neq-dependent event rate. Let
+ℓ= log
+p
+1 −p
+(5)
+denote the log-odds of the raw model output. A change in the assumed class prior corresponds to an additive shift in
+log-odds,
+ℓ′ = ℓ+ log
+π(neq)
+1 −π(neq),
+(6)
+where π(neq) denotes the expected event rate for a given neq bin.
+Assuming π(neq) ∝neq−1 and π(max(neq)) ≪1, this results in 1 −π(neq) ≈1 and we obtain the rescaled
+probability:
+p′ =
+
+1 + e−ℓ′−1
+.
+(7)
+We consider two variants of this logit-based rescaling. In the first variant, the proportionality constant of π(neq) is
+fixed by matching the global event rate observed in the training set, yielding a prior-corrected but otherwise untuned
+transformation. In the second variant, an additional constant offset in logit space is introduced and calibrated to
+maximize BSS on the training period. This latter variant retains the functional dependence on neq but allows for
+empirical adjustment of the absolute probability scale. The logit-based rescaling function corresponding to a model
+output of p = 0.5 are shown in Figure 1 for comparison with the empirical BSS-based calibration.
+Logit-based rescaling preserves the rank ordering of model outputs while adjusting their absolute scale to reflect the
+rarity of target events, and avoids the loss of discriminative power associated with direct probability scaling in regions
+with large neq.
+As expected, the empirical BSS-based rescaling aligns most closely with the regions of positive skill identified in the
+BSS diagnostics. For this reason, it is used for all subsequent analyses. The logit-based rescalings are shown for
+methodological comparison and to illustrate the effect of prior-based corrections.
+4.3
+Molchan style Analysis
+We use this rescaled model output to create a Molchan diagram. As we need a discrete alarm-based prediction for the
+Molchan diagram, we define our threshold criterion as
+rModel Output × s(nEQ) × k > pBaseline Model,
+(8)
+where rModel Output is the raw model output, k is a single scalar threshold (scaled logarithmically from 10−2 to 10+10)
+to create the Molchan diagram and set the overall alarm rate, and pBaseline Model is the spatial baserate for MW≥5
+earthquake. Confidence intervals are calculated using 10000 bootstrapping resamples.
+2A single sample takes 512 × 32 × 32 b-values as the input. Each of these b-value calculations is based on a number of events,
+and this it the number we average to get neq.
+5
+
+--- Sayfa 6 ---
+A PREPRINT - MARCH 4, 2026
+10
+5
+10
+4
+10
+3
+10
+2
+Model Scaling Factor
+101
+102
+103
+104
+neq
+All timeseries
+EQ timeseries
+Epochs 400-484
+10
+5
+10
+4
+10
+3
+10
+2
+10
+1
+Model Scaling Factor
+All timeseries
+EQ timeseries
+Epochs 485-589
+1
+ 
+0.5
+ ±0
+ +0.5
+ +1
+Brier Skill Score
+Figure 1:
+Evaluation of model output rescaling using the Brier Skill Score (BSS) relative to the historical spatial
+bin-event rate. Each panel shows the BSS as a function of a multiplicative scaling factor and the mean number of
+earthquakes neq used for local b-value estimation. The left panel corresponds to the training (calibration) epochs, and
+the right panel to the independent test epochs; BSS values are clipped at −1 for visualization.
+Black circles indicate the empirical BSS-based rescaling obtained by fitting along the ridge of positive skill. Green
+circles show the logit-based prior correction with the global event rate fixed from the training set. Orange circles
+denote a logit-based rescaling with an additional offset calibrated to optimize BSS. All rescaling functions are fitted
+on the training period and shown on the test period for diagnostic comparison only.
+Violin plots illustrate the distribution of neq for all evaluated space-time samples (left) and for samples culminating in
+an earthquake with MW≥5 (right) in each panel.
+The red horizontal lines to the left are the result of less MW≥5 events happening in this bin in the test epochs.
+0.00
+0.25
+0.50
+0.75
+1.00
+Fraction of space time under alarm
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Fraction of missed target events
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AR1   5.88% [ 1.18% - 11.76%]
+AR5  15.29% [ 8.24% - 23.53%]
+AUC   0.302 [ 0.233 -  0.375]
+rModel Output snEQ k > pBaseline
+10
+2
+10+0
+10+2
+10+4
+10+6
+10+8
+10+10
+Threshold k
+Figure 2: Molchan Diagram for Model4.9 showing the alarm rates for 1% and 5% alarm rates and the AUC with their
+respective 95% confidence intervals.
+6
+
+--- Sayfa 7 ---
+A PREPRINT - MARCH 4, 2026
+5
+ETAS Comparison
+The Epidemic Type Aftershock Sequence (ETAS) is a model derived by [23, 22] based on earlier work from [11,
+12] and is the most widely used earthquake (rate) forecasting model. The idea is that there is a group if independent
+background earthquakes happening at a constant rate. Each can trigger its own aftershocks, following the Gutenberg-
+Richter Law and the Omori-Utsu Law, and each aftershock can do the same, leading to an “epidemic” aftershock
+propagation. Thus, at each point in time and space, there is an earthquake probability λ based on all previous earth-
+quakes and a background earthquake rate µ. We assume a temporally and spatially uniform background rate [18]:
+λ(t, x, y) = µ +
+X
+i:ti<t
+νj(t −ti, x −xi, y −yi, mi)
+ν(t, x, y, m) =
+K0
+(t+c)1+ω
+e−(t)/τ
+· eα(m−mc) ·
+1
+ (x2 + y2) + d · eγ(m−mc)
+1+p
+To assess whether model behavior differs between background-like and cascade-dominated seismicity, we compare the
+model output to triggering probabilities derived from an independent ETAS declustering analysis. Rather than attempt-
+ing a binary classification into “mainshocks” and “aftershocks,” we use the continuous ETAS triggering probability
+Ptriggered and background probability Pbackground = 1 −Ptriggered assigned to each event, which quantifies the relative
+contribution of preceding seismicity to the conditional intensity at the event’s occurrence time. In near-critical3 ETAS
+fits, such as those obtained here, Ptriggered is systematically high for most events, reflecting the dominance of triggering
+in the likelihood rather than a literal statement that most events are aftershocks. Importantly, the total expected number
+of triggered events remains finite, as given by the sum of triggering probabilities, even when individual probabilities
+are large.
+For this purpose, we use the ETAS implementation from [17, 18] for the inversion and determination of Pbackground and
+Ptriggered. The area as well as the accompanying magnitude completeness which was used to determine the area are
+shown in Figure 3. As the magnitude completeness in the area is around 3.2 (determined using the method from [6])
+with a corresponding high number of events, we impose a cutoff magnitude of 3.5 for the ETAS inversion, leaving us
+with 51092 events in the area shown in Figure 3. The inversion parameters are shown in Table 1.
+Because the absolute values of Ptriggered depend on the fitted ETAS model (e.g., magnitude completeness and pa-
+rameter trade-offs), they should not be interpreted as hard labels or compared across different declustering setups.
+Instead, their relative variation within a single fit provides a meaningful ordering of events according to their depth
+within the inferred triggering cascade. To visualize this relationship without imposing arbitrary thresholds or bins, we
+therefore examine the model output in logit transform ln
+
+x
+1−x
+
+, which expands the range of background-dominated
+events while retaining the continuous nature of the probabilities. This approach avoids common pitfalls in ETAS
+interpretation, such as equating high triggering probability with a discrete aftershock classification, and allows us to
+test whether the model output systematically varies with an event’s relative position between background-like and
+cascade-dominated seismicity. The resulting Figure 5 shows a weak negative correlation between the logits of the
+model output and the logits of Pbackground, and a (therefore expected) positive correlation between the logarithm of the
+local productivity λi and the logit of the model output.
+6
+Discussion
+6.1
+Interpretation of Forecast Skill Relative to a Spatial Base Rate
+The comparison against a spatial base rate model provides a stringent benchmark for assessing whether the model
+output contains information beyond historical seismicity alone. In this context, the observed Brier Skill Scores are
+small but consistently positive, both when averaged over all valid grid cells and when restricted to cells in which
+MW≥5 earthquakes occurred during the test period (see Figure 6). The mean BSS over the entire domain is sBSS =
+0.000682, while the mean over cells that hosted MW≥5 events during the test period remains slightly positive at
+sBSS = 0.000197.
+At the same time, an alarm-based evaluation using Molchan diagrams reveals a clearer separation from random perfor-
+mance. As shown in Figure 2, the model captures 5.88% of MW≥5 earthquakes at a 1% alarm fraction and 15.29%
+at a 5% alarm fraction.This indicates that the model is able to concentrate a nontrivial fraction of target events into a
+small fraction of space-time, demonstrating meaningful discriminatory power despite limited probabilistic calibration.
+3Criticality here refers to the branching ratio, the number of aftershocks the average eathquake will have. The system becomes
+critical at a branching ratio of 1.
+7
+
+--- Sayfa 8 ---
+A PREPRINT - MARCH 4, 2026
+135.0 E 137.5 E 140.0 E 142.5 E 145.0 E
+Longitude
+35.0 N 
+37.5 N 
+40.0 N 
+42.5 N 
+45.0 N 
+Latitude
+2.5
+3.0
+3.5
+4.0
+NaN
+Completeness Magnitude
+Figure 3: Completeness map including the ETAS region outline and the MW≥5 events. Completeness was determined
+using a 1◦radius around the center of each cell to collect the earthquakes, and then use the method in [6] to determine
+Mc. As we do not visually inspect the curve for each cell, we determine Mc as the smallest mth with ma(mth) >
+min(ma) + 0.3. The red marks correspond to the events eligible to the model by being within 1.6◦degrees from the
+edge, a limit shown by the dotted gray line. The green marks correspond to MW≥5 events not included in the test
+data (no event from this region is the target in either training or testing).
+Parameter
+Value
+β
+3.34
+a
+2.32
+γ
+2.63
+log10(c)
+−3.65
+log10(d)
+−0.66
+log10(k0)
+−2.54
+log10(µ)
+−5.57
+log10(τ)
+2.88
+ω
+−0.217
+ρ
+0.507
+br
+0.952
+ˆn
+2645
+Table 1: ETAS parameters. The analysis takes Mc = 3.5. The inversion was performed using the code from [17, 18]
+and the parameter naming conventions are taken from there too.
+8
+
+--- Sayfa 9 ---
+A PREPRINT - MARCH 4, 2026
+2020
+2021
+2022
+2023
+Date
+3
+4
+5
+6
+7
+Magnitude
+-15
+-10
+-5
+0
+5
+10
+15
+log-odds(Ptriggered)
+Figure 4: This figure shows the time-magnitude plot for the test set used in this work. The events are colored using
+the logits transformation of the ETAS derived probability that the earthquake is triggered. We show the earthquakes
+below the ETAS inversion threshold in 3.5 in black with low opacity.
+12.5
+10.0
+7.5
+5.0
+2.5
+0.0
+2.5
+Log-odds(pbackground)
+20
+15
+10
+5
+0
+5
+10
+15
+20
+Log-odds(Model output)
+Spearman: -0.28 [-0.42, -0.07]
+Pearson:  -0.25 [-0.46, -0.09]
+MW 5
+MW 6
+MW 7
+Figure 5: Scatter plot of model output against ETAS background probability. The scatter shows a small negative cor-
+relation between background probability and model output. The fit was created using a linear regression. Confidence
+intervals (95%) on the noted correlations and the fit were calculated using 10000 bootstrapping resamples.
+9
+
+--- Sayfa 10 ---
+A PREPRINT - MARCH 4, 2026
+Such a divergence between Molchan-based performance and Brier Skill Scores is not unexpected for spatially resolved
+short-term earthquake forecasts of rare events. While the BSS penalizes probability miscalibration and base-rate mis-
+match, the Molchan diagram primarily reflects ranking and concentration ability. Taken together, the results indicate
+the presence of a weak but non-vanishing signal associated with the spatiotemporal evolution of b-values while also
+highlighting substantial constraints on achieving strong probabilistic skill at these temporal and spatial scales.
+6.2
+Effects of Training Data Imbalance and Major Sequences
+A major limitation affecting both training and evaluation is the dominance of the 2011 T¯ohoku earthquake sequence
+in the available catalog. A large fraction of the positive training samples are associated with this single episode,
+leading to a strongly imbalanced representation of seismic regimes. While the implications of this imbalance for
+model training are discussed in detail in [14], it should be noted here that this concentration likely inflates early
+validation performance (in the years immediately after T¯ohoku) and complicates the interpretation of aggregate skill
+measures later on. It should be noted, that we alreadey chose our benchmarking period (Epochs 400-484, 2016-09-17
+to 2019-12-28) that short and that late to reduce the immediate effects of the T¯ohoku earthquake sequence.
+6.3
+Spatial Variability of Skill
+The spatial distribution of BSS values reveals marked regional variability. In particular, regions with comparatively
+low background seismicity tend to exhibit more consistently positive skill (
+¯
+sBSS = 0.000685), whereas highly active
+regions show mixed or near-neutral performance (
+¯
+sBSS = 0.000197). This pattern likely reflects a combination of
+effects, including differences in base rate, the influence of aftershock-dominated sequences, and the varying stability
+of b-value estimates as a function of event count (neq).
+This spatial pattern is consistent with the Molchan analysis, which indicates that a disproportionate fraction of large
+events occurs within a small alarm fraction, even though the corresponding probabilities remain only weakly cali-
+brated.
+Importantly, positive skill is not confined to regions without large earthquakes; cells that hosted MW≥5 events
+during the test period still show a slightly positive mean BSS. This indicates that the model does not merely suppress
+probabilities in low-activity regions but retains limited discriminatory power even where large events occurred, a side
+effect that could be expected since the low-activity regions are more dominant and have a greater influence on the
+rescaling since they are more numerous (see Figure 1).
+6.4
+Relation to ETAS-Based Seismicity Models
+In addition to the base rate comparison, the model output was examined in relation to ETAS-derived triggered prob-
+abilities. Although the two approaches are conceptually distinct, a weak but positive correlation is observed, with
+higher network output tending to coincide with events that ETAS classifies as having a higher triggered component.
+This agreement should not be interpreted as equivalence between the two models or as evidence that the network
+reproduces ETAS-type triggering dynamics (the correlation is too weak to do that). Rather, it indicates that the spa-
+tiotemporal b-value patterns learned by the network are, to some extent, sensitive to seismic regimes characterized by
+elevated clustering and recent activity. At the same time, the substantial scatter in the relationship underscores that the
+model output cannot be reduced to an ETAS proxy and contains information that is at least partly distinct to a classical
+aftershock-based description.
+6.5
+Relation to Previous b-Value Based Approaches
+Previous studies have reported systematic changes in b-values preceding large earthquakes, using both descriptive and
+statistical approaches [29, 16, 30, 7]. The present work differs in that it does not test a specific hypothesized pattern,
+but instead evaluates whether any information contained in the spatiotemporal evolution of b-values can be exploited in
+an operational forecasting framework. The weak but positive skill observed here suggests that such information exists,
+while also indicating that using it in this current form is insufficient on its own to yield strong short-term probabilistic
+forecasts.
+7
+Conclusion
+In this study, we evaluated the performance of the deep learning model based on the spatiotemporal evolution of
+b-values originally presented in [14] in an application-oriented forecasting context. The model output was rescaled
+10
+
+--- Sayfa 11 ---
+A PREPRINT - MARCH 4, 2026
+137°
+138°
+139°
+140°
+141°
+142°
+143°
+144°
+Longitude
+37°
+38°
+39°
+40°
+41°
+42°
+43°
+44°
+Latitude
+Mean BSS:         0.000682
+Mean BSS only EQ: 0.000197
+-10
+-9
+-8
+-7
+-6
+-5
+-4
+-3
+-2
+-1
+0
+1
+Brier Skill Score
+Figure 6: Brier Skill Score (BSS) map. BSS can only be computed for locations where the base rate score is non-zero;
+cells with no events during both training and testing periods are shown in black. Black crosses mark locations where
+earthquakes with MW≥5 occurred in the test set. Mean BSS over all valid cells as well as only the cells which contain
+earthquakes during the test set are given in the top left.
+11
+
+--- Sayfa 12 ---
+A PREPRINT - MARCH 4, 2026
+to account for training on balanced datasets and assessed relative to a spatial base rate model using the Brier Skill
+Score. While the resulting BSS values are small in absolute terms, they are consistently positive on average, including
+at locations where MW≥5 earthquakes occurred during the test period, indicating the presence of a weak but non-
+vanishing signal beyond historical seismicity alone.
+At the same time, an alarm-based evaluation using Molchan diagrams demonstrates a clearer separation from random
+performance. Under strict alarm constraints, the model captures a disproportionate fraction of target events, indicating
+meaningful spatial-temporal discrimination even when probabilistic calibration remains limited. Taken together, these
+results suggest that the model is more effective at concentrating earthquakes into a small fraction of space-time than
+at producing well-calibrated occurrence probabilities.
+A complementary comparison with ETAS-derived background probabilities shows a weak negative correlation, sug-
+gesting that elevated model output partially coincides with seismic regimes characterized by increased clustering and
+recent activity. This consistency supports the physical plausibility of the learned patterns, while also highlighting that
+the model output cannot be reduced to classical aftershock-based descriptions.
+At the same time, the results demonstrate clear limitations. Forecast skill over the short evaluation windows considered
+here remains modest, reflecting both the rarity of large earthquakes and the constraints imposed by the available catalog
+length. In particular, the dominance of the 2011 T¯ohoku earthquake sequence likely introduces substantial imbalance
+into the training and evaluation data, complicating the interpretation of aggregate performance measures.
+Overall, this work shows that information contained in the spatiotemporal evolution of b-values can be exploited to
+produce forecasts that marginally outperform a spatial base rate in probabilistic terms, while exhibiting nontrivial
+discriminatory power under alarm-based evaluation. The results do not constitute a strong operational forecast, but
+rather provide an application-level validation that such signals persist under realistic evaluation conditions.
+8
+Acknowledgements
+This research is supported by the “KI-Nachwuchswissenschaftlerinnen" – grant SAI 01IS20059 by the Bundesminis-
+terium für Bildung und Forschung – BMBF. The calculations were performed at the Frankfurt Institute for Advanced
+Studies’ GPU cluster, funded by BMBF for the project Seismologie und Artifizielle Intelligenz (SAI). We thank Megha
+Chakraborty, Darius Fenner, Dr. Claudia Quinteros, Professor Geoffrey Fox, Dr. Danijel Schorlemmer and Dr. Kiran
+Thingbaijam for their helpful discussion.
+We acknowledge the help and advice from Prof. Dr. Horst Stoecker. The research has made extensive use of PyTorch
+[24], numpy [9], and matplotlib [10]. Geographical maps were made with Natural Earth. Free vector and raster map
+data @ naturalearthdata.com. The training was carried out on Nvidia A100 Tensor Core GPUs.
+References
+[1]
+Keiiti Aki. “17. Maximum Likelihood Estimate of b in the Formula logN=a-bM and its Confidence Limits”. In:
+Bulletin of the Earthquake Research Institute 43.2 (1965), pp. 237–239.
+[2]
+Glenn W. Brier. “Verification of Forecasts Expressed in Terms of Probability”. In: Monthly Weather Review
+78.1 (Jan. 1950), p. 1. DOI: 10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2.
+[3]
+Megha Chakraborty et al. “CREIME—A Convolutional Recurrent Model for Earthquake Identification and
+Magnitude Estimation”. In: Journal of Geophysical Research: Solid Earth 127.7 (2022). e2022JB024595
+2022JB024595, e2022JB024595. DOI: https : / / doi . org / 10 . 1029 / 2022JB024595. eprint: https :
+//agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2022JB024595. URL: https://agupubs.
+onlinelibrary.wiley.com/doi/abs/10.1029/2022JB024595.
+[4]
+Nicholas J. van der Elst. “B-Positive: A Robust Estimator of Aftershock Magnitude Distribution in Tran-
+siently Incomplete Catalogs”. In: Journal of Geophysical Research: Solid Earth 126.2 (2021). e2020JB021027
+2020JB021027, e2020JB021027. DOI: https://doi.org/10.1029/2020JB021027. eprint: https://
+agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2020JB021027. URL: https://agupubs.
+onlinelibrary.wiley.com/doi/abs/10.1029/2020JB021027.
+[5]
+Geoffrey Charles Fox et al. “Earthquake Nowcasting with Deep Learning”. In: GeoHazards 3.2 (2022), pp. 199–
+226. ISSN: 2624-795X. DOI: 10 . 3390 / geohazards3020011. URL: https : / / www . mdpi . com / 2624 -
+795X/3/2/11.
+12
+
+--- Sayfa 13 ---
+A PREPRINT - MARCH 4, 2026
+[6]
+C. Godano and G. Petrillo. “Estimating the Completeness Magnitude mc and the b-Values in a Snap”. In: Earth
+and Space Science 10.2 (2023). e2022EA002540 2022EA002540, e2022EA002540. DOI: https://doi.
+org/10.1029/2022EA002540. eprint: https://agupubs.onlinelibrary.wiley.com/doi/pdf/
+10.1029/2022EA002540. URL: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/
+2022EA002540.
+[7]
+Laura Gulia and Stefan Wiemer. “Real-time discrimination of earthquake foreshocks and aftershocks”. In: Na-
+ture 574.7777 (Oct. 2019), pp. 193–199. ISSN: 1476-4687. DOI: 10.1038/s41586- 019- 1606- 4. URL:
+https://doi.org/10.1038/s41586-019-1606-4.
+[8]
+B. Gutenberg and C. F. Richter. “Frequency of Earthquakes in California”. In: Bulletin of the Seismological
+Society of America 34.4 (1944), pp. 185–188. eprint: https://authors.library.caltech.edu/47734/1/
+185.full.pdf.
+[9]
+Charles R. Harris et al. “Array programming with NumPy”. In: Nature 585.7825 (Sept. 2020), pp. 357–362.
+DOI: 10.1038/s41586-020-2649-2. URL: https://doi.org/10.1038/s41586-020-2649-2.
+[10]
+J. D. Hunter. “Matplotlib: A 2D graphics environment”. In: Computing in Science & Engineering 3 (2007),
+pp. 90–95. DOI: 10.1109/MCSE.2007.55.
+[11]
+Y. Y. Kagan and L. Knopoff. “Stochastic synthesis of earthquake catalogs”. In: Journal of Geophysical Re-
+search: Solid Earth 86.B4 (1981), pp. 2853–2862. DOI: https://doi.org/10.1029/JB086iB04p02853.
+eprint: https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JB086iB04p02853. URL:
+https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JB086iB04p02853.
+[12]
+Yan Y. Kagan and Leon Knopoff. “Statistical Short-Term Earthquake Prediction”. In: Science 236 (1987),
+pp. 1563–1567. URL: https://api.semanticscholar.org/CorpusID:12946111.
+[13]
+Jonas Koehler et al. Testing the Potential of Deep Learning in Earthquake Forecasting. 2023. arXiv: 2307.
+01812 [physics.geo-ph]. URL: https://arxiv.org/abs/2307.01812.
+[14]
+Jonas Köhler et al. Detecting Spatiotemporal b-Value Anomalies with a Progressive Deep Learning Architec-
+ture. 2026. arXiv: 2602.12408 [physics.geo-ph]. URL: https://arxiv.org/abs/2602.12408.
+[15]
+Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. “Deep learning”. In: nature 521.7553 (2015), pp. 436–444.
+[16]
+Ian G. Main, Philip G. Meredith, and Colin Jones. “A reinterpretation of the precursory seismic b-value anomaly
+from fracture mechanics”. In: Geophysical Journal International 96.1 (Jan. 1989), pp. 131–138. ISSN: 0956-
+540X. DOI: 10.1111/j.1365- 246X.1989.tb05255.x. eprint: https://academic.oup.com/gji/
+article- pdf/96/1/131/1613982/96- 1- 131.pdf. URL: https://doi.org/10.1111/j.1365-
+246X.1989.tb05255.x.
+[17]
+Leila Mizrahi. ETAS: Epidemic-Type Aftershock Sequence. Accessed: 2025-12-16. 2020. DOI: https://doi.
+org/10.5281/zenodo.341629005. URL: https://github.com/lmizrahi/etas.
+[18]
+Leila Mizrahi, Shyam Nandan, and Stefan Wiemer. “The Effect of Declustering on the Size Distribution of
+Mainshocks”. In: Seismological Research Letters 92.4 (2021), pp. 2333–2342. DOI: 10.1785/0220200231.
+URL: https://pubs.geoscienceworld.org/ssa/srl/article-abstract/92/4/2333/594794/The-
+Effect-of-Declustering-on-the-Size?redirectedFrom=fulltext.
+[19]
+G.M. Molchan et al. “Statistical analysis of the results of earthquake prediction, based on bursts of aftershocks”.
+In: Physics of the Earth and Planetary Interiors 61.1 (1990), pp. 128–139. ISSN: 0031-9201. DOI: https:
+//doi.org/10.1016/0031-9201(90)90100-C. URL: https://www.sciencedirect.com/science/
+article/pii/003192019090100C.
+[20]
+S. Mostafa Mousavi et al. “Earthquake transformer—an attentive deep-learning model for simultaneous earth-
+quake detection and phase picking”. In: Nature Communications 11.1 (Aug. 2020), p. 3952. ISSN: 2041-1723.
+DOI: 10.1038/s41467-020-17591-w. URL: https://doi.org/10.1038/s41467-020-17591-w.
+[21]
+K. Z. Nanjo et al. “Analysis of the Completeness Magnitude and Seismic Network Coverage of Japan”. In:
+Bulletin of the Seismological Society of America 100.6 (Dec. 2010), pp. 3261–3268. ISSN: 0037-1106. DOI:
+10.1785/0120100077. eprint: https://pubs.geoscienceworld.org/ssa/bssa/article-pdf/100/
+6/3261/2654329/3261.pdf. URL: https://doi.org/10.1785/0120100077.
+[22]
+Yosihiko Ogata. “Space-Time Point-Process Models for Earthquake Occurrences”. In: Annals of the Institute
+of Statistical Mathematics 50.2 (1998), pp. 379–402. URL: https://link.springer.com/article/10.
+1023/A:1003403601725.
+[23]
+Yosihiko Ogata. “Statistical Models for Earthquake Occurrences and Residual Analysis for Point Processes”.
+In: Journal of the American Statistical Association 83.401 (1988), pp. 9–27. DOI: 10.1080/01621459.1988.
+10478560. eprint: https://www.tandfonline.com/doi/pdf/10.1080/01621459.1988.10478560.
+URL: https://www.tandfonline.com/doi/abs/10.1080/01621459.1988.10478560.
+13
+
+--- Sayfa 14 ---
+A PREPRINT - MARCH 4, 2026
+[24]
+Adam Paszke et al. “PyTorch: an imperative style, high-performance deep learning library”. In: Proceedings
+of the 33rd International Conference on Neural Information Processing Systems. Red Hook, NY, USA: Curran
+Associates Inc., 2019.
+[25]
+Claudia Cartaya Quinteros et al. Exploring a CNN Model for Earthquake Magnitude Estimation using HR-GNSS
+data. 2023. arXiv: 2304.09912 [physics.geo-ph].
+[26]
+Omar M. Saad et al. “Earthquake Forecasting Using Big Data and Artificial Intelligence: A 30-Week Real-Time
+Case Study in China”. In: Bulletin of the Seismological Society of America 113.6 (Sept. 2023), pp. 2461–2478.
+ISSN: 0037-1106. DOI: 10.1785/0120230031. eprint: https://pubs.geoscienceworld.org/ssa/bssa/
+article- pdf/113/6/2461/6037436/bssa- 2023031.1.pdf. URL: https://doi.org/10.1785/
+0120230031.
+[27]
+Emmanuel Scordilis. “Globally valid relations converting Ms, mb and MJMA to Mw”. In: Sept. 2005, pp. 158–
+161.
+[28]
+Francesco Serafini et al. “Ranking earthquake forecasts using proper scoring rules: binary events in a low prob-
+ability environment”. In: Geophysical Journal International 230.2 (Mar. 2022), pp. 1419–1440. ISSN: 0956-
+540X. DOI: 10.1093/gji/ggac124. eprint: https://academic.oup.com/gji/article-pdf/230/2/
+1419/43541169/ggac124.pdf. URL: https://doi.org/10.1093/gji/ggac124.
+[29]
+Warwick D. Smith. “The b-value as an earthquake precursor”. In: Nature 289.5794 (Jan. 1981), pp. 136–139.
+DOI: 10.1038/289136a0. URL: https://doi.org/10.1038/289136a0.
+[30]
+Christine Smyth and Jim Mori. “Statistical models for temporal variations of seismicity parameters to forecast
+seismicity rates in Japan”. In: Earth, Planets and Space 63.3 (Mar. 2011), p. 7. DOI: 10.5047/eps.2010.10.
+001. URL: https://doi.org/10.5047/eps.2010.10.001.
+[31]
+Samuel Stockman, Daniel J. Lawson, and Maximilian J. Werner. “Forecasting the 2016–2017 Central Apen-
+nines Earthquake Sequence With a Neural Point Process”. In: Earth’s Future 11.9 (2023). e2023EF003777
+2023EF003777, e2023EF003777. DOI: https : / / doi . org / 10 . 1029 / 2023EF003777. eprint: https :
+//agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023EF003777. URL: https://agupubs.
+onlinelibrary.wiley.com/doi/abs/10.1029/2023EF003777.
+[32]
+Koji Wakita. “Geology and tectonics of Japanese islands: A review – The key to understanding the geology of
+Asia”. In: Journal of Asian Earth Sciences 72 (2013). Geological Evolution of Asia, pp. 75–87. ISSN: 1367-
+9120. DOI: https://doi.org/10.1016/j.jseaes.2012.04.014. URL: https://www.sciencedirect.
+com/science/article/pii/S1367912012001642.
+[33]
+J. Douglas Zechar and Thomas H. Jordan. “Testing alarm-based earthquake predictions”. In: Geophysical Jour-
+nal International 172.2 (Feb. 2008), pp. 715–724. ISSN: 0956-540X. DOI: 10.1111/j.1365-246X.2007.
+03676.x. eprint: https://academic.oup.com/gji/article-pdf/172/2/715/17359354/172-2-
+715.pdf. URL: https://doi.org/10.1111/j.1365-246X.2007.03676.x.
+[34]
+Chengxiang Zhan et al. “ETAS-Inspired Spatio-Temporal Convolutional (STC) Model for Next-Day Earthquake
+Forecasting”. In: IEEE Transactions on Geoscience and Remote Sensing 62 (2024), pp. 1–14. DOI: 10.1109/
+TGRS.2024.3424881.
+[35]
+Ying Zhang et al. “Forecasting future earthquakes with deep neural networks: application to California”. In:
+Geophysical Journal International 240.1 (Oct. 2024), pp. 81–95. ISSN: 1365-246X. DOI: 10.1093/gji/
+ggae373. eprint: https://academic.oup.com/gji/article-pdf/240/1/81/60814890/ggae373.pdf.
+URL: https://doi.org/10.1093/gji/ggae373.
+[36]
+Weiqiang Zhu and Gregory C Beroza. “PhaseNet: a deep-neural-network-based seismic arrival-time picking
+method”. In: Geophysical Journal International 216.1 (Oct. 2018), pp. 261–273. ISSN: 0956-540X. DOI: 10.
+1093/gji/ggy423. eprint: https://academic.oup.com/gji/article-pdf/216/1/261/26329430/
+ggy423.pdf. URL: https://doi.org/10.1093/gji/ggy423.
+14

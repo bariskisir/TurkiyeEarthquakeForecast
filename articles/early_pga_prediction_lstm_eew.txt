@@ -1,0 +1,1650 @@
+
+--- Sayfa 1 ---
+Early Peak Ground Acceleration
+Prediction for On-Site Earthquake
+Early Warning Using LSTM Neural
+Network
+T.Y. Hsu 1,2* and A. Pratomo 1
+1Department of Civil and Construction Engineering, National Taiwan University of Science and Technology, Taipei City, Taiwan,
+2National Center for Research on Earthquake Engineering, Taipei City, Taiwan
+On-site earthquake early warning techniques, which issue alerts based on seismic waves
+measured at a single station, are promising, and have performed quite successfully during
+some damaging earthquakes. Conventionally, most existing techniques extract several
+P-wave features from the ﬁrst few seconds of seismic waves after the trigger to predict the
+intensity or destructiveness of an incoming earthquake. This type of technique neglects the
+behavior of temporal varying features within P waves. In other words, the characteristics of
+data sequences are not considered. In this study, a long short-term memory (LSTM) neural
+network, which is capable of learning order dependence in seismic waves, is employed to
+predict the peak ground acceleration (PGA) of the coming earthquake. A dense LSTM
+architecture is proposed and a large data set of earthquakes is used to train the LSTM
+model. The general performance of the LSTM model indicated that the predicted PGA
+values are quite promising but are generally overestimated. However, the predicted PGA of
+the Chi-Chi earthquake data set, whose fault rupture is complex and long, using the
+proposed LSTM model is more accurate than the PGA predicted in a previous study using
+a support vector regression approach. In addition, an alternative alert criterion, which
+issues alerts when the predicted PGA exceeds the threshold in successive time windows,
+is presented, and the performance of the proposed LSTM model when different PGA
+thresholds are considered is also discussed.
+Keywords: PGA (peak ground acceleration), LSTM (long short-term memory networks), on-site earthquake early
+warning, single-station, Chi-Chi earthquake
+1 INTRODUCTION
+After an earthquake rupture occurs, it is possible for an earthquake early warning (EEW) system to
+send alerts to earn several seconds to tens of seconds of lead time before destructive seismic waves
+strike. Regional EEW techniques estimate the magnitude and location of an earthquake based on
+seismic waves measured at several stations, while on-site EEW techniques estimate the earthquake’s
+intensity or identify destructive earthquakes based on seismic waves measured at only a single
+station. Successful EEW alerts were issued during several large earthquakes using both regional (e.g.,
+Fujinawa and Noda 2013; Cuéllar et al., 2014; Yamada et al., 2014; Kodera et al., 2016) and on-site
+techniques (e.g., Hsu et al., 2016; Hsu et al., 2018; Wu et al., 2019). On-site techniques could attain a
+longer lead time at the region close to the epicenter during several large earthquakes (e.g., Hsu et al.,
+Edited by:
+Tariq Alkhalifah,
+King Abdullah University of Science
+and Technology, Saudi Arabia
+Reviewed by:
+Omar M. Saad,
+National Research Institute of
+Astronomy and Geophysics, Egypt
+Yuki Kodera,
+Meteorological Research Institute,
+Japan
+*Correspondence:
+T.Y. Hsu
+tyhsu@mail.ntust.edu.tw
+Specialty section:
+This article was submitted to
+Solid Earth Geophysics,
+a section of the journal
+Frontiers in Earth Science
+Received: 03 April 2022
+Accepted: 17 June 2022
+Published: 08 July 2022
+Citation:
+Hsu TY and Pratomo A (2022) Early
+Peak Ground Acceleration Prediction
+for On-Site Earthquake Early Warning
+Using LSTM Neural Network.
+Front. Earth Sci. 10:911947.
+doi: 10.3389/feart.2022.911947
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+1
+ORIGINAL RESEARCH
+published: 08 July 2022
+doi: 10.3389/feart.2022.911947
+
+--- Sayfa 2 ---
+2018; Wu et al., 2019). Nowadays, a number of EEW systems
+issue alerts based on hybrid techniques (e.g., Kodera et al., 2018;
+Kodera, 2019; Hsu et al., 2021). The status of these EEW
+techniques and systems have been addressed by several recent
+review papers (e.g., Allen and Melgar 2019; Cremen and Galasso
+2020; Wald 2020).
+In order to predict the source characteristics, e.g., magnitude,
+distance from the epicenter, and seismic intensity [peak ground
+acceleration (PGA) and peak ground velocity (PGV)], of a
+coming earthquake at the stage of initial seismic waves,
+artiﬁcial intelligence techniques have recently been employed,
+especially for on-site EEW. Often, several P-wave features are
+extracted from the initial waveforms after the trigger and inputted
+into the prediction model constructed using artiﬁcial intelligence
+techniques for on-site EEW. For instance, the integration of the
+absolute value of acceleration, velocity, and displacement time
+histories, which describe the envelope of the waveforms in a
+simplistic way, is used as the input in multilayer feedforward
+neural
+networks
+(Bose
+et
+al.,
+2012).
+Similarly,
+effective
+predominant period, cumulative absolute velocity, integral of
+the squared velocity, peak acceleration, peak velocity, and peak
+displacement are used as the input in the prediction model
+constructed
+using
+the
+support
+vector
+regression
+(SVR)
+technique (Hsu et al., 2013). In this model, only some
+important P-wave features are used, so other important
+underlying information in the waveforms may be ignored.
+However, different prediction models are required to be
+constructed using the above-mentioned approaches based on
+artiﬁcial
+intelligence
+techniques
+if
+different
+time-window
+lengths of P waves are employed after the trigger. For
+instance, the typical length of these approaches is 3 s. In
+addition, temporal variation within P waves is also neglected
+in
+the
+above-mentioned
+approaches,
+and
+only
+lumped
+information is considered. In other words, the characteristics
+of data sequences are not considered in these approaches.
+Recently, many advanced methods have been proposed to
+estimate the magnitude and intensity of the earthquakes based on
+deep learning approaches. Hsu and Huang et al. (2021) attempted
+to exploit a deep convolutional neural network (CNN) to
+automatically extract useful features from previously measured
+P-wave data without losing too much information in the seismic
+waveforms and successfully predict the PGA of coming
+earthquakes based on a single-station approach. Similarly,
+Chiang et al. (2022) employed CNN to extract features of the
+initial P wave measured at a single station and predicted whether
+the maximum PGA of the coming earthquake of that station was
+larger than a pre-deﬁned threshold. Fayaz and Galasso (2022)
+developed a single station approach to estimate acceleration
+response spectrum using a deep neural network and a
+variational autoencoder with site characteristics and seven
+intensities measures. Jozinovic et al. (2020) utilized a 10 s
+window of raw waveform data of multiple stations starting at
+the earthquake origin time and a CNN to predict PGA at stations
+far from the epicenter which have not yet recorded the maximum
+ground shaking. Munchmeyer et al. (2021) proposed a deep-
+learning approach consisting of CNNs and a transformer network
+with raw waveform data of an arbitrary number of multiple
+stations at arbitrary locations to predict the magnitude and
+location of the earthquake.
+Long short-term memory (LSTM) is a class of recurrent neural
+networks that provides a connection between previous inputs and
+current inputs. The network stores information selectively from
+previous time steps, which then acts as an additional input in the
+current time step. The LSTM model can capture the dependencies
+between time steps and has been proven to be very useful for some
+sequential data problems such as speech recognition (Sak et al.,
+2014), prediction of stock prices (Murtaza et al., 2017), and short-
+term trafﬁc forecasting (Zhao et al., 2017). Wang et al. (2020)
+developed an LSTM neural network for on-site EEW. The LSTM
+model was trained to predict whether or not a large earthquake (with
+a PGA of more than 80 Gal) was imminent. In other words, the
+LSTM model only predicted the class of earthquake. However, PGA
+values are quite useful for different application purposes. For issuing
+alerts to the general public, 25 Gal is often employed as the threshold
+in Taiwan (Hsu et al., 2018), hence the threshold of 25 Gal is
+employed for the general application and discussion in this study.
+The machines in semiconductor fabrication plants are sensitive to
+small earthquakes and could be shut down by the emergency stop
+due to registering small vibration signals, e.g., with a PGA of several
+Gal. In contrast, high-speed trains may have different emergency
+responses to a PGA of 40, 80, or 120 Gal. The nuclear power plants
+in Taiwan are designed to resist earthquakes with a PGA of several
+hundred Gal. Therefore, in this study, we constructed an LSTM
+model to predict PGA values. The methodology of the proposed
+LSTM approach and the earthquake data used are explained in the
+second section. The results are discussed in the third section, and
+conclusions are drawn in the ﬁnal section.
+2 METHODOLOGY AND EARTHQUAKE
+DATA
+2.1 A Brief Description of the Long
+Short-Term Memory Neural Network
+Each LSTM unit, shown in Figure 1, contained an internal cell, a
+forget gate, an input gate, and an output gate (Hochreiter and
+Schmidhuber 1997). The internal cell stored values over time
+intervals via a self-recurrent connection to the previous time step,
+and value updating was controlled by the gates. The algorithm of
+an LSTM unit was deﬁned as
+f t  σwf [Ht−1, Xt] + bf 
+(1)
+it  σ(wi[Ht−1, Xt] + bi)
+(2)
+~Ct  tanh(wc[Ht−1, Xt] + bc)
+(3)
+Ct  f t × Ct−1 + it × ~Ct
+(4)
+ot  σ(wo[Ht−1, Xt] + bo)
+(5)
+and
+Ht  ot × tanh(Ct)
+(6)
+The forget gate took the current time step input (Xt) and the
+hidden state (Ht−1) from the previous time step as concatenated
+input, multiplied the forget gate weight (wf), added the forget
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+2
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 3 ---
+gate bias (bf), and applied the activation function. The input gate
+was provided with a concatenated input (Ht−1, Xt) with its
+weights (wi) and biases (bi) along with the candidate cell state
+(Ct). The cell state was updated with the forget gate (ft) by
+applying both the previous cell state (Ct−1) additional to the input
+gate (it) and the candidate cell state (~Ct). The input gate
+determined whether or not the information in the current
+time step was memorized and stored in the cell state. The
+output gate (ot) managed the output to update the cell state
+with its speciﬁc weights (wo) and biases (bo) using concatenated
+input similar to that of the input gate.
+2.2 Design of the Input and Output of the
+Long Short-Term Memory Model
+Before we introduce the neural network architecture, the design
+of the input and output of the proposed LSTM model is explained
+in this section. The goal of the proposed LSTM approach was to
+predict the PGA of the coming earthquake, as soon as possible
+after the arrival of the P wave, based on the measured seismic
+waves. Note that actually the problem is a regression one.
+However, in order to observe the intermediate prediction
+results more clearly, the target output of the LSTM model,
+shown in Figure 2, was designated as a step function with the
+amplitude of the PGA of the whole time history of the earthquake:
+h(t)   0
+, ti ≤t < tp
+PGA , tp ≤t ≤te
+(7)
+te  tp + tw;
+tw  0.5, 1.0, 1.5, 2.0, 2.5, 3.0
+(8)
+and
+ti  4 −tw
+(9)
+where tp was the P-wave arrival time determined based on the
+short-term
+average
+over
+long-term
+average
+(STA/LTA)
+algorithm; ti and te were start time and end time, respectively;
+and tw was the length of the time-window between tp and te. As a
+result, the output was anticipated to be like a step function, but
+the predicted output was actually a series of predicted PGA
+values. Typical example of the output will be illustrated and
+discussed more in Section 3.3. Note that tp was approximately 2 s
+after the real ﬁrst arrival time of the seismic wave. The total
+estimation time of the proposed algorithm to issue an alert
+consists of 1) the time between the P-wave arrival time and
+the trigger time determined by the STA/LTA algorithm, 2) the
+required length of tw, and 3) the execution time of the proposed
+algorithm.
+In this study, six tw lengths with an interval of 0.5 s were
+employed; hence, corresponding six truncated lengths with 4 s of
+“windowed” inputs were also employed. For instance, when
+tw  0.5, only seismic waves with a time-window length of
+0.5 s after the trigger were employed in the inputs, while those
+with a time-window length of 1.0 s after the trigger were
+employed when tw  1.0, and so on. An example of the input
+and output targets of one typical earthquake is shown in Figure 3.
+The windowed input when tw  0.5 is illustrated in Figure 3A. If
+the waveform is divided into windows with a smaller interval,
+then the alert could be issued once the predicted PGA values in
+any of the windows reach the threshold. Actually, the original
+FIGURE 1 | The long short-term memory unit.
+FIGURE 2 | The schematic diagram of the target output of the LSTM
+model. tp is the P-wave arrival time; ti and te are start time and end time,
+respectively; and tw is the length of the time-window between tp and te.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+3
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 4 ---
+design of the proposed algorithm is to predict the target PGA
+values at every time windows with an interval of 0.02 s. However,
+the program seems to have a problem dealing with the huge data
+with an interval of 0.02 s. A preliminary study was performed to
+determine whether the acceleration, velocity, and displacement
+time histories were used as the input of the proposed LSTM
+model. It was found that the performance of using both the
+acceleration and velocity was better than only using the
+acceleration or velocity, and including the displacement time
+history didn’t help. Hence both the acceleration and velocity are
+employed as the input in this study. Figures 3A–C show three
+acceleration time histories and three velocity time histories for
+different time-window lengths of the input. The velocity time
+histories were obtained from integration of the acceleration time
+histories. The corresponding target output time histories are
+shown in Figures 3D–F.
+To save computational effort, the sampling rate of the input
+and output was reduced. Since the energy of seismic waves tended
+to be below 25 Hz, the original seismic waves were down-sampled
+from 200 to 50 Hz using an 8th order Chebyshev Type I inﬁnite
+impulse response lowpass ﬁlter with a cutoff frequency of 40 Hz.
+The dimensions of the input and output of the LSTM model were
+201 × 6 and 201 × 1, respectively. Hence, the window length of the
+input with 201 samples was 201 s × 0.02 s = 4.02 s. Both the input
+and output data were normalized using the RobustScaler
+normalization algorithm which removed the median and
+scaled
+the
+input
+and
+output
+data
+according
+to
+their
+interquartile range. Note that if longer or shorter waveform is
+used as the input or the sampling rate is changed, then the
+dimension of the input should be changed and the LSTM model
+should be modiﬁed and trained again.
+2.3 Proposed Long Short-Term Memory
+Architecture
+Because a previous study showed that the results of PGA
+prediction or large earthquake detection using conventional
+LSTM architecture were not acceptable (Wang et al., 2020), a
+dense LSTM architecture was employed in this study for PGA
+prediction. The dense LSTM architecture contained several
+LSTM layers, with each layer consisting of a parallel LSTM
+series, as shown in Figure 4. After the ﬁnal dense LSTM layer,
+two fully connected layers were employed to generate the output
+data. The ﬁrst layer consisted of a parallel ReLU (Rectiﬁed Linear
+FIGURE 3 | A typical example of the input/output of the LSTM model. (A) input of tw = 0.5 s; (B) input of tw = 1.0 s; (C) input of tw = 3.0 s; (D) target output of tw =
+0.5 s; (E) target output of tw = 1.0 s; and (F) target output of tw = 3.0 s.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+4
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 5 ---
+Unit) series, which was a series of ReLU activation functions,
+while the second layer was a series of linear activation functions.
+The ﬁnal LSTM model is shown in Figure 4. The number of
+LSTM layers and the number of parallel ReLU series in the ﬁrst
+fully connected layer were determined based on a grid-search
+approach. The ﬁrst hyper-parameter in the grid search was the
+number of LSTM layers, N, and the number of LSTM series in
+each layer was determined automatically as 2N+2 in descending
+order. The number of LSTM layers considered in this study were
+(4, 5, 6). The other hyper-parameter in the grid search was the
+number of ReLU series in the ﬁrst fully connected layer. The
+number of ReLU series in the ﬁrst fully connected layer
+considered in this study were (8, 16, 32).
+2.4 Earthquake Data Sets
+The Central Weather Bureau (CWB) of Taiwan collects high-
+quality data on ground motions at several hundred seismic
+stations
+around
+Taiwan
+via
+the
+Taiwan
+strong
+motion
+instrument program (TSMIP). The TSMIP data set of 91,128
+earthquakes during the period from 29 July 1992, to 31 December
+2006, was employed in this study. Approximately half of the
+TSMIP data, 40,000 earthquakes in total, for each PGA range
+deﬁned by the CWB was used for training (32,000 earthquakes)
+and validation (8,000 earthquakes) of the proposed LSTM model,
+as listed in Table 1. The P-wave arrival time was determined
+based on the STA/LTA algorithm. In addition, two data sets of the
+most damaging recent earthquake events in Taiwan, i.e., the 2016
+Meinong (Tainan) earthquake event and the 2018 Hualien
+earthquake event (https://www.worlddata.info), were employed
+to test the performance of the proposed LSTM approach.
+2.5 Classiﬁcation Metrics and Lead Time
+In this study, the PGA threshold for general application was
+assumed to be 25 Gal. Once anyone of the values within the
+predicted PGA time history of a time-window length tw is equal
+to or larger than the threshold, the alert will be issued. In the ﬁeld
+of machine learning, the confusion matrix of false positives (FPs),
+false negatives (FNs), true positives (TPs), and true negatives
+(TNs) allows performance to be easily visualized, as shown in
+Figure 5A. Note that the target of the LSTM prediction model is
+the PGA values, hence the problem is a regression one. But the
+application of the problem is actually if the alert is issued
+correctly,
+hence
+the
+precision,
+recall,
+and
+F1-score
+are
+calculated to estimate the performance of alert issuing of the
+FIGURE 4 | Proposed architecture of the LSTM model. LL 1 is the 1st LSTM Layer; LL 2 is the 2nd LSTM Layer and so on; FL 1 is the 1st Fully-connected Layer; FL
+2 is the 2nd Fully-connected Layer.
+TABLE 1 | The number of earthquakes of different ranges in the TSMIP data set.
+PGA (Gal)
+Data
+set
+0.8–2.5
+2.5–8
+8–25
+25–80
+80–250
+250–800
+800~
+Total
+Whole TSMIP
+117
+31,192
+43,334
+13,366
+2,843
+268
+8
+91,128
+Training
+46
+12,477
+12,882
+5,347
+1,138
+108
+2
+32,000
+Validation
+13
+3,119
+3,220
+1,336
+284
+26
+2
+8,000
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+5
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 6 ---
+proposed approach. The lead time, tlead, is deﬁned as the time of
+issuing an alert, talert, minus the time when the observed PGA
+reaches the threshold, tPGA. That is, tlead  talert −tPGA. Note that
+if a correct alert is issued after the observed PGA reaches the
+threshold, i.e., negative lead time, it will be classiﬁed as an FN. The
+classiﬁcation metrics of precision, recall, and F1 score are
+calculated as
+precision 
+TP
+TP + FP
+(10)
+recall 
+TP
+TP + FN
+(11)
+and
+F1 score  2 × precision × recall
+precision + recall
+(12)
+For community earthquake early warning, the false alert
+ratio
+(FAR)
+and
+missed
+alert
+ratio
+(MAR)
+are
+more
+straightforward to observe than alert performance, and can
+be calculated as
+FAR 
+FP
+TP + FP
+(13)
+and
+MAR 
+FN
+TP + FN
+(14)
+Note that the problem is a regression problem, hence the
+predict error is estimated using the root mean squared
+logarithmic error (RMSLE) value of the maximum predicted
+PGA, which will be explained in the next section.
+3 RESULTS AND DISCUSSION
+3.1 Training and Validation
+When large deviations exist in the data, e.g., the PGA of large
+earthquakes can be almost 1,000 times those of small ones, the
+RMSLE is often employed to estimate the loss in prediction
+accuracy, which is deﬁned as
+E 
+
+1
+N 
+N
+j1logyp
+j + 1 −logyr
+j + 1
+2
+	
+(15)
+where yr
+j and yp
+j are the actual and predicted PGA of the jth
+earthquake, respectively, and N is the total number of
+earthquakes.
+The
+parameters
+in
+the
+LSTM
+model
+were
+updated based on the Nadam optimizer with a learning rate =
+0.0001 and batch size = 32 during the training process. The
+training process stopped when validation loss kept increasing
+over three successive epochs; the loss history during a typical
+training process of the LSTM is shown in Figure 6. The LSTM
+model was trained using Python language on an Intel® Core™i7-
+6700 CPU 3.40 GHz computer.
+3.2 Grid Search Results
+In this study, a grid search approach was employed to determine
+the two hyper-parameters (the number of LSTM layers and the
+FIGURE 5 | The confusion matrix when the threshold is designated as 25 Gal (A) without tolerance, and (B) with tolerance. FP is false positive; FN is false negative;
+TP is true positive; and TN is true negative.
+FIGURE 6 | Loss history during a typical training process.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+6
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 7 ---
+number of ReLU series in the ﬁrst fully connected layer) in the
+LSTM architecture. Both PGA prediction accuracy and lead-time
+length were considered in the evaluation of the performance of
+the LSTM architecture. Speciﬁcally, the model score, SM, of the
+LSTM architecture was calculated using the Min-Max normalized
+F1 score, ~F1, and the Min-Max normalized average lead-time,
+~tlead, (without tolerance) as
+SM  ~F1 + ~tlead
+(16)
+Table 2 shows the F1 score, average lead time, and model score
+of the nine combinations of the two hyper-parameters. The
+highest model score was achieved by the 7th LSTM model.
+Thus, the selected LSTM model consisted of six hidden LSTM
+layers and eight ReLU series in the ﬁrst fully connected layer,
+which was used in the following analyses.
+3.3 Typical Predicted Peak Ground
+Acceleration Time Histories
+In this section, the raw output of the predicted PGA time history using
+the proposed LSTM approach is discussed. The predicted PGA time
+histories of a TP case using different input windows are shown in
+Figure 7. When tw = 0.5 s, the observed PGA time history and the
+predicted PGA time history of the LSTM model are shown as the thin
+dashed–dotted gray line and the thick color line, respectively, in
+Figure 7A. The observed PGA time history is a series of the peak
+ground acceleration observed till different time. The target PGA is
+shown as the step function in a brown dashed–dotted line style, where
+the trigger time is indicated by the location of a “jump” in the step
+function. Because the predicted PGA exceeds 25 Gal at approximately
+4.04 s (shown as the dotted salmon-colored vertical line), the alert is
+issued in this window, i.e., at 4.5 s, as indicated by the dashed–dotted,
+teal-colored vertical line (at the very end of this ﬁgure). When tw =
+1.0 s (Figure 7B), since the predicted PGA already exceeded the
+threshold in the previous window when tw = 0.5 s, the alert has already
+been issued and the alert time remains at 4.5 s. The measured
+accelerations exceed the threshold approximately at 4.88 s (shown
+as the dashed purple line); hence, the lead time of this TP case is 4.88 −
+4.5 = 0.38 s. Note that an alert is classiﬁed as a TP only when it is
+issued before the threshold is reached, i.e., the lead time is positive. If a
+correct alert is issued but the lead time is zero or negative, the alert is
+classiﬁed as a false negative (FN). The observed PGA time history and
+the predicted PGA time history of the LSTM model when tw = 1.5, 2.0,
+2.5, and 3.0 s are shown in Figures 7C–F. Figures 7A–F can be
+combined together to produce Figure 8A for conciseness of this
+paper. In summary, the maximum amplitude of the predicted PGA
+time history (in short, maximum predicted PGA) at each window
+when tw = 0.5, 1.0, 1.5, 2.0, 2.5, and 3.0 s is 42.5, 51.2, 88.6, 67.8, 79.5,
+and 115.2 Gal, respectively. Although the target is a step function, the
+predicted output is approximately a monotonically-increasing step-
+like PGA time history. This phenomenon is also observed in Otake
+et al. (2020). Although the seismic intensity of an earthquake has only
+one value determined by the largest intensity during the earthquake,
+the predicted output of Otake et al. (2020) is a series of seismic
+intensity predicted at different time.
+The results of a typical FP case using different input windows
+are shown in Figure 8B. Because the predicted PGA exceeds
+25 Gal at approximately 4.02 s (shown as the dotted salmon-
+colored vertical line), the alert is issued in this window, i.e., at 4.5 s
+(shown as the dashed–dotted, teal-colored vertical line). The
+maximum predicted PGA value at each window when tw =
+0.5, 1.0, 1.5, 2.0, 2.5, and 3.0 s is 52.1, 39.9, 62.2, 53.5, 48.6,
+and 33.7 Gal, respectively. However, the actual PGA is only about
+16 Gal, as indicated by the dashed–dotted cobalt blue step
+function of the target PGA; hence, this is an FP case if no
+tolerance of the error of the predicted PGA is allowed. The
+results of a typical true negative (TN) case using different
+input windows are shown in Figure 8C. Although the time
+histories of the predicted PGA at each window are quite
+different, the maximum predicted PGA of all windows are
+approximately below 16 Gal, hence no alert will be issued in
+this case. The actual PGA is only about 21.7 Gal as indicated by
+the step function of the target PGA; hence, no alert is necessary in
+this case. The results of a typical FN case using different input
+windows are shown in Figure 8D. The actual PGA is
+approximately 33.6 Gal as indicated by the step function of the
+target PGA. However, the maximum predicted PGA of all the six
+windows is only about 11.1 Gal; hence, no alert is issued in this
+case. Note that because the P-wave arrival time is determined
+automatically using the STA/LTA algorithm, it could be after the
+real arrival of the P-wave for approximately 2 s, especially for the
+small earthquakes. As a result, for the small earthquakes, small
+acceleration signals already exist before the P-arrival time picked
+by the STA/LTA algorithm. Hence PGAs of approximately 5 Gal
+in Figures 8C,D could be predicted before the P-wave
+arrival times.
+TABLE 2 | The nine combinations of the two hyper-parameters of the LSTM models. The F1 score, average lead time, and model score of these models are also given.
+Model No.
+Number of
+LSTM layers
+ReLU series
+Average lead
+time (s)
+F1-Score (w/o
+Tolerance)
+Model score
+1
+4
+8
+6.512
+0.757
+0.623
+2
+4
+16
+6.539
+0.730
+0.270
+3
+4
+32
+6.537
+0.764
+0.837
+4
+5
+8
+6.520
+0.783
+1.091
+5
+5
+16
+6.572
+0.788
+1.340
+6
+5
+32
+6.773
+0.728
+1.000
+7
+6
+8
+6.670
+0.785
+1.613
+8
+6
+16
+6.468
+0.778
+0.834
+9
+6
+32
+6.673
+0.734
+0.769
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+7
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 8 ---
+3.4 General Performance of the Taiwan
+Strong Motion Instrument Program
+Data Set
+The accuracy of the predicted PGA of the entire TSMIP data set of
+91,119 earthquakes is discussed here to understand the general
+performance of the LSTM model in PGA prediction. The
+predicted PGA is a time history of each window, hence the
+data set for predicting the PGA of 91,119 earthquakes using
+six different windows is quite substantial. Because an alert will be
+issued when any predicted PGA within any window reaches the
+threshold, the maximum predicted PGA within all the windows is
+a critical value affecting performance in issuing alerts and will be
+discussed here. Figure 9 illustrates the comparison between the
+maximum predicted PGA and the actual PGA of all 91,119
+earthquakes. The RMSLE value of the maximum predicted
+PGA is 0.804. Besides, the standard deviation error (STD) of
+FIGURE 7 | The observed PGA time histories, predicted PGA time histories, and target PGA time histories of a typical true positive (TP) case using (A) tw = 0.5 s; (B)
+tw = 1.0 s; (C) tw = 1.5 s; (D) tw = 2.0 s; (E) tw = 2.5 s; and (F) tw = 3.0 s.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+8
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 9 ---
+the maximum predicted PGA is 0.563, while the mean absolute
+error percentage (MAPE) of the maximum predicted PGA is
+131.0%. The large value of MAPE is because there are many
+earthquakes of small PGA. It is evident that the maximum
+predicted PGA tends to be larger than the actual one, which is
+reasonable because the maximum value of the predicted PGA
+time history within all the windows is considered. For example,
+the maximum predicted PGA in the typical FP case in Figure 8B
+is approximately 62 Gal, which is the largest predicted value when
+tw = 1.5 s, while the actual PGA is approximately 11 Gal.
+If the magnitude and location of the earthquakes were
+perfectly estimated right after the arrival of the P wave, the
+PGA could be predicted base on the ground motion prediction
+equation (GMPE), which is used in many EEW systems in the
+world. Based on the GMPE developed by Jean et al. (2006), the
+RMSLE of the predicted PGA is 1.102, which is much larger than
+the one using the proposed LSTM approach. Hence although the
+deviation in Figure 9 looks quite large, the calculated RMSLE is
+still quite acceptable.
+The performance of the alerts issued based on the PGA
+prediction results of the LSTM model is discussed next. The
+confusion matrix of FP, FN, TP, and TN when no tolerance of the
+predicted PGA is allowed and the PGA threshold for issuing an
+alert is designated as 25 Gal (Figure 5A). The performance
+metrics based on the confusion matrix, such as the number of
+TPs, FPs, FNs, TNs, and the values of the F1 score, precision, and
+recall are shown in Table 3. Although recall is quite high
+(95.17%), precision and F1 score are quite low, only 32.4%
+and 48.3%, respectively. This is because the predicted PGA
+tends to be overestimated, hence the number of FPs is quite
+large, i.e., 32,720, compared to the number of TPs, i.e., 15,684. In
+other words, the false alert ratio (FAR), at 67.6%, is quite high and
+the missed alert ratio (MAR), at 4.90%, is quite low.
+In practical, a tolerance of ±1 level of intensity prediction is
+accepted and employed in the Japan Meteorological Agency,
+Japan (JMA, 2016) and the CWB, Taiwan. They deﬁne the
+intensity prediction accuracy ratio as the ratio of the predicted
+intensity scale located within a one-scale difference from the real
+intensity scale among all the considered earthquake data. In this
+study, the tolerance range proposed by Meier (2017) is employed
+when evaluating the classiﬁcation performance of an EEW
+system. The ±1 level of the CWB intensity scale based on
+PGA is shown in Figure 5B, and the performance metrics of
+tolerance are also summarized in Table 3. While tolerance is
+allowed, only 17 and 7,119 cases of FNs and FPs, respectively,
+remain and precision, recall, and F1-score increase to 85.3%,
+FIGURE 8 | Observed PGA time histories, predicted PGA time histories of different windows, and target PGA time histories of a typical (A) TP, (B) FP, (C) TN, and
+(D) FN case.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+9
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 10 ---
+100.0%, and 92.1%, respectively. Hence, the overall potential alert
+performance using the proposed LSTM model appears to be quite
+promising in general if tolerance is allowed. The false alert ratio
+(FAR), at only 14.7%, is quite acceptable, and the missed alert
+ratio (MAR), at 0.03%, is almost zero.
+The distribution of lead times of the cases when both the actual
+and predicted PGA is ≥25 Gal is shown in Figure 10. The lead
+times of these cases are between −1 and 26 s, and the average lead
+time is 7.46 s. The lead times of only ﬁve cases are negative, and
+these cases are classiﬁed as FN, as shown in Figure 10B.
+3.5 Performance of the Chi-Chi Earthquake
+Data Set
+The Chi-Chi earthquake data set is also included in the TSMIP
+data set of 91,119 earthquakes, hence approximately half of the
+data of the Chi-Chi earthquake are in the training dataset and
+validation dataset. The fault rupture of the Chi-Chi earthquake
+has been reported as long and complex (Ma et al., 2001). In
+addition, several studies have indicated that the magnitude or
+intensity estimation based on the short beginning of vibration
+signals (usually several seconds) is not reliable for such large
+earthquakes, which are usually generated by a long and complex
+rupture (e.g., Wu and Zhao, 2006; Rydelek et al., 2007; Hoshiba
+and Iwakiri, 2011; Kodera, 2019). As in the case of the Chi-Chi
+earthquake, underestimation of PGA is usually observed when
+the prediction model is established using SVR (Hsu et al., 2013), a
+multilayer feedforward network (Hsu et al., 2020), or a CNN (Hsu
+et al., 2021). Hence, we also assessed the PGA prediction results of
+the Chi-Chi earthquake data set using the proposed LSTM
+approach in this study, as shown in Figure 11A and Table 3.
+The maximum PGA of the same windows, i.e., 0.5, 1, 1.5, 2, 2.5,
+and 3 s, after the trigger, predicted using the SVR approach (Hsu
+et al., 2013) and the CNN approach (Hsu et al., 2021), is shown in
+Figures 11B,C for comparison, respectively. It is evident that the
+PGA predicted using the SVR approach and the CNN approach is
+substantially underestimated, while that predicted using the
+LSTM approach is much closer to the actual PGA, although
+the predicted PGA of some earthquakes is still underestimated.
+The number of TPs, FPs, FNs, TNs, and the RMSLE, STD, MAPE,
+F1 score, precision, recall, FAR, and MAR using the SVR
+approach and the CNN approach are shown in Table 4.
+Tables 3, 4 show that while the FARs of the LSTM, SVR, and
+CNN approaches are very low, the MARs of the latter two
+approaches are much higher than those of the former. In
+addition, the average lead time of the proposed LSTM
+approach is much longer than that of the SVR and CNN
+approaches. Based on these results, the proposed LSTM
+approach may have an advantage over the other approach in
+more accurately predicting the PGA of earthquakes with a long
+and complex rupture process, but further study is necessary to
+support this ﬁnding.
+3.6 Performance of the Independent Data
+Sets
+In addition to the TSMIP data set, the performance of the
+proposed
+LSTM
+approach
+was
+also
+studied
+using
+the
+independent data sets of the 2016 Meinong earthquakes and
+the 2018 Hualien earthquakes. The comparison between the
+predicted and actual PGA of these two data sets is shown in
+Figure 12. The distribution indicates that the independent
+data sets could also demonstrate the anticipated accuracy of
+PGA prediction. The RMSLE of the Meinong and Hualien data
+sets was 1.410 and 0.882, respectively. The performance
+metrics, based on the confusion matrices in Figure 5, are
+shown in Table 3. If no tolerance is allowed, the number of FPs
+FIGURE 9 | Comparison between the predicted PGA and actual PGA of
+the entire TSMIP data set using the proposed LSTM approach. The
+distribution of the earthquakes with real PGA larger than 800 Gal is marked
+with the blue box.
+TABLE 3 | The performance metrics of the TSMIP, Chi-Chi earthquake, Meinong
+earthquake, and Hualien earthquake data sets using the proposed
+LSTM model.
+Metric
+TSMIP
+Chi-Chi
+Meinong
+Hualien
+w/o
+w/
+w/o
+w/
+w/o
+w/
+w/o
+w/
+Tolerance
+Tolerance
+Tolerance
+Tolerance
+RMSLE
+0.804
+0.941
+1.141
+0.882
+STD
+0.563
+0.876
+1.109
+0.969
+MAPE (%)
+131.0
+56.97
+103.5
+82.62
+TP
+15,684
+41,295
+310
+317
+186
+268
+55
+133
+FP
+32,720
+7,119
+7
+—
+106
+24
+109
+31
+FN
+801
+17
+59
+22
+71
+24
+25
+8
+TN
+41,924
+42,708
+1
+38
+160
+207
+275
+292
+Precision (%)
+32.4
+85.3
+97.8
+100
+63.7
+91.7
+32.7
+80.9
+Recall (%)
+95.1
+100
+84.0
+93.5
+72.4
+91.1
+66.3
+92.9
+F1 score (%)
+48.3
+92.1
+90.4
+96.6
+67.8
+91.4
+43.8
+86.5
+FAR (%)
+67.6
+14.7
+2.21
+0.00
+36.3
+8.30
+67.3
+19.1
+MAR (%)
+4.90
+0.03
+16.0
+6.49
+27.6
+8.90
+33.7
+7.10
+Lead time (s)
+7.46
+13.66
+6.04
+4.29
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+10
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 11 ---
+is larger than the number of FNs, resulting in higher recall than
+precision of both data sets. If tolerance is allowed, precision,
+recall, and F1 score of these two data sets are quite high,
+between 80.9% and −92.9%. Hence, the performance of alert
+classiﬁcation seems quite promising in general if tolerance is
+allowed.
+The lead times of these two data sets were between −2 and 17 s,
+and the average lead times were 6.04 and 4.29 s, as shown in
+FIGURE 10 | (A) Lead time distribution of the TSMIP data set; and (B) close view of the distribution of lead times shorter than 2 s.
+FIGURE 11 | Comparison between the predicted PGA and actual PGA of the Chi-Chi data set using (A) the proposed LSTM approach, (B) the SVR approach, and
+(C) the CNN approach.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+11
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 12 ---
+Figure 13 and Table 3. Although the predicted PGA was larger
+than the threshold for all the cases with a negative lead time, these
+cases were classiﬁed as FN due to late alerts, whose locations are
+shown as inverted triangles in Figure 14. Note that it is not
+necessary for the stations with a negative lead time to be close to
+the epicenter. In fact, the lead time of only one of these cases was
+<−1; the observed PGA and the predicted PGA using different
+input windows of this case are shown in Figure 15A. The
+amplitude of observed PGA time history was quite small and
+increased very slowly with time, which may make accurate
+prediction of PGA in time quite difﬁcult. In all other cases
+with negative lead times, their lead times were actually
+between −0.5 and 0 s. A typical case with negative lead times
+is shown in Figure 15B. Because the predicted PGA exceeded
+25 Gal in the same time window with the actual PGA exceeding
+25 Gal, the negative lead-time cases could become positive if
+smaller intervals are used (for example, when the time interval is
+changed to 0.1 s).
+The locations of the classiﬁcation results with tolerance for
+the Meinong earthquakes are shown in Figure 14A. The
+background
+of
+PGA
+distribution
+may
+result
+from
+the
+northwestward rupture of the left–lateral strike-slip fault.
+Most of the alerts of the stations close to the epicenter are
+TP. In addition, most of the stations with FN alerts are located
+in the region approximately 80–130 km north of the epicenter.
+TABLE 4 | The performance metrics of the Chi-Chi earthquake data set using the
+SVR approach and the CNN approach.
+Metric
+SVR
+CNN
+w/o
+w/
+w/o
+w/
+Tolerance
+Tolerance
+RMSLE
+2.005
+1.5256
+STD
+0.831
+0.770
+MAPE (%)
+67.88
+64.91
+TP
+80
+80
+174
+174
+FP
+1
+1
+0
+0
+FN
+267
+109
+201
+90
+TN
+29
+187
+2
+113
+Precision (%)
+98.7
+98.7
+100
+100
+Recall (%)
+23.0
+42.3
+46.4
+65.9
+F1 score (%)
+37.3
+59.2
+63.3
+79.5
+FAR (%)
+3.33
+0.53
+0.0
+0.0
+MAR (%)
+77.0
+57.7
+53.6
+34.1
+Average lead time (s)
+5.70
+10.44
+FIGURE 12 | Comparison between the predicted PGA and actual PGA of the (A) Meinong data set, and (B) Hualien data set.
+FIGURE 13 | Lead time distribution of the (A) Meinong data set, and (B) Hualien data set.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+12
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 13 ---
+This phenomenon could mainly be related to the seismic wave
+difference due to the rupture directivity of the fault. In
+addition, most of the FP alerts are located in east Taiwan.
+Besides the rupture directivity of the fault, another possible
+reason for this phenomenon could be the effect of the path
+from west to east through the mountainous area in central
+Taiwan.
+In
+the
+case
+of
+the
+Hualien
+earthquakes,
+the
+background of PGA distribution in Figure 14B indicates
+that the rupture was oriented toward the south, which was
+identical to the focal mechanism solutions. The majority of the
+alerts of stations near the epicenter were TP, except for those of
+several stations very close to the epicenter. Most of the FP
+stations were located north of the epicenter. This phenomenon
+may also be related to the seismic wave difference due to the
+rupture directivity of the fault.
+3.7 Discussion of the Alert Criterion
+From the general performance of the LSTM approach to the
+analysis of the TSMIP data set, it is evident that the predicted
+PGA tends to be overestimated, resulting in a higher FAR. The
+alert is issued once the predicted PGA is equal to or larger than
+the threshold in any of the six windows. If the alert is issued
+only when the predicted PGA of two consecutive windows
+reaches the threshold, then the number of false alerts should be
+FIGURE 14 | The locations of the stations of different classiﬁcation conditions of the (A) Meinong data set, and (B) Hualien data set. The background indicates the
+distribution of observed PGA. LT is lead time, and the star marker is the epicenter.
+FIGURE 15 | Observed PGA time histories, predicted PGA time histories of different windows, and target PGA time histories of (A) the only case of lead time < −1 s
+in the Meinong data set, and (B) a typical case of lead time < 0 s in the independent data sets.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+13
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 14 ---
+reduced. Hence, in this section, an alternative algorithm for
+issuing an alert is proposed to reduce the FAR. This algorithm
+has two conditions, and the alert will be issued when anyone of
+the conditions is fulﬁlled. The ﬁrst is satisﬁed when the
+predicted PGA is equal to or larger than the threshold in
+two consecutive windows. The second is satisﬁed when the
+predicted PGA is equal to or larger than the threshold in the
+last window (tw = 3.0 s). It is because there are no further
+windows after this one. As shown in Table 5, the number of FP
+cases decreased from 32,720 to 27,024, while the FAR
+decreased from 14.7% to 11.5% when tolerance was allowed.
+However, the number of FN cases increased from 17 to 20,
+while the MAR increased from 0.03% to 0.04% when tolerance
+was allowed, and the average lead time also decreased from
+7.46 to 6.91 s. A trade-off was always present between FP cases
+and the FN cases, and also between prediction accuracy and
+lead time. If more missed alerts are not tolerable, then the
+original criterion to issue an alert should be employed.
+3.8 Performance of Different Peak Ground
+Acceleration Thresholds
+As discussed in the Introduction, a threshold can be
+designated for different applications. In this study, two
+alternative thresholds were considered. The ﬁrst was a
+relatively small threshold, which is required to issue a
+command
+to
+automatically
+park
+machines
+in
+semiconductor fabrication plants during the manufacturing
+process even when the intensity of the coming seismic
+vibration is small. By doing so, these machines can restart
+the manufacturing process after the earthquake much faster
+than when they are shut down by the emergency stop due to
+the measured vibration signals. The reduced time required to
+restart the manufacturing process is very beneﬁcial to the
+semiconductor fabrication plants. Hence, the threshold of
+8 Gal
+was
+considered
+in
+this
+study,
+and
+the
+general
+performance of the TSMIP data set was assessed.
+The performance metrics when the PGA threshold for issuing
+an alert is designated as 8 Gal are shown in Table 6. If no
+tolerance is allowed, the number of FPs is quite large,
+i.e., 31,047, compared to the number of TPs, i.e., 59,778,
+resulting in the FAR being quite high at 34.2%. Note that the
+FAR is much lower than that (it is 67.6%) when the threshold is
+25 Gal (Table 3). On the other hand, the number of FNs is only
+41, resulting in the MAR being only 0.07%. The average lead time
+is 6.60 s. The number of FPs becomes only 112, which is very
+small compared to the number of TPs, i.e., 90,713, when a ±1 level
+of the CWB intensity scale is employed, as shown in Figure 16A.
+In addition, only three FNs remain. Hence the FAR and MAR are
+very small, i.e., 0.12% and 0.01%, respectively. As a result, the
+performance of alert classiﬁcation using 8 Gal as the threshold
+seems quite promising in general if tolerance is allowed.
+The other threshold is relatively large, which could be useful
+for nuclear power plants because their design basis earthquake
+is much larger than that of ordinary structures. Hence, the
+threshold of 250 Gal is studied here, and the general
+performance
+of
+the
+TSMIP
+data
+set
+is
+assessed.
+The
+performance metrics when the PGA threshold for issuing an
+alert is designated as 250 Gal are also shown in Table 6. If no
+tolerance is allowed, the number of FPs is only 560, but it is
+relatively large compared to the number of TPs, i.e., 211,
+resulting in the FAR, at 72.6%, being quite high. On the
+other hand, the number of FNs is only 65, which is
+relatively small compared to the number of TPs, resulting
+in the MAR being only 23.2%. The average lead time is 6.32 s.
+When a ±1 level of the CWB intensity scale is employed here,
+as shown in Figure 16B, the number of FPs is only 74, which is
+very small compared to the number of TPs, i.e., 697. In
+addition, the number of FNs becomes 0. Hence, the FAR
+and MAR are very small, i.e., 9.60% and 0.00%, respectively,
+lower than 14.7% and 0.03% when the threshold is 25 Gal
+(Table 3). As a result, the performance of alert classiﬁcation
+using 250 Gal as the threshold also seems quite acceptable in
+general if tolerance is allowed.
+TABLE 5 | The performance metrics of the TSMIP data set using the proposed
+LSTM model with an alternative alert criterion.
+Metric
+TSMIP
+w/o
+w/
+Tolerance
+TP
+15,491
+37,644
+FP
+27,024
+4,871
+FN
+994
+15
+TN
+47,620
+48,599
+Precision (%)
+36.4
+88.5
+Recall (%)
+94.0
+100
+F1 score (%)
+52.5
+93.9
+FAR (%)
+63.6
+11.5
+MAR (%)
+6.03
+0.04
+Lead time (s)
+6.91
+TABLE 6 | The performance metrics of the TSMIP data set using the proposed
+LSTM model with different PGA thresholds.
+Metric
+Threshold
+8 Gal
+250 Gal
+w/o
+w/
+w/o
+w/
+Tolerance
+Tolerance
+TP
+59,778
+90,713
+211
+697
+FP
+31,047
+112
+560
+74
+FN
+41
+3
+65
+—
+TN
+263
+301
+90,293
+90,358
+Precision (%)
+65.8
+99.9
+27.4
+90.4
+Recall (%)
+99.9
+100
+76.8
+100
+F1 score (%)
+79.4
+99.9
+40.3
+95.0
+FAR (%)
+34.2
+0.12
+72.6
+9.60
+MAR (%)
+0.07
+0.01
+23.2
+0.00
+Lead time (s)
+6.60
+6.32
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+14
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 15 ---
+4 CONCLUSION
+In this study, a dense architecture was proposed for the LSTM
+neural network to predict the PGA of the incoming seismic
+wave at the same site. The input data of the LSTM model were
+the acceleration and velocity time histories of different window
+lengths of
+P-wave data
+after
+the
+trigger.
+The general
+performance of the proposed LSTM model using the TSMIP
+data set with 91,128 earthquakes was quite acceptable.
+However, the predicted PGA of the proposed LSTM model
+tended to be overestimated, hence a higher FAR (14.7%) and a
+lower MAR (0.03%) were obtained when a ±1 level of the CWB
+intensity scale was tolerated, and the average lead time was
+7.46 s for the whole TSMIP data set.
+Surprisingly, the accuracy of the predicted PGA of the Chi-
+Chi earthquake using the proposed LSTM model was quite
+acceptable, resulting in a zero FAR (0.00%) and a low MAR
+(6.49%) when a ±1 level of the CWB intensity scale was
+tolerated. Note that the predicted PGA of the Chi-Chi
+earthquake
+in
+previous
+studies
+was
+always
+seriously
+underestimated. For comparison, if the maximum predicted
+PGA for the same windows after the trigger is considered using
+the SVR approach, an FAR of 0.53% and a high MAR value of
+57.7% with a shorter average lead time of 5.70 s are obtained.
+This illustrates one of the merits of the proposed LSTM
+approach.
+Two independent data sets for damaging earthquakes that
+occurred recently in Taiwan were employed to validate the
+proposed LSTM approach. The results indicate that the
+anticipated accuracy of PGA prediction
+could also be
+demonstrated
+with
+the
+independent
+data
+sets.
+When
+tolerance
+was
+allowed,
+the
+performance
+of
+alert
+classiﬁcation appeared quite promising in general because
+precision, recall, and F1-score were quite high, i.e., between
+80.9% and −92.9%. The lead times of these two data sets were
+between −2 and 17 s, and the average lead times were 6.04 and
+4.29 s. Lead time can be improved if smaller intervals between
+time windows are employed, especially for the cases with
+negative lead times, but further studies are required to
+support this hypothesis.
+Because the proposed LSTM approach tended to predict
+overestimated PGA in general, an alternative algorithm to
+issue
+alerts
+is
+proposed
+to
+reduce
+the
+FAR.
+In
+this
+alternative algorithm, an alert will be issued only if the
+PGA threshold is satisﬁed in two consecutive windows
+(except
+the
+last
+window).
+The
+performance
+of
+the
+alternative algorithm was tested with the TSMIP data set.
+When tolerance was allowed, although the FAR decreased
+from 14.7% to 11.5%, the MAR increased from 0.03% to
+0.04% and the average lead time decreased from 7.46 to 6.91 s.
+The threshold can be designated for different applications.
+In this study, two alternative thresholds were studied. The
+performance of the different thresholds was tested with the
+TSMIP data set. If the PGA threshold for issuing an alert was
+designated as 8 Gal and tolerance was allowed, the FAR and
+MAR were very small, i.e., 0.12% and 0.01%, respectively, and
+the average lead time became somewhat shorter, i.e., 6.60 s. If
+the PGA threshold for issuing an alert was designated as
+250 Gal and tolerance was allowed, the FAR and MAR were
+also very small, i.e., 9.60% and 0.00%, respectively, and the
+average lead time also became a little shorter, i.e., 6.32 s. Note
+that these FAR and MAR values were smaller than those,
+i.e., 14.7% and 0.03%, when the threshold was 25 Gal.
+However, more studies are required because the number of
+earthquakes with a PGA of <2.5 Gal or >250 Gal is not large
+enough.
+Nevertheless,
+the results
+still indicate possible
+application of the proposed LSTM approach to different
+designated thresholds.
+FIGURE 16 | The confusion matrix with tolerance when the threshold is designated as (A) 8 Gal, and (B) 250 Gal.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+15
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 16 ---
+DATA AVAILABILITY STATEMENT
+Publicly available datasets were analyzed in this study. This data
+can be found here: The strong-motion accelerations of the
+Taiwan strong motion instrumentation program (TSMIP) can
+be downloaded from the geophysical database management
+system
+(GDMS)
+website
+(http://gdms.cwb.gov.tw/index.php,
+last accessed September 2021).
+AUTHOR CONTRIBUTIONS
+TH designed the research study and wrote sections of the
+manuscript. AP constructed the LSTM and ran the analysis.
+ACKNOWLEDGMENTS
+The authors want to thank Dr. Hung-Yi Lee, the professor of the
+Department of Computer Science and Information Engineering
+at National Taiwan University, Taiwan, for his generous support
+of this research. The authors also want to thank the Taiwan
+Strong Motion Instrument Program operated by Central Weather
+Bureau (CWB) in Taiwan for providing high-quality strong
+ground motions caused by earthquakes around Taiwan. The
+strong-motion accelerations of the Taiwan strong motion
+instrumentation program (TSMIP) can be downloaded from
+the geophysical database management system (GDMS) website
+(http://gdms.cwb.gov.tw/index.php,
+last
+accessed
+September
+2021).
+REFERENCES
+Allen, R. M., and Melgar, D. (2019). Earthquake Early Warning: Advances,
+Scientiﬁc Challenges, and Societal Needs. Annu. Rev. Earth Planet. Sci. 47,
+361–388. doi:10.1146/annurev-earth-053018-060457
+Böse, M., Heaton, T., and Hauksson, E. (2012). Rapid Estimation of Earthquake
+Source and Ground-Motion Parameters for Earthquake Early Warning Using
+Data from a Single Three-Component Broadband or Strong-Motion Sensor.
+Bull. Seismol. Soc. Am. 102 (2), 738–750.
+Chiang, Y.-J., Chin, T.-L., and Chen, D.-Y. (2022). Neural Network-Based Strong
+Motion Prediction for On-Site Earthquake Early Warning. Sensors 22, 704.
+doi:10.3390/s22030704
+Cremen, G., and Galasso, C. (2020). Earthquake Early Warning: Recent Advances
+and Perspectives. Earth-Science Rev. 205 (February), 103184. doi:10.1016/j.
+earscirev.2020.103184
+Cuéllar, A., Espinosa-Aranda, J. M., Suarez, R., Ibarrola, G., and Uribe, A. (2014).
+“The Mexican Seismic Alert System (SASMEX): its Alert Signals, Broadcast
+Results and Performance during the M 7.4 Punta Maldonado Earthquake of
+March 20th, 2012,” in Early Warning for Geological Disasters. Editors F. Wenzel
+and Z. Zschau (Berlin: Springer-Verlag), 71–87.
+Fayaz, J., and Galasso, C. (2022). A Deep Neural Network Framework for Real-
+Time On-Site Estimation of Acceleration Response Spectra of Seismic Ground
+Motions. Computer-Aided Civ. Infrastructure Eng., 1–17.
+Fujinawa, Y., and Noda, Y. (2013). Japan’s Earthquake Early Warning System on
+11 March 2011: Performance, Shortcomings, and Changes. Earthq. Spectra 29
+(S1), S341–S368. doi:10.1193/1.4000127
+Hochreiter, S., and Schmidhuber, J. (1997). Long Short-Term Memory. Neural
+Comput. 9 (8), 1735–1780. doi:10.1162/neco.1997.9.8.1735
+Hoshiba, M., and Iwakiri, K. (2011). Initial 30 Seconds of the 2011 off the Paciﬁc
+Coast of Tohoku Earthquake (M W 9.0)-amplitude and τ C for Magnitude
+Estimation for Earthquake Early Warning-. Earth Planet Sp. 63, 553–557.
+doi:10.5047/eps.2011.06.015
+Hsu, T.-Y., and Huang, C.-W. (2021). Onsite Early Prediction of PGA Using CNN
+with Multi-Scale and Multi-Domain P-Waves as Input. Front. Earth Sci. 9,
+626908. doi:10.3389/feart.2021.626908
+Hsu, T.-Y., Huang, S.-K., Chang, Y.-W., Kuo, C.-H., Lin, C.-M., Chang, T.-M., et al.
+(2013). Rapid On-Site Peak Ground Acceleration Estimation Based on Support
+Vector Regression and P-Wave Features in Taiwan. Soil Dyn. Earthq. Eng. 49,
+210–217. doi:10.1016/j.soildyn.2013.03.001
+Hsu, T.-Y., Kuo, C.-H., Wang, H.-H., Chang, Y.-W., Lin, P.-Y., and Wen,
+K.-L. (2021). The Realization of an Earthquake Early Warning System
+for Schools and its Performance during the 2019 ML 6.3 Hualien
+(Taiwan) Earthquake. Seismol. Res. Lett. 92 (1), 342–351. doi:10.
+1785/0220190329
+Hsu, T.-Y., Wang, H.-H., Lin, P.-Y., Lin, C.-M., Kuo, C.-H., and Wen, K.-L. (2016).
+Performance of the NCREE’s On-Site Warning System during the 5 February
+2016Mw6.53 Meinong Earthquake. Geophys. Res. Lett. 43, 8954–8959. doi:10.
+1002/2016gl069372
+Hsu, T.-Y., Wu, R.-T., Liang, C.-W., Kuo, C.-H., and Lin, C.-M. (2020). Peak
+Ground Acceleration Estimation Using P-Wave Parameters and Horizontal-
+To-Vertical Spectral Ratios. Terr. Atmos. Ocean. Sci. 31 (1), 1–8. doi:10.3319/
+tao.2019.07.04.01
+Hsu, T. Y., Lin, P. Y., Wang, H. H., Chiang, H. W., Chang, Y. W., and Kuo, C. H.
+(2018). Comparing the Performance of the NEEWS Earthquake Early Warning
+System against the CWB System during the 6 February 2018 Mw 6.2 Hualien
+Earthquake. Geophys. Res. Lett. 45, 6001–6007.
+Japan Meteorological Agency (JMA) (2016). JMA Operational Evaluation Report.
+Jean, W. Y., Chang, Y. W., Wen, K. L., and Loh, C. H. (2006). Early Estimation of
+Seismic Hazard for Strong Earthquakes in Taiwan. Nat. Hazards 37, 39–53.
+Jozinović, D., Lomax, A., Štajduhar, I., and Michelini, A. (2020). Rapid Prediction
+of Earthquake Ground Shaking Intensity Using Raw Waveform Data and a
+Convolutional Neural Network. Geophys. J. Int. 222, 1379–1389.
+Kodera, Y. (2019). An Earthquake Early Warning Method Based on Huygens
+Principle: Robust Ground Motion Prediction Using Various Localized
+Distance-Attenuation
+Models.
+J.
+Geophys.
+Res.
+Solid
+Earth
+124,
+12981–12996. doi:10.1029/2019jb017862
+Kodera, Y., Saitou, J., Hayashimoto, N., Adachi, S., Morimoto, M., Nishimae, Y.,
+et al. (2016). Earthquake Early Warning for the 2016 Kumamoto Earthquake:
+Performance Evaluation of the Current System and the Next-Generation
+Methods of the Japan Meteorological Agency. Earth Planets Space 68, 202.
+doi:10.1186/s40623-016-0567-1
+Kodera, Y., Yamada, Y., Hirano, K., Tamaribuchi, K., Adachi, S., Hayashimoto, N.,
+et al. (2018). The Propagation of Local Undamped Motion (PLUM) Method: A
+Simple and Robust Seismic Waveﬁeld Estimation Approach for Earthquake
+Early Warning. Bull. Seismol. Soc. Am. 108, 983–1003. doi:10.1785/0120170085
+Ma, K. F., Mori, J., Lee, S. J., and Yu, S. B. (2001). Spatial and Temporal Distribution
+of Slip for the 1999 Chi-Chi, Taiwan, Earthquake. Bull. Seism. Soc. Am. 91 (5),
+1069–1087.
+Meier, M.-A. (2017). How "good" Are Real-Time Ground Motion Predictions from
+Earthquake Early Warning Systems? J. Geophys. Res. Solid Earth 122,
+5561–5577. doi:10.1002/2017jb014025
+Münchmeyer, J., Bindi, D., Leser, U., and Tilmann, F. (2021). The Transformer
+Earthquake Alerting Model: A New Versatile Approach to Earthquake Early
+Warning. Geophys. J. Int. 225, 646–656.
+Murtaza, R., Patel, H., and Varma, S. (2017). Predicting Stock Prices Using LSTM.
+Int. J. Sci. Res. 6 (4), 1754–1756.
+Otake, R., Kurima, J., Goto, H., and Sawada, S. (2020). Deep Learning Model for
+Spatial Interpolation of Real-Time Seismic Intensity. Seismol. Res. Lett. 91 (6),
+3433–3443. doi:10.1785/0220200006
+Rydelek, P., Wu, C., and Horiuchi, S. (2007). Comment on “Earthquake Magnitude
+Estimation from Peak Amplitudes of Very Early Seismic Signals on Strong
+Motion Records” by Aldo Zollo, Maria Lancieri, and Stefan Nielsen. Geophys.
+Res. Lett. 34, L20302. doi:10.1029/2007gl029387
+Sak, H., Senior, A. W., and Beaufays, F. (2014). Long Short-Term Memory
+Recurrent Neural Network Architectures for Large Vocabulary Speech
+Recognition.
+ArXiv
+e-prints.
+Available
+at
+http://research.google/pubs/
+pub43905.pdf.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+16
+Hsu and Pratomo
+On-Site EEW Using LSTM
+
+--- Sayfa 17 ---
+Wald, D. J. (2020). Practical Limitations of Earthquake Early Warning. Earthq.
+Spectra 36 (3), 1412–1447. doi:10.1177/8755293020911388
+Wang, C. Y., Huang, T. C., and Wu, Y. M. (2020). A LSTM Neural Network for On-
+Site Earthquake Early Warning. EGU General Assem. 2020, 3696.
+Wu, Y.-M., and Zhao, L. (2006). Magnitude Estimation Using the First Three
+Seconds P-Wave Amplitude in Earthquake Early Warning. Geophys. Res. Lett.
+33, L16312. doi:10.1029/2006GL026871
+Wu, Y. M., Mittal, H., Huang, T. C., Yang, B. M., Jan, J. C., and Chen, S. K. (2019).
+Performance of a Low-Cost Earthquake Early Warning System (P-Alert) and
+Shake Map Production during the 2018 Mw 6.4 Hualien, Taiwan, Earthquake.
+Seismol. Res. Lett. 90 (1), 19–29. doi:10.1785/0220180170
+Yamada, M., Tamaribuchi, K., and Wu, S. (2014). Faster and More Accurate Earthquake
+Early Warning System. J. JAEE 14 (4), 21–24. doi:10.5610/jaee.14.4_21
+Zhao, Z., Chen, W., Wu, X., Chen, P. C. Y., and Liu, J. (2017). LSTM Network: a
+Deep Learning Approach for Short-term Trafﬁc Forecast. IET Intell. Transp.
+Syst. 11 (2), 68–75. doi:10.1049/iet-its.2016.0208
+Conﬂict of Interest: The authors declare that the research was conducted in the
+absence of any commercial or ﬁnancial relationships that could be construed as a
+potential conﬂict of interest.
+Publisher’s Note: All claims expressed in this article are solely those of the authors
+and do not necessarily represent those of their afﬁliated organizations, or those of
+the publisher, the editors and the reviewers. Any product that may be evaluated in
+this article, or claim that may be made by its manufacturer, is not guaranteed or
+endorsed by the publisher.
+Copyright © 2022 Hsu and Pratomo. This is an open-access article distributed under
+the terms of the Creative Commons Attribution License (CC BY). The use,
+distribution or reproduction in other forums is permitted, provided the original
+author(s) and the copyright owner(s) are credited and that the original publication
+in this journal is cited, in accordance with accepted academic practice. No use,
+distribution or reproduction is permitted which does not comply with these terms.
+Frontiers in Earth Science | www.frontiersin.org
+July 2022 | Volume 10 | Article 911947
+17
+Hsu and Pratomo
+On-Site EEW Using LSTM

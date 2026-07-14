@@ -1,0 +1,1475 @@
+
+--- Sayfa 1 ---
+arXiv:2002.01706v1  [stat.CO]  5 Feb 2020
+Semiparametric Bayesian Forecasting of
+Spatial Earthquake Occurrences
+Aleksandar A. Kolev1,2
+email aleksandar.kolev@ed.ac.uk
+Gordon J. Ross2
+email gordon.ross@ed.ac.uk
+1Department of Statistical Science, University College London, London, United Kingdom
+2School of Mathematics, University of Edinburgh, Edinburgh, United Kingdom
+Abstract
+Self-exciting Hawkes processes are used to model events which clus-
+ter in time and space, and have been widely studied in seismology under
+the name of the Epidemic Type Aftershock Sequence (ETAS) model. In
+the ETAS framework, the occurrence of the mainshock earthquakes in a
+geographical region is assumed to follow an inhomogeneous spatial point
+process, and aftershock events are then modelled via a separate triggering
+kernel. Most previous studies of the ETAS model have relied on point
+estimates of the model parameters due to the complexity of the likeli-
+hood function, and the diﬃculty in estimating an appropriate mainshock
+distribution. In order to take estimation uncertainty into account, we in-
+stead propose a fully Bayesian formulation of the ETAS model which uses
+a nonparametric Dirichlet process mixture prior to capture the spatial
+mainshock process. Direct inference for the resulting model is problem-
+atic due to the strong correlation of the parameters for the mainshock and
+triggering processes, so we instead use an auxiliary latent variable routine
+to perform eﬃcient inference.
+Keywords:
+Dirichlet Process, ETAS, Spatial analysis, Seismology, Bayesian
+analysis
+1
+
+--- Sayfa 2 ---
+1
+Introduction
+The Hawkes process (Hawkes, 1971) is a widely used point process model for
+describing events which are clustered in time and/or space. Applications of the
+Hawkes process span a diverse range of ﬁelds, such as credit risk (Errais et al.,
+2010), criminology (Mohler et al., 2011), neuroscience (Chornoboy et al., 1988),
+social interaction modelling (Crane and Sornette, 2008), and terrorism (Porter et al.,
+2012). A particular form of the Hawkes process, known as the Epidemic-Type
+Aftershock Sequence (ETAS) model, is used in seismology to forecast earthquake
+occurrences and quantify seismic risk (Ogata, 1988; Marzocchi and Lombardi,
+2009; Schoenberg, 2013; Omi et al., 2014, 2015; Fox et al., 2016).
+The standard ETAS model has two components: an inhomogeneous spatial
+background process which describes the long-term rate of mainshock activity
+in a geographical area, and a triggering component which describes the rate
+and location of aftershock events. Parameter estimation in the ETAS model is
+known to be diﬃcult for two reasons (Veen and Schoenberg, 2008; Zhuang et al.,
+2002): ﬁrst, the likelihood function is complex and exhibits multi-modality and
+extended ﬂat regions. Second, the model requires a speciﬁcation of the inho-
+mogeneous background process which can be challenging when only a limited
+number of mainshock events are available.
+Due to these complications, the
+majority of the ETAS literature focuses only on point estimates of the model
+parameters and ignores any estimation uncertainty, although some recent ex-
+ceptions are (Fox et al., 2016) and (Wang et al., 2010).
+While the majority of previous work on the ETAS model is carried out in
+a frequentist framework, the Bayesian paradigm provides a natural alternative
+for incorporating parameter uncertainty. However the application of Bayesian
+methods to the ETAS model have been limited by the complexity of the like-
+lihood function, and many of the approaches which purport to be Bayesian
+still rely on point estimates of model parameters (Ebrahimian et al., 2013) with
+the prior only used for regularisation purposes. Limited attempts have been
+made at performing full Bayesian inference for the temporal ETAS model (with-
+out a spatial component) using Markov Chain Monte Carlo (Omi et al., 2015;
+Ebrahjmian and Jalayer, 2017; Kumazawa et al., 2014) but a recent technical
+report by one of the current authors (Ross, 2018) casts doubt on the validity of
+this procedure since the high correlation of parameters in the likelihood function
+means the eﬀective sample size will be unreasonably low even for a large num-
+ber of simulations. Additionally, the Bayesian estimation of the inhomogeneous
+background rate has not to our knowledge been previously considered.
+In this paper we present the ﬁrst fully Bayesian treatment of the ETAS
+model. Our main innovation is the use of a nonparametric Dirichlet process
+prior to estimate the inhomogenous spatial background rate. Due to the com-
+plexity of the ETAS likelihood function, direct estimation of the resulting non-
+parametric model is not feasible. As such, we develop a novel estimation pro-
+cedure using auxiliary latent variables which is an extension of recent work
+by (Markwick and Ross, 2019) originally proposed for temporal (non-spatial)
+2
+
+--- Sayfa 3 ---
+Hawkes processes. Although our application here is focused on seismology, a
+similar version of our model could be deployed in other spatial Hawkes applica-
+tions such as modelling crime hotspots (Mohler et al., 2011).
+We begin in Section 2 with a brief introduction to the spatial ETAS model
+and its use in modelling clustered event sequences. Then in Section 3 we in-
+troduce the Dirichlet process prior that will be used for nonparametric spatial
+estimation. We next discuss posterior inference strategies using auxiliary latent
+variables in Section 4. Issues relating to prior choice and goodness-of-ﬁt test-
+ing are discussed in Sections 5, 6 and 7. Finally, we study the performance of
+the resulting spatial ETAS model on synthetic and real earthquake catalogs in
+Sections 8 and 9 respectively.
+2
+Spatio-temporal ETAS model
+In the ETAS formulation (Ogata, 1998), earthquakes are modelled as events
+(ti, mi, xi, yi) from a marked point process on the temporal interval [0, T ] and
+spatial region Σ, where ti denotes the time at which the ith earthquake occurred,
+with mi ∈R+ and (xi, yi) ∈Σ denoting its magnitude and spatial location. It is
+well known that earthquakes cluster together in both space and time, since large
+earthquakes tend to trigger further earthquakes nearby, known as aftershocks
+(Utsu et al., 1995). To capture this behaviour, the ETAS point process uses the
+following conditional intensity function:
+λ(t, m, x, y|Ht) = µ(x, y) +
+X
+ti<t
+ι(mi −M0)r(t −ti)s(x −xi, y −yi),
+(1)
+where Ht = {(ti, mi, xi, yi); ti < t} denotes the history of the process be-
+fore time t, and M0 is the magnitude of completeness of the catalog, which
+is determined empirically and corresponds to the minimum magnitude above
+which all earthquakes are successfully detected (Gutenberg and Richter, 1944;
+Wiemer and Wyss, 2000). The magnitudes are then assumed to be independent
+and identically distributed according to the usual Gutenberg-Richter (G-R) law
+mi−M0 ∼Exponential(β) (Gutenberg and Richter, 1944; Fox et al., 2016). As
+a point of notation, we will suppress all explicit dependence on Ht and simply
+write λ(·) for the conditional intensity function.
+The function µ(·) > 0 is known as the background process and speciﬁes the
+baseline intensity, while the functions ι(·), r(·), s(·) determine the contribution
+of each previous earthquake at ti < t to the intensity at time t, and are typically
+chosen to be monotonic decreasing. This implies that each earthquake causes
+the process intensity to temporarily increase for a period of time, producing
+local clusters of events.
+The ETAS model can equivalently be viewed as a branching process, as ﬁrst
+noted by (Hawkes and Oakes, 1974). At each time t, suppose that nt events
+occurred prior to t. From Equation 1, the conditional intensity at time t is a
+linear superposition of nt + 1 independent inhomogeneous Poisson processes,
+3
+
+--- Sayfa 4 ---
+where the ﬁrst is the background process which contributes intensity µ(x, y)
+and the remainder are indexed by each of the nt previous events, with each
+contributing intensity ι(mi −M0)×r(t−ti)×s(x−xi, y−yi) respectively. Since
+these processes are independent, each event time ti can be assumed to have been
+generated either by the background process µ(x, y) processes triggered by one
+of the previous events. As a point of convention, we will refer to the events from
+the background process as immigrant events or mainshocks, with the triggered
+events being aftershocks.
+A visual example of such a branching structure is shown in Figure 1. Events
+t1, t6 and t10 are the immigrants that initiate all other events and which are
+uncaused by any other event in the sequence. The events t2, t3 and t5 are caused
+by t1, while t4 is an aftershock of t3. Similarly t7 and t9 are aftershock of t6,
+while t11 is caused by t8, which is a aftershock of t7. There are no detected
+aftershock events for t10, although some might occur in the future.
+Figure 1: Example of a Branching structure
+2.1
+Speciﬁc functional form.
+To complete the speciﬁcation of the ETAS model, we need to make choices for
+the functions µ(·), r(·) ι(·) and s(·). It is common to take r(·) to be the modiﬁed
+Omori law which has been empirically shown to capture the temporal decay of
+earthquake productivity (Utsu et al., 1995):
+r(z) =
+K
+(z + c)p ,
+where c and p are parameters controlling the decay rate, while K controls the av-
+erage productivity. Similarly, many empirical studies (Ogata, 1988; Ogata and Zhuang,
+2006; Ogata, 2011; Fox et al., 2016) have shown that a good choice for ι(·) is:
+ι(mi −M0) = eα(mi−M0).
+Several forms have been proposed for the spatial kernel s(·) (Ogata, 2011;
+4
+
+--- Sayfa 5 ---
+Fox et al., 2016), however we will focus on the most widely used version:
+s(x −xi, y −yi) =
+n
+(x −xi)2 + (y −yi)2 + d
+o−q
+,
+(2)
+with parameters d and q, which corresponds to long-range power law decay.
+Finally, the background intensity µ(x, y) deﬁnes the long term average seis-
+micity over the spatial region being considered. This is the most diﬃcult func-
+tion to choose, since it will depend on the particular spatial region being studied.
+Many studies assume that seismicity is constant over space so that µ(x, y) = ˜µ,
+however this is highly unrealistic since it is known that earthquakes tend to
+occur along geological fault lines. As such, several methods have been proposed
+to model and estimate the spatial dependence of µ(x, y), such as (Ogata, 2011;
+Fox et al., 2016; Gerstenberger et al., 2004; Helmstetter et al., 2006), which typ-
+ically uses some kind of kernel smoothing. However the limitation of this ap-
+proach is that it is diﬃcult to capture the inherent uncertainty in the estimate,
+which can be especially problematic in regions where only a small number of
+historical earthquakes are mainshocks from µ(x, y) rather than triggered events.
+The primary goal of this paper is to develop a novel nonparametric Bayesian
+method for the eﬃcient estimation of µ(x, y) which captures all underlying un-
+certainty. We will take this up in Section 3 after ﬁrst discussing the likelihood
+function for the ETAS model.
+2.2
+(Log-)Likelihood
+The log-likelihood function for a general space-time point process with intensity
+λ(·) , observed data Ht = {(ti, mi, xi, yi); ti < t} and parameter vector Θ is
+given by the following expression (Daley and Vere-Jones, 2003):
+l(HT |Θ) =
+n
+X
+i=1
+log(λ(ti, mi, xi, yi|Θ))
+−
+Z ∞
+−∞
+Z ∞
+−∞
+Z T
+0
+λ(z, m, x, y|Θ)dzdxdy.
+(3)
+The evaluation of the triple integral term in Equation 3 is slow and can be
+numerically unstable, and so several approximations are provided in the litera-
+ture (Harte, 2012; Ogata, 1998; Schoenberg, 2013; Lippiello et al., 2014). The
+calculation of this integral is more feasible if the spatial and temporal kernels
+r(·) and s(·) are reparameterised to be probability densities that integrate to
+1, which is achieved by splitting K into a product of normalisation constants
+K = ¯KKrKs where:
+Kr = (p −1)cp−1 :
+Z ∞
+0
+Kr
+(z + c)p dz = 1,
+5
+
+--- Sayfa 6 ---
+Ks = q −1
+πd1−q :
+Z ∞
+−∞
+Z ∞
+−∞
+Ks(x2 + y2 + d)−qdxdy = 1.
+Then
+r′(z) =
+¯Kr(z)
+K
+and
+s′(z) = Kss(z).
+Using similar notation, we write µ(x, y) = ˜µφ(x, y) where φ(·) is a probability
+density that integrates to 1. Under this notation, the triple integral in Equation
+3 can then be approximated as:
+Z ∞
+−∞
+Z ∞
+−∞
+Z ∞
+0
+λ(zi, mi, xi, yi|Θ)dzdxdy ≈˜µT + ¯K
+n
+X
+i=1
+eα(mi−M0).
+This is only an approximation since it assumes that the temporal and spatial
+domains are inﬁnite, when in fact the point process is deﬁned on the ﬁnite
+region [0, T ] × Σ.
+In Schoenberg (2013), it was shown that the assumption
+of an inﬁnite spatial domain has negligible eﬀect on the likelihood and so we
+will use this approximation to reduce the computational cost of evaluating the
+triple integral.
+However, the assumption of an inﬁnite time domain can be
+problematic.
+In Kolev and Ross (2019), it was shown that the inﬁnite time
+assumption provides a poor performance regarding the North California seismic
+sequence, thus we prefer not to use it whenever possible. As such, we will avoid
+using it and instead work on the ﬁnite temporal region [0, T ].
+In summary, the log-likelihood of the Spatial ETAS model based on the
+ﬁnite time and inﬁnite space assumptions can be approximated by the following
+expression:
+l(HT |Θ) =
+n
+X
+i=1
+log(λ(ti, mi,xi, yi|Θ)) −˜µT
++ ¯K
+n
+X
+i=1
+eα(mi−M0)
+ 
+1 −
+cp−1
+(T −ti + c)p−1
+!
+,
+(4)
+with a parameter vector Θ = (˜µ, α, c, p, ¯K, d, q). along with the parameters that
+deﬁnite the background kernel φ(x, y).
+3
+Nonparametric Estimation of Background In-
+tensity
+We will consider a variety of methods for estimating the spatial background rate
+µ(x, y) in the ETAS model. Using the parametrisation above, we can write:
+µ(x, y) = ˜µφ(x, y),
+where ˜µ is a scaling constant and φ(x, y) is a probability density that integrates
+6
+
+--- Sayfa 7 ---
+to 1. We will consider three diﬀerent Bayesian models for the background rate.
+In all three, the constant ˜µ will be estimated separately, with the models varying
+in terms of how they treat φ(x, y):
+1. φ(x, y) ∝1, in which case the background intensity is constant over space.
+This is highly unrealistic due to the known fact that seismic activity is
+highly spatially dependent, and we use this model only as a baseline.
+2. A nonparametric model where φ(x, y) is learned using Kernel Density Es-
+timation (KDE). Diﬀerent versions of this method are fairly common in
+the seismology literature, albeit in a non-Bayesian context (Zhuang et al.,
+2002; Marsan and Lengline, 2008; Sornette and Utkin, 2009; Fox et al.,
+2016; Helmstetter et al., 2006). Note that ﬁtting a KDE directly to the ob-
+served earthquake catalogs will result in a biased estimate of φ(x, y) since
+φ(x, y) is speciﬁcally a model for the background (immigrant) events only,
+and not for the triggered events.
+3. A nonparametric model where φ(x, y) is learned in a fully Bayesian man-
+ner using a spatial Dirichlet Process prior, in a way which distinguishes
+between background and triggered events. This is substantially more com-
+plex than the KDE approach since it require declustering the earthquakes
+into background and immigrant events, with only the background events
+used to estimate φ(x, y). This corrects the bias in the KDE approach.
+The ﬁrst model using the uniform density is self-explanatory. We will now
+discuss the other two in more detail.
+3.1
+KDE ETAS
+The second method described above uses kernel density estimation to learn
+φ(x, y). Suppose we observe n observations (ti, mi, xi, yi) from the point process.
+Let zi = (xi, yi) be the spatial coordinates of the ith earthquake. Then a KDE
+estimate of φ(·) can be given by:
+ˆφ(z) = 1
+n
+n
+X
+i=1
+KH(z −zi)
+with
+KH(x) = |H|−1/2K(H−1/2x),
+where H is d × d, symmetric and positive-deﬁnite which is also referred to as
+bandwidth matrix and K(·) is a symmetric kernel function. Without loss of
+generality we can choose it to be:
+K(x) = (2π)−1 exp(−1
+2x′x).
+The estimated φ(x, y) is then treated as being a ﬁxed constant while the
+other model parameters including ˜µ are estimated.
+We refer to this model
+7
+
+--- Sayfa 8 ---
+as KDE ETAS. Although Kernel Density Estimation is a powerful and ﬂexi-
+ble nonparametric method, it has two drawbacks (Marsan and Lengline, 2008;
+Sornette and Utkin, 2009).
+First, it can be diﬃcult to choose H in a man-
+ner which produces an accepted level of smoothing across the whole spatial
+domain rather than under/over ﬁtting in particular regions. Second, the re-
+sulting KDE estimate of φ(·) is based on smoothing over all n earthquakes in
+the historical catalog. However this is not the correct behaviour in the con-
+text of an ETAS model, since the φ(·) function speciﬁes the occurrence of only
+background, rather than triggered events. As such, we would expect the KDE
+estimate to be biased, and assign too much probability mass to spatial regions
+where large magnitude earthquakes have occurred, since their large number of
+triggered aftershocks will be incorporated into the estimate of φ(·). To some
+extent this problem can be avoided by ﬁrst declustering the catalog before ﬁt-
+ting the KDE as in Helmstetter et al. (2006) however it is diﬃcult to choose
+an adequate bandwidth when ﬁtting to such a declustering catalog, and the in-
+ability to incorporate estimation uncertainty into the KDE is problematic when
+ﬁtting to declustered catalogs where the number of background events may be
+low. These problems are avoided in the fully Bayesian approach which we will
+now discuss.
+3.2
+DP ETAS
+To avoid the drawbacks of KDE, we propose estimating φ(x, y) using a Dirichlet
+process mixture prior. The Dirichlet process (DP) was introduced by Ferguson
+(1973); Antoniak (1974) as a probability distribution over probability distribu-
+tions, and is commonly used as a prior in Bayesian nonparametric modelling. If
+a probability distribution G has a DP prior then we write:
+G ∼DP(χ, G0),
+where G0 is the base distribution which deﬁnes the expected value of the DP
+and χ > 0 is a measure of the variance. The DP is a conjugate prior in the
+following sense: suppose that θ1, . . . , θn ∼G where G ∼DP(χ, G0). Then the
+posterior distribution of G is:
+G|θ1, · · ·, θn ∼DP
+ 
+χ + n, χG0 + Pn
+i=1 δθi
+χ + n
+!
+,
+where δ· is a Dirac delta function (Dirac, 1947).
+A constructive deﬁnition of the DP was given by Sethuraman (1994), who
+showed that samples from a DP can be written in stick breaking form:
+G =
+∞
+X
+i=1
+πiδψi,
+ψk ∼G0,
+where {βi}∞
+i=1 ∼Beta(1, χ), πk = βk
+Qk−1
+i=1 (1 −βi), and δψk is the Dirac delta
+8
+
+--- Sayfa 9 ---
+function (Dirac, 1947). This provides a practical method for drawing a sample
+from a DP, by approximating the stick breaking as a ﬁnite (truncated) sum:
+G =
+N
+X
+i=1
+πiδψi,
+ψk ∼G0.
+Combining this with the conjugacy result above, we can hence sample G from
+its posterior distribution given some observed data θ1, . . . , θn as:
+G|θ1, · · ·, θn =
+N
+X
+i=1
+πiδψi,
+ψk ∼χG0 + Pn
+i=1 δθi
+χ + n
+,
+where {βi}N
+i=1 ∼Beta(1, χ + n) and πk = βk
+Qk−1
+i=1 (1 −βi).
+An alternative representation of the DP is based on the Chinese restaurant
+process (Neal, 2000), which shows that the marginal prior distribution of the
+samples θ1, . . . , θn (with G integrated out) can be written as:
+θi|θ1, ..., θi−1 ∼
+1
+i −1 + χ
+i−1
+X
+j=1
+δθi +
+χ
+i −1 + χG0,
+where θi ∼G0
+The Dirichlet Process as a Spatial ETAS Prior
+In this work, we propose
+to use the Dirichlet Process (DP) as a nonparametric prior for the background
+ETAS intensity φ(x, y). From the above results, we can see that samples from a
+DP follow a discrete distribution. In order to adapt the DP to continuous data,
+it is common to instead use it as a prior distribution for a mixture model. This
+leads to the following speciﬁcation:
+φ(x, y) =
+Z
+k(x, y|θ)dG(θ)
+G ∼DP(χ, G0)
+where k(·) is a mixture kernel.
+This formulation corresponds to an inﬁnite
+dimensional mixture model where the DP is used as a prior on the mixing
+distribution parameter.
+Since φ(x, y) is a two-dimensional spatial distribution, we will model it as
+a mixture of bivariate Gaussians, where θ = (µ, S) is the mean vector and
+precision matrix. For conjugacy, we choose G0 to be the Normal Inverse-Wishart
+distribution. This leads to the following model:
+xi, yi|ci ∼N(µi, (Si)−1)
+µi, Si ∼G
+G ∼DP
+
+χ, NW(ξ, ρ, β, βV )
+
+9
+
+--- Sayfa 10 ---
+where ξ, ρ, β and V are the parameters of the Normal Inverse-Wishart dis-
+tribution where the mean µk follow a Gaussian distribution µk | Sk, ξ, ρ ∼
+N(ξ, (ρSk)−1) and the precision matrix Sk comes from a Wishart distribution
+(Wishart, 1928) Sk | β, V ∼W(β, (βV )−1).
+From here after, this ETAS alternative will be referred to as DP ETAS
+model.
+4
+Posterior Simulation
+We propose to estimate all model parameters Θ = {˜µ, φ(x, y), α, ¯K, c, p, d, q} of
+the ETAS model using Bayesian inference. Given a prior distribution p(Θ) and
+earthquake catalog data HT , the resulting posterior is:
+π(Θ|HT ) =
+p(HT |Θ)π(Θ)
+R
+Θ p(HT |Θ)π(Θ)dΘ.
+(5)
+The multi-dimensional integral in Equation 5 cannot be solved analytically
+for the ETAS model. For this reason, we will use simulation methods to ap-
+proximate the posterior instead.
+It may initially seem feasible to use Metropolis-Hastings or Gibbs sampling
+to draw samples from the posterior. However this are serious grounds to doubt
+that this will work. Recall from Equation 4, that the log-likelihood of the ETAS
+model is:
+l(HT |Θ) ≈−˜µT + ¯K
+n
+X
+i=1
+eα(mi−M0)
+ 
+1 −
+cp−1
+(T −ti + c)p−1
+!
++
+n
+X
+j=1
+log
+
+µ(xj, yj) +
+X
+ti<tj
+ι(mi −M0) × r(tj −ti) × s(xj −xi, yj −yi)
+
+,
+(6)
+The ﬁrst problem is that evaluating the likelihood function requires a double
+summation and this evaluation must take place each time a new parameter value
+is proposed. As such, direct MCMC would be computationally very demanding,
+and cannot feasibly be run on a catalog containing more than a few hundred
+earthquakes. The second problem is that Schoenberg (2013) studied the per-
+formance of frequentist maximum likelihood estimation for the ETAS model
+based on directly maximising the above likelihood function when µ(x, y) = ˜µ
+was a constant value. They found that the resulting parameter estimates of-
+ten diﬀered substantially from their true values. This is because the likelihood
+function is multi-modal and the components of the parameter vector are highly
+correlated. Since MCMC methods can also suﬀer from serious convergence is-
+sues when the parameters are correlated, it is reasonable to believe that this
+direct MCMC procedure will suﬀer from the same problem. Since this problem
+is already present in the simple parametric case with constant ˜µ, it will be even
+worse in the more complex nonparametric setting.
+10
+
+--- Sayfa 11 ---
+As such, we instead propose a reparametrisation of the model based on latent
+variables that aims to break the parameter correlation in the likelihood function
+and lead to an eﬃcient Metropolis-Hastings algorithm for posterior sampling.
+This is an extension of the method proposed by Markwick and Ross (2019) for
+the temporal Hawkes process.
+4.1
+Latent Variable Formulation
+As discussed in Section 2, the ETAS model can be reinterpreted as a branching
+process in the following sense.
+Suppose that at time t there have been nt
+previous events.
+Then, Equation 1 can be interpreted as showing that the
+intensity function at time t is a sum of nt + 1 diﬀerent Poisson processes. The
+ﬁrst is a time-homogenous Poisson process with intensity µ(x, y), while each
+of the other nt processes is triggered by the previous events. Speciﬁcally, for
+each 1 ≤j ≤nt, the event that occurred at time tj triggers an inhomogeneous
+Poisson process with intensity:
+λj(t, x, y) = Keα(mj−M0)(t −tj + c)−pn
+(x −xj)2 + (y −yj)2 + d
+o−q
+.
+(7)
+Now consider an event that occurs at time ti, where there have been nti
+previous events. Based on standard results about the superposition of Poisson
+processes (Daley and Vere-Jones, 2003) we can interpret event ti as having been
+generated by a single one of these nti + 1 processes. For an earthquake catalog
+that contains n events in total, we hence introduce the latent branching vari-
+ables B = {B1, . . . , Bn} where Bi ∈{0, 1, . . ., nti} indexes the process which
+generated ti:
+Bi ∼
+
+0
+if ti was produced by the background process
+j
+if ti was triggered by the previous earthquake at time tj
+Conditional on knowing B, we can partition the earthquakes into n + 1 sets
+S0, . . . , Sn where:
+Sj = {ti; Bi = j},
+0 ≤j < n,
+so that S0 is the set of immigrant events which were not triggered by previous
+earthquakes, and Sj is the set of direct aftershocks triggered by the earthquake
+at time tj. It is clear that these sets are mutually exclusive and that their union
+contains all the earthquakes in the catalog. Additionally, we can see that the
+earthquakes in set S0 are generated by an inhomogeneous Poisson process with
+intensity µ(x, y), while the events in each set Sj for j > 0 are generated by a
+single inhomogeneous Poisson process with intensity given by Equation 7. The
+ETAS likelihood function from Equation 4 can hence be rewritten (conditional
+on knowing the latent branching variables) as:
+11
+
+--- Sayfa 12 ---
+p(Ht|Θ, B) =e−˜µT Y
+ti∈S0
+µ(xi, yi)
+n
+Y
+j=1
+ 
+e
+−¯
+Keα(mj −M0)
+1−
+cp−1
+(tn−ti+c)p−1
+
+{ ¯Keα(mj−M0)}|Sj|
+!
+n
+Y
+j=1
+Y
+ti∈Sj
+ 
+KtKr
+(ti −tj + c)p ((xi −xj)2 + (yi −yj)2 + d)−q
+!
+,
+(8)
+where as before µ(x, y) = ˜µφ(i, y) where ˜µ is a constant and φ(x, y) has a KDE
+or DP mixture prior. From this factorisation, we can see that ˜µ and φ(x, y) are
+independent of the other model parameters in the likelihood, and hence will be
+independent in the posterior assuming prior independence. This latent variable
+formulation hence breaks the dependency which would have made the KDE or
+DP part of the model diﬃcult to learn, and further weakens the dependence
+between {c, p}, {α, ¯K} and {d, q} which will allow for more eﬃcient MCMC
+sampling.
+We hence propose a Gibbs sampler which samples the parameters in the
+following conditionally independent blocks:
+• p(B|˜µ, φ(x, y), ¯K, α, c, p, d, q, Ht)
+• p(φ(x, y)|B, Ht)
+• p(˜µ|B, φ(x, y), Ht)
+• p( ¯K, α|B, c, p, Ht)
+• p(c, p|B, ¯K, α, Ht)
+• p(d, q|B, Ht)
+Given a set of model parameters Θ(k) at iteration k of the Gibbs sampler, we
+now explain how to sample the next value Θ(k+1) from the above full conditional
+distributions.
+4.1.1
+Sampling B
+As shown by Zhuang et al. (2002) in a very diﬀerent context (stochastic declus-
+tering), each individual branching variable B(k+1)
+i
+can be sampled exactly from
+its conditional posterior. Note that each Bi can take values only in the discrete
+set {0, 1, . . ., i−1}, i.e. each earthquake can be triggered only by either a previ-
+ous earthquake, or the background process. Assuming a uniform prior on each
+Bi, the probability of it being caused by any of the i processes is simply the
+proportion of the overall intensity that can be attributed to that process, i.e.:
+12
+
+--- Sayfa 13 ---
+p(B(k+1)
+i
+= j|Ht, Θ(k)) =
+
+
+
+
+
+
+
+˜µφ(xi, yi)
+λ(ti, mi, xi, yi|Hti, Θ(k))
+for j = 0
+g(ti −tj)h(xi −xj, yi −yj)ι(mi)
+λ(ti, mi, xi, yi|Hti, Θ(k))
+for j̸ = 0
+(9)
+Each Bi can hence be drawn independently from the discrete distribution
+on {0, . . ., i−1}, with weights given by the above (Kolev and Ross, 2019). Note
+that unlike the MCMC sampler used in Rasmussen (2013) for Hawkes processes,
+this samples B(k+1) exactly from its conditional posterior, which drastically
+improves computational eﬃciency.
+4.1.2
+Update φ(x, y)
+This step is required only for DP ETAS since φ(·) is constant in the KDE version
+of the model. Recall from Section 3.2 that
+φ(x, y) =
+Z
+N(x, y|θ)dθ
+θ ∼G
+G ∼DP(χ, G0),
+where φ(x, y) is the generating function for the |S0| immigrant earthquakes
+that are assigned to the background process based on the current branching
+structure.
+In order to simulate a value of φ(·) from its conditional posterior, we ﬁrst
+simulate values of θi, i ∈{1, 2, . . ., |S0|} from their posterior distributions given
+the earthquakes which are assigned to the background process, using the usual
+Chinese Restaurant process sampler. Given these values, we then have from
+Section 3.2 that:
+G|θ1, . . . , θ|S0| ∼DP
+ 
+χ + n, χG0 + Pn
+i=1 δθi
+χ + n
+!
+.
+We can hence sample a value of G from its posterior using truncated stick
+breaking, i.e:
+G =
+N
+X
+i=1
+πiδψi.
+This hence fully deﬁnes a realisation of φ(x, y) from its posterior. Note that the
+reason why we need to simulate a realisation of φ(x, y) (and hence G) rather
+than working only with the θi samples is that we need to have a realisation of
+φ(x, y) to evaluate the branching posterior in Equation 9.
+As part of this step, we can also perform an update of the DP hyperparam-
+13
+
+--- Sayfa 14 ---
+eters of G0 and of χ, if we wish to work with the full hierarchical version of the
+DP. This can be done by assigning them a sensible prior distribution, such as
+χ ∼Gamma(1, 1). The updates in this case are standard in the DP literature
+and are described in detail in (G¨or¨ur and Rasmussen, 2010).
+4.1.3
+Update the value of ˜µ
+Using Equation 8 we can observe that ˜µ depends only on the number of events
+in the background process S0, hence:
+p(˜µ|Ht, Θ, B) ∝π(˜µ)e−˜µT Y
+ti∈S0
+µ(xi, yi) =
+π(˜µ)e−˜µT ˜µ|S0| Y
+ti∈S0
+φ(xi, yi) ∝π(˜µ)e−˜µT ˜µ|S0|.
+This is equivalent to estimating the intensity ˜µ of a homogeneous Poisson
+process on [0, T ], with event times S0. In this case, the Gamma distribution
+is the conjugate prior: π˜µ = Ga(α˜µ, β˜µ). The posterior distribution is then
+p(˜µ|Ht, Θ, B) = Ga(α˜µ + |S0|, β˜µ + T ) which can be sampled from directly
+(Ross, 2018).
+4.1.4
+Update the values of ¯K and α
+Similar to the process for sampling ˜µ, we can sample new values of ¯K and α
+from p( ¯K, α|Ht, Θ, B). Based on Equation 8, we conclude that:
+p(α, ¯K|Ht, Θ, B) ∝π( ¯K, α)
+n
+Y
+j=1
+
+e
+−¯
+Keα(mj −M0)
+1−
+cp−1
+(tn−ti+c)p−1
+
+{ ¯Keα(mj−M0)}|Sj|
+.
+Although there is no conjugate prior in this case, it is straightforward to use
+(e.g.) random walk MCMC to draw a sample from this posterior as described
+in the beginning of this section.
+4.1.5
+Update the values of c and p
+Again, based on Equation 8, we can see that the posterior distribution of c and
+p is given by:
+p(c, p|Ht, Θ, B) ∝π(c, p)
+n
+Y
+j=1
+ 
+e
+−¯
+Keα(mj −M0)
+1−
+cp−1
+(tn−ti+c)p−1
+
+Y
+ti∈Sj
+Kt
+(ti −tj + c)p
+!
+.
+14
+
+--- Sayfa 15 ---
+The parameter sampling can be done using (e.g.) standard random walk
+MCMC sampler.
+4.1.6
+Update the values of d and q
+As a last step of our MCMC sampler we update the oﬀspring kernel space
+parameters d and q. The expression below is a simpliﬁed approximation that
+depends on an inﬁnite space approximation which was discussed in Section 2.2
+p(d, q|Ht, Θ, B) ∝π(d, q)
+n
+Y
+j=1
+ Y
+ti∈Sj
+Kr
+
+(xi −xj)2 + (yi −yj)2 + d
+−q
+.
+5
+Prior Choice, and Implementation Details
+A common problem with the estimation and simulation of an ETAS model
+is that certain parameter values can result in inﬁnitely many earthquakes be-
+ing generated from the process with non-zero probability.
+It can be shown
+(Helmstetter and Sornette, 2002) that to guarantee a ﬁnite catalog, the average
+number of aftershocks produced by each earthquake in the catalog must be less
+than 1. The intuition for this result is that if the average number of aftershocks
+is greater than 1, then the branching process representation of the process may
+never converge.
+By integrating over the Gutenberg-Richter magnitude distribution, it can be
+shown (Ross, 2018) that the average number of aftershocks will be less than 1
+if:
+β < α
+and
+¯Kβ
+β −α < 1,
+where β is the parameter in the G-R distribution p(m −M0|β) (Section 2).
+As such, we will choose our prior distributions so that positive mass is only
+assigned to regions where the above parameter relations are satisﬁed. We choose
+to use relatively uninformative Uniform priors: α ∈(0, 10), c ∈(0, 10), p ∈
+(1, 30), ¯K ∈(0, 30), d ∈(0, ∞) and q ∈(1, ∞) , with the regions not satisfying
+the above relations assigned zero mass. Note that the priors for c and p are
+slightly informative which is required since these parameters are only weakly
+identiﬁable (Holschneider et al., 2012)
+Finally in the above discussion of the MCMC sampler, we mentioned that
+random walk Metropolis-Hastings was used to update some blocks of parame-
+ters. For these, we used a Normal proposal distribution with standard deviation
+of 0.1.
+15
+
+--- Sayfa 16 ---
+6
+Model comparison
+We have proposed three diﬀerent versions of the Bayesian ETAS model, which
+respectively use the Uniform distribution, KDE and a DP mixture model to rep-
+resent φ(x, y). In this section we discuss the in- and out-of-sample performance
+metrics that we will use to compare these models.
+6.1
+Deviance Information Criterion (DIC)
+The DIC is a fully Bayesian alternative to the Akaike Information Criteria (AIC)
+(Akaike, 1973). It replaces the maximum likelihood parameter estimates of Θ
+with their posterior mean ¯Θ.
+The correction associated with the number of
+used parameters is substituted with a measure of parameter adequacy (pDIC)
+(Gelman et al., 2014). Given a set of model parameters Θ the model’s DIC
+value is:
+DIC(Θ) = −2l(Ht|¯Θ) + 2.pDIC,
+where l(Ht|Θ) = log(p(Ht|Θ)) is the log-likelihood function and pDIC is the
+eﬀective sample size, which evaluates the number of independent samples the
+MCMC draws are equivalent to. It is deﬁned as:
+pDIC = 2l(Ht|¯Θ) −2 E(l(Ht|Θ) ∼= 2l(Ht|¯Θ) −2 1
+S
+S
+X
+s=1
+l(Ht|Θs),
+where Θs indicates the sth parameters’ sample in the considered MCMC chain.
+Alternatively, we can compute the eﬀective sample size as the variance of the
+obtained log-likelihood values for all sampled parameters as follows:
+pDICalt = 2V ar(l(Ht|Θ).
+This method is not as numerically stable as the other one but it is easier to
+compute because it does not require the allocation of ¯Θ, which is a computa-
+tionally demanding task with respect to the φ(x, y) of DP ETAS model. This
+measure further guarantees to provide positive values. For all these reasons we
+will use this alternative of the DIC metric through this paper.
+6.2
+Out-of-sample log-likelihood
+A common way to evaluate the performance of earthquake models is to con-
+sider the out-of-sample predictive distributions, i.e. how well we can predict
+the occurrence time and locations of earthquakes in the time window [T, U]
+given that we have ﬁtted a model to the time window [0, T ]. Several versions
+of this approach have been used in the literature, with a summary given in
+Bray and Schoenberg (2013).
+Since all of our models are Bayesian with completely speciﬁed probability
+distributions, we will compare based on the out-of-sample posterior predictive
+16
+
+--- Sayfa 17 ---
+likelihood (i.e. the likelihood of the future observations averaged over the sam-
+ples which have been drawn from the posterior).
+7
+Forecasting
+We note that since our models are fully speciﬁed, we can use them to create
+forecasts about future earthquakes, e.g. the probability of an earthquake with
+magnitude greater than M0 occurring during some future time period Hnew .
+This can be done by simulation, based on the samples drawn from the posterior
+using MCMC to produce simulated point process trajectories over the time pe-
+riod of interest, and then extracting the quantities to be forecasted as summary
+statistics. This is essentially a Monte Carlo approximation to the forecasting
+distribution:
+p(Hnew|Ht) =
+Z
+p(Hnew|Θ)p(Θ|Ht)dΘ ≈1
+M
+M
+X
+i=1
+p(Hnew|Θ(i))
+for
+Θ(i) ∼p(Θ|Ht).
+8
+Simulation Study
+In this section we will use synthetic (simulated) data to evaluate and compare
+the performance of the three Bayesian ETAS models for φ(x, y) using 1) the
+Uniform distribution, 2) KDE, and 3) a Dirichlet process mixture. The next
+section will similarly compare them using real earthquake catalogs.
+8.1
+Initial Comparison
+We simulate three catalogs, each with a diﬀerent choice for the density φ(x, y).
+The ﬁrst density that we consider follows a standard bivariate normal distribu-
+tion i.e.
+φ1(x, y) ∼N
+ 0
+0
+
+,
+1
+0
+0
+1
+ !
+.
+(10)
+The second one is a mixture of two Normal distributions. The ﬁrst of them
+has a mean of (−1, −1) and the second one (1, 1). They share a common covari-
+ance matrix that comprises zero covariance and 0.4 standard deviation in each
+dimension i.e.
+φ2(x, y) ∼N
+ −1
+−1
+
+,
+0.4
+0
+0
+0.4
+ !
++ N
+ 1
+1
+
+,
+0.4
+0
+0
+0.4
+ !
+.
+(11)
+17
+
+--- Sayfa 18 ---
+The third density aims to simulate a seismic fault - all events are uniformly
+distributed on a line with known boundary conditions. This requires the speci-
+ﬁcation of a ﬁxed spatial region Σ. We sample uniformly a realisation of the x
+range of Σ. Then we transform it into a point on a line deﬁned by an intercept
+a and a slope b and further scale it by an error component ǫ ∼N(0, σ2
+ǫ) i.e.
+φ3(x, y) = φx(x)φy(y),
+(12)
+for φx(x) ∼Unif(Σx), where Σx is the range in x dimension and φy(y) ∼
+a + bx + ǫ. We chose a = 1, b = 2, σǫ = 0.5 and Σx = (−2, 2).
+For the remainder of the ETAS parameters, we choose parameters based
+on the Tohoku District, Japan catalog from 1926 −1995 over 36o, 42o N and
+141o, 145o, E, which were estimated using maximum likelihood by Ogata (1998).
+These are: ( ¯K, α, p, c, d, q) = (0.322, 1.407, 1.121, 0.0353, 0.0159, 1.531) with
+immigrant intensity constant ˜µ = 0.854 × 10−4 and margin of completion M0 =
+5.
+The same parametrisation is used in Fox et al. (2016) subject to the following
+amendments - M0 = 0, Σ = [0, 4] × [0, 6], and ˜µφ(xi, yi) = 0.001 + 0.004 ×
+1(x;y){([0, 2]; [3, 6]) ∪([2, 4]; [0, 3])} where
+1(·){·} is an indicator function. These
+simulations spread over temporal interval [0, 25000].
+For our simulation, we choose to set ˜µ = 0.325 to provide denser catalogs
+within a shorter period of time. The overall event rate has increased by 0.35×104
+which allows us to run simulations for a shorter period of time compared to the
+previously introduced examples. However, this is not going to aﬀect negatively
+the performance of the remaining parameters.
+All simulated catalogs in this section have magnitudes following the G-R law
+(Gutenberg and Richter, 1944) with b-value of 1 i.e. mi−M0 ∼Exponential
+
+β =
+ln(10)
+
+. Hence, all marks m are greater than the speciﬁc margin of complete-
+ness used for the simulation, M0. Within the simulation study, we set temporal
+window in t ∈(0, 300) with extension interval τ ∈[300, 350) and magnitude of
+completeness of M0 = 2.
+8.2
+Model Fitting and Results
+For each of the three datasets, we used MCMC to draw 12, 000 samples from
+the posterior (after thinning). The branching structure was sampled from its
+conditional posterior only at every 50 iterations of the latent variable MCMC
+algorithm, since this is an O(n2) operation and slower than the other updates.
+For the DP ETAS model, we also resample the immigrant events density function
+φ(x, y) when a new branching structure is sampled.
+For the KDE ETAS model, the estimate of the immigrant spatial density
+φ(x, y) is based on the whole catalog of observations, and so is estimated prior
+to running the MCMC and set to a ﬁxed value, as in Zhuang et al. (2002);
+Marsan and Lengline (2008); Sornette and Utkin (2009); Marsan and Lenglin´e
+(2010); Fox et al. (2016).
+In the simulation example we developed an out-of sample comparison with
+18
+
+--- Sayfa 19 ---
+respect to 30 out-of-sample periods for each dataset. In order to evaluate the
+estimate performance we used every 50th parameter set across the 10, 000 sets
+that were obtained as part of the MCMC procedure. This gives 200 estimates of
+the out-of-sample log-likelihood for each of the 20 catalog out-of-sample periods.
+Table 1 shows the average out-of-sample performance for the three models across
+these catalogs.
+φ·
+DICU
+DICK
+DICD
+¯lo
+U
+¯lo
+K
+¯lo
+D
+φ1
+5985.64
+2495.93
+4347.91
+-1150.57
+-1079.11
+-1084.31
+φ2
+5984.60
+2372.27
+4583.25
+-913.29
+-862.19
+-832.30
+φ3
+5918.93
+1780.47
+3670.92
+-830.16
+-777.72
+-778.89
+Table 1: Comparison between the performance of Unif (U), KDE (K) and DP
+(D) ETAS models across three uncaused events’ spatial distributions (φ·) with
+respect to the Tohoku District (Ogata, 1998) MLE estimated based simulated
+catalogs.
+The obtained results for φ1(·) and φ3(·) show that KDE ETAS model outper-
+formed DP ETAS model, and that both outperformed the Fixed ETAS model
+(Table 1). However, the results obtained based on φ2(·) show that DP is better
+than KDE with respect to all diagnostic tests.
+Since these results are mixed and show that both DP and KDE are capable
+of outperforming each other depending on the model parameters, we will now
+develop a larger simulation study to gain insight into the factors which determine
+when each is most suitable.
+8.3
+Large Scale Simulation Study
+In order to examine further the behaviour of the spatial ETAS models, we cre-
+ated a number of simulated data sets by varying the model parameters. We
+set ˜µ = 0.325, c = 0.0353 and p = 1.121 to be constant.
+Then we con-
+sider: α ∈{1.0, 1.3, 1.6, 1.9}, ¯K ∈{0.1, 0.3, 0.5}, d ∈{0.01, 0.255, 0.5} and
+d ∈{1.10, 1.55, 2}. We exclude the combinations of parameters which result in
+an expected productivity greater than 1 since these can potentially generate in-
+ﬁnite catalogs as discussed in Section 5. This resulted in 63 diﬀerent parameter
+sets.
+Table 2 shows the results for DP and KDE ETAS on the 63 simulations,
+using the three speciﬁcations for φ(x, y) discussed in Section 8.1 . This table
+presents the number of datasets that allocate either KDE or DP as the best
+model based on either DIC or out-of-sample maximum likelihood ˆlo or out-of-
+sample mean log-likelihood ¯lo or with respect to all previous metrics (referred
+as best). We further provided the aggregated counts across all 189 simulations.
+It can be seen that both the DP and KDE versions of the model can outperform
+each other for diﬀerent values of the model parameters. This shows that they
+are both likely to have value for estimating real-world catalogs.
+19
+
+--- Sayfa 20 ---
+It is interesting to understand the factors that make DP superior to KDE
+for particular data-sets, since this will give us a general rule for deciding which
+one is most appropriate to use. We propose the following hypothesis, which
+seems intuitively reasonable: since KDE forms its estimate of φ(x, y) by using
+all the earthquakes in the catalog rather than only the immigrant events, we
+would expect it to perform well either when most earthquakes are immigrants,
+or when the true distribution φ(x, y) of mainshocks is not too dissimilar to the
+overall distribution of earthquakes in the catalog.
+We would expect the DP approach to perform better when K is large (since
+this results in a higher proportion of aftershocks relative to immigrants), and
+also when the parameters d and q are large since this results in the distribution
+of triggered events being spread out over a wider areas, which increases the
+spatial discrepancy between the mainshock distribution and the overall catalog
+distribution.
+subset
+model
+max(ˆl·)
+min(DIC)
+max(ˆlo
+· )
+max(¯lo
+· )
+best
+φ1(·)
+KDE
+49
+54
+49
+52
+47
+DP
+14
+9
+14
+11
+8
+φ2(·)
+KDE
+26
+33
+25
+27
+23
+DP
+37
+30
+38
+36
+29
+φ3(·)
+KDE
+32
+35
+26
+27
+24
+DP
+31
+28
+37
+36
+28
+All
+KDE
+107
+122
+100
+106
+94
+DP
+82
+67
+89
+83
+65
+Table 2: Number of datasets that allocate either KDE or DP as the best model
+based on either maximum log-likelihood ˆl or DIC or out-of-sample maximum
+likelihood ˆlo or out-of-sample mean log-likelihood ¯lo or with respect to all pre-
+vious metrics (best).
+To test this hypothesis, we will try to create a single measure which repre-
+sents the discrepancy between φ(x, y) and the overall catalog distribution. This
+relationship is primarily inﬂuenced by the overall area that the catalog spans.
+Since all immigrant events are restricted to lie within the same area (Σ), the
+overall area of the catalog is driven primarily by the values of d and q and ¯K,
+which aﬀects how the triggered events spread out relative to the immigrants.
+As such, we compute the resulting areas for each of the 63 catalogs which were
+simulated by varying the parameter values. In Figure 2, we plot how the area
+of the catalog relates to the degree to which DP performed KDE. Speciﬁcally,
+we plot the diﬀerence in the DIC and out-of-sample log-likelihood values be-
+tween DP and KDE, as a function of catalog area. It can be seen that there is
+a clear relationship between the performance measures and the overall area of
+a catalog - a larger area is associated with a better performance of DP ETAS.
+The correlation between these measures and the proportion of immigrant events
+(p˜µ) is -0.27 and -0.26 for the DIC and ML diﬀerences respectively. This largely
+20
+
+--- Sayfa 21 ---
+Metrics difference
+0
+2
+4
+6
+8
+10
+12
+−1
+0
+1
+2
+3
+4
+φ1
+0
+2
+4
+6
+8
+10
+12
+φ2
+log(Area)
+0
+2
+4
+6
+8
+10
+12
+φ3
+Figure 2: Standardised diﬀerences of performance metrics of DP ETAS related
+to KDE ETAS with respect to the logarithmic transformation of every catalog
+overall Area across the three uncaused events’ spatial densities φ·(·) (Section
+8.1).
+■stands for the diﬀerence between in-sample log-likelihood values for
+DP ETAS minus KDE ETAS; ●stands for the diﬀerence between DIC values
+for KDE ETAS minus DP ETAS; ▲stands for the diﬀerence between out-
+of-sample log-likelihood values for DP ETAS minus KDE ETAS. For ease of
+display all values are re-scaled to follow a zero mean, unit variance Normal
+distribution. The three solid lines on each sub-plot represent the ﬁtted lines of
+the pattern with respect to the three discussed diﬀerence (in their respective
+colours). The horizontal dashed line indicate the threshold for which DP ETAS
+will be considered to outperform KDE ETAS.
+conﬁrms our previous hypothesis; in general, the DP model outperforms KDE
+when there are a large number of aftershocks that are spread out over a wide
+area, while KDE performs best when the number of aftershocks is smaller and
+more localised.
+9
+Real earthquake sequences
+In this Section we explore the performance of spatial ETAS model(s) across four
+diﬀerent real earthquake catalogs. Since the Uniform model is unrealistic and
+performs substantially worse than the other two, we will not consider it further
+and instead focus on comparing the KDE and DP models. A summary of the
+results is given in Table 3.
+9.1
+Vrancea, Romania
+Vrancea is an area in Romania that has a strong seismic inﬂuence on South-
+Eastern Europe. On 4/3/1977 a large magnitude 7.2 earthquake occurred which
+caused substantial destruction and human loss in both Bulgaria and Roma-
+21
+
+--- Sayfa 22 ---
+nia. We analysed the earthquake catalog from 01/01/1974 to 01/01/2019 that
+covers the spatial region 46o, 45o18′ N and 27o, 26o E with a magnitude of
+completeness of M0 = 2.5. The data was split into a training set over the pe-
+riod 01/01/1975 −01/01/2014 with 529 events and a test set over the period
+01/01/2014−01/01/2019 with comprises 46 events. The data was obtained from
+the United States Geological Survey (USGS) catalog (http://earthquake.usgs.gov/).
+The goodness-of-ﬁt information is shown on Table 3. It can be seen that DP
+ETAS outperforms KDE when it comes to out-of-sample forecasting of the test
+set period. Interestingly, KDE does better when performance is evaluated using
+the DIC. Since this is computed using only the in-sample period, this suggests
+that KDE is overﬁtting to the data, while the DP method is estimating a more
+parsimonious model which results in superior forecasting.
+9.2
+Zakynthos and Kefalonia, Greece
+Zakynthos and Kefalonia are subject to prolonged seismic activity. The area
+of interest spans 38o33.54′, 47o14.34′ N and 21o36.96′, 19o39.96′ E. The most
+important event in the region is the 6.8 M Ionian earthquake that occurred on
+12/08/1953. Including data from this period is very challenging due to the high
+magnitude of catalog completeness caused by poor quality seismic detection
+equipment. For this reason we focused our study on a more recent time period
+from (1/1/2069 to 1/1/2019) and chose a magnitude of completeness of M0 = 4.5
+to ensure consistency throughout the catalog. The data was split into a train-
+ing set 01/01/1969 −01/01/2018 with 343 events and a test set 01/01/2018 −
+01/01/2019 that comprises 109 events. The data was obtained from the United
+States Geological Survey (USGS) catalog (http://earthquake.usgs.gov/).
+The results in Table 3 are the same as above: DP ETAS performs better for fore-
+casting the test set, while KDE has a superior in-sample performance. Again,
+this suggests that KDE is overﬁtting and that the DP approach is more useful
+for forecasting.
+9.3
+Friuli, Italy
+Friuli is an area in Italy that is primarily known for the 6.5 M earthquake
+that occurred on 06/05/1976, followed by multiple aftershocks with consid-
+erably large magnitudes. We based our study on the earthquake occurrence
+from 01/01/1975 to 01/01/2019 that covers the area within 46o36′, 46o N and
+12o18′, 13o30′ E with minimum magnitude of M0 = 3.
+For inferential pur-
+poses we split the data into a train set 01/01/1975 −01/01/2004 with 310
+events and a test set 01/01/2004−01/01/2019 that comprises of 20 events. The
+data was obtained from the United States Geological Survey (USGS) catalog
+(http://earthquake.usgs.gov/).
+As before, the goodness-of-ﬁt results are shown on Table 3 and show the same
+pattern as above: DP ETAS performs better when it comes to out-of-sample
+forecasting, due to KDE overﬁtting to the training set.
+22
+
+--- Sayfa 23 ---
+9.4
+Central Italy
+In 2006, Central Italy suﬀered a particularly damaging magnitude 6.2 earth-
+quake that caused the death of nearly 300 people (Luzi et al., 2017). Although
+the type of point process models discussed in this paper are not appropriate for
+predicting the occurrence of individual earthquakes, they are particularly useful
+for forecasting patterns in aftershock sequences. To this end, we obtained earth-
+quake data from the Italian National Institute of Geophysics and Volcanology
+(Instituto Nazionale Di Geoﬁsica e Vulcanalogia http://www.ingv.it) from
+01/04/1999 to 01/04/2019 that spans Italy within 35o, 49o N and 5o, 20o E
+with magnitude of completeness taken to be M0 = 3. Then we split the data
+into a training set from 01/04/1999 to 01/04/2014 (4669 events) which was used
+to estimate the model parameters, followed by a test set from 01/04/2014 to
+01/04/2019 (2171 events) used to measure performance.
+The model comparison results are shown on Table 3. In this case, the KDE
+approach outperforms DP ETAS when it comes to out-of-sample forecasting.
+Investigating the catalog more closely, we found that most of the detected earth-
+quakes were localised in a fairly small shore area. As discussed in the previous
+section, we would hence expect the KDE approach to perform particularly well
+here.
+Data
+DICK
+DICD
+¯lo
+K
+¯lo
+D
+Vrancea
+2710.23
+2731.23
+-43.88
+-37.86
+Zakynthos
+846.51
+903.64
+-36.66
+-31.00
+Friuli
+946.66
+995.58
+-36.36
+-29.11
+Italy
+- 6318.75
+-7403.23
+11580.85
+11552.51
+Table 3: KDE and DP based spatial ETAS model comparison across real cat-
+alogs. Lower values of the DIC and larger (less negative) values of the out-of-
+sample likelihood indicate superior performance. The large value of the like-
+lihood for the Central Italy catalog is due to the very large number of events
+compared to the other catalogs.
+10
+Conclusions
+The classic frequentist methods commonly used in seismic forecasting typically
+assume that model parameters are known exactly, which can result in fore-
+casts which are overly conﬁdent.
+To mitigate this, Bayesian approaches are
+becoming more common in seismology. Despite being one of the most popular
+forecasting models, the ETAS framework has rarely received a fully Bayesian
+treatment, and even studies which attempt Bayesian forecasting often up resort-
+ing to frequentist-style plug-in estimates of the model parameters (Omi et al.,
+2015; Ebrahimian et al., 2013). This is due to the highly complex nature of
+the posterior distribution. In this work, we have introduced a new posterior
+23
+
+--- Sayfa 24 ---
+sampling scheme which can be scaled up to catalogs containing thousands of
+earthquakes, and demonstrated its eﬃciency. Our approach can easily be de-
+ployed on realistic seismic catalogs containing thousands of earthquakes.
+In this work, we explored the most commonly used version of the spatial
+ETAS model and showed how a nonparametric Dirichlet process prior could
+be used to allow fully Bayesian inference for the underlying spatial density.
+A comparison to a ﬁxed Kernel Density Estimate of this density showed very
+promising performance in out-of-sample forecasting tasks.
+From our experi-
+ments on synthetic catalogs, we are able to draw the conclusion that the DP
+approach performs best when there are a large number of triggered events with
+a spatial distribution that is spread out over the region, while KDE is more
+suited to catalogs where all earthquakes occur in a compact area.
+Bibliography
+Akaike, H. (1973). Maximum likelihood identiﬁcation of gaussian autoregressive moving av-
+erage models. Biometrika, 60(2):255–265.
+Antoniak, C. E. (1974). Mixtures of dirichlet processes with applications to bayesian non-
+parametric problems. The annals of statistics, pages 1152–1174.
+Bray, A. and Schoenberg, F. P. (2013). Assessment of point process models for earthquake
+forecasting. Statistical science, pages 510–520.
+Chornoboy, E., Schramm, L., and Karr, A. (1988).
+Maximum likelihood identiﬁcation of
+neural point process systems. Biological cybernetics, 59(4-5):265–275.
+Crane, R. and Sornette, D. (2008). Robust dynamic classes revealed by measuring the re-
+sponse function of a social system.
+Proceedings of the National Academy of Sciences,
+105(41):15649–15653.
+Daley, D. J. and Vere-Jones, D. (2003). An introduction to the theory of point processes. vol.
+i. probability and its applications.
+Dirac, P. (1947). The principles of quantum mechanics (clarendon, oxford).
+Ebrahimian, H., Jalayer, F., Asprone, D., Lombardi, A. M., Marzocchi, W., Prota, A., and
+Manfredi, G. (2013). Adaptive daily forecasting of seismic aftershock hazard. Bulletin of
+the Seismological Society of America, 104(1):145–161.
+Ebrahjmian, H. and Jalayer, F. (2017). Robust seismicity forecasting based on bayesian param-
+eter estimation for epidemiological spatio-temporal aftershock clustering models. Scientiﬁc
+Reports, 7(9803).
+Errais, E., Giesecke, K., and Goldberg, L. R. (2010).
+Aﬃne point processes and portfolio
+credit risk. SIAM Journal on Financial Mathematics, 1(1):642–665.
+Ferguson, T. S. (1973). A bayesian analysis of some nonparametric problems. The annals of
+statistics, pages 209–230.
+Fox, E. W., Schoenberg, F. P., Gordon, J. S., et al. (2016). Spatially inhomogeneous back-
+ground rate estimators and uncertainty quantiﬁcation for nonparametric hawkes point pro-
+cess models of earthquake occurrences. The Annals of Applied Statistics, 10(3):1725–1756.
+Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., and Rubin, D. B. (2014).
+Bayesian data analysis, volume 2. CRC press Boca Raton, FL.
+Gerstenberger, M., Wiemer, S., and Jones, L. (2004).
+Real-time forecasts of tomorrow’s
+earthquakes in california: a new mapping tool.
+24
+
+--- Sayfa 25 ---
+G¨or¨ur, D. and Rasmussen, C. E. (2010). Dirichlet process gaussian mixture models: Choice
+of the base distribution. Journal of Computer Science and Technology, 25(4):653–664.
+Gutenberg, B. and Richter, C. F. (1944). Frequency of earthquakes in california. Bulletin of
+the Seismological Society of America, 34(4):185–188.
+Harte, D. (2012). Bias in ﬁtting the etas model: A case study based on new zealand seismicity.
+Geophysical Journal International, page ggs026.
+Hawkes, A. G. (1971). Spectra of some self-exciting and mutually exciting point processes.
+Biometrika, 58(1):83–90.
+Hawkes, A. G. and Oakes, D. (1974). A cluster process representation of a self-exciting process.
+Journal of Applied Probability, 11(3):493–503.
+Helmstetter, A., Kagan, Y. Y., and Jackson, D. D. (2006). Comparison of Short-Term and
+Time-Independent Earthquake Forecast Models for Southern California. Bulletin of the
+Seismological Society of America, 96(1):90–106.
+Helmstetter, A. and Sornette, D. (2002).
+Subcritical and supercritical regimes in epi-
+demic models of earthquake aftershocks. Journal of Geophysical Research: Solid Earth,
+107(B10):ESE–10.
+Holschneider, M., Narteau, C., Shebalin, P., Peng, Z., and Schorlemmer, D. (2012). Bayesian
+analysis of the modiﬁed omori law. Journal of Geophysical Research: Solid Earth, 117(B6).
+Kolev, A. A. and Ross, G. J. (2019). Inference for etas models with non-poissonian mainshock
+arrival times. Statistics and Computing, 29(5):915–931.
+Kumazawa, T., Ogata, Y., et al. (2014). Nonstationary etas models for nonstandard earth-
+quakes. The Annals of Applied Statistics, 8(3):1825–1852.
+Lippiello, E., Giacco, F., De Arcangelis, L., Marzocchi, W., and Godano, C. (2014). Param-
+eter estimation in the etas model: Approximations and novel methods.
+Bulletin of the
+Seismological Society of America, 104(2):985–994.
+Luzi, L., Pacor, F., Puglia, R., Lanzano, G., Felicetta, C., DAmico, M., Michelini, A., Faenza,
+L., Lauciani, V., Iervolino, I., et al. (2017). The central italy seismic sequence between
+august and december 2016: Analysis of strong-motion observations. Seismological Research
+Letters, 88(5):1219–1231.
+Markwick, D. and Ross, G. J. (2019). Hierarchical nonparametric Hawkes processes for mod-
+elling ﬁnancial trades. Preprint.
+Marsan, D. and Lengline, O. (2008). Extending earthquakes’ reach through cascading. Science,
+319(5866):1076–1079.
+Marsan, D. and Lenglin´e, O. (2010). A new estimation of the decay of aftershock density with
+distance to the mainshock. Journal of Geophysical Research: Solid Earth, 115(B9).
+Marzocchi, W. and Lombardi, A. M. (2009).
+Real-time forecasting following a damaging
+earthquake. Geophysical Research Letters, 36(21).
+Mohler, G. O., Short, M. B., Brantingham, P. J., Schoenberg, F. P., and Tita, G. E. (2011).
+Self-exciting point process modeling of crime. Journal of the American Statistical Associ-
+ation, 106(493):100–108.
+Neal, R. M. (2000). Markov chain sampling methods for dirichlet process mixture models.
+Journal of computational and graphical statistics, 9(2):249–265.
+Ogata, Y. (1988). Statistical models for earthquake occurrences and residual analysis for point
+processes. Journal of the American Statistical association, 83(401):9–27.
+25
+
+--- Sayfa 26 ---
+Ogata, Y. (1998). Space-time point-process models for earthquake occurrences. Annals of the
+Institute of Statistical Mathematics, 50(2):379–402.
+Ogata, Y. (2011). Signiﬁcant improvements of the space-time etas model for forecasting of
+accurate baseline seismicity. Earth, planets and space, 63(3):6.
+Ogata, Y. and Zhuang, J. (2006). Space–time etas models and an improved extension. Tectono-
+physics, 413(1):13–23.
+Omi, T., Ogata, Y., Hirata, Y., and Aihara, K. (2014). Estimating the etas model from an
+early aftershock sequence. Geophysical Research Letters, 41(3):850–857.
+Omi, T., Ogata, Y., Hirata, Y., and Aihara, K. (2015). Intermediate-term forecasting of after-
+shocks from an early aftershock sequence: Bayesian and ensemble forecasting approaches.
+Journal of Geophysical Research: Solid Earth, 120(4):2561–2578.
+Porter, M. D., White, G., et al. (2012). Self-exciting hurdle models for terrorist activity. The
+Annals of Applied Statistics, 6(1):106–124.
+Rasmussen, J. G. (2013). Bayesian inference for hawkes processes. Methodology and Comput-
+ing in Applied Probability, 15(3):623–642.
+Ross, G. J. (2018). Bayesian Estimation of the ETAS Model for Earthquake Occurrences.
+Technical Report.
+Schoenberg, F. P. (2013). Facilitated estimation of etas. Bulletin of the Seismological Society
+of America, 103(1):601–605.
+Sethuraman, J. (1994). A constructive deﬁnition of dirichlet priors. Statistica sinica, pages
+639–650.
+Sornette, D. and Utkin, S. (2009). Limits of declustering methods for disentangling exoge-
+nous from endogenous events in time series with foreshocks, main shocks, and aftershocks.
+Physical Review E, 79(6):061110.
+Utsu, T., Ogata, Y., et al. (1995). The centenary of the omori formula for a decay law of
+aftershock activity. Journal of Physics of the Earth, 43(1):1–33.
+Veen, A. and Schoenberg, F. P. (2008). Estimation of space–time branching process models in
+seismology using an em–type algorithm. Journal of the American Statistical Association,
+103(482):614–624.
+Wang, Q., Schoenberg, F. P., and Jackson, D. D. (2010). Standard Errors of Parameter Esti-
+mates in the ETAS Model. Bulletin of the Seismological Society of America, 100(5A):1989–
+2001.
+Wiemer, S. and Wyss, M. (2000). Minimum magnitude of completeness in earthquake catalogs:
+Examples from alaska, the western united states, and japan. Bulletin of the Seismological
+Society of America, 90(4):859–869.
+Wishart, J. (1928). The generalised product moment distribution in samples from a normal
+multivariate population. Biometrika, pages 32–52.
+Zhuang, J., Ogata, Y., and Vere-Jones, D. (2002).
+Stochastic declustering of space-time
+earthquake occurrences. Journal of the American Statistical Association, 97(458):369–380.
+26

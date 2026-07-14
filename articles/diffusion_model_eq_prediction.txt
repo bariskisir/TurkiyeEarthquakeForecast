@@ -1,0 +1,3861 @@
+
+--- Sayfa 1 ---
+1 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+Mapping Information in Feature Extraction 
+Transformation for Chirp Signal 
+ 
+Shuyi Gu, Zhenghua Luo*, Lin Hu, Yilin Zhang, and Junxiong Guo* 
+ 
+ Abstract—Chirp signals have established diverse applications 
+caused by the capable of producing time-dependent linear 
+frequencies. Most feature extraction transformation methods for 
+chirp signals focus on enhancing the performance of transform 
+methods but neglecting the information derived from the 
+transformation process. Consequently, they may fail to fully 
+exploit the information from observations, resulting in decreased 
+performance under conditions of low signal-to-noise ratio (SNR) 
+and limited observations. In this work, we develop a novel post-
+processing method called “mapping information model” to 
+addressing this challenge. The model establishes a link between the 
+observation space and feature space in feature extraction 
+transform, enabling interference suppression and obtain more 
+accurate information by iteratively resampling and assigning 
+weights in both spaces.  Analysis of the iteration process reveals a 
+continual increase in weight of signal samples and a gradual 
+stability in weight of noise samples. The demonstration of the noise 
+suppression in the iteration process and feature enhancement 
+supports the effectiveness of the mapping information model. 
+Furthermore, numerical simulations also affirm the high 
+efficiency of the proposed model by showcasing enhanced signal 
+detection and estimation performances without requiring 
+additional observations. This superior model allows amplifying 
+performance within feature extraction transformation for chirp 
+signal processing under low SNR and limited observation 
+conditions, and opens up new opportunities for areas such as 
+communication, biomedicine, and remote sensing. 
+ 
+Index Terms—Chirp signal, Post-processing, Winger Ville 
+distribution, 
+Cross-terms 
+interference, 
+Hough 
+transform, 
+Algorithm, Time-frequency analysis, Signal detection, Parameter 
+estimation. 
+ 
+I. INTRODUCTION 
+HIRP signal is a typical non-stationary signal 
+characterized by a linear variation of frequency over 
+time and are capable of carrying abundant information. 
+Due to these characteristics, diverse applications including 
+radar [1], biological signal processing [2], and geological 
+exploration [3] have reached a high-level maturity by 
+employing chirp signals. High-performance of information 
+acquisition by processing chirp signal is typically depend on 
+ 
+This work was financially supported by the National Natural Science 
+Foundation of China (grant no. 62201096), the Science and Technology Plan 
+of Sichuan Province (grant no. 2023YFS0426) and the Natural Science 
+Foundation of Sichuan Province (grant no. 24NSFSC0409).  
+Corresponding authors: Zhenghua Luo (luozhenghua@cdu.edu.cn) and 
+Junxiong Guo (guojunxiong@cdu.edu.cn).  
+Shuyi Gu (gushuyi@stu.cdu.edu.cn), Zhenghua Luo, and Junxiong Guo are 
+with the School of Electronic Information and Electrical Engineering, Chengdu 
+University, Chengdu 610106, China. 
+detection and estimation theory [4] and feature extraction 
+methods [5]. A significant obstacle encountered in signal 
+processing, including chirp signal processing, is the presence of 
+low signal-to-noise ratio (SNR) [6], which often leads to failure 
+in estimation and detection processes. Consequently, accurately 
+obtaining the carried information within the chirp signal 
+becomes arduous. One potential solution to mitigate the impact 
+of low SNR is to increase the number of observations in both 
+temporal and spatial dimensions. However, this approach has 
+practical limitations imposed by specific application scenarios. 
+To date, how to effectively achieve superior processing 
+performance while dealing with low SNR and limited 
+observations remains a crucial challenge. 
+The application of estimation methods in statistical signal 
+processing for chirp signal has demonstrated to be effective in 
+numerous studies. For example, cubic phase function (CPF) [7] 
+method models the phase as a cubic polynomial and offers a 
+suboptimal estimation. Additionally, the least squares 
+estimators (LSEs) [8] have been suggested for estimating the 
+frequency rates and amplitude of chirp signal. In a related work 
+[9], an iterative estimation method equivalent to LSE is 
+introduced, treating parameter estimation problem as a 
+nonlinear programming problem. The results indicate that this 
+method closely approximates the theoretical asymptotic 
+variance of LSE. Another approach focuses on estimating the 
+instantaneous frequency function of chirp signals by 
+introducing continuous-time probabilistic models [10]. The 
+model jointly characterizes chirp signals and their instantaneous 
+frequency functions, without requiring prior knowledge of the 
+form of the instantaneous frequency function. Such methods 
+often provide strict closed form expressions of estimation 
+performance, with many claiming optimality or asymptotic 
+optimality. However, once the SNR decreases, these methods 
+often deviate from the Cramér-Rao lower bound (CRLB) [11]. 
+Consequently, the assistance of filtering or other noise 
+reduction techniques become necessary. 
+Similarly, the time-frequency representation (TFR) [12] is 
+commonly employed as the primary method for analyzing non-
+stationary signals, to extract target information [13, 14, 15]. 
+Currently, there are various approaches to obtain TFR, 
+Shuyi Gu, Zhenghua Luo, and Lin Hu (hulin@5ritt.com) are with the Fifth 
+Institute of Telecommunication Science and Technology, Chengdu 610036, 
+China and Sichuan Time Frequency Synchronization System and Application 
+Engineering Technology Research Center, Chengdu 610062, China. 
+Yilin Zhang (zhang_yi_lin@163.com) is with the Chengdu Jinjiang Electronic 
+System Engineering Company, Ltd., Chengdu 610051, China. 
+ 
+C
+
+--- Sayfa 2 ---
+2 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+including short time Fourier transform (STFT) [12], wavelet 
+transform (WT) [16], Wigner-Ville distribution (WVD) [17], 
+Hilbert-Huang transform (HHT) [18], and other improved 
+methods. Subsequently, the Hough transform (HT) [19] and 
+Radon transform (RT) [20] were proposed to extract chirp 
+signals on TFR, taking advantage of the energy distribution 
+characteristics of chirp signal. One well-known method is the 
+Wigner-Hough transform (WHT) [21], which combines WVD 
+and Hough transform to detect and estimate chirp signals and is 
+equivalent to fractional Fourier transform [22]. Other types of 
+TFR methods can also achieve the same function by combining 
+HT, such as short time Fourier-Hough transform (STFHT) [23], 
+wavelet-Hough transform [24], chirplet-Hough transform 
+(CHT) [25], Teager-Huang-Hough transform (THHT) [26]. In 
+general, the choice of TFR combined with HT depends on the 
+specific characteristics of the scenario to achieve the best output 
+SNR [15, 21, 27]. However, even though combing HT with 
+TFR can achieve a relatively higher SNR, such methods still 
+exhibit threshold effect at low SNR condition [6, 28]. Inspired 
+by these methods, diverse improved algorithms have been 
+demonstrated to enhance the performance of chirp signal 
+processing, including Pseudo Wigner-Hough transform 
+(PWHT) [15], modified Wigner-Hough transform (MWHT) 
+[29], and local polynomial periodogram Wigner-Hough 
+transform (LPPWHT) [30], which aim to address the failure of 
+WHT under low SNR condition. These methods reduce the 
+location of threshold effects by improving the transformation 
+method without additional observations. Other methods 
+focusing on improving TFR, such as the post-processing 
+methods [31], have also been proposed to improve the 
+processing performance of chirp signals under low SNR. For 
+example, Fourier synchrosqueezed-Hough Transform (FSSHT) 
+[32] 
+and 
+wavelet 
+synchrosqueezed-Hough 
+Transform 
+(WSSHT) [33] are able to achieve higher energy concentration 
+and improve the performance of subsequent HT results via 
+rearranging TFR. Additionally, the two-dimensional (2D) mask 
+method [34] is used to suppress interference on TFR and 
+similar. Similar to 2D mask, slice entropy is employed to assign 
+weight to the point in HT feature plane to implement noise 
+suppression and signal feature enhancement [35]. Besides, the 
+neural network [36] extracts and recognizes features in TFR 
+through its unique architecture [37]. These methods of 
+improving in TFR or feature space can effectively improve 
+performance at SNR, but they usually fail to establish a 
+connection between TFR and feature space, leading to limited 
+utilization of observation information and unacceptable 
+performance degradation under low SNR. 
+When the performance degradation caused by low SNR 
+cannot be avoided, conducting multiple observations at both the 
+temporal and spatial scales achieve better signal processing 
+performance compared to single observations in the 
+spatiotemporal dimension. This provides a promising method 
+for addressing low SNR issues, which has been widely used, 
+such as coherent [38] or incoherent [39] accumulation between 
+multiple observations. However, there is an upper limit to 
+adding observation points at the spatial scale, such as the 
+number of channels in the array antenna, which is limited by 
+application scenarios and costs [40]. In some specific scenes, 
+multiple observations in the time dimension may not be suitable, 
+such as, radar systems require reliable conclusions within a 
+limited time window and limited observed information for 
+target detection [41].  
+For the reasons mentioned above, it is crucial to focus on how 
+to handle the information contained in a single observation, as 
+it also contributes to reducing the demand for multiple 
+observations. To achieve acceptable performance at lower SNR 
+and extremely minimize observation redundancy, a framework 
+with strong universality and the ability to obtain more 
+information in limited observations should be applied to further 
+improve performance.  
+Motivated by these factors, this paper presents a novel 
+resampling model called “mapping information model” to 
+establish a connection between the observation space and 
+feature space. The model takes into account the mapping 
+relationship between samples in these two spaces to extract 
+unique information that is distinct from the spatial distributions. 
+Then, a post-processing method based on the model is proposed, 
+which can be widely applied in feature extraction 
+transformation in TFR. This method enhances signal features 
+and suppresses noise through iterative resampling in the two 
+spaces, without requiring any additional observations. It 
+provides an efficient approach for detecting and estimating 
+parameters in low SNR and limited time window, enabling the 
+utilization of limited observation information to achieve 
+improved signal processing results. An illustrative example 
+demonstrating the transformation of feature extraction into the 
+Hough transform is provided, and the convergence results of the 
+post-processing for iterative resampling is analyzed and 
+presented. Finally, several commonly used TFR numerical 
+simulations are conducted to support our claims.  
+The organization of this paper is as follows: In Section II, we 
+introduce the mapping information model based on the general 
+representation 
+of 
+feature 
+extraction 
+transformation. 
+Subsequently, we incorporate the Hough transform of TFR into 
+the model and develop an iterative method for noise 
+suppression, which applies weights to TFR or feature plane. 
+Section III presents the performances analysis of the proposed 
+noise suppression method, and Section IV employs numerical 
+simulations to validate our analysis. Finally, in Section V, we 
+provide conclusions and discuss future research prospects for 
+the proposed mapping information model. 
+II. MAPPING INFORMATION MODEL 
+A. Mapping Information in Feature Extraction  
+In kernel-based feature extraction, mapping function  
+transforms elements from the input space  to the kernel 
+space , 
+:
+→. Typically, this involves projecting  
+onto a feature parameter space, 
+: →. Given m feature 
+parameters v , the feature extraction of a sample vector 
+r
+ 
+can expressed as [42]: 
+
+--- Sayfa 3 ---
+3 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+ 
+1
+2
+, ( )
+, ( )
+( ( ))
+...
+, ( )
+m
+
+
+
+
+
+
+
+
+
+
+= 
+
+
+
+
+
+
+
+v
+r
+v
+r
+r
+v
+r
+ 
+(1) 
+By further associating the kernel  with the feature v , we 
+obtain: 
+ 
+( )
+{ ; ( )}
+
+
+=
+v r
+v
+r
+ 
+(2) 
+This indicates the newly defined kernel v completes the 
+transformation from the input vector to the feature parameter 
+space 
+:
+
+→
+v
+. The mapping process in equation (1) can be 
+rewritten as follows: 
+ 
+( ( ))
+( )
+( )
+( )
+d
+r
+T
+
+
+
+=
+=
+=
+
+v
+v
+r
+r
+v 
+(3) 
+For different feature parameter vectors v , they are 
+transformed by different input vectors r in equation (3). While 
+it is possible to directly use the entire input space  as input 
+for the mapping , there is always a unique sample vector 
+
+r
+ that serves as the main reason for projecting the input 
+onto the feature space. Therefore, the elements in vector form a 
+set 
+ related to the feature parameters vector 
+0v as follows: 
+ 
+0
+0
+{
+|
+( )
+( )}
+ir
+
+
+=
+
+=
+=
+
+v
+v
+v
+r
+r
+v
+ 
+(4) 
+The integral in (3) can be rewritten as: 
+ 
+( )
+( )
+i
+T
+d
+r
+
+= 
+v
+v
+v
+ 
+(5) 
+In discrete cases, we have: 
+ 
+( )
+( )
+i
+i
+T
+r
+r
+
+=
+
+
+v
+v
+v
+ 
+(6) 
+It is worth noting that kernels with different parameters result 
+in different sets with corresponding samples. The set 
+ 
+formed during the mapping process is referred to as the 
+Mapping Set (MS) in this paper. Just as different kernels can 
+extract different information, although the mapping set depends 
+on the current kernel, applying operations other than the kernel 
+function to the elements in mapping set can still yield new 
+information. Essentially, this type of information originates 
+from the process of mapping samples onto feature space using 
+v . Hence, we refer to it as Mapping Information (MI). 
+The mapping information enables us to impose constraints 
+on the distribution characteristics in the feature space after 
+feature extraction transformation. It can be targeted at each 
+point in feature space because the kernel that determines the 
+mapping set depending on the parameters in feature space. It 
+can be used to change the distribution of projections in the 
+feature space, such as enhancing or filtering, while following a 
+certain constraints or criteria function L that is flexible: 
+ 
+( )
+J
+L
+=
+v
+v
+ 
+(7) 
+Similarly, whether the feature extraction transformation 
+based on v is reversible or not, if there is a mapping 
+1 :
+−
+→
+r
+transforms the feature element to the input space 
+with parameter r , a new MS with vector v from  can be 
+composed. v is derived from the linear or nonlinear 
+transformation of 
+r
+ fundamentally, but they may not equal. 
+The set and the MI could be note as: 
+ 
+0
+1
+1
+0
+{
+|
+( )
+( )}
+iv
+
+
+−
+−
+=
+
+=
+=
+
+r
+r
+r
+v
+v
+r
+ 
+(8) 
+ 
+( )
+C
+L
+=
+r
+r
+ 
+(9) 
+The sketch of MI model is shown in Fig. 1. We provide a 
+representation of the mapping kernel function of many-for-one 
+between two spaces. If the mapping is many-to-many, we just 
+apply J or C to the multiple projections after mapping. In the 
+sketch, the boundary between the input space and feature space 
+becomes blurred, and the sequence of mapping between them 
+becomes no longer important. The mapping process always 
+generate new information, when the appropriate mapping 
+kernel is selected, as mentioned above and named MI. 
+ 
+Fig. 1. Schematic of Mapping Information model herein. 
+ 
+ 
+B. Weight Matrix based on Mapping Information 
+The Hough Transform (HT) is a typical feature extraction 
+transformation or mapping that conforms to the model above 
+described. It is often combined with the TFR of chirp signal. 
+When using the Hough transform for feature extraction, the 
+chirp signal is represented as a straight line in the input space 
+(TFR plane) and an impulse in the feature plane (parameter 
+plane). 
+The TFR can be defined as: 
+ 
+( )
+( , )
+s t
+D t f
+→
+ 
+(10) 
+where ( )
+s t is the time domain signal, 
+( ,
+)
+D t f denotes its TFR. 
+When ( )
+s t is a chirp signal, its energy concentrates along a line 
+on the TFR plane. The Hough transform is then used for 
+detecting the chirp signal and estimating its parameters. In 
+Hough transform, the kernel  represents the lines with all 
+possible feature parameters 
+( , )
+
+=
+v
+. These parameters are 
+the polar radius and polar angle of the line in the polar 
+coordinates respectively. In generalized Hough transform 
+(GHT) [43], the kernel can also represent circular shapes and 
+other regular or irregular shapes with different parameters, this 
+makes the discussion solely about HT universal. The mapping 
+kernel of the Hough transform could be written as the form in 
+equation (2): 
+ 
+, ( ( , ))
+{( , ); ( ( , ))}
+D t f
+D t f
+
+
+
+=
+ 
+(11) 
+where  is 
+
+--- Sayfa 4 ---
+4 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+ 
+( , )      
+cos
+sin
+( ( , ))
+   0            
+cos
+sin
+D t f
+t
+f
+D t f
+t
+f
+
+
+
+
+
+
+
+=
++
+
+= 
+
++
+
+ 
+(12) 
+Therefore, following the form of equation (5), the entire feature 
+extraction process can be expressed as: 
+ 
+,
+( , )
+(
+( ,
+))
+T
+d
+D t f
+
+
+
+= 
+ 
+(13) 
+For different feature parameters, different mapping sets (MSs) 
+can be generated by kernel (11) in the HT. As discussed above, 
+the resulting MS should be a set that projects onto a specific 
+location in feature space. Here, we consider treating all outputs 
+of  as an MS when 
+cos
+sin
+t
+f
+
+
+
+=
++
+. Hence, equation 
+(13) can be rewritten as: 
+ 
+,
+( , )
+( ,
+)
+T
+dD t f
+
+= 
+ 
+(14) 
+In discrete cases, it is given by: 
+ 
+,
+( , )
+( ,
+)
+i
+j
+T
+D t
+f
+
+= 
+ 
+(15) 
+Thus, the MSs formed by the Hough transform are obtained as 
+following. 
+ 
+,
+( ,
+)
+i
+j
+ij
+D t f
+D
+
+=
+
+ 
+(16) 
+The proposed MS provides information about the 
+transformation process of features extraction from the TFR to 
+the feature parameter space. Each feature 
+0
+0
+(
+,
+)
+
+ in the feature 
+space corresponds to a set  
+0
+0
+,
+: 
+ 
+,
+,
+,
+(
+)
+ij
+ij
+J
+L
+D
+D
+
+
+
+=
+
+ 
+(17) 
+When the TFR 
+( ,
+)
+D t f
+ is not sparse, there are significant 
+number of non-zero elements in the set, which provides 
+abundant mapping information for the function L . This allows 
+us to use more flexible functions to obtain a feature space 
+distribution that aligns better with our expectations. However, 
+when the TFR is sparse, such as Teager-Huang transform (THT) 
+[44], an increase of zero elements in the MS requires careful 
+function selection and may result in decreased adaptability to 
+interference. 
+C. Using of Mapping Information 
+When using the HT, we aim to detect a significant impulse in   
+the parameter plane, which indicates the presence of a chirp 
+signal. In the TFR plane, the chirp signal is a line and we 
+assume that its energy is evenly distributed at every point along 
+the line. Therefore, for a chirp signal ( )
+s t , we considered it to 
+follow a uniform distribution in the TFR plane, and its random 
+process samples S can be assumed as: 
+ 
+0
+1
+~
+( , )
+S
+AU t t
+ 
+(18) 
+where A is the power of the signal, 
+0t and 
+1t represent the 
+start time and end time of the signal, respectively. For additive 
+Gaussian noise ( )
+n t unrelated to the signal, we consider its 
+samples N as a random variable following a zero-mean 
+Gaussian distribution in the TFR plane. These samples are 
+independent, and 
+2
+n
+ is used to represent the power of the noise: 
+ 
+2
+~
+(0,
+)
+n
+N
+N
+
+ 
+(19) 
+Based on the previous discussion, we can see that the mapping 
+sets 
+,
+ formed by random variables S and N during the 
+transforming process have extremely different distributions. 
+This statistical characteristic can be used to obtain additional 
+information without conducting additional observations. In this 
+work, we quantify this statistical characteristic by negentropy 
+[45]. Negentropy is used to measure the difference between the 
+sample distribution and the Gaussian distribution using 
+independent component analysis (ICA) [46], which can be 
+given as: 
+ 
+( )
+(
+)
+( )
+G
+L x
+H x
+H x
+=
+−
+v
+ 
+(20) 
+where 
+(
+)
+G
+H x
+ is the entropy of the Gaussian distribution 
+random variables, 
+( )
+H x is the entropy of the samples. In this 
+paper, we focus on the detection and parameter estimation of 
+chirp signal. Hence, we consider a function with the form of 
+negentropy for the samples in each MS 
+, defined as follows: 
+ 
+( )
+(
+)
+( )
+U
+J
+L x
+H x
+H x
+=
+=
+−
+v
+ 
+(21) 
+(
+)
+G
+H x
+ is the entropy of random variables with a uniform 
+distribution. When the samples in set 
+0
+0
+,
+ are from the chirp 
+signal in the TF plane, it means that they are uniformly 
+Fig. 2. Generate weight matrix from mapping set. 
+ 
+
+--- Sayfa 5 ---
+5 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+distributed. The output value of function is zero (in real life 
+scenarios where there is unavoidable noise, it is a small value). 
+Otherwise, if there are only noise in the mapping set, the 
+distribution is different from uniform distribution and the 
+output of the function have a relatively large value. Furthermore, 
+the output value has a one-to-one correspondence with the 
+parameter plane. Therefore, a weight matrix can be constructed 
+using all outputs of the function: 
+ 
+,
+,
+( , )
+(
+)
+w
+J
+L
+
+
+=
+=
+v
+ 
+(22) 
+Here, when we use negentropy as the weight, it can be 
+expressed in the following form: 
+ 
+( , )
+(
+)
+( )
+log
+log
+U
+U
+U
+x
+x
+x
+x
+w
+H x
+H x
+p
+p
+p
+p
+=
+−
+=
+−
+−
+−
+
+
+ 
+(23) 
+where 
+U
+xp
+ is the probability of uniform distribution, 
+xp is the 
+frequency about the element in mapping set 
+,
+.  
+For a known distribution, a closed form solution for the 
+entropy of random variable samples can be determined, but it is 
+not so easy for samples in a mapping set. Therefore, we assume 
+that the samples in each mapping set follow a Gaussian 
+distribution when considering the negentropy of each mapping 
+set. Based on this, the weight can be expressed as shown in 
+equation (24), where l is the number of elements in this 
+mapping set, 
+x
+ is their standard deviation,  and  is the mean. 
+ 
+2
+,
+~
+(
+,
+)
+(
+)
+( )
+(
+)
+( ) |
+x
+U
+U
+x N
+J
+H x
+H x
+H x
+H x
+
+
+=
+−
+
+−
+ 
+(24) 
+that is, 
+ 
+1
+log
+log
+log
+log
+2
+2
+1
+log
+2
+2
+U
+U
+x
+x
+p
+p
+p
+p
+l
+l
+
+
+−
+−
+−
+
+−
+−
+=
+−
+
+
+ (25) 
+By examining the weight formula provided, it is clear that the 
+weight of each point on the parameter plane depends on the 
+number of samples l and their variance 
+2
+x
+ in MS 
+, but is 
+not related to . When all the elements within the set are time-
+frequency (TF) points generated by noise, this assumption is 
+unproblematic. When there is a set with chirp signal TF point, 
+x
+ is small, and l is not too small. For an MS composed by 
+chirp signal samples, the term /
+2
+x
+l
+ is larger than when 
+there is a noise set. To better illustrate this, Figure 2 shows three 
+mapping sets generated during feature extraction of TFR using 
+Hough kernel with different parameters. These mapping sets are 
+represented by a line coincident with chirp signal point in the 
+TFR, a line that only passes through noise points in the TFR, 
+and a line that passes through noise points but partially overlaps 
+with a chirp signal point. As the figure shows, these mapping 
+sets have different sample distribution characteristics. By 
+quantifying these characteristics using function 
+( )
+L
+, we obtain 
+different weight values. Figure 2 demonstrates that our weight 
+formula can effectively assign different weights to noise and 
+chirp signals in the feature plane, as the logarithmic function is 
+strictly monotonic. To ensure positive weights, we ultimately 
+use the weight calculation given in equation (26). 
+ 
+,
+log(1
+)
+2
+x
+l
+w
+
+=
++
+ 
+(26) 
+After obtaining the corresponding weights for each point, we 
+multiply the normalized weight matrix onto the parameter plane. 
+We simulate chirp signals under noise and use WHT to obtain 
+the original distribution in parameter. Figure 3 shows the 
+contour map of the original distribution and the distribution 
+after using weights. In contrast, the latter distribution contains 
+significantly less noise. As we proposed, due to the addition of 
+mapping information, some information that cannot be obtained 
+in the original distribution is extracted and are used to suppress 
+noise through our designed weight formula. This promising 
+approach paves the way for tasks such as chirp signal detection 
+and parameter estimation in noisy environments, where 
+accurately distinguishing between noise and signal is critical. 
+ 
+Fig. 3. Contour map of (a) original parameter plane distribution 
+and (b) parameter plane distribution after being multiplied by 
+weight. 
+ 
+ 
+When mapping from the parameter plane into the TFR plane, 
+the kernel becomes sinusoidal, and we subsequently have 
+followings equations and the generated mapping set 
+. 
+
+--- Sayfa 6 ---
+6 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+ 
+1
+1
+, ( ( , ))
+{( , );
+( ( , ))}
+t f T
+t f
+T
+
+
+
+
+−
+−
+=
+ 
+(27) 
+ 
+1
+( , )      
+cos
+sin
+( ( , ))
+   0            
+cos
+sin
+T t f
+t
+f
+T
+t
+f
+
+
+
+
+
+
+
+
+−
+=
++
+
+= 
+
++
+
+ 
+(28) 
+As a chirp signal is represented as an impulse on the parameter 
+plane, equation (26) can also serve as a weight on the TFR 
+plane. This is because a prominent impulse increases the 
+variance of the samples within the mapping set. However, as 
+mentioned above, the choice of function 
+( )
+L
+ is flexible as long 
+as it adjusts the distribution as desired. To illustrate this point, 
+we introduce another metric called cross-entropy to calculate 
+weights on TFR plane by following equation. 
+ 
+,
+,
+( ,
+)
+(
+)
+(
+, )
+( ,
+)
+1
+1
+log
+log
+t f
+t f
+U
+U
+x
+x
+w t f
+C
+L
+H x
+x
+H x x
+p
+p
+l
+l
+=
+=
+=
+−
+=
+−
+−
+−
+
+
+r
+ 
+(29) 
+Similar to equation (24), we assume that the sample follows 
+a Gaussian distribution: 
+ 
+2
+2
+~
+(
+,
+)
+~
+(
+,
+)
+(
+, )
+( ,
+)
+(
+, ) |
+( ,
+) |
+x
+x
+U
+U
+U
+U
+x N
+x N
+H x
+x
+H x x
+H x
+x
+H x x
+
+
+−
+
+−
+ 
+(30) 
+Considering the limited number of elements in the mapping set, 
+the weight is given by: 
+ 
+,
+2
+2
+3
+3
+max
+min
+2
+1
+1
+log
+( )
+( )log
+2
+1
+log
+(
+)
+2
+2
+(
+)
+(
+)
+log
+6
+t f
+x
+x
+x
+x
+x
+x
+w
+p
+x dx
+p
+x
+dx
+l
+l
+l
+x
+dx
+l
+l
+x
+x
+l
+l
+l
+
+
+
+
+
+
+
+= −
++
+=
++
++
+−
+−
+−
+−
+
++
++
+
+
+
+ 
+(31) 
+Furthermore, it is easy to see that 
+3
+3
+max
+(
+)
+(
+)
+x
+x
+
+
+−
+
+−
+ and 
+3
+min
+(
+)
+0
+x
+
+−
+
+, thus resulting in 
+3
+3
+3
+max
+min
+(
+)
+(
+)
+x
+x
+x
+
+
+
+−
+−
+−
+
+. 
+Therefore, we have: 
+ 
+3
+3
+3
+max
+min
+2
+2
+(
+)
+(
+)
+6
+6
+6
+x
+x
+x
+x
+x
+x
+l
+l
+l
+
+
+
+
+
+
+−
+−
+−
+
+=
+ 
+(32) 
+To facilitate the analysis of the weight properties, after 
+shrinking the weight formula as formula (32), we can rewrite 
+the weight calculation formula (31) as: 
+ 
+,
+2
+log
+6
+x
+x
+t f
+w
+l
+l
+l
+
+
+=
++
++
+ 
+(33) 
+It can be observed that the weight of the TFR plane given in this 
+paper depends on the sample variance of the curve 
+corresponding to that point on the parameter plane. The 
+mapping set 
+ containing impact points have a larger sample 
+variance compared to the set containing only noise points, 
+resulting in a higher weight. 
+Same way as using weights on parameter plane, we also 
+multiply the weight corresponding to the TFR plane by the 
+original distribution. In our simulations, we generated four 
+chirp signals with different parameters in presence of noise, 
+where the SNR is 3. The time-frequency distribution used is the 
+WVD, and the feature extraction kernel that forms the mapping 
+set remains the Hough transform kernel.  
+For dealing with multi-component signals, the most well-
+known drawback of the WVD is cross interference [47]. When 
+the function 
+( )
+L
+ is appropriately selected, the proposed 
+mapping information model can handle the cross interference 
+caused by multiple components. We attempt this using (33) and 
+compare the results before and after using weights in Fig. 4. It 
+can be observed that the noise and cross interference in Fig. 4a 
+are significantly suppressed in Fig. 4b, while the chirp signal is 
+enhanced. This is achieved through the high output SNR of the 
+Hough transform feature extraction kernel and the suitable 
+extraction of mapping information for both signal and noise 
+using function L . The comparison results in Fig. 4 demonstrate 
+the potential of the mapping information model in cross 
+interference suppression. However, it is worth noting that this 
+result is just an illustration and is not limited to it. The proposed 
+mapping information model allows for flexible selection of 
+functions 
+( )
+L
+ to achieve the desired goal. More specific 
+performance analysis of the two weight equations presented in 
+this paper is elaborated in detail in the next section. 
+ 
+ 
+Fig. 4. (a) Original time-frequency plane distribution and (b) 
+weighted time-frequency plane distribution. 
+ 
+ 
+
+--- Sayfa 7 ---
+7 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+D. The Connecting Effect of Mapping Information 
+After obtaining the weights using the equation (26) and (33), 
+the approach in this article is to multiply the parameter plane 
+distribution matrix or TFR plane to obtain a new distribution. 
+Another perspective to view the TFR, Wigner distribution is 
+originally used to describe the probability distribution in phase 
+space [48]. Inspired by this, we try to view the TFR and explain 
+the role of weights from a perspective of probability distribution.  
+Considering the distribution in TFR plane and parameter 
+plane, we assign the values on the parameter plane to a 
+probability note as 
+,
+(
+)
+t f
+P X
+r
+=
+ , 
+,
+(
+)
+P Y
+v
+=
+. The probability 
+form of each point on the parameter plane can be written as: 
+ 
+,
+,
+,
+,
+,
+(
+)
+( )
+i
+j
+i
+j
+t
+f
+t
+f
+t f
+t f
+t f
+r
+P X
+r
+p
+x
+r
+r
+=
+=
+=
+
+
+ 
+(34) 
+ 
+,
+,
+,
+,
+,
+(
+)
+( )
+i
+j
+i
+j
+i
+j
+v
+P Y
+v
+p
+y
+v
+v
+
+
+
+
+
+=
+=
+=
+
+
+ 
+(35) 
+where 
+,t f
+r
+ and 
+,
+v are the values of each point in the two 
+planes. Although the Wigner distribution satisfies the 
+normalization property, the probability distribution on other 
+TFRs and the parameter domain may not satisfy this, while it is 
+not important for the actual processing process, as the 
+difference only lies in whether to divide by a constant. Using 
+the probability characteristic of weights, we express the process 
+of multiplying the original distribution by the weight matrix as: 
+ 
+ˆp
+wp
+=
+ 
+(36) 
+As weights can act as new descriptions of distribution 
+probabilities generated based on existing samples and 
+hypothetical constraints, we have: 
+ 
+,
+0
+0
+1
+1
+0
+0
+1
+1
+(
+|
+)
+( )
+( )
+(
+,...,
+|
+)
+(
+,...,
+)
+l
+l
+l
+l
+P
+Y
+w
+J
+P
+P X
+x
+X
+x
+Y
+P X
+x
+X
+x
+
+−
+−
+−
+−
+=
+=
+=
+=
+=
+=
+=
+v
+ 
+(37) 
+ 
+,
+0
+0
+1
+1
+0
+0
+1
+1
+(
+|
+)
+( )
+( )
+(
+,...,
+|
+)
+(
+,...,
+)
+t f
+l
+l
+l
+l
+P
+X
+w
+J
+P
+P Y
+y
+Y
+y
+X
+P Y
+y
+Y
+y
+−
+−
+−
+−
+=
+=
+=
+=
+=
+=
+=
+r
+ 
+(38) 
+Then, there is: 
+ 
+0
+0
+1
+1
+,
+0
+0
+1
+1
+0
+0
+1
+1
+(
+,...,
+| ) ( )
+ˆ
+(
+,...,
+)
+( |
+,...,
+)
+( |
+)
+l
+l
+l
+l
+l
+l
+P X
+x
+X
+x
+Y P Y
+p
+P X
+x
+X
+x
+P Y X
+x
+X
+x
+P Y
+
+−
+−
+−
+−
+−
+−
+=
+=
+=
+=
+=
+=
+=
+=
+=
+ 
+(39) 
+ 
+0
+0
+1
+1
+,
+0
+0
+1
+1
+0
+0
+1
+1
+(
+,...,
+|
+) (
+)
+ˆ
+(
+,...,
+)
+(
+|
+,...,
+)
+(
+|
+)
+l
+l
+t f
+l
+l
+l
+l
+P Y
+y
+Y
+y
+X P X
+p
+P Y
+y
+Y
+y
+P X Y
+y
+Y
+y
+P X
+−
+−
+−
+−
+−
+−
+=
+=
+=
+=
+=
+=
+=
+=
+=
+ 
+(40) 
+This indicates that after normalizing all w , it can be seen as a 
+probability distribution. The process of multiplying with 
+weights can be written to the form of Bayesian formula. 
+According to the Bayesian theorem, the new distribution 
+obtained is the correction of the probability distribution in this 
+plane by the mapping set formed through the Hough 
+transformation process. Meanwhile, according to equations (39) 
+and (40), we establish a connection between the two 
+distribution planes (or space) by the mapping information 
+brought by mapping set. This reveals the essence of the method 
+proposed in this paper and provides strong support for us to 
+further generalize the above definition. 
+III. PERFORMANCE ANALYSIS 
+Mapping information offers a feasibility of making a single 
+correction to the original distribution. However, in the 
+connection between observation space and feature space 
+established through mapping information, there is more 
+information that can be used. For all points in these planes, the 
+process of using MI for correction can be expressed as a transfer 
+process: 
+ 
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+1
+,
+,
+,
+,
+,
+,
+,
+1
+,
+,
+,
+,
+1
+,
+...
+0
+...
+...
+...
+...
+0
+...
+(
+)
+...
+0
+...
+...
+...
+...
+0
+...
+(
+)
+l
+l
+l
+l
+l
+l
+l
+l
+i
+i
+i
+i
+i
+i
+i
+l l
+l
+i
+i
+i
+i
+l l
+l
+i
+w
+v
+w
+v
+J
+v
+J
+v
+v
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+−
+−
+−
+−
+−
+−
+−
+−
++
+
+
+
+
+=
+
+
+
+
+
+
+
+
+= 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+= 
+
+
+
+
+
+
+
+
+
+
+
+=
+v
+v
+W
+v
+v
+0
+0
+1
+1
+1
+1
+1
+1
+,
+1
+1
+,
+,
+1
+...
+...
+l
+l
+l
+l
+i
+t
+f
+i
+i
+t
+f
+l
+v
+
+−
+−
+−
+−
++
++
++
++
+
+
+
+
+
+
+
+
+
+→
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+(41) 
+ 
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+1
+,
+,
+,
+,
+,
+,
+,
+1
+,
+,
+,
+,
+1
+,
+...
+0
+...
+...
+...
+...
+0
+...
+(
+)
+...
+0
+...
+...
+...
+...
+0
+...
+(
+)
+l
+l
+l
+l
+l
+l
+l
+l
+i
+i
+i
+t f
+t f
+t f
+i
+i
+t
+f
+t
+f
+i
+i
+t
+f
+t
+f
+l l
+l
+i
+i
+t
+f
+t
+f
+i
+i
+t
+f
+t
+f
+l l
+l
+i
+t
+f
+w
+r
+w
+r
+J
+r
+J
+r
+r
+−
+−
+−
+−
+−
+−
+−
+−
++
+
+
+
+
+=
+
+
+
+
+
+
+
+
+= 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+= 
+
+
+
+
+
+
+
+
+
+
+
+=
+r
+r
+W
+r
+r
+0
+0
+1
+1
+1
+1
+1
+1
+,
+1
+1
+,
+,
+1
+...
+...
+l
+l
+l
+l
+i
+i
+i
+t
+f
+l
+r
+
+
+
+−
+−
+−
+−
++
++
++
++
+
+
+
+
+
+
+
+
+
+→
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+(42) 
+where l denotes the number of points in each space. W is a 
+l l
+ diagonal matrix, r and v are 
+1
+l vectors. We use the 
+superscript i to represent ith correction of the original 
+distribution via mapping information, and the subscript 
+explains the space to which a vector or scalar belong. 
+From the mapping set proposed in the previous section, it can 
+be seen that the mapping set corresponding to a TFR plane point 
+is composed of points in the parameter plane, and the mapping 
+set of a parameter plane point is composed of points in the TFR 
+plane. This indicates we can use mapping information to 
+modify the distribution of a plane and further make corrections 
+
+--- Sayfa 8 ---
+8 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+to the other plane. This two-direction correction brings new 
+mapping information to describe another plane, while using 
+mapping information only in one direction does not further 
+generate new information. The following iteration equations are 
+used to describe this process: 
+ 
+1
+1
+1
+1
+(
+)
+(
+)
+(
+(
+))
+(
+(
+))
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+diag L
+diag L
+
+−
++
++
++
+=
+=
+→
+=
+→
+=
+v
+v
+r
+r
+r
+v
+r
+v
+v
+v
+r
+v
+r
+r
+ 
+(43) 
+This iterative process does not require additional observation 
+information, only except a set of samples with original 
+distribution. Essentially, it is a resampling process that provides 
+criteria for the original sample according to the function 
+( )
+L
+. 
+The bidirectional alternating iteration process brings new 
+information. Meanwhile, as we have emphasized, the choice of 
+descriptive criteria or constraint functions are flexible. 
+Therefore, for the iterative process given by formula (43), we 
+didn’t provide detailed closed results, but analyzed the process 
+from the perspective of how the selected function affects the 
+trend of the process, which can better demonstrate the 
+generality of the proposed mapping information model. 
+Based on previous analysis, the weight of any given point is 
+mainly determined by the sample variance of its corresponding 
+mapping set. A change in weight affects the new distribution 
+trend of each plane. Equation (26) shows the weight of 
+parameter plane points, it depends on the sample standard 
+deviation. Taylor expanding w to the first derivative at 
+i
+w , 
+there is: 
+ 
+,
+,
+,
+,
+1
+1
+,
+,
+2
+(
+)
+2 (
+)
+i
+i
+i
+i
+i
+i
+l
+w
+w
+l
+
+
+
+
+
+
+
+
+
+
++
++
+−
+=
++
+−
++
+ (44) 
+Then we have: 
+ 
+,
+2
+2 (
+)
+i
+i
+r
+i
+i
+r
+r
+l
+w
+l
+
+
+
+
+−
+
+= 
++
+ 
+(45) 
+Similarly: 
+ 
+,
+,
+1
+1
+,
+,
+6 2
+1
+(
+)
+6
+t f
+t f
+i
+i
+i
+i
+t f
+t f
+w
+w
+l
+
+
+
++
++
++
+=
++
+−
+ 
+(46) 
+ 
+,
+,
+6 2
+1
+6
+t f
+i
+i
+t f
+w
+l
+
+
++
+
+= 
+ 
+(47) 
+Figure 2 illustrates the three scenarios when only one chirp 
+signal is sampled, they denote the samples of set is all signal 
+points or noise points and both signal points or noise points are 
+included, which are all possible scenarios in TFR plane for the 
+mapping set. For the parameter plane, there are only two 
+possibilities, that is the mapping set include the impulse point 
+or not.  It is important to note that, when employing the 
+proposed method in this paper, we standardize the new 
+distribution each time the weight is applied to it. 
+When all elements in the mapping set are noises 
+,
+0
+1
+1
+{
+,
+,...,
+}
+i
+n
+n
+n
+l
+r
+r
+r
+
+−
+=
+, due to standardization processing, there 
+is 
+,
+lim
+1
+i
+i
+
+
+→
+=
+, and 
+,
+lim
+0
+i
+i
+
+
+→
+=
+. This means for points 
+projected entirely by noise, the weight gradually stops changing, 
+that is 
+,
+lim
+0
+i
+i
+w
+→
+=
+. When the set 
+,
+0
+1
+1
+{
+,
+,...,
+}
+i
+n
+n
+n
+t f
+l
+v v
+v −
+=
+ is 
+composed by noise points, the constant weight of noise points 
+in the parameter plane affects the TFR plane simultaneously, 
+which leads 
+,
+lim
+0
+t f
+i
+i
+
+→
+=
+ and 
+,
+lim
+0
+i
+t f
+i
+w
+→
+=
+. Conversely, a 
+mapping set 
+,
+0
+1
+1
+{ ,
+,...,
+}
+i
+s
+s
+s
+l
+r r
+r
+
+−
+=
+ containing the entire chirp 
+signal samples, such a statistical characteristic, is capable of 
+distinguishing itself from noise and obtaining a larger weight. 
+The high weight in the parameter plane also brings a large 
+variance to the mapping set 
+,
+0
+0
+2
+{ ,
+,...,
+}
+i
+s
+n
+n
+t f
+l
+v v
+v −
+=
+. Equation 
+(33) predicts that if the mapping set of a point in the TFR plane 
+includes the point projection by the entire chirp signal samples 
+mapping set, it obtain similar weights as the other points are all 
+noise. This results in a decrease in sample variance, 
+,
+lim
+0
+i
+i
+
+
+→
+=
+, 
+,
+0
+i
+
+
+
+
+, and a continuous increase in 
+weight, 
+,
+lim
+i
+i
+w
+→
+= . As the weight goes up, 
+0
+sv increases 
+proportionally, resulting in an increase in
+,t f
+i
+
+
+ . Ultimately, 
+this also leads to a change in the weight of signal points in the 
+TFR plane 
+,
+lim
+i
+t f
+i
+w
+→
+= . 
+Finally, based on the above discussions, the change in the 
+weight of the mapping set 
+,
+0
+1
+0
+1
+{ ,...,
+,
+,...,
+}
+i
+s
+s
+n
+n
+m
+l m
+r
+r
+r
+r
+
+−
+−
+−
+=
+ that 
+includes both noise and chirp signal samples are easier to 
+analyze. Due to the weight of noise points remains a constant, 
+while the weight of the points mapped by the signal continues 
+to increase. In addition to the influence of standardization, the 
+sample variance of the mapping set 
+,
+i
+
+
+ continues to increase, 
+as noise points become smaller under standardization, while 
+signal points become stronger. That means: 
+ 
+,
+lim
+i
+i
+
+
+→
+=  
+(48) 
+ 
+,
+,
+2
+lim
+0
+2 (
+)
+i
+i
+i
+l
+l
+
+
+
+
+→
+−
+=
++
+ 
+(49) 
+And due to the square term of 
+,
+i
+
+
+: 
+ 
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+2
+1
+2
+1
+lim
+lim
+2 (
+)
+(
+)
+lim
+2 (
+)
+(
+1)
+lim
+2 (
+)
+0
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+i
+l
+w
+l
+l
+l
+l
+l
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+→
+→
++
+→
++
+→
+−
+
+=
+
++
+−
+−
+=
++
+−
+−
+=
++
+=
+ 
+(50) 
+Due to the mapping set 
+,
+i
+ contains the signal points, the 
+mapping set composed of parameter planes have these two 
+forms
+,
+0
+1
+1
+{
+,
+,...,
+}
+i
+n
+n
+n
+t f
+l
+v v
+v −
+=
+ and 
+,
+0
+0
+2
+{ ,
+,...,
+}
+i
+s
+n
+n
+t f
+l
+v v
+v −
+=
+. When 
+there are all noise points 
+nv , the weight is applied to the noise 
+point on TFR plane, the same results as the analysis of all noise 
+points MS mentioned above can be obtained. When signal point 
+
+--- Sayfa 9 ---
+9 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+is included in MS, the weight for signal point is also same as 
+the above analysis of all signal points MS. 
+Based on the previous discussion, we have compiled the 
+weights for iteratively correcting the original information 
+distribution using the mapping information model. For a point 
+in the parameter plane, if it is a signal impulse, the weight is 
+given by: 
+ 
+,
+lim
+i
+i
+w
+→
+=  
+(51) 
+In other cases, equation (52) applies. 
+ 
+,
+lim
+i
+i
+w
+c
+
+→
+=
+ 
+(52) 
+For the TFR plane, the weight of a signal point is determined 
+by  
+ 
+,
+lim
+i
+t f
+i
+w
+→
+=  
+(53) 
+While the weight of a noise point is given by 
+ 
+,
+lim
+i
+t f
+i
+w
+c
+→
+=
+ 
+(54) 
+where c represents a constant. 
+It can be observed that, based on the function 
+( )
+L
+used in 
+this article, the weight remains constant when facing noise 
+points, while it continuously increases when facing signal 
+points. This allows us to achieve noise suppression and signal 
+point feature enhancement through iteration. Figure 5 shows the 
+changes in the weight matrix of the parameter plane in iteration 
+process, where Order is the number of iterations in equation 
+(43). The diagram is obtained from the simulation process with 
+an SNR of -5. Initially, during the early iterations, there are no 
+significant impulses in the weight matrix, making it difficult to 
+determine the presence or position of the signal. However, as 
+the iterations progress, the noise is gradually suppressed, 
+leaving a significant impulse at the point where the chirp signal 
+maps to the parameter plane. Similarly, when there is only noise 
+present, the iterative process of weight matrix is almost the 
+opposite. The iteration process is shown in Fig. 6, with the same 
+format as Fig. 5. Under the influence of high intensity noise, 
+there may be obvious impulses in the parameter plane. However, 
+as the iterations progress, these impulses are no longer be 
+retained. Ultimately, the weight matrix becomes chaotic and 
+disorderly, resembling the noise itself, and the weights no 
+longer change. This is consistent with the constant trend of 
+noise point weights mentioned above. 
+ 
+ 
+Fig. 5. Iterative diagram of parameter plane weight matrix 
+when there is a chirp signal. 
+ 
+ 
+Fig. 6. Iterative diagram of parameter plane weight matrix 
+when there is only noise. 
+ 
+ 
+IV. SIMULATION RESULTS 
+A. Methods 
+In this section, we employ the aforementioned iterative 
+process in the simulation to demonstrate the effectiveness of the 
+mapping information model. We focus on the time-frequency 
+distribution of a single chirp signal and its distribution in the 
+Hough transform parameter plane. The time-frequency 
+distributions considered in this work are as follows: 
+● 
+Wigner-Ville distribution (WVD): It is initially 
+proposed by Wigner [48], demonstrating the joint 
+quantum mechanical distributions of position and 
+momentum. Ville introduced this distribution to signal 
+processing purposes [49]. The WVD exhibits high 
+energy concentration in TF plane, making it suitable 
+for detecting and parameter estimating of chirp signals 
+by combined with the Hough transform. In our results, 
+we represent this method as WHT. 
+● 
+Fourier synchrosqueezed transform (FSST): The short 
+time Fourier transform (STFT) is a widely-used time-
+frequency analysis method. To improve time-
+frequency clustering and approximate the ideal time-
+frequency representation, the reassignment method 
+(RM) [50] has been proposed as a post-processing 
+technique. The synchrosqueezed transform [51] is a 
+special rearrangement that not only sharpens the time-
+frequency representation but also facilitates the signal 
+recovery. It offers improved time-frequency resolution 
+and noise robustness. By combining FSST with the 
+Hough transform, that is FSSHT, is introduced for 
+processing chirp signals similar to WHT. 
+● 
+Wavelet synchrosqueezed transform (WSST): As an 
+equally renowned time-frequency analysis method to 
+STFT, Wavelet transform faces similar challenges. 
+Consequently, it inevitably intersects with the 
+synchrosqueezed transform to achieve higher time-
+frequency resolution and noise robustness [24]. 
+Similar to FSSHT, we denote this approach as 
+WSSHT; 
+● 
+Chirplet transform (CT) [52]: The chirplet transform 
+
+--- Sayfa 10 ---
+10 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+combines the advantages of the Fourier transform and 
+the wavelet transform, allowing for the utilization of 
+more complex shaped time-frequency atoms to 
+construct TFR. However, it requires the consideration 
+of additional parameters. In this work, we combine the 
+CT and the Hough transform and denote it as CTHT 
+[25]. 
+These four methods for processing chirp signal, WHT, 
+FSSHT, WSSHT, and CTHT, are evaluated in our simulation 
+to demonstrate the effectiveness of the mapping information 
+model. 
+ 
+B. Evaluation Indicators 
+After conducting time-frequency distribution and Hough 
+Transform feature extraction for a chirp signal, we propose to 
+use the following metrics to perform the simulations.  
+Firstly, detection rate and parameter estimation error are 
+essential metrics in traditional detection and estimation method. 
+In terms of signal detection and parameter estimation, we 
+identify the maximum peak in the parameter plane and compare 
+it with the threshold as shown in equation (55). This is 
+equivalent to GRLT, which has been proven to be an 
+asymptotically optimal detection way for a finite time chirp 
+signal [17]: 
+ 
+1
+0
+,
+max
+( ,
+tan
+)
+sin
+H
+H
+T t
+t dt
+
+
+
+
+
+
+−
++
+
+ 
+(55) 
+where  is the threshold. We use the adaptive threshold [53] 
+following the Neyman-Pearson criterion [4] for a specific false 
+alarm probability:  
+ 
+0
+( |
+)
+fP
+p x H dx
+
+
+=
+ 
+(56) 
+ 
+1
+( |
+)
+dP
+p x H dx
+
+
+= 
+ 
+(57) 
+fP is false alarm probability,
+dP is detection probability, 
+0
+( |
+)
+p x H
+ and 
+1
+( |
+)
+p x H
+ are the probability density functions 
+of noise and signal, respectively. When using HT to detect the 
+chirp signal, they are considered as chi-square distributions and 
+non-central chi-square distributions with a degree of freedom 
+of 2. 
+Secondly, output SNR [27] is widely used to evaluate the 
+performance of the Hough transform and its improved methods. 
+The commonly accepted definition of output SNR is given by 
+[54]: 
+ 
+2
+0
+0
+2
+0
+0
+(
+,
+)
+{
+(
+,
+) }
+s
+out
+s n
+T
+SNR
+E T
+
+
++
+=
+ 
+(58) 
+where 
+0
+0
+(
+,
+)
+sT 
+ denotes the signal point in parameter plane 
+when there is only signal, 
+0
+0
+(
+,
+)
+s n
+T
+
++
+ represents the signal 
+point corrupted by noise. However, considering that the method 
+proposed in this work is not a completely new transform 
+method, but a noise reduction method based on the proposed 
+mapping information. Thus, the impacts caused by the weight 
+matrix should be given more attention. The influence of weight 
+matrix should be taken into consideration when dealing with 
+signals and noises separately. Therefore, we use the following 
+form of output SNR: 
+ 
+2
+0
+0
+0
+0
+0
+0
+(
+,
+)
+(
+,
+)
+10log
+var{
+(
+,
+)}
+s n
+n
+out
+n
+T
+T
+SNR
+T
+
+
+
++
+−
+=
+ 
+(59) 
+Although closed-form expressions for output SNR have been 
+derived in many improved transform methods, the proposed 
+mapping information model may have different forms due to 
+different feature extraction kernels and weight calculation 
+methods. To avoid any misleading results, we did not provide a 
+closed form expression for the output SNR in the analysis. 
+Instead, we used finite iterations of numerical simulation to 
+demonstrate performance. The trend of weight changes was 
+analyzed in the previous chapter, where it was determined that 
+the weight of signal points should be infinite with infinite 
+iterations. However, since the effect of limited iterations is 
+practical, we used numerical simulation to demonstrate 
+performance. 
+Finally, we introduce a performance metric from side 
+channel analysis (SCA) called Confidence [55] in this study. In 
+SCA, the Confidence is defined as the ratio between the most 
+significant peak and the second significant peak in a one-
+dimensional sequence. It reflects the credibility of the 
+information represented by the most significant peak. In the 
+context of chirp signal detection, the scene becomes a peak on 
+a two-dimensional plane. Due to the use of adaptive thresholds 
+in signal detection, this work prefers to assess how the detected 
+peak compares to the current threshold. In other words, it 
+measures where the new distributions processed by the method 
+in this article gather above the threshold value. The Confidence 
+metric is used to evaluate this indicator, and the following 
+formula is used to calculate it in following simulation results. 
+ 
+0
+0
+(
+,
+)
+s n
+T
+Confidence
+
+
++
+=
+ 
+(60) 
+In the simulations conducted in this paper, a chirp signal with 
+a duration time of 
+10e
+6
+rT =
+−
+s and a sampling rate of 
+20e6
+sT =
+ Hz, an initial frequency of 
+/ 4
+s
+F
+F
+=
+, a bandwidth 
+of 
+/ 4
+s
+B
+F
+=
+ and a chirp rate of 
+/
+r
+G
+B T
+= −
+ are performed. 
+For the parameters F and G estimation of chirp signal, it is 
+believed that besides parameter estimation during signal 
+detection, the impact of missed or false alarms on parameter 
+estimation should also be considered. Therefore, the principle 
+of minimizing maximum risk in Bayesian decision [56] is 
+emulated, taking into account missed detections in estimation 
+errors. Regarding missed detections, it is assumed that they 
+result in a parameter estimation error of 10% in simulation, as 
+detections with parameter estimation errors greater than 10% 
+are classified as missed detections. The equations used for 
+calculating the estimation errors caused by missed detections or 
+the "risk" brought by missed detections in parameter estimation 
+are as follows: 
+ˆ
+ˆ
+{
+}
+{
+(1
+)
+} 100%
+d
+m
+d
+d
+F
+F
+F
+F
+F
+E Error
+P
+P
+F
+F
+−
+−
+
+=
+=
++
+−
+
+ (61) 
+ˆ
+ˆ
+{
+}
+{
+(1
+)
+} 100%
+d
+m
+d
+d
+G
+G
+G
+G
+G
+E Error
+P
+P
+G
+G
+−
+−
+
+=
+=
++
+−
+
+ (62) 
+
+--- Sayfa 11 ---
+11 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+Here, ˆ
+d
+F and ˆ
+d
+G are the estimated values obtained from 
+equation (55), and 
+ˆ
+m
+F
+F
+F
+−
+ is the error caused by missed 
+detections or the ‘risk’ associated with missed detections in 
+parameter estimation. 
+C. Results 
+To evaluate the performance of the proposed method, 1000 
+Monte Carlo simulations were conducted using different time-
+frequency distributions combined with the Hough transform 
+under different SNR levels, based on the indicators provided 
+above. When using mapping information in WHT, the 
+significant effect that should be taken into consider is that due 
+to the excellent performance of WVD, it can better conform to 
+the weight calculation formula that we have selected. Figure 7 
+shows the results of WHT and using mapping information with 
+1 to 4 iterations on WHT. 
+After only one iteration, the detection probability has 
+significantly increased, as shown in Fig. 7. Moreover, as the 
+order increases, the improvement in detection probability 
+continues to increase. However, the increment is decreasing, 
+indicating that the performance improvement of continuing to 
+iterate after the weight and distribution of signal points reach 
+their maximum peaks become limited and unnecessary. The 
+output SNR and Confidence exhibiting the same pattern of 
+change, where more iterations lead to greater performance 
+improvement. Additionally, higher orders can bring lower 
+errors for parameter estimation error. Meanwhile, after 
+evaluating the performance using equations (61) and (62), the 
+error curve is not only a numerical indicator of performance, 
+but also an important basis for evaluating when it approaches 
+the set maximum risk value. This is one of the benefits of using 
+them to evaluate parameter estimation errors. As shown in Fig. 
+7, a higher order leads to an error curve approaching 10% at a 
+lower SNR, which is the ‘maximum risk’ that has been set. This 
+means that the proposed method has a higher tolerance for noise. 
+Also, according to the results given in Fig. 7, it can be 
+inferred that the weighting process as a resampling process 
+cannot break through the limitations of its original methods of 
+action. For example, in the Hough transform, there is a 
+threshold effect on performance including detection and 
+parameter estimation, where performance sharply declines 
+when SNR falls below a threshold [28]. This is manifested as 
+various performance evaluation indicators being relatively 
+close at extremely low SNR. Nonetheless, the results in our 
+proposed models still indicate that in some intervals above the 
+threshold SNR, and the proposed method significantly 
+improves various performance of chirp signal processing. Most 
+importantly, our proposed method can essentially be considered 
+as iteratively resampling in two spaces without the need for 
+additional observation information. This enables more efficient 
+utilization of observation information within a limited time 
+window.  
+ 
+ 
+Fig. 7. Simulated results of WHT. 
+ 
+ 
+Figure 8 shows that the performance of FSSHT is consistent 
+with that of WHT in all aspects. Our proposed method 
+demonstrates a greater improvement in detection probability 
+than WHT, however, it requires a higher SNR range needed. As 
+discussed in Section II, sparser time-frequency distribution 
+reduces the information contained in the mapping set and 
+synchronous compression transformation makes the time-
+frequency distribution sparse. Furthermore, noise can cause the 
+chirp signal to deviate a straight line in synchronous 
+compression transformation, resulting in a certain degree of 
+mismatch in the weight formula, which affects the performance. 
+Nevertheless, our method still demonstrates improved 
+performance and is consistent with the conclusions of the 
+analysis conclusion. 
+
+--- Sayfa 12 ---
+12 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+ 
+Fig. 8. Simulated results of FSSHT. 
+ 
+ 
+Similar to FSST, WSST also uses synchronous compression 
+transformation in time-frequency distribution. However, the 
+chirp signal is not a straight line on the time-frequency plane 
+provided by WSST. In Section II, the mapping information 
+model is based on feature extraction transformations that are 
+more general, as opposed to being limited to the Hough 
+transformation. From a general perspective, the mapping 
+information model should be flexible, and the feature extraction 
+kernel and weight calculation formula should be appropriately 
+changed according to the scene to achieve better results. 
+Therefore, we used different feature extraction kernels when 
+processing WSSHT to convert wavelet scale to time-frequency. 
+According to the results given in Fig. 9, our method still shows 
+improved performance with increasing order, even after 
+changing the feature extraction kernel function. Essentially, this 
+is the same as the simulation results of WHT and FSSHT, 
+revealing that the mapping information model is still effective 
+and provides feasible support for the more general applications. 
+ 
+ 
+Fig. 9. Simulated results of WSSHT. 
+TABLE I 
+COMPARISON OF AVERAGE PERFORMANCE 
+ 
+Metrics / 
+Method 
+WHT 
+FSSHT 
+Order=1 
+Order=2 
+Order=3 
+Order=4 
+Order=1 
+Order=2 
+Order=3 
+Order=4 
+dP 
+0.0916 
+0.1568 
+0.1932 
+0.2166 
+0.1106 
+0.2103 
+0.2749 
+0.312 
+Output SNR 
+6.6024 
+11.8401 
+15.2593 
+17.6438 
+3.7362 
+7.454 
+10.2669 
+12.5435 
+F
+ 
+-0.82 
+-1.37 
+-1.63 
+-1.75 
+-0.81 
+-1.46 
+-1.83 
+-2.02 
+G
+ 
+-0.75 
+-1.24 
+-1.42 
+-1.47 
+-0.6 
+-1.01 
+-1.19 
+-1.27 
+Confidence 
+0.3083 
+0.6129 
+0.8744 
+1.1045 
+0.0874 
+0.2092 
+0.3559 
+0.5035 
+Metrics / 
+Method 
+WSSHT 
+CTHT 
+Order=1 
+Order=2 
+Order=3 
+Order=4 
+Order=1 
+Order=2 
+Order=3 
+Order=4 
+dP 
+0.0658 
+0.0994 
+0.1211 
+0.1378 
+0.0206 
+0.0374 
+0.0526 
+0.0619 
+Output SNR 
+3.3558 
+5.1953 
+6.5001 
+7.4682 
+1.925 
+3.1588 
+3.9842 
+4.5823 
+F
+ 
+-0.4 
+-0.61 
+-0.73 
+-0.83 
+-0.18 
+-0.33 
+-0.46 
+-0.53 
+G
+ 
+-0.2 
+-0.3 
+-0.34 
+-0.38 
+-0.16 
+-0.29 
+-0.4 
+-0.46 
+Confidence 
+0.1284 
+0.2278 
+0.3038 
+0.3729 
+0.1224 
+0.1826 
+0.213 
+0.2383 
+
+--- Sayfa 13 ---
+13 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+When applying MI to improve the performance of CTHT, we 
+observed a less significant improvement compared to the other 
+methods, which illustrates importance of selecting appropriate 
+kernel and matching weight calculation formula in mapping 
+information module. As shown in Fig. 10, even after multiple 
+iterations, the performance improvement of CTHT is not 
+substantial. This is mainly because the chirp signal in the time-
+frequency distribution provided by CT is not strictly a straight 
+line, and selecting appropriate generation function parameters 
+is crucial to ensure the energy concentration on the time-
+frequency plane [52]. In addition, CT is also susceptible to 
+noise, which can cause distortion of chirp signals in the time-
+frequency plane. These factors are inconsistent with the feature 
+extraction kernel used in this study and the assumption made 
+when calculating weights based on the time-frequency 
+distribution. Therefore, although increasing the number of 
+iterations can achieve greater performance improvement while 
+maintaining the same trend as the first three methods, CTHT 
+achieves the smallest improvement due to the aforementioned 
+challenges.  
+ 
+ 
+Fig. 10. Simulated results of CTHT. 
+More 
+quantitative 
+information 
+about 
+the 
+average 
+improvement of indicators is summarized in Table I. It can be 
+concluded that an increase in order leads higher detection rate, 
+output SNR, and Confidence. However, as mentioned earlier 
+and depicted in Figs. 7 to 10, there is always an upper limit to 
+this improvement. In terms of parameter estimation, increasing 
+the number of iterations enables it to reach the ‘maximum risk’ 
+point at a lower SNR, which ensures effective operation even 
+in low SNR conditions. Additionally, for each TFR distribution, 
+the performance improvements observed across different orders 
+highlight the importance of considering appropriate kernel and 
+weight calculation formulas. By doing so greater enhancements 
+in performance can be achieve, thus demonstrating the 
+flexibility inherent in the proposed mapping information model.  
+V. CONCLUSION 
+We have developed a novel model called mapping 
+information model which is utilized in the Hough transform to 
+enhance the performance of chirp signal processing. The 
+demonstrated model enables iterative resampling in both the 
+input space and feature space, thereby altering the distribution 
+of these spaces through generated weights. Moreover, we 
+emphasize that the proposed model offers flexibility and 
+variability in terms of feature extraction kernels and weight 
+calculation. With the proposed model as a basis, we present a 
+weight calculation and iteration method to demonstrate its 
+effectiveness. The simulation results indicate that the proposed 
+model can significantly improve the performance of chirp 
+signal processing at low SNR, with greater improvement 
+achieved through more iterations. Notably, the iterative process 
+does not require additional observation information, making it 
+highly suitable for signal processing devices that need to 
+respond quickly within a limited time window. Furthermore, it 
+is important to note that the proposed model is not limited to the 
+scenarios discussed in this paper. Exploring the selection of 
+more suitable weight calculation and kernel choices based on 
+the proposed model in diversity of scenarios warrants further 
+investigation. 
+REFERENCES 
+[1] F. Berggren and B. M. Popovic, “Joint radar and communications with 
+multicarrier chirp-based waveform,” IEEE Open Journal of the 
+Communications Society, vol. 3, pp. 1702–1718, 2022. 
+[2] J. Xiong, H. Hong, L. Xiao, E. Wang, and X. Zhu, “Vital signs detection 
+with difference beamforming and orthogonal projection filter based on 
+simo-fmcw radar,” IEEE Transactions on Microwave Theory and 
+Techniques, vol. 71, no. 1, pp. 83–92, Jan. 2023. 
+[3] 
+X. Chen, 
+H. Chen, 
+Y. Hu, 
+Y. Xie, 
+and 
+G. Chen, 
+“Statistical 
+synchrosqueezing transform and its application to seismic thin interbed 
+analysis,” IEEE Transactions on Geoscience and Remote Sensing, vol. 61, 
+pp. 1–13, 2023. 
+[4] H. L. Van Trees, Detection, estimation, and modulation theory, part I: 
+detection, estimation, and linear modulation theory. John Wiley & Sons, 
+2004. 
+[5] V. Roth and V. Steinhage, “Nonlinear discriminant analysis using kernel 
+functions,” Advances in neural information processing systems, vol. 12, 
+1999. 
+[6] J. Wang, S. Su, and Z. Chen, “Parameter estimation of chirp signal under 
+low snr,” Science China Information Sciences, vol. 58, no. 2, pp. 1–13, Jan. 
+2015. 
+[7] P. O’shea, “A fast algorithm for estimating the parameters of a quadratic fm 
+signal,” IEEE Transactions on Signal Processing, vol. 52, no. 2, pp. 385–
+393, 2004. 
+[8] A. Mittal, R. Grover, D. Kundu, and A. Mitra, “Estimation of the 
+elementary chirp model parameters,” IEEE Transactions on Aerospace and 
+Electronic Systems, pp. 1–16, 2023. 
+[9] Mittal, Anjali and Grover, Rhythm and Kundu, Debasis and Mitra, Amit, 
+“On efficient parameter estimation of elementary chirp model,” IEEE 
+Transactions on Signal Processing, 2023. 
+[10] Z. Zhao, S. Särkkä, J. Sjölund, and T. B. Schön, “Probabilistic estimation 
+of instantaneous frequencies of chirp signals,” IEEE Transactions on 
+Signal Processing, vol. 71, pp. 461–476, 2023. 
+[11] O. Aldimashki and A. Serbes, “Performance of chirp parameter estimation 
+in the fractional fourier domains and an algorithm for fast chirp-rate 
+estimation,” IEEE Transactions on Aerospace and Electronic Systems, 
+vol. 56, no. 5, pp. 3685–3700, Oct. 2020. 
+
+--- Sayfa 14 ---
+14 
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) < 
+ 
+[12] M. Portnoff, “Time-frequency representation of digital signals and systems 
+based on short-time fourier analysis,” IEEE Transactions on Acoustics, 
+Speech, and Signal Processing, vol. 28, no. 1, pp. 55–69, Feb. 1980. 
+[13] A. Belouchrani and M. Amin, “Time-frequency MUSIC,” IEEE Signal 
+Processing Letters, vol. 6, no. 5, pp. 109–110, may 1999. 
+[14] W. K. Zhang, K. B. Cui, W. W. Wu, T. Xie, and N. C. Yuan, “DOA 
+estimation of LFM signal based on single-source time-frequency points 
+selection algorithm by using the hough transform,” Radioengineering, 
+vol. 27, no. 1, pp. 265–275, apr 2019. 
+[15] L. Cirillo, A. Zoubir, and M. Amin, “Parameter estimation for locally 
+linear FM signals using a time-frequency hough transform,” IEEE 
+Transactions on Signal Processing, vol. 56, no. 9, pp. 4162–4175, sep 
+2008. 
+[16] M. Farge, “Wavelet transforms and their applications to turbulence,” 
+Annual Review of Fluid Mechanics, vol. 24, no. 1, pp. 395–458, Jan. 1992. 
+[17] S. Kay and G. Boudreaux-Bartels, “On the optimality of the wigner 
+distribution for detection,” in ICASSP 85. IEEE International Conference 
+on Acoustics, Speech, and Signal Processing. Institute of Electrical and 
+Electronics Engineers. 
+[18] N. E. Huang and S. S. P. Shen, Hilbert 鈥揌uang Transform and Its 
+Applications. WORLD SCIENTIFIC, Apr. 2014. 
+[19] J. Illingworth and J. Kittler, “A survey of the hough transform,” Computer 
+Vision, Graphics, and Image Processing, vol. 44, no. 1, pp. 87–116, Oct. 
+1988. 
+[20] G. Beylkin, “Discrete radon transform,” IEEE Transactions on Acoustics, 
+Speech, and Signal Processing, vol. 35, no. 2, pp. 162–172, Feb. 1987. 
+[21] S. Barbarossa, “Analysis of multicomponent LFM signals by a combined 
+wigner-hough transform,” IEEE Transactions on Signal Processing, 
+vol. 43, no. 6, pp. 1511–1515, jun 1995. 
+[22] D. H. Bailey and P. N. Swarztrauber, “The fractional fourier transform and 
+applications,” SIAM Review, vol. 33, no. 3, pp. 389–404, Sep. 1991. 
+[23] F. Xu, Q. Bao, Z. Chen, S. Pan, and C. Lin, “Parameter estimation of 
+multi-component lfm signals based on stft+hough transform and fractional 
+fourier transform,” in 2018 2nd IEEE Advanced Information 
+Management,Communicates,Electronic 
+and 
+Automation 
+Control 
+Conference (IMCEC), 2018, pp. 839–842. 
+[24] K. Sun and T. Zhang, “A new GNSS interference detection method based 
+on rearranged wavelethough transform,” Sensors, vol. 21, no. 5, p. 1714, 
+mar 2021. 
+[25] X. Zhang and R. Liu, “Time-frequency analysis of multicomponent LFM 
+signal based on hough and chirplet transform,” MATEC Web of 
+Conferences, vol. 173, p. 03054, 2018. 
+[26] A. Bouchikhi, A.-O. Boudraa, J.-C. Cexus, and T. Chonavel, “Analysis of 
+multicomponent LFM signals by teager huang-hough transform,” IEEE 
+Transactions on Aerospace and Electronic Systems, vol. 50, no. 2, pp. 
+1222–1233, apr 2014. 
+[27] X. Li, G. Yang, and G. Gao, “Output SNR analysis of the LPP-hough 
+transform,” ETRI Journal, vol. 35, no. 1, pp. 162–165, feb 2013. 
+[28] P. Rao and F. Taylor, “Estimation of instantaneous frequency using the 
+discrete wigner distribution,” Electronics Letters, vol. 26, no. 4, p. 246, 
+1990. 
+[29] A. Y. Erdogan, T. O. Gulum, L. Durak-Ata, T. Yildirim, and P. E. Pace, 
+“Defining the effective threshold using modified wigner-hough transform 
+in FMCW-signal detection,” in 2013 21st Signal Processing and 
+Communications Applications Conference (SIU). IEEE, apr 2013. 
+[30] G. Bi, X. Li, and C. M. S. See, “LFM signal detection using LPP-hough 
+transform,” Signal Processing, vol. 91, no. 6, pp. 1432–1443, jun 2011. 
+[31] F. Jiru, “Introduction to post-processing techniques,” European Journal of 
+Radiology, vol. 67, no. 2, pp. 202–217, Aug. 2008. 
+[32] D. Wei and J. Shen, “Multi-spectra synchrosqueezing transform,” Signal 
+Processing, vol. 207, p. 108940, Jun. 2023. 
+[33] Z. Li and N. Martin, “A time-frequency based method for the detection and 
+tracking of multiple non-linearly modulated components with births and 
+deaths,” IEEE Transactions on Signal Processing, vol. 64, no. 5, pp. 
+1132–1146, Mar. 2016. 
+[34] T. K. Hon, A. de la Fuente Gonzalez, and A. Georgakis, “Enhancing the 
+readability of the wigner distribution by exploiting its cross-terms 
+geometry,” in 2013 IEEE International Conference on Acoustics, Speech 
+and Signal Processing. IEEE, may 2013. 
+[35] H. Wang, X. Fan, Y. Chen, and Y. Yang, “Wigner-hough transform based 
+on slice’s entropy and its application to multi-lfm signal detection,” 
+Journal of Systems Engineering and Electronics, vol. 28, no. 4, pp. 634–
+642, 2017. 
+[36] J. Guo, Y. Liu, L. Lin, S. Li, J. Cai, J. Chen, W. Huang, Y. Lin, and J. Xu, 
+“Chromatic 
+plasmonic 
+polarizer-based 
+synapse 
+for 
+all-optical 
+convolutional neural network,” Nano Letters, vol. 23, no. 20, pp. 9651–
+9656, Aug. 2023. 
+[37] C. Yu, Y. Li, L. Zhao, Q. Chen, and Y. Xun, “A novel time-frequency 
+recurrent network and its advanced version for short-term wind speed 
+predictions,” Energy, vol. 262, p. 125556, Jan. 2023. 
+[38] Z. Ma, J. Jiang, S. Wang, K. Liu, Y. Zhang, W. Chen, P. Niu, S. Wang, 
+and T. Liu, “High performance distributed acoustic sensor based on digital 
+lfm pulse coherent-optical time domain reflectometer for intrapulse event,” 
+Applied Physics Express, vol. 13, no. 1, p. 012016, Jan. 2020. 
+[39] K. Zhang, F. K. Coutts, and J. Thompson, “Non-coherent discrete chirp 
+fourier transform for modulated lfm parameter estimation,” in 2022 Sensor 
+Signal Processing for Defence Conference (SSPD). IEEE, Sep. 2022. 
+[40] J. Li, C. Matos, and N. Ghalichechian, “A low-cost vertically integrated 
+antenna array at 60 ghz with 85% efficiency,” IEEE Antennas and 
+Wireless Propagation Letters, vol. 20, no. 4, pp. 513–517, Apr. 2021. 
+[41] L. Piotrowsky and N. Pohl, “Spatially resolved fast-time vibrometry using 
+ultrawideband fmcw radar systems,” IEEE Transactions on Microwave 
+Theory and Techniques, vol. 69, no. 1, pp. 1082–1095, Jan. 2021. 
+[42] P.-F. Hsieh, P.-W. Chou, and H.-Y. Chung, “An mrf-based kernel method 
+for nonlinear feature extraction,” Image and Vision Computing, vol. 28, 
+no. 3, pp. 502–517, Mar. 2010. 
+[43] K. R. Resmi and G. Raju, “A novel approach to automatic ear detection 
+using banana wavelets and circular hough transform,” in 2019 
+International Conference on Data Science and Communication (IconDSC). 
+IEEE, mar 2019. 
+[44] J.-C. Cexus and A.-O. Boudraa, “Nonstationary signals analysis by teager-
+huang transform (tht),” in 2006 14th European Signal Processing 
+Conference, 2006, pp. 1–5. 
+[45] G. Qian and P. Wei, “Stability analysis of complex ICA by negentropy 
+maximization: A unique perspective,” Neurocomputing, vol. 214, pp. 80–
+85, nov 2016. 
+[46] S. Coelli, S. Medina Villalon, F. Bonini, J. Velmurugan, V. J. L 贸pez-
+Madrona, R. Carron, F. Bartolomei, J.-M. Badier, and C.-G. B 茅nar, 
+“Comparison of beamformer and ica for dynamic connectivity analysis: A 
+simultaneous meg-seeg study,” NeuroImage, vol. 265, p. 119806, Jan. 
+2023. 
+[47] K. N. Faisal, H. S. Mir, and R. R. Sharma, “Human activity recognition 
+from fmcw radar signals utilizing cross-terms free wvd,” IEEE Internet of 
+Things Journal, pp. 1–1, 2023. 
+[48] E. P. Wigner, “On the quantum correction for thermodynamic equilibrium,” 
+in Part I: Physical Chemistry. Part II: Solid State Physics. Springer Berlin 
+Heidelberg, 1997, pp. 110–120. 
+[49] J. Ville, “Theorie et application de la notion de signal analytic,” in Cables 
+et Transmissions, 1948, vol. 2A, no. 1, pp. 61–74. 
+[50] Z. Hua, J. Shi, X. Jiang, Y. Luo, and Z. Zhu, “Matching and reassignment 
+based time-frequency enhancement for rotating machinery fault diagnosis 
+under nonstationary speed operations,” Measurement Science and 
+Technology, vol. 32, no. 8, p. 084002, May 2021. 
+[51] S. Chen, S. Wang, B. An, R. Yan, and X. Chen, “Instantaneous frequency 
+band and synchrosqueezing in time-frequency analysis,” IEEE 
+Transactions on Signal Processing, vol. 71, pp. 539–554, 2023. 
+[52] Z. K. Peng, G. Meng, F. L. Chu, Z. Q. Lang, W. M. Zhang, and Y. Yang, 
+“Polynomial chirplet transform with application to instantaneous 
+frequency estimation,” IEEE Transactions on Instrumentation and 
+Measurement, vol. 60, no. 9, pp. 3222–3229, sep 2011. 
+[53] J. dong Zhu, J. liang Li, X. dong Gao, L.-B. Ye, and H. yao Dai, “Adaptive 
+threshold detection and estimation of linear frequency-modulated 
+continuous-wave signals based on periodic fractional fourier transform,” 
+Circuits, Systems, and Signal Processing, vol. 35, no. 7, pp. 2502–2517, 
+sep 2015. 
+[54] S. Barbarossa and A. Scaglione, “Adaptive time-varying cancellation of 
+wideband interferences in spread-spectrum communications based on 
+time-frequency distributions,” IEEE Transactions on Signal Processing, 
+vol. 47, no. 4, pp. 957–965, Apr. 1999. 
+[55] S. Gu, Z. Luo, Y. Chu, Y. Xu, Y. Jiang, and J. Guo, “Trace alignment 
+preprocessing in side-channel analysis using the adaptive filter,” IEEE 
+Transactions on Information Forensics and Security, vol. 18, pp. 5580–
+5591, 2023. 
+[56] M. Khosravi-Farmad and A. Ghaemi-Bafghi, “Bayesian decision network-
+based security risk management framework,” Journal of Network and 
+Systems Management, vol. 28, no. 4, pp. 1794–1819, Aug. 2020. 
+ 

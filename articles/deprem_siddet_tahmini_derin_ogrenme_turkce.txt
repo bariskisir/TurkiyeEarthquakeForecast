@@ -1,0 +1,2144 @@
+
+--- Sayfa 1 ---
+ 
+*Sorumlu Yazar/Corresponding Author: Rabia Uyar 
+e-posta/e-mail: rabia.uyar@dpu.edu.tr 
+ 
+Afyon Kocatepe Üniversitesi Fen ve Mühendislik Bilimleri Dergisi 
+Afyon Kocatepe University – Journal of Science and Engineering 
+https://dergipark.org.tr/tr/pub/akufemubid 
+ 
+ 
+e-ISSN: 2149-3367 
+ 
+DOI: https://doi.org/10.35414/akufemubid.1511843 
+AKÜ FEMÜBİD 25 (2025) 035103 (522-534) 
+ 
+AKU J. Sci. Eng. 25 (2025) 035103 (522-534) 
+ 
+Deprem Şiddet Tahmini İçin Derin Öğrenme 
+Yöntemlerinin Karşılaştırılması ve Model Önerisi 
+ 
+Comparison of Deep Learning Methods and Model 
+Proposal for Earthquake Intensity Estimation) 
+ 
+Rabia UYAR1* 
+, Durmuş ÖZDEMİR2 
+ 
+ 
+Kütahya Dumlupınar Üniversitesi, Mühendislik Fakültesi, Bilgisayar Mühendisliği Bölümü, Kütahya, Türkiye 
+ 
+ 
+ 
+ 
+© 2025 The Authors | Creative Commons Attribution-Noncommercial 4.0  (CC BY-NC) International License 
+ 
+Öz 
+Deprem, yer kabuğundaki kırılmalar sonucu oluşan enerjinin 
+sismik dalgalar şeklinde yayılarak yeryüzünü sarsmasıdır. 
+Deprem afeti ülkemizde dahil olmak üzere birçok ülkede 
+şehirleşme ve yapılaşmadaki temel sorunlardan dolayı yeterince 
+önlem alınamadığı için ciddi ölçüde kayıplar meydana 
+getirmektedir. Bu tür kayıpları önlemek amacıyla, araştırmacılar 
+deprem şiddetini ve depremin meydana geleceği yeri önceden 
+tahmin etmek için çalışmalar yürütmektedir. Depremin 
+meydana geleceği zamanı ve şiddetini tahmin edebilmek için, 
+önceden meydana gelen depremlerin oluştuğu tarih, zaman, 
+derinlik, enlem, boylam ve şiddet gibi verilerin bir araya 
+getirilerek oluşturulan veri setinin çok iyi analiz edilerek faydalı 
+deprem tahmin çalışmaları yürütülmektedir. Bu kapsamda, 
+1965-2022 yılları arasında ülkemizde meydana gelen büyük ve 
+küçük şiddetteki depremlerin sadece deprem şiddeti verileri 
+esas alınarak, meydana gelmesi muhtemel depremlerin 
+şiddetlerinin tahmin edilmesi amaçlanmıştır. Belirlenen bu 
+amaçlar 
+doğrultusunda, 
+depremlerin 
+şiddetini 
+tahmin 
+edebilmek için, Amerika Birleşik Devletleri Jeolojik Araştırma 
+Kurulundan elde edilen deprem katalog verileri kullanılarak, 
+LSTM (Uzun-Kısa Vadeli Bellek) ile Deprem Şiddeti Tahmin 
+Modeli ve YSA ile Deprem Şiddeti Tahmin Modeli olmak üzere iki 
+farklı tahmin modeli geliştirilmiştir. Önerilen bu iki modelin 
+tahmin sonuçları hem gerçek deprem verileriyle hem de 
+Otomatik Regresif Entegre Hareketli Ortalama (ARIMA) 
+modelinin tahmin sonuçları ile karşılaştırılmıştır. Önerilen iki 
+modelden LSTM ile oluşturulan Deprem Şiddeti Tahmin Modeli 
+(0,561 R-kare değeri), YSA ile oluşturulan modele (0,3 R-kare) 
+kıyasla daha başarılı sonuçlar vermiştir. 
+ 
+Anahtar Kelimeler: Derin öğrenme; Yapay sinir ağları; ARIMA; LSTM.
+Abstract 
+An earthquake is the shaking of the earth by the propagation of 
+the energy generated as a result of fractures in the earth's crust 
+in the form of seismic waves. Earthquake disasters cause severe 
+losses in many countries, including our country, due to the lack 
+of adequate precautions and fundamental problems in 
+urbanization and construction. In order to prevent such losses, 
+researchers are engaged in the process of developing predictive 
+models for the intensity and location of earthquakes. To predict 
+the time and intensity of the earthquake, helpful earthquake 
+prediction studies are carried out by analyzing the data set 
+created by combining data such as the date, time, depth, 
+latitude, longitude, and intensity of previous earthquakes. In this 
+context, the aim is to estimate the intensities of possible 
+earthquakes based only on the earthquake intensity data of the 
+large and small earthquakes that occurred in our country 
+between 1965 and 2022. In line with these determined 
+purposes, two different estimation models, namely the 
+Earthquake Intensity Prediction Model with LSTM (Long short-
+term memory) and the Earthquake Intensity Prediction Model 
+with ANN, were developed by using earthquake catalog data 
+obtained from the United States Geological Survey Board to 
+predict the intensity of earthquakes. Of the two proposed 
+models, the Earthquake Intensity Prediction Model (0.561 R-
+square value) created with LSTM gave more successful results 
+compared to the model created with ANN (0.3 R-square value). 
+  
+ 
+ 
+ 
+ 
+Keywords: Deep learning; Artificial neural networks; ARIMA; LSTM 
+ 
+ 
+ 
+1. Giriş 
+Deprem, yer kabuğu içindeki kırılmaların ve magnetik 
+hareketliliğin bir sonucu olarak ortaya çıkan titreşimlerin, 
+dalga halinde yayılım yapmasıyla ani yeryüzünün 
+sarsılması olayıdır (Topçu vd. 2017). Bu sarsılma 
+nedeniyle yerkürenin üzerinde yer alan yapıları yıkarak 
+çok ciddi ölçüde can ve mal kayıplarına yol açmaktadır 
+(Özger, 2020; Öztürk ve Alkan, 2022). Ülkemiz, dünyanın 
+en aktif fay hatlarının üzerinde yer aldığı için küçük ve 
+büyük 
+boyutlarda 
+çok 
+sayıda 
+deprem 
+meydana 
+gelmektedir (Guo vd. 2022, Tan vd. 2021, Wu, 2022).  
+Geçmişte Türkiye’de birçok yıkıcı deprem meydana 
+geldiği için, gelecekte depremin ülkemizde gerçekleşme 
+ihtimali bulunduğundan depremlerin tahmin edilmesi 
+oldukça önem arz etmektedir. Günümüzde insanoğlu, 
+bilimsel 
+açıdan 
+depremlerin 
+yıkıcı 
+etkilerinden 
+korunmamıza olanak sağlayacak ve sürekli olarak yeni 
+bilgiler ile güncellenen bilgi birikimine sahiptir (Sumy vd. 
+*Makale Bilgisi / Article Info 
+Alındı/Received: 07.07.2024 
+Kabul/Accepted: 26.12.2024 
+Yayımlandı/Published: 10.06.2025 
+
+--- Sayfa 2 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+523 
+2022). Fakat, deprem felaketi ülkemizde dahil olmak 
+üzere birçok ülkede şehirleşme ve yapılaşmadaki temel 
+sorunlardan dolayı, can ve mal kayıplarına neden olmaya 
+devam etmektedir. Bu tür temel yetersizliklerin meydana 
+getireceği hasarları en aza indirebilmek ve önemli can ve 
+mal kayıplarının önüne geçebilmek için araştırmacılar, 
+deprem şiddeti ve depremin meydana geldiği yeri 
+önceden tahmin etmek için çalışmalar yürütmektedirler 
+(Kuyuk ve Susumu, 2018; Laurenti vd. 2022). Ancak 
+deprem felaketinin yeri, büyüklüğü ve zamanı kesin 
+olarak doğru bir şekilde tahmin edilememektedir. Bu 
+amaçla, geçmişten günümüze birçok matematiksel 
+hesaplamalar, 
+istatistiksel 
+yöntemler 
+ve 
+teknikler 
+kullanılmaktadır. 
+Deprem felaketinin çok yönlü analiz edilebilmesi için, 
+depremin şiddeti, yeri ve zamanının belirlenmesi oldukça 
+önemlidir. Çeşitli hesaplama yöntem ve metodlar 
+kullanılarak yapılan tahmin çalışmalarının sayısı, her 
+geçen gün artmaktadır. Yapay sinir ağları, makine 
+öğrenimi algoritmaları vs. gibi yöntem ve teknikler 
+kullanılarak farklı yer ve zamanlarda meydana gelen 
+deprem felaketlerinin arasındaki temel ilişkileri ortaya 
+çıkarmak ve olası depremi önceden tahmin etmek için 
+araştırmalar yapılmaktadır (Kuang vd. 2021a). Kullanılan 
+önemli yöntemlerden birisi de Derin Öğrenme tekniğidir. 
+Derin 
+öğrenmeyle 
+birlikte 
+Makine 
+Öğrenmesi 
+algoritmaları ve Yapay Sinir Ağlarıda deprem tahmini için 
+kullanılmaktadır (Guo vd. 2022b). Deprem doğal afeti, 
+tüm dünyada olduğu gibi ülkemizde de çok fazla can ve 
+mal kaybına neden olmaktadır. Bu yıkıcı hasarı en aza 
+indirmek için bu tür deprem tahmini çalışmalarına 
+yoğunlaşılması, geleceğimiz adına oldukça umut verici bir 
+eylemdir. Diğer afetlere göre etki alanının geniş olması 
+sebebiyle çok yönlü kayıplar meydana getiren depremler, 
+beşeri ve ekonomik faaliyetlerimizi büyük ölçüde olumsuz 
+yönde etkilemektedir (Jena vd. 2020a). Bu olumsuz 
+etkileri en aza indirmek adına yapılan ve yapılacak olan 
+tüm 
+çalışmalarda, 
+deprem 
+tahmini 
+araştırmaları 
+popülerliğini her zaman koruyacak ve geniş araştırma 
+alanları sunacaktır (Bayrak vd. 2021, Crespi vd. 2022, 
+Doğan 2021, Jiao ve Shan 2022).  
+Büyük ve küçük şiddette meydana gelen depremler, 
+günümüzde tam anlamıyla tahmin edilemez durumdadır 
+(DeVries vd. 2018, Tan vd. 2021). Fakat depremin 
+meydana getirdiği hasarı azaltmak için önemli adımlar 
+atılarak, maddi ve manevi meydana gelecek kayıpları 
+düşük seviyelere indirmek mümkündür. Deprem tahmin 
+çalışmalarının asıl amacı, meydana gelecek depremleri 
+önceden belirleyerek gerekli önlemlerin alınması ve bu 
+sayede can ve mal kayıplarını azaltmaktır (Sumy vd. 
+2022). Depremin zamanı ve şiddetini tahmin edebilmek 
+için, önceki depremlerin tarih, zaman, derinlik, enlem, 
+boylam ve şiddet gibi verilerini içeren veri setleri analiz 
+edilmekte ve bu sayede deprem tahmin çalışmaları 
+yürütülmektedir (Joshi vd. 2022, Song vd. 2022).  
+Bu çalışmada, 1965-2022 yılları arasında ülkemizde 
+meydana gelen büyük ve küçük şiddetteki depremlerin 
+sadece deprem şiddeti verileri esas alınarak, meydana 
+gelmesi muhtemel depremlerin klasik yapay sinir ağları 
+kullanılarak geliştirilen Deprem şiddeti tahmin modeli 
+(YSA ile DŞTM) ile olası depremlerin şiddetlerinin tahmin 
+edilmesi amaçlanmıştır. Çalışmanın bir diğer amacı ise, 
+depremin temel paremetleri olan tarih, zaman, derinlik, 
+enlem, boylam ve şiddet verileri LSTM (Long-Sort Term 
+Memory) ile DŞTM geliştirilmiştir. LSTM ile DŞTM 
+modeliyle, depremin meydana geldiği zaman periyodunu 
+dikkate alarak meydana gelmesi muhtemel depremin 
+şiddet tahmininin yapılması amaçlanmaktadır. Belirlenen 
+bu amaçlar doğrultusunda, depremlerin şiddetini tahmin 
+edebilmek için, Amerika Birleşik Devletleri Jeolojik 
+Araştırma Kurulundan elde edilen deprem katalog verileri 
+kullanılarak, iki farklı model geliştirilmiştir. Önerilen bu iki 
+modelin 
+tahmin 
+sonuçları 
+hem 
+gerçek 
+deprem 
+sonuçlarıyla hem de Otomatik Regresif Entegre Hareketli 
+Ortalama (ARIMA) modelinin tahmin sonuçları ile 
+karşılaştırılmış 
+ve 
+geliştirilen 
+modellerin 
+başarısı 
+sunulmuştur. 
+1.1.Literatür Taraması  
+Bu alandaki çalışmalardan bazıları aşağıda belirtilmiştir. 
+Ren vd. (2023), çalışmada deprem erken uyarı 
+sistemlerinde 
+sismik 
+şiddetin 
+tahmini 
+için 
+bir 
+konvolüsyonel sinir ağı (CNN) kullanılmıştır. CNN, 4 
+saniyelik tek kanallı dalga formlarını analiz ederek 
+deprem şiddetini sınıflandırır. Model, 5 büyüklüğünün 
+üzerindeki depremleri %97.9 doğrulukla tespit etmiştir. 
+Eğitim ve test verileri, Çin Deprem Ağı Merkezi (CENC) ve 
+Stanford Deprem Veritabanı'ndan (STEAD) alınmıştır. 
+Model, iki büyük deprem dizisi (Çangning ve Tangshan) 
+üzerinde test edilmiş ve genel anlamda başarılı sonuçlar 
+elde etmiştir. CNN'nin hızlı ve güvenilir tahmin 
+yetenekleri, geleneksel yöntemlerle kıyaslandığında 
+önemli avantajlar sunmaktadır. Model, gerçek zamanlı 
+testlerde de iyi bir performans göstermiştir. 
+Sebatlı-Sağlam ve Çavdur (2021), çalışmada yapay sinir 
+ağı (YSA) ile deprem şiddeti tahmini gerçekleştirilmiştir. 
+Depremin büyüklüğü, derinliği ve merkez üssüne olan 
+uzaklık verileri, YSA'nın girdileri olarak kullanılmıştır. ABD 
+Jeoloji Araştırmaları Kurumu'nun (USGS) veri tabanından 
+elde edilen önemli depremler bu analizlerde temel 
+alınmıştır. Farklı ağ tasarımları değerlendirilmiş ve en iyi 
+sonuçları veren iki gizli katmanlı bir ağ yapısı 
+
+--- Sayfa 3 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+524 
+belirlenmiştir. Her katmanda beş ve on gizli nöron 
+bulunan bu yapı, ortalama karesel hata (OKH) açısından 
+en iyi performansı sağlamıştır. Eğitim için Levenberg-
+Marquardt algoritması ile Bayes düzenlemesi kullanılmış 
+ve %96'ya yakın doğruluk elde edilmiştir. Bu yöntemle, 
+deprem sonrası zarar tahmininde kullanılabilecek 
+güvenilir 
+bir 
+model 
+geliştirilmiştir. 
+Çalışma, 
+afet 
+operasyonları yönetiminde de kullanılabilir ve gelecekteki 
+çalışmalarda yaralı sayısı ve ekonomik kayıp gibi 
+parametrelerin tahmini için temel oluşturabilir. 
+Abri ve Artuner (2022), çalışma depremlerin tespiti için 
+iyonosferdeki Toplam Elektron İçeriği (TEC) değerlerine 
+dayalı 
+LSTM 
+tabanlı 
+derin 
+öğrenme 
+modelleri 
+önermektedir. Araştırmada, iki GPS istasyonundan 
+toplanan 
+TEC 
+verileri 
+kullanılarak 
+depremler 
+ile 
+iyonosferdeki bozulmalar arasındaki ilişki incelenmiştir. 
+Şili bölgesi, güçlü depremlerle bilinirken, Karratha bölgesi 
+daha sakin bir bölge olarak ele alınmıştır. Önerilen LSTM 
+modellerinin performansı, SVM, LDA ve Rastgele Orman 
+sınıflandırıcıları ile karşılaştırılmıştır. Deprem öncesi 
+günlerdeki iyonosferik bozulmaları tahmin eden LSTM 
+tabanlı modeller, test setlerinde %80-85 doğruluk oranı 
+elde etmiştir. Stacked-LSTM modeli, doğruluk, geri 
+çağırma, kesinlik, F1-skora ve ROC eğrisi gibi metriklerde 
+SVM'den daha başarılı bulunmuştur. LSTM tabanlı 
+modellerin deprem tahmininde daha güvenilir olduğu 
+belirlenmiştir. 
+Araştırma, 
+iyonosfer 
+bozulmalarının 
+deprem öncesinde tespit edilebileceğini göstermiştir. Bu 
+bulgular, LSTM tabanlı modellerin iyonosfer gözlemlerine 
+dayalı olarak deprem tahmininde önemli bir araç 
+olabileceğini ortaya koymaktadır. Model, özellikle şiddetli 
+ve orta büyüklükteki depremler için etkili sonuçlar 
+vermektedir. 
+Pura vd. (2023), çalışma depremlerin tahmin edilmesine 
+yönelik RNN (tekrarlayan sinir ağı) yöntemini kullanarak 
+Düzce İlçesi'nde 1990-2022 yılları arasında meydana 
+gelen 3.0 ve üzeri büyüklükteki depremler üzerinde 
+gerçekleştirilmiştir. Çalışmada, depremlerin b ve d 
+değerleri 
+hesaplanarak 
+öğrenme 
+potansiyelinin 
+artırılması hedeflenmiştir. Marmara bölgesinde belirli bir 
+zaman diliminde depremlerin tespit edilmesi, sismik 
+verilerin yapay sinir ağları ile sınıflandırılması ve geleceğe 
+yönelik 
+tahminler 
+yapılması 
+çalışmanın 
+önemini 
+vurgulamaktadır. Sonuçlar, RNN yöntemlerinin yanı sıra, 
+ay ile Dünya arasındaki mesafe verileri ve b ve d 
+katsayılarının dahil edilmesiyle tahmin performansının 
+önemli ölçüde artırılabileceğini göstermiştir. Kullanılan 
+veri seti, deprem büyüklüğü, derinlik, ay mesafesi, b 
+değeri ve d değerini içermektedir. Çalışma, farklı 
+yöntemlerin uygulanmasına rağmen, verilerin düzensiz 
+yapısı nedeniyle %100 doğru tahmin yapmanın zor 
+olduğunu 
+ortaya 
+koymuştur. 
+Ancak, 
+araştırma 
+sonuçlarına ve uygulanan yönteme göre oluşturulan veri 
+seti ile tahmin edilen büyüklüklerin gerçek depremlerin 
+büyüklüklerine yakın olduğu bulunmuştur. 
+Senkaya vd. (2023), çalışma 6 Şubat 2023 Türkiye 
+depremlerinde yerel sismik özelliklerin hasar üzerindeki 
+etkisini makine öğrenmesi yöntemleriyle analiz etmiştir. 
+Kullanılan giriş özellikleri arasında Vs30 (30 m derinlikte 
+ortalama kayma dalgası hızı), f0 (alanın baskın frekansı), 
+A0 (HVSR oranı) ve EBd (mühendislik temeli derinliği) 
+bulunmakta olup, hedef özellik olarak hasar durumu 
+değerlendirilmiştir. 
+Makine 
+öğrenmesi 
+kapsamında 
+Random Forest (RF), K-en yakın komşu (KNN), Lojistik 
+Regresyon (LR), Karar Ağaçları (DT), Destek Vektör 
+Makineleri (SVM), Stokastik Gradyan İnişi (SGD) ve Çok 
+Katmanlı Algılayıcı (MP) algoritmaları kullanılmıştır. Beş 
+katlı çapraz doğrulama ile uygun hiperparametreler 
+belirlenmiş ve küçük örneklem setlerinde modelleme 
+etkinliği artırılmıştır. RF, hasar ve hasar olmama 
+durumları için sırasıyla %94 ve %92 geri çağırma skorları 
+ile en yüksek performansı göstermiş ve hasar tahmin 
+doğruluğu %93 olmuştur. Diğer algoritmalar da %89 
+doğruluk oranı ile dikkat çekmiştir, MP hasar olmama 
+durumunda %80, SVM ve SGD ise hasar durumu için 
+sırasıyla %88 ve %80 geri çağırma skorları elde etmiştir. 
+EBd, hasar oluşumunda %52 önem ile en kritik parametre 
+olarak belirlenmiştir; f0, Vs30 ve A0 sırasıyla %24, %18 ve 
+%6 önem değerlerine sahiptir. Bu bulgular, yüksek sismik 
+riskli 
+bölgelerde 
+ilk 
+hasar 
+tahminlerinin 
+makine 
+öğrenmesi yöntemleriyle etkili bir şekilde yapılabileceğini 
+göstermektedir. Gelecek çalışmalar, yerel veri setlerinin 
+artırılması ve küresel veri setlerinin oluşturulmasına 
+odaklanacaktır. 
+Wang vd. (2023), çalışmada deprem erken uyarı (EEW) 
+sistemleri için derin öğrenme tabanlı yeni bir yaklaşım 
+olan EEWNet'i önermektedir. EEWNet, herhangi bir ön 
+işleme yapmadan tek bir istasyondan kaydedilen ilk 
+birkaç saniye P-dalgasını giriş olarak kullanarak, 
+maksimum yer değiştirmeyi tahmin etmekte ve böylece 
+büyüklüğü hesaplamaktadır. Geniş bir yer altı güçlü 
+hareket kayıtları veri seti kullanılarak eğitim, doğrulama 
+ve test işlemleri gerçekleştirilmiştir. EEWNet'in sonuçları, 
+geleneksel Pd (empirik tepe yer değiştirme) yöntemine 
+kıyasla daha hızlı ve doğru sonuçlar verdiği gösterilmiştir. 
+EEWNet, 4.0 ile 5.9 büyüklüğündeki depremleri ilk 0.5 
+saniyede tahmin edebilmekte ve bu yöntem, Pd'nin 3 
+saniyelik verilerini kullandığı büyüklükler arasında 1 ile 
+2.5 saniye kadar önde tahmin yapabilmektedir. Ayrıca, 
+EEWNet, ilk 0.5 ila 3 saniyelik verilerle büyüklüğü daha iyi 
+tahmin edebilmektedir. Derin öğrenmenin, P-dalgasının 
+ilk saniyelerinden büyüklüğe ilişkin özellikleri insanlardan 
+
+--- Sayfa 4 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+525 
+daha etkili bir şekilde çıkarabildiği kanıtlanmıştır. Bu 
+bulgular, derin öğrenmenin EEW ve diğer sismoloji 
+alanlarında 
+büyük 
+potansiyele 
+sahip 
+olduğunu 
+göstermektedir. 
+Khosravikia ve Clayton (2021), bu çalışmada farklı makine 
+öğrenimi tekniklerinin yer hareketi şiddetini tahmin etme 
+konusundaki 
+avantajları 
+ve 
+dezavantajları 
+analiz 
+edilmiştir. Geleneksel olarak, yer hareketi tahminleri 
+doğrusal regresyon modelleri kullanılarak önceden 
+tanımlanmış 
+denklemler 
+ve 
+katsayılar 
+aracılığıyla 
+yapılmaktadır; ancak bu modeller, veride bulunan 
+karmaşık doğrusal olmayan ilişkileri yakalamada yetersiz 
+kalabilmektedir. Bu bağlamda, çalışmada yapay sinir 
+ağları (ANN), rastgele orman (RF) ve destek vektör 
+makineleri (SVM) gibi makine öğrenimi algoritmaları 
+kullanılarak yer hareketi şiddeti tahmin edilmiştir. Model 
+eğitimi, 2005 yılından bu yana Oklahoma, Kansas ve 
+Teksas'ta kaydedilen 4528 yer hareketi kaydı ve 376 
+deprem olayını (büyüklük 3 ile 5.8 arasında) içeren bir veri 
+seti ile gerçekleştirilmiştir. Sonuçlar, rastgele orman 
+algoritmasının doğruluk açısından diğer algoritmalardan 
+üstün performans gösterdiğini ve yeterli veri olduğunda 
+tüm alternatif modellerin geleneksel doğrusal regresyon 
+yöntemine kıyasla daha yüksek tahmin doğruluğuna 
+sahip olduğunu göstermektedir. Ek olarak, olaylar ve 
+bölgeler arasındaki değişkenlikler rastgele etkiler olarak 
+modele entegre edilmiş, bu sayede aleatorik belirsizlikler 
+azaltılmıştır. RF ve SVM algoritmalarının, mühendislik 
+analizlerinde 
+kullanılacak 
+doğrudan 
+matematiksel 
+denklemler sunmamasına rağmen, yazılım ortamında 
+yeni veri için tahmin yapılmasına olanak tanıdığı 
+vurgulanmıştır. 
+Nicolis vd. (2021), Şili'deki sismik oranları tahmin etmek 
+için iki Derin Sinir Ağı (DNN) mimarisini, Uzun Kısa Süreli 
+Bellek 
+(LSTM) 
+ve 
+Evrişimsel 
+Sinir 
+Ağları 
+(CNN) 
+kullanmaktır. 
+Önerilen 
+metodoloji 
+üç 
+modülden 
+oluşmaktadır: ön işleme, uzaysal ve zamansal tahmin ve 
+nihai tahmin modülü. İlk modül, Epidemik Tip Artçı Şok 
+Dizileri (ETAS) modelini kullanarak sismik oran tahminleri 
+için yoğunluk fonksiyonunu hesaplamaktadır. LSTM, son 
+30 günün maksimum sismik yoğunluk verilerini kullanarak 
+bir sonraki günün maksimum yoğunluğunu tahmin 
+ederken, CNN, son 30 günün uzaysal verilerini analiz 
+ederek bir sonraki gün olası deprem alanını tahmin 
+etmektedir. Modeller, R² ve doğruluk gibi performans 
+ölçütleriyle doğrulanmıştır.  
+Kuang vd. (2021), Güney Kaliforniya’da bulunan 
+RIDGECREST bölgesinde bulunan bir sismik ağdan gelen 
+verileri kullanarak depremin odak mekanizmasını tahmin 
+etmeyi sağlayan derin öğrenme tabanlı yeni bir algoritma 
+önermişlerdir. Yerel veya bölgesel, orta veya büyük 
+ölçekli deprem hareketlerini izlemek için FMnet modeli 
+geliştiren araştırmacılar sonuç olarak otomatik deprem 
+izleme ve raporlama sistemi geliştirmişlerdir. 
+Karcı ve Şahin (2022), Türkiye’deki depremlerden elde 
+edilen enlem, boylam, tarih, deprem derinliği ve yer 
+yüzeyindeki sismik şiddet gibi parametreleri kullanarak 
+derin öğrenme tabanlı bir uzun-kısa süreli bellek (LSTM) 
+modeli geliştirmiştir. Araştırmada, geliştirilen modelin 
+performansı, geleneksel regresyon yöntemleri, karar 
+ağaçları ve rastgele orman teknikleri ile karşılaştırılmıştır. 
+Elde edilen bulgular, LSTM modelinin %93.4 doğruluk 
+oranı ile en yüksek tahmin başarısını sağladığını 
+göstermektedir. Diğer yöntemlerin ise %85.2 ile %88.7 
+arasında değişen doğruluk oranlarıyla daha düşük 
+performans sergilediği gözlemlenmiştir. Çalışma, derin 
+öğrenme tabanlı yaklaşımların deprem tahmininde 
+sağladığı avantajları vurgulamaktadır. Sonuç olarak, 
+önerilen model, sismik tehlike değerlendirmeleri için 
+önemli bir katkı sunmakta ve gelecekteki araştırmalara 
+yön vermektedir. 
+Jena vd. (2020), Hindistan bölgesinden elde edilen 
+yükseklik, deprem büyüklüğü yoğunluğu, merkez üssü 
+yoğunluğu, merkez üssünden olan uzaklık, sismik aktivite 
+yoğunluğu, Deprem derinliği, zemin yapısı, tarihsel 
+deprem verileri, jeolojik özellikler gibi 9 farklı deprem 
+göstergesini girdi parametresi olarak kullanarak deprem 
+olasılığı haritalaması yapmıştır. Araştırmada, derin 
+öğrenme tekniklerinden konvolüsyonel sinir ağı (CNN) 
+kullanılarak bir sınıflandırma modeli geliştirilmiştir. 
+Modelin performansı, doğruluk, F1 skoru ve kesinlik gibi 
+değerlendirme kriterleri ile ölçülmüş ve geleneksel 
+yöntemlerle karşılaştırılmıştır. Elde edilen sonuçlar, 
+önerilen CNN modelinin %95.1 doğruluk oranı ile 
+geleneksel yöntemlere göre daha yüksek bir başarı 
+sağladığını göstermektedir. F1 skoru ve kesinlik değerleri 
+de geleneksel yöntemlerle kıyaslandığında belirgin bir 
+üstünlük sergilemiştir. Bu çalışma, derin öğrenme 
+tekniklerinin 
+deprem 
+risk 
+analizi 
+ve 
+haritalama 
+süreçlerindeki potansiyelini ortaya koymaktadır. 
+Li vd. (2020), Japonya, Filipinler, Losangeles gibi 
+bölgelerden elde edilen, sekiz farklı veri setiyle derin 
+öğrenme kullanarak DLEP (Explicit and implicit features 
+for accurate Earthquake Prediction) deprem modelini 
+geliştirmişlerdir. Kullandıkları modeldeki örtük özellikleri 
+çıkarmak için CNN ağını kullanmışlardır. Daha sonra DLEP 
+modelini ve CNN ağını birleştirerek başarılı bir şekilde 
+deprem tahmini yapmışlardır. 
+Wang vd. (2020), derin öğrenme tekniği olan LSTM 
+yöntemini 
+kullanarak 
+deprem 
+tahmini 
+modelleri 
+
+--- Sayfa 5 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+526 
+geliştirmişlerdir. 
+Farklı 
+bölgelerden 
+elde 
+ettikleri 
+depremler 
+arasındaki 
+uzay-zaman 
+ilişkisinden 
+yararlanarak başarılı sonuçlar elde etmişlerdir. 
+Altan ve Karasu (2020), topluluk ampirik kip ayrışımı, 
+dalgacık dönüşümü ve ampirik kip ayrışımı olmak üzere 
+üç farklı ayrıştırma yöntemi kullanarak, derin öğrenme 
+yöntemlerinden olan LSTM ile elde ettikleri tahmin 
+modelini başarımını araştırmışlardır. Daha sonra üç ayrı 
+ayrıştırma yöntemiyle elde edilen birleşik modellerin 
+başarımlarını 
+istatistiksel 
+hata 
+ölçütlerine 
+göre 
+değerlendirmişlerdir. 
+Duman (2016), Batı Anadolu Bölgesinde bulunan ve 
+yoğun sismik aktivite bulunduran dört bölgenin deprem 
+verileri 
+kullanılmıştır. 
+Gutenberg-Richter 
+ölçeğini 
+kullanarak ileri beslemeli geri yayılımlı yapay sinir ağı 
+geliştirmiştir. Eğitim tamamlandıktan sonra bu dört farklı 
+bölge için ayrı ayrı test gerçekleştirilmiş ve ağın başarısı 
+sunulmuştur. Tahmin sonuçlarına bakıldığında ise, 
+gerçekleşmesi beklenen deprem tahmin sonuçları 
+çalışılan dört bölgede de belli oranlarda farklı sonuçlar 
+vermiş fakat bu yöntem kabul edilebilir bir oranda başarılı 
+bulunmuştur. 
+Utku ve Akcayol (2020), doğal afet, müşteri davranışı gibi 
+bazı olayların meydana gelmeden önce, oluş zamanını 
+önceden 
+tahmin 
+edilmesine 
+yönelik 
+çalışmalar 
+yürütmüşlerdir. Bu kapsamda geliştirdikleri model ile elde 
+edilen sonuçları ARIMA (İstatistiksel Zaman Serisi 
+Tahminleme Yöntemi) ile karşılaştırmışlardır. Deneysel 
+sonuçlara bakıldığında ise derin öğrenme tabanlı 
+geliştirilen bu modelin ileriye dönük oluş zamanı 
+tahmininde, ARIMA’dan daha başarılı olduğunu ileri 
+sürüp kanıtlamışlardır. 
+Sevinç ve Kaya (2021), Doğu Anadolu Bölgesi’nde yer alan 
+bazı il ve ilçelerin verilerini kullanarak LSTM ve ARIMA 
+modelleriyle analiz gerçekleştirilmiştir. Bu iki modelin, 
+tahmin 
+performansını 
+karşılaştırmak 
+için 
+farklı 
+değerlendirme parametreleri kullanmışlardır. Gerçek 
+değer ile tahmin değeri arasındaki ilişkiyi veren R Kare 
+skor değeri, ARIMA Modelinde, LSTM modeline göre 
+daha yüksek çıkmış ve bu iki modelinde tahmin 
+çalışmalarında başarılı sonuçlar vererek kullanılabilirliğini 
+göstermişlerdir. 
+Sevinç ve Kaya (2021a), Güneydoğu Anadolu Bölgesi’nde 
+yer alan bazı il ve ilçelerin verilerini kullanarak 
+Özyinelemeli Sinir Ağlarının özel türü olan LSTM modelini 
+kullanarak 
+depremin 
+büyüklük 
+tahmini 
+modelini 
+gerçekleştirmeye çalışmışlardır. Daha sonra bu model ile 
+eğittikleri sistemin R kare skoruna göre değerlendirme 
+yapıp modelin başarısı ortaya konulmuştur. 
+Fidanboy vd. (2022), resmi kaynaklardan elde ettikleri 
+verileri derin öğrenme teknikleri ile işleyerek yeni bir 
+model geliştirmişler ve bu model ile risk haritası elde 
+etmişlerdir. OYAT (Orman Yangını Tahmini) bu model, 
+dinamik veriler ile güncellenebilir yapıda olup görsel 
+olarak da saklanabilirdir. OYAT modelinin, veri setinin de 
+zamanla büyümesiyle daha verimli ve başarılı sonuçlar 
+vereceği öngörülmektedir. Bu modelle geliştirilen yapının 
+şuan %98 doğruluk oranına sahip olduğu görülmektedir. 
+Sabah ve Bayraktar (Sabah ve Bayraktar 2020), çeşitli 
+deprem senaryoları oluşturarak Düzce ili ve çevresindeki 
+deprem şiddet bölgeleri seçilmiş daha sonra Türkiye 
+İstatistik Kurumundan (TÜİK) aldıkları resmi veriler ile az 
+hasarlı, orta hasarlı ve çok hasarlı binalar için istatistiksel 
+olarak hasar tahmin sistemi geliştirmişlerdir. Bu hasar 
+tahmin sistemi ile bölgede gerekli olan çadır ihtiyacını 
+belirlemeye çalışarak bölge halkının maddi imkanındaki 
+eksikliklerini gidermeyi amaçlamışlardır. 
+Akyüz (2019), deprem büyüklüğü verilerini inceleyerek, 
+her yıl max deprem büyüklüğünü kaydetmiş ve veri seti 
+oluşturmuştur. Daha sonra oluşturmuş olduğu bu veri 
+setini kullanarak deprem olma olasılığını incelemiştir. Bu 
+incelemeyi, kısa süreli elde edilen verileri göz önünde 
+bulundurarak, uzun süreli depremlerin olma olasılığını 
+elde ederek gerçekleştirmiştir. K- kare, Ortalama Hata, 
+Ortalama Mutlak Hata vb. gibi birden çok istatistiksel 
+dağılım kullanarak yapılan bu çalışmaya göre, gelecek 10 
+yıl içinde 5 ve üzeri şiddetinde deprem olma olasığı %10 
+olarak belirlenmiştir. 
+Emeksiz ve Tan (2021), hibrit ayrıklaştırma yöntemi 
+geliştirerek bu yöntem ile veri seti oluşturmuşlardır. Daha 
+sonra bu veri setini Geri Beslemeli Sinir Ağına uygulayarak 
+çok adımlı bir tahminleme işlemi gerçekleştirmişlerdir. 
+Önerilen bu modelin tekil ayrıklaştırma ile oluşturulan 
+yöntemden daha başarılı olduğunu tespit etmişlerdir. 
+Tahmin performansını ise determinasyon katsayısı, 
+ortalama mutlak yüzde hata ve ortalama karakök hata ile 
+hesaplayıp incelemişler. Önerilen hibrit modelin, yüksek 
+hassasiyette 
+tahminler 
+gerçekleştirmesi 
+modelin 
+başarısını göstermiştir. 
+Özmen (2011), Kastamonu ili ve çevresinde 4.0 ve daha 
+büyük şiddette meydana gelmiş olan depremlerin 
+verilerini 
+kullanarak 
+Gutenberg-Richter 
+ölçeğinde 
+magnitüd-frekans parametreleri arasındaki bağıntıdaki a 
+ve b değerlerini bulmuştur. Ve bu değer parametrelerden 
+yararlanarak, Poisson modelini farklı büyüklükteki 
+depremlerin meydana gelme olasılığını istatistiksel olarak 
+incelemişlerdir. Bu modele göre gelecek 100 yıl içerisinde 
+7.5 şiddetinde deprem olma olasılığı %75 olarak tahmin 
+edilmiştir. 
+
+--- Sayfa 6 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+527 
+Topçu vd. (2017), iyonosfer toplam elektron içeriği, 
+atmosferin ısı ve sıcaklık değerleri, bağıl nem miktarı ve 
+TUSAGA-Aktif 
+konumlama 
+sistem 
+istasyonunun 
+kinematik deprem verilerini, kullanarak deprem tahmini 
+yapmışlardır. 
+Sağlam ve Çavdur (2022), ileri beslemeli geri yayılımlı 
+yapay sinir ağı ile deprem büyüklüğünü (earthquake 
+magnitüde), derinliğini ve depremi birebir yaşayan 
+afetzedelerin depremin gerçekleştiği Merkez üssüne olan 
+uzaklık mesafelerine bakarak deprem şiddet tahmini 
+yapmışlardır. Farklı yapay sinir ağı tasarımları denemişler 
+ve en uygun sinir ağı tasarımı elde edip önermişlerdir. 
+Uygun görülen sinir ağı ile çeşitli eğitim algoritmalarını 
+kullanarak eğitim gerçekleştirmişler. Daha sonra farklı 
+sinir ağı tasarımlarını ve farklı eğitim algoritmalarının 
+performanslarını karşılaştırmışlardır. Bu karşılaştırma 
+için, ortalama karesel hata ve korelasyon katsayısı 
+kullanılmış ve analiz edilmiştir. Bu çalışma için iki gizli 
+katman ve her katman için beş ve on gizli nöron 
+kullanılmıştır. Ağ, Bayes düzenlemesi ve Levenberg-
+Marquardt eğitim algoritmasının kullanıldığı durumda en 
+iyi performansı sergilemiştir. Turgut vd. (2019), analog 
+bilgileri sersörler ile elde ettikleri verileri veri kaybına 
+uğramadan veri tabanına, kaydetmişlerdir. Daha sonra 
+oluşturulan bu veri tabanını KNN (K-Nearest Neighbors), 
+RF (Random Forest) algoritmaları tarafından işlenmiş ve 
+YSA ağ modeli oluşturulmuştur. Bu şekilde oluşturulan 
+systemin tahmin değeri %87 olarak hesaplanmıştır. 
+Literatürde de görüldüğü üzere deprem şiddeti tahmin 
+çalışmalarında yapay sinir ağları, makine öğrenmesi 
+algoritmaları ve derin öğrenme mimarileri kullanılarak 
+yeni modeller geliştirerek deprem şiddeti tahmin 
+edilmeye çalışılmıştır. Fakat derin öğrenme modellerine 
+dayalı çalışmaların oldukça kısıtlı olduğu ve bu 
+yöntemlerle 
+yapılan 
+çalışmalara 
+ihtiyaç 
+olduğu 
+görülmüştür. Bu çalışmalarda tarih, zaman, enlem, 
+boylam ve derinlik gibi parametreler kullanılarak deprem 
+şiddeti tahmini yapılmaya çalışılmıştır. 
+2. Materyal ve Metot / Materials and Methods 
+2.1. Deprem veri setinin hazırlanması  
+ 
+Amerika Birleşik Devletleri Jeolojik Araştırma Kurulundan 
+elde edilen 3.0- 10.0 şiddetlerindeki depremler .csv 
+formatında indirilip, kaydedilmiştir. Daha sonra deprem 
+şiddet tahmininde kullanılacak depremin meydana geliş 
+tarihi, depremin meydana geldiği zaman, enlem, boylam, 
+derinlik ve büyüklük bilgileri haricindeki alanlar ve veri 
+setinde 
+yer 
+alan 
+istenmeyen 
+boş 
+veri 
+alanları 
+temizlenmiştir. 
+ 
+Çizelge 1.  Xm>=3.0 veri kümesinin detayları. 
+Tarih 
+01.01.1965 - 31.12.2022 
+Enlem 
+36.0 – 42.0 
+Boylam 
+26.0 – 45.0 
+Derinlik 
+0-500 
+Büyüklük 
+3.0- 10.0 
+Sarsıntı Türü 
+Deprem 
+Deprem Sayısı 
+24.007 
+ 
+2.2. Çalışmada önerilen deprem tahmin modelleri ve 
+uygulama süreçleri 
+Bu çalışmada deprem tahmini ile ilgili bir model 
+önerilmiştir. Deprem büyüklüğü tahmin modeli, Python 
+programlama dili ve Python için bir derin öğrenme 
+kütüphanesi olan keras kullanılarak hazırlanmıştır. 1965-
+2022 yılları arasında meydana gelen depremler için, 
+meydana gelecek depremleri tahmin edebilmek amacıyla 
+Long Short Term Memory kullanılarak bir model 
+oluşturulmuştur. 
+2.2.1. Yapay sinir ağı ile deprem şiddeti tahmin modeli  
+Yürütülen çalışmada, önerilen modelin programlaması 
+için Python programlama dili, geliştirilmesi için ise 
+PyCharm IDE’si kullanılmıştır. Derin öğrenme modellerini 
+oluşturmak için ise Keras ve Tensorflow kütüphaneleri 
+kullanılmıştır. Keras kütüphanesi, farklı türden derin 
+öğrenme modellerinin tanımlanması ve eğitilmesini 
+sağlayan derin öğrenme kütüphanesidir. Tensorflow ise, 
+derin öğrenme modelleri geliştirmek ve değerlendirmek 
+için güvenilir ve açık kaynaklı Python kütüphanesidir. 
+Keras kütüphanesi kullanılarak tasarlanan YSA ile DŞTM; 
+• 
+4 girişli girdi katmanı 
+• 
+5 gizli katmanı 
+• 
+1 çıkışlı çıktı katmanı  
+kullanılarak oluşturulmuştur. Oluşturulan YSA ile DŞTM 
+modelinin şematik gösterimi Şekil 1’de verilmiştir. 
+ 
+ 
+Şekil 1. Deprem şiddeti tahmini için önerilen YSA modeli 
+ 
+Deprem şiddeti tahmin modelini oluşturmak ve 
+modelden bir çıktı değeri almak için, modelde kullanılacak 
+veriler sırasıyla, Girdi (Xn) ve Çıktı (Y) olarak bölünmesi 
+gerekmektedir. Bu uygulamada girdi parametreleri; 
+
+--- Sayfa 7 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+528 
+• 
+Zaman Damgası (X1) 
+• 
+Derinlik (X2) 
+• 
+Enlem (X3) 
+• 
+Boylam verileridir (X4). 
+Çıktı olarak ise deprem şiddeti bilgisi alınmaktadır. Keras 
+kütüphanesi kullanılarak model oluşturuldu. Daha sonra 
+oluşturulan bu modele belirtilen sayıda gizli katmanlar 
+eklendi ve bu katmanların düğüm sayıları, aktivasyon 
+fonksiyonları ve eğitim sayıları belirlendi. Bu modelde 
+aktivasyon fonksiyonu olarak Relu, Lineer ve Softmax 
+olmak üzere üç tane aktivasyon fonksiyonu kullanılmıştır. 
+Kayıp fonksiyonu olarak ise Mean Squared Error 
+kullanılmış ve optimizasyon fonksiyonu olarak da Adam 
+fonksiyonu kullanılmıştır. Oluşturulan model 20’şer 
+batchler halinde Adam optimizasyon fonksiyonunu 
+çalıştırmaktadır. Modelde kullanılan veri seti, eğitim ve 
+test veri kümeleri olmak üzere iki farklı veri kümesine 
+bölünmüş ve tüm veri seti 100 kez eğitilmiştir. Model veri 
+kümelerinin, 0.80’ini kullanarak eğitilmekte ve kalan 0.20 
+ile de test edip, hatalarını düzeltmektedir.  
+Deprem şiddeti tahmin modelinde kullanılan epochs, 
+batch, katmanlardaki nöron sayıları, optimizasyon 
+fonksiyonu, kayıp fonksiyonu ve aktivasyon fonksiyonları 
+değiştirilip farklı kombinasyonlarla tekrar eğitilmiş ve en 
+iyi sonuç veren parametreler belirlenmiştir. YSA ile 
+DŞTM’de en iyi performans veren parametreler Çizelge 
+2’te gösterilmiştir. 
+Çizelge 2. YSA ile deprem şiddeti tahmin modelinde kullanılan 
+parametreler  
+Parametreler 
+Değerler 
+Epoch 
+100 
+Gizli Katman Sayısı 
+5 
+Batch 
+20 
+Katmanlardaki Nöron Sayısı 
+128,64,64,32,32 
+Aktivasyon Fonksiyonları 
+Lineer, Relu, Softmax 
+Optimizasyon Fonksiyonu 
+ADAM 
+Kayıp Fonksiyonu 
+Mean Squared Error 
+ 
+2.2.2. Uzun kısa süreli bellek ile deprem şiddeti tahmin 
+modeli  
+Genellikle bir sonraki meydana gelecek durumu tahmin 
+edebilmek için kullanılan özyinelemeli sinir ağlarından biri 
+olan LSTM, girdiler arasında ilişki kurarlar ve kurdukları 
+tüm ilişkileri hatırlamaktadırlar (Wang vd., 2020b). LSTM, 
+aynı 
+zamanda 
+uzun 
+süreli 
+bağımlılık 
+durumunu 
+tekrarlayan sinir ağlarından doğru bir şekilde modellemek 
+için oluşturulmuş ve derin öğrenme için kullanılan, 
+tekrarlayan sinir ağı mimarilerinden birisidir. LSTM’ler 
+zaman serisi verilerini kullanarak, tahmin problemlerinin 
+çözümünde kullanılan uygun yapılardır. LSTM ağları 
+kullanılarak tasarlanan bu model;  
+• 
+Katmanda 128 LSTM hücresi 
+• 
+2. Katmanda 64 LSTM hücresi 
+• 
+3. Katmanda 64 LSTM hücresi 
+• 
+4. Katmanda 32 LSTM hücresi 
+• 
+1 tane dropout katmanı 
+• 
+1 tane çıktı katmanı  
+kullanılarak tasarlanmıştır. Önerilen LSTM ile DŞTM 
+modelinin şematik gösterimi Şekil 2’ de verilmiştir. 
+ 
+Şekil 2. LSTM ile deprem şiddeti tahmin modeli 
+LSTM ile deprem şiddeti tahmin modelinde, Aktivasyon 
+fonksiyonu olarak ReLu, Lineer ve Softmax kullanılmıştır. 
+Optimizasyon fonksiyonu olarak ADAM, kayıp fonksiyonu 
+olarak ise Mean Squared Error kullanılmıştır. Oluşturulan 
+modelde dropout oranı 0.2 olarak alınmıştır. LSTM ağları 
+için girdi verileri, veri normalizasyon işlemleri yapılarak 
+tekrardan şekillendirilmiştir. LSTM ile model eğitiminde, 
+parametre değerlerinin sırası önemlidir. Bu sebeple, veri 
+kümesi sıralandıktan sonra bölünmektedir. Veri kümeleri, 
+0.80 eğitim ve 0.20 test veri kümesi olmak üzere 
+bölünmüştür.  
+LSTM modeli 20’şer batchler halinde ADAM optimizasyon 
+fonksiyonunu çalıştırmaktadır. Tüm veri kümesi eğitim 
+için 100 kez tekrarlanmıştır. Oluşturulan bu modelde, 
+eğitim için kullanılan veri kümesi 1’er haftalık periyotlar 
+halinde alınmaktadır. İlk 1 haftalık deprem verileri 
+alınarak sekizinci günün, daha sonra ikinci 1 haftalık 
+deprem verileri alınarak dokuzuncu günün deprem 
+şiddeti tahmin edilmeye çalışılmıştır. 1’er haftalık 
+periyotlar 
+halinde, 
+eğitim 
+kümeleriyle 
+model 
+eğitilmektedir. Modelde gelecek günlerin depremlerinin 
+tahmini 
+için 
+gerekli 
+değişken 
+tanımlamaları 
+yapılmaktadır. Gelecek dönemlerde meydana gelmesi 
+muhtemel depremleri tahmin etmek için, kullanılmak 
+istenen geçmiş günlerin sayısı ve geçmiş günlere bağlı 
+olarak, tahminde bulunmak istenilen gelecek günlerin 
+sayısı belirlenmiştir. Modelin performansını ortaya 
+koymak adına hem eğitim kümesiyle hemde test kümeleri 
+kullanılarak tahminler yapılmaya çalışılmıştır. 
+Oluşturulan LSTM ile deprem şiddeti tahmin modelinde 
+farklı farklı epoch, batch, nöron sayıları, aktivasyon 
+fonksiyonları, 
+kayıp 
+fonksiyonu 
+ve 
+optimizasyon 
+fonksiyonu parametreleriyle eğitilmiş ve en iyi sonuç 
+veren 
+parametre 
+değerleri 
+belirlenmiştir. 
+En 
+iyi 
+performans veren parametre değerleri Çizelge 3’de 
+sunulmuştur. 
+
+--- Sayfa 8 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+529 
+Çizelge 3. LSTM ile deprem şiddeti tahmin modelinin 
+parametleri  
+Parametreler 
+Değerler 
+Epoch 
+100 
+1.LSTM Hücresi 
+128 
+2.LSTM Hücresi 
+64 
+3.LSTM Hücresi 
+64 
+4.LSTM Hücresi 
+32 
+Batch 
+20 
+Dropout Oranı 
+0.2 
+Aktivasyon Fonksiyonu 
+Lineer, ReLU, Softmax 
+Optimizasyon Fonksiyonu 
+ADAM 
+Kayıp Fonksiyonu 
+Mean Squared Error 
+ 
+3.Bulgular 
+Bu bölümde önerilen iki modelin ve istatistiki tahmin 
+modeli olan ARIMA modelinin performans sonuçları 
+ölçülmüş ve detayları verilmiştir. 
+3.1.Elde edilen performans sonuçlarının 
+değerlendirilmesi 
+Hem önerilen YSA ile deprem şiddeti tahmin modelinin 
+hem LSTM ile deprem şiddeti tahmin modelinin hemde 
+tahmin araştırmalarında 
+sıklıkla kullanılan ARIMA 
+modelinin performansları, xM ≥ 3.0 veri kümesi için 
+performans değerleri ölçülmüştür. 
+3.2. ARIMA  
+İstatistiksel modelleme yöntemi olan ARIMA ile deprem 
+tahmini için oluşturulan xM≥ 3.0 veri kümesi eğitilmiştir. 
+3.2.1. ARIMA Modelinin Performans Sonuçları  
+ARIMA modeli, deprem tahmini için oluşturulan xM ≥ 3.0 
+veri kümesi ile eğitilmiş ve performans sonuçları Çizelge 
+4’te verilmiştir. 
+Çizelge 4. ARIMA modelinin performans sonuçları 
+Ölçüm Metriği 
+Performans Sonucu 
+R-Kare 
+0.268 
+MAE 
+0.312 
+MSE 
+0.173 
+RMSE 
+0.513 
+3.2.2. ARIMA modelinin gerçek veri seti ile test edilmesi  
+Meydana gelen depremlerin bazıları tarih, derinlik, enlem 
+ve boylam değerleri ARIMA modeli ile test edilmiş ve 
+gerçek deprem sonuçları ile modelin tahmin ettiği 
+deprem sonuçları Çizelge 5’te karşılaştırılmıştır. Çizelge 
+5’teki sonuçlara bakıldığında ARIMA modelinin gerçek 
+deprem değerlerine çok yakın olmayan ve birbirine çok 
+yakın deprem tahmininde bulunduğu görülmektedir.
+ 
+Çizelge 5. ARIMA modelinin gerçek veri seti ile karşılaştırılması 
+Tarih 
+Enlem 
+Boylam 
+Der(km) 
+Yer 
+xM 
+ARIMA İle DŞTM 
+18.10.2022 
+38.6562 
+39.7057 
+007.0 
+Malatya 
+5.9 
+4.0 
+10.08.2022 
+39.8423 
+39.4025 
+005.3 
+Elazığ 
+5.6 
+4.52 
+07.07.2022 
+38.5530 
+39.4844 
+022.3 
+Elazığ 
+6.1 
+5.22 
+22.03.2022 
+38.3819 
+26.9856 
+012.0 
+İzmir 
+6.7 
+5.10 
+26.02.2022 
+38.1943 
+38.8520 
+002.7 
+Malatya 
+5.5 
+4.5 
+ 
+3.3. Yapay sinir ağı ile deprem şiddeti tahmin modeli  
+3.3.1. Yapay sinir ağı ile DŞTM’nin performans  
+Yapay Sinir Ağı Deprem şiddeti tahmin modeli, deprem 
+tahmini için oluşturulan xM ≥ 3.0 veri kümesi ile eğitilmiş 
+ve sonuçlar Çizelge 6’da verilmiştir. 
+Çizelge 6. YSA ile DŞTM modelinin performans sonuçları 
+Ölçüm Metriği 
+Performans Sonucu 
+R-Kare 
+0.3 
+MAE 
+0.220 
+MSE 
+0.158 
+RMSE 
+0.357 
+ 
+3.3.2. Yapay sinir ağı ile DŞTM’nin gerçek veri seti ile 
+test edilmesi  
+Meydana gelen depremlerin bir kısmı; zaman, tarih, 
+derinlik, enlem ve boylam bilgileri ile deprem şiddeti 
+tahmin modeli test edilmiş ve gerçek deprem sonuçlarıyla 
+YSA ile DŞTM’nin tahmin ettiği deprem sonuçlarının 
+karşılaştırılması Çizelge 7’de gösterilmiştir. 
+Çizelgeye bakıldığında YSA ile Deprem Şiddeti Tahmin 
+Modelinin gerçek deprem değerlerine yakın deprem 
+tahmininde bulunduğu görülmektedir. 
+Çizelge 7. YSA ile DŞTM modelinin gerçek veri seti ile 
+karşılaştırılması  
+Tarih 
+Enlem 
+Boylam 
+Der(km) 
+Yer 
+xM 
+YSA 
+İle 
+DŞTM 
+18.10.2022 
+38.6562 
+39.7057 
+007.0 
+Malatya 
+5.9 
+4.40 
+10.08.2022 
+39.8423 
+39.4025 
+005.3 
+Elazığ 
+5.6 
+4.72 
+07.07.2022 
+38.5530 
+39.4844 
+022.3 
+Elazığ 
+6.1 
+5.67 
+22.03.2022 
+38.3819 
+26.9856 
+012.0 
+İzmir 
+6.7 
+5.42 
+26.02.2022 
+38.1943 
+38.8520 
+002.7 
+Malatya 
+5.5 
+4.70 
+3.4. Long Short Term Memory ile deprem şiddeti tahmin 
+modeli  
+3.4.1. LSTM ile deprem şiddeti tahmin modelinin 
+performans sonuçları  
+LSTM ile deprem şiddeti tahmin modeli, deprem tahmini 
+için oluşturulan xM ≥ 3.0 veri kümesi ile eğitilmiş ve 
+sonuçlar Çizelge 8’de verilmiştir. 
+
+--- Sayfa 9 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+530 
+Çizelge 8. LSTM ile DŞTM modelinin performans sonuçları 
+Ölçüm Metriği 
+Performans Sonucu 
+R-Kare 
+0.561 
+MAE 
+0.2 
+MSE 
+0.160 
+RMSE 
+0.373 
+ LSTM ile deprem şiddeti tahmin modelinin xM ≥ 3.0 veri 
+kümesi ile eğitim sonuçlarına bakıldığında R-Kare 
+değerinin 0.561 ile DŞTM’ne göre daha yüksek olduğu ve 
+ortalama mutlak hata değerinin de daha düşük olduğu 
+görülmektedir. LSTM ile deprem şiddeti tahmin modelinin 
+xM ≥ 3.0 veri kümesiyle tahmin sonuçları incelendiğinde 1 
+haftalık tahminde en yüksek 5.7 şiddetinde, en düşük 3.5 
+şiddetinde deprem şiddeti tahmininde bulunmuştur. 
+Kısaca LSTM ile deprem şiddeti tahmin modeli 1 haftalık 
+kısa bir periyotta 5.7 şiddetinin üzerinde herhangi bir 
+deprem meydana gelmeyeceğini tahmin etmiştir. İki 
+haftalık tahmin sonuçları incelendiğinde ise en yüksek 5.0 
+şiddetinde, en düşük 3.7 şiddetinde deprem tahmini 
+yaptığı görülmektedir. Buda LSTM ile deprem şiddeti 
+tahmin modelinin 2 haftalık süreçte 5.0 şiddetinin 
+üstünde bir deprem meydana gelmeyeceğini tahmin ettiği 
+anlamına gelmektedir. 
+3.4.2. LSTM ile deprem şiddeti tahmin modelinin gerçek 
+veri ile karşılaştırılması  
+2022 yılı Aralık ayında meydana gelen depremlerin oluş 
+zamanı, tarih, derinlik, enlem ve boylam bilgilerine 
+bakıldığında 2022 Aralık ayında en yüksek 6.9, en düşük 
+3.1 şiddetinde deprem meydana geldiği Çizelge 9’da 
+görülmektedir.     
+ 
+Çizelge 9.  2022 Aralık ayında meydana gelen depremlerin listesi 
+No 
+Kod 
+Tarih 
+Zaman 
+Enlem 
+Boylam 
+Derin 
+xM 
+MD 
+ML 
+Mw 
+Ms 
+Mb 
+Yer 
+000001 
+20221231062528 
+2022.12.31 
+06:25:28 
+37.1217 
+36.5458 
+010.3 
+3.6 
+0.0 
+3.4 
+3.6 
+0.0 
+0.0 
+Osmaniye 
+000002 
+20221231014148 
+2022.12.31 
+01:41:48 
+35.2116 
+32.4582 
+008.9 
+4.3 
+0.0 
+5.2 
+0.0 
+0.0 
+0.0 
+Akdeniz 
+000003 
+20221231124250 
+2022.12.31 
+12:42:50 
+39.1120 
+40.5025 
+005.0 
+4.0 
+0.0 
+0.0 
+3.7 
+0.0 
+0.0 
+Elazığ 
+000004 
+20221231055705 
+2022.12.31 
+05:57:05 
+37.1217 
+35.5458 
+004.1 
+3.9 
+0.0 
+3.7 
+3.8 
+0.0 
+0.0 
+Adana 
+000005 
+20221231111413 
+2022.12.31 
+11:14:13 
+39.1717 
+40.6958 
+001.0 
+4.7 
+0.0 
+3.4 
+3.5 
+0.0 
+0.0 
+Elazığ 
+000006 
+20221229173159 
+2022.12.29 
+17:31:59 
+37.1806 
+32.4586 
+002.8 
+3.1 
+0.0 
+3.7 
+3.8 
+0.0 
+0.0 
+Konya 
+000007 
+20221229005018 
+2022.12.29 
+00:50:18 
+35.9210 
+32.5228 
+010.0 
+4.2 
+0.0 
+6.4 
+6.4 
+0.0 
+0.0 
+Akdeniz 
+000008 
+20221228222814 
+2022.12.28 
+22:28:14 
+35.1003 
+32.6850 
+009.2 
+6.9 
+0.0 
+4.0 
+4.1 
+0.0 
+0.0 
+Akdeniz 
+000009 
+20221226034022 
+2022.12.26 
+03:40:22 
+37.1947 
+29.3320 
+003.7 
+3.6 
+0.0 
+4.2 
+4.1 
+0.0 
+0.0 
+Denizli 
+000010 
+20221226110334 
+2022.12.26 
+11:03:34 
+38.2015 
+43.6359 
+005.0 
+3.2 
+0.0 
+3.9 
+4.0 
+0.0 
+0.0 
+Van 
+000011 
+20221223212543 
+2022.12.23 
+21:25:43 
+38.2879 
+26.3693 
+009.0 
+3.7 
+0.0 
+3.4 
+3.6 
+0.0 
+0.0 
+İzmir 
+000012 
+20221222124716 
+2022.12.22 
+12:47:16 
+39.3214 
+28.5698 
+005.0 
+5.0 
+0.0 
+4.9 
+4.7 
+0.0 
+0.0 
+Balıkesir 
+000013 
+20221222024345 
+2022.12.22 
+02:43:45 
+38.2563 
+42.5450 
+001.5 
+3.8 
+0.0 
+4.1 
+4.0 
+0.0 
+0.0 
+Muş 
+000014 
+20221221101435 
+2022.12.21 
+10:14:35 
+38.3265 
+42.2010 
+002.7 
+4.3 
+0.0 
+4.3 
+4.3 
+0.0 
+0.0 
+Muş 
+000015 
+20221220200807 
+2022.12.20 
+20:08:07 
+38.8957 
+42.2134 
+001.0 
+3.1 
+0.0 
+4.3 
+4.2 
+0.0 
+0.0 
+Muş 
+000016 
+20221219062559 
+2022.12.19 
+06:25:59 
+40.4574 
+29.6778 
+006.9 
+3.9 
+0.0 
+3.8 
+3.7 
+0.0 
+0.0 
+Bursa 
+000017 
+20221219092336 
+2022.12.19 
+09:23:36 
+39.6279 
+35.2783 
+004.9 
+5.2 
+0.0 
+3.8 
+4.0 
+0.0 
+0.0 
+Kayseri 
+000018 
+20221219055846 
+2022.12.19 
+05:58:46 
+39.1937 
+35.2846 
+003.5 
+5.0 
+0.0 
+3.6 
+3.4 
+0.0 
+0.0 
+Kayseri 
+000019 
+20221219203529 
+2022.12.19 
+20:35:29 
+37.2837 
+32.5654 
+003.0 
+4.9 
+0.0 
+0.0 
+4.2 
+0.0 
+0.0 
+Konya 
+000020 
+20221215055900 
+2022.12.15 
+05:59:00 
+37.4121 
+29.5158 
+003.5 
+4.3 
+0.0 
+3.7 
+0.0 
+0.0 
+0.0 
+Denizli 
+000021 
+20221214131250 
+2022.12.14 
+13:12:50 
+35.3210 
+32.1356 
+007.1 
+4.0 
+0.0 
+3.8 
+3.7 
+0.0 
+0.0 
+Akdeniz 
+000022 
+20221213235745 
+2022.12.13 
+23:57:45 
+35.4620 
+33.0051 
+005.7 
+3.6 
+0.0 
+3.5 
+3.4 
+0.0 
+0.0 
+Akdeniz 
+000023 
+20221212024243 
+2022.12.12 
+02:42:43 
+39.2085 
+40.7410 
+004.8 
+4.7 
+0.0 
+3.8 
+3.7 
+0.0 
+0.0 
+Elazığ 
+000024 
+20221212221943 
+2022.12.12 
+22:19:43 
+38.3025 
+43.5564 
+005.2 
+4.2 
+0.0 
+5.0 
+5.4 
+0.0 
+0.0 
+Van 
+000025 
+20221211202149 
+2022.12.11 
+20:21:49 
+38.4560 
+26.1009 
+008.7 
+5.2 
+0.0 
+4.1 
+4.0 
+0.0 
+0.0 
+İzmir 
+000026 
+20221210032115 
+2022.12.10 
+03:21:15 
+38.1248 
+44.5306 
+002.0 
+4.6 
+0.0 
+4.1 
+4.2 
+0.0 
+0.0 
+Türkiye -İran 
+Sınır Bölgesi 
+000027 
+20221210111713 
+2022.12.10 
+11:17:13 
+35.9817 
+32.4238 
+005.0 
+4.6 
+0.0 
+4.0 
+3.9 
+0.0 
+0.0 
+Akdeniz 
+000028 
+20221210004951 
+2022.12.10 
+00:49:51 
+39.8947 
+28.4613 
+006.0 
+4.7 
+0.0 
+3.6 
+3.4 
+0.0 
+0.0 
+Balıkesir 
+000029 
+20221207225508 
+2022.12.07 
+22:55:08 
+39.0868 
+28.9795 
+003.0 
+5.2 
+0.0 
+4.0 
+4.1 
+0.0 
+0.0 
+Kütahya 
+000030 
+20221206200729 
+2022.12.06 
+20:07:29 
+40.4225 
+29.8868 
+004.9 
+4.5 
+0.0 
+4.3 
+3.7 
+0.0 
+0.0 
+Bursa 
+000031 
+20221205062547 
+2022.12.05 
+06:25:47 
+40.0004 
+29.5673 
+006.9 
+4.2 
+0.0 
+4.2 
+4.3 
+0.0 
+0.0 
+Bursa 
+000032 
+20221204031929 
+2022.12.04 
+03:19:29 
+37.7896 
+35.1234 
+008.1 
+4.8 
+0.0 
+3.7 
+3.8 
+0.0 
+0.0 
+Adana 
+000033 
+20221201203537 
+2022.12.01 
+20:35:37 
+35.4319 
+32.5411 
+006.9 
+3.2 
+0.0 
+4.0 
+3.8 
+0.0 
+0.0 
+Akdeniz 
+ 
+Deprem şiddetine yönelik olarak kullanılan LSTM ile 
+deprem şiddeti tahmin modelinin xM ≥ 3.0 veri kümesi ile 
+yaptığı bir haftalık ve iki haftalık deprem tahminleri Şekil 
+3 ve Şekil 4’te gösterilmektedir. LSTM ile deprem şiddeti 
+tahmin modelinin xM ≥ 3.0 veri kümesi ile tahmin 
+sonuçlarına bakıldığında modelin 1 haftalık tahmininde en 
+yüksek 5.7 şiddetinde en düşük 3.5 şiddetinde, 2 haftalık 
+şiddet tahmininde ise en yüksek 5.0 şiddetinde, en düşük 
+3.7 şiddetinde tahminde bulunduğu görülmektedir. LSTM 
+ile deprem şiddeti tahmin modelinde 1 haftalık zaman 
+
+--- Sayfa 10 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+531 
+periyotları ve 2 haftalık zaman periyotlarındaki deprem 
+şiddeti tahminleri karşılaştırıldığında, eğitilen modelin 1 
+haftalık deprem şiddeti tahmininde daha başarılı olduğu 
+görülmektedir. 
+ 
+Şekil 3. LSTM ile DŞTM’nin Xm ≥ 3.0 veri kümesi ile bir haftalık 
+deprem tahmini 
+ 
+Şekil 4. LSTM ile DŞTM’nin Xm ≥ 3.0 veri kümesi ile iki haftalık 
+deprem tahmini 
+3.5. Modellerin performans sonuçlarının 
+karşılaştırılması 
+Önerilen her iki modelin performans değerleri Çizelge 
+10’da gösterilmektedir. Oluşturulan modellerin Çizelge 
+10’da verilen xM ≥ 3.0 veri kümesindeki performansına 
+bakıldığında ARIMA modelinin 0.268 R-Kare değeriyle en 
+kötü performansa sahip olduğu görülmektedir. DŞTM, 0.3 
+R-Kare değeriyle ARIMA modeline göre daha iyi 
+performansa sahip olduğu görülmektedir. LSTM ile 
+deprem şiddeti tahmin modeli ise 0.561 R-Kare değeriyle 
+diğer iki modele göre daha iyi performansa sahip olduğu 
+görülmektedir. Ayrıca ARIMA’nın ortalama mutlak hata 
+değeri 0.312 ile önerilen diğer iki modele göre daha 
+yüksek çıkmıştır. 
+ 
+Çizelge 10. Modellerin xM ≥ 3.0 veri kümesindeki performans 
+sonuçlarının karşılaştırılması 
+Model 
+R-Kare 
+MAE 
+MSE 
+RMSE 
+YSA ile DŞTM 
+0.3 
+0.220 
+0.158 
+0.357 
+LSTM ile DŞTM 
+0.561 
+0.2 
+0.160 
+0.373 
+ARIMA 
+0.268 
+0.312 
+0.173 
+0.513 
+Önerilen deprem şiddeti tahmin modelleri, xM ≥ 3.0 veri 
+kümesi ile ARIMA modeline göre daha yüksek bir 
+performans göstermektedir. Deprem şiddet tahmin 
+modelinin R-Kare değeri 0.3 ve LSTM ile deprem şiddet 
+tahmin modelinin 0.561 olarak görülmektedir. xM ≥ 3.0 
+veri kümesindeki en iyi performansı LSTM ile deprem 
+şiddeti tahmin modeli göstermektedir. 
+4. Tartışma ve Sonuç  
+İnsanoğlunun maruz kaldığı yıkıcı doğal afetlerin başında 
+gelen depremleri, önceden ve kesin olarak tahmin 
+edebilen ve doğruluğu ispatlanan bir yöntem veya çalışma 
+henüz gerçekleşmemiştir. Fakat bu alandaki çalışmalar 
+sensör teknolojilerinin, yapay zeka tahmin modellerinin 
+ve coğrafi bilgi sistemlerinin gelişmesiyle faydalı sonuçlar 
+üretmeye başlamıştır. 
+Bu çalışmada, meydana gelecek depremin şiddetini 
+tahmin edebilmek için DŞTM (Deprem şiddeti tahmin 
+modeli) ve LSTM ile deprem şiddeti tahmin modeli olmak 
+üzere iki farklı model geliştirilip eğitilmiştir. Önerilen bu 
+tahmin modelleri, depremler arasındaki ilişkiyi analiz 
+etmek için kullanılan, tahmin problemlerinin çözümünde 
+başarılı olduğu bilinen özyinelemeli sinir mimarisinin 
+örnekleridir. 
+Çalışmada 
+geçmişte 
+meydana 
+gelen 
+depremlerin oluş zamanı, tarih, derinlik, enlem ve boylam 
+parametreleri kullanılmıştır. 
+Deprem şiddeti tahmini için oluşturulan deprem veri 
+kümesi xM ≥ 3.0 olan depremlerin bilgilerini içermektedir. 
+Veri kümesinin 3.0 şiddeti ile sınırlandırılmasının nedeni 
+ise artçı depremleri inceleme dışında tutmaktır. Artçı 
+depremlerin çalışmaya dahil edilmemesinin nedeni ise 
+deprem tahmininin olumsuz etkilenmesini önlemektir. Bu 
+şekilde artçı depremleri temizleyerek daha doğru deprem 
+tahmini yapılabileceği düşünülmektedir. 
+Önerilen iki model ve ARIMA modeli hazırlanan veri 
+kümesi ile test edilmiştir. Genel olarak, xM ≥ 3.0 veri 
+kümesi ile en kötü sonucu ARIMA modeli vermiştir. DŞTM 
+ise ARIMA modeline göre daha iyi sonuç vermesine 
+rağmen LSTM ile deprem şiddeti tahmin modeline göre 
+genel performansının kötü olduğu görülmüştür. Sonuçlar 
+önerilen deprem şiddeti tahmin modelinin ve LSTM ile 
+deprem şiddeti tahmin modelinin, istatistiki model olan 
+ARIMA modeline göre daha iyi bir performansa sahip 
+olduğunu göstermektedir. 
+Ayrıca LSTM ile deprem şiddeti tahmin modeli, kendi 
+içerisinde performans bakımından incelendiğinde ise, bir 
+haftalık periyotlarda, iki haftalık periyotlara göre daha iyi 
+deprem şiddeti tahmini performansına sahip olduğu 
+görülmüştür. 
+
+--- Sayfa 11 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+532 
+Elde edilen sonuçlar, deprem katalog veri kümeleri ile 
+deprem şiddeti tahmini konusunda önerilen derin 
+öğrenme 
+modellerinin, 
+gerçek 
+deprem 
+verileriyle 
+kıyaslandığında kabul edilir bir performansa sahip olduğu 
+görülmektedir. Bu durum da önerilen ve geliştirilen derin 
+öğrenme modellerinin deprem şiddeti tahmininde 
+iyileştirilip, geliştirilebileceğini göstermiştir. 
+Gelecek çalışmalarda, deprem şiddeti tahminleri için veri 
+seti geliştirilip, artırılabilir ve bu sayede daha kesin 
+deprem şiddeti tahminleri gerçekleştirilebilir. Deprem 
+şiddeti tahmin çalışmalarında farklı girdi parametreleri 
+kullanılarak 
+aynı 
+modeller 
+için 
+performans 
+değerlendirmesi yapılabilir. Gizli katman sayısı artırılıp 
+model daha iyi eğitilip, hafızasında daha uzun süre 
+tutması sağlanarak modellerin performansı artırılabilir. 
+Böylece bu alandaki deprem şiddeti tahmin çalışmaları 
+artırılarak, önlenmesi imkansız olan bu afet için erken 
+korunma önlemlerinin alınması sağlanabilir. 
+Etik Standartlar Bildirgesi 
+Bu çalışma Doç. Dr. Durmuş ÖZDEMİR danışmanlığında Rabia UYAR 
+tarafından 25.01.2023 tarihinde tamamlanan “Derin öğrenme 
+yöntemleriyle deprem şiddeti tahmini” başlıklı ve 790460 tez no’lu 
+yüksek lisans tezinden türetilmiştir. 
+Yazarlar tüm etik standartlara uyduklarını beyan ederler. 
+ 
+Yazarlık Katkı Beyanı 
+Yazar 1: Kaynaklar, Araştırma, Deney, Yazma – orijinal taslak 
+Görselleştirme, Yazma – orijinal taslak, Analiz ve yorumlama 
+Yazar 2: Doğrulama, Biçimsel analiz, Metodoloji, Görselleştirme, 
+Denetleme/danışmanlık  
+ 
+Çıkar Çatışması Beyanı 
+Yazarların bu makalenin içeriğiyle ilgili olarak beyan edecekleri hiçbir 
+çıkar çatışması yoktur. 
+Verilerin Kullanılabilirliği 
+Bu çalışma sırasında oluşturulan veya analiz edilen tüm veriler, 
+yayınlanan bu makaleye dahil edilmiştir. 
+ 
+ 
+5. Kaynaklar 
+Abri, R. and Artuner, H., 2022. LSTM-based deep learning 
+methods for prediction of earthquakes using 
+ionospheric data. Gazi University Journal of Science, 
+35, 1417-1431. 
+https://doi.org/10.35378/gujs.950387 
+ 
+Akyüz, H.E., 2019. Farklı İstatistiksel Dağılımlar ile  
+Deprem Verilerinin Modellenmesi ve Performans 
+Karşılaştırması. 
+Academic 
+Platform 
+Journal 
+of 
+Engineering 
+and 
+Science, 
+7, 
+7–13. 
+https://doi.org/10.21541/apjes.401652 
+ 
+Altan, A. and Karasu, S., 2020. Ayrıştırma Yöntemlerinin 
+Derin Öğrenme Algoritması ile Tanımlanan Rüzgâr Hızı 
+Tahmin Modeli Başarımına Etkisinin İncelenmesi. 
+European Journal of Science and Technology, 20, 844-
+853. 
+ 
+https://doi.org/10.31590/ejosat.785699 
+Bayrak, E., Ozer, C., Cakici, H. and Kocadagistan, M. E., 
+2021. January 24, 2020 Sivrice (Turkey) Earthquake 
+(Mw 6.8): Evaluation of Ground-Motion Prediction 
+Equations and Microtremor Studies. Türk Deprem 
+Arastirma Dergisi, 3, 125–148.  
+ 
+https://doi.org/10.46464/tdad.1003057 
+ 
+Crespi, M., Kossobokov, V., Peresan, A. and Panza, G. F., 
+2022. The integration between seismology and 
+geodesy 
+for 
+intermediate-term 
+narrow-range 
+earthquake 
+prediction 
+according 
+to 
+NDSHA. 
+Earthquakes 
+and 
+Sustainable 
+Infrastructure: 
+Neodeterministic (NDSHA) Approach Guarantees 
+Prevention Rather than Cure, 97–112.  
+ 
+https://doi.org/10.1016/B978-0-12-823503-4.00003-
+8 
+ 
+DeVries, P. M. R., Viégas, F., Wattenberg, M. and Meade, 
+B. J., 2018. Deep learning of aftershock patterns 
+following large earthquakes. Nature, 560, 632–634.  
+ 
+https://doi.org/10.1038/s41586-018-0438-y 
+ 
+Doğan, A., 2021. Yapisal Tekrarlayan Sinir Ağlari İle 
+Zaman-Mekansal Deprem Tahmini, Yüksek Lisans Tezi, 
+Hacettepe Üniversitesi Fen Bilimleri Enstitüsü, Ankara. 
+ 
+Duman, O., 2016. Batı Anadolu Bölgesindeki Depremlerin 
+Yapay Sinir Ağı Yöntemiyle Tahmini, Yüksek Lisans 
+Tezi, 
+Gümüşhane 
+Üniversitesi 
+Sosyal 
+Bilimler 
+Enstitüsü, Gümüşhane, 142. 
+ 
+Emeksiz, C. and Tan, M., 2021. Geliştirilmiş EEMD-EWT 
+Tabanlı Yapay Sinir Ağı Modeli Kullanarak Çok Adımlı 
+Rüzgar Hızı Tahmini. European Journal of Science and 
+Technology, 26, 165–173.  
+ 
+https://doi.org/10.31590/ejosat.948661 
+ 
+Fidanboy, M., Adar, N. and Okyay, S., 2022. Derin 
+öğrenmeye dayalı orman yangını tahmin modeli 
+geliştirilmesi ve Türkiye yangın risk haritasının 
+oluşturulması. Ormancılık Araştırma Dergisi, 2, 206–
+218.  
+ 
+https://doi.org/10.17568/ogmoad 
+ 
+Guo, L., He, Z. and Li, L., 2022a. Lacustrine sedimentary 
+responses 
+to 
+earthquakes—soft-sediment 
+deformation structures since late Pleistocene: A 
+review 
+of 
+current 
+understanding. 
+Earthquake 
+Research Advances, 3, 100158.  
+ 
+https://doi.org/10.1016/j.eqrea.2022.100158 
+ 
+Jena, R., Pradhan, B., Al-amri, A., Lee, C. W. and Park, H. 
+J., 2020. Earthquake probability assessment for the 
+indian subcontinent using deep learning. Sensors, 20, 
+1–24.  
+ 
+https://doi.org/10.3390/s20164369 
+ 
+Jena, R., Pradhan, B., Almazroui, M., Assiri, M. and Park, 
+H. J., 2023. Earthquake-induced liquefaction hazard 
+mapping at national-scale in Australia using deep 
+learning 
+techniques. 
+Geoscience 
+Frontiers, 
+14, 
+101460. 
+ 
+https://doi.org/10.1016/j.gsf.2022.101460 
+ 
+
+--- Sayfa 12 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+533 
+Jiao, Z. H. and Shan, X., 2022. Consecutive statistical 
+evaluation framework for earthquake forecasting: 
+Evaluating satellite surface temperature anomaly 
+detection methods. Journal of Asian Earth Sciences: X, 
+7, 100096.  
+ 
+https://doi.org/10.1016/j.jaesx.2022.100096 
+ 
+Joshi, A., Vishnu, C. and Mohan, C. K., 2022. Early 
+detection of earthquake magnitude based on stacked 
+ensemble model. Journal of Asian Earth Sciences: X, 8, 
+100122.  
+ 
+ https://doi.org/10.1016/j.jaesx.2022.100122 
+ 
+Karcı, M., 2022. Derin Öğrenme Yöntemlerinin Kullanarak 
+Deprem Tahmini. Artificial Intelligence Studies, 5, 23-
+34. 
+https://doi.org/10.30855/ais.2022.05.01.03 
+ 
+Khosravikia F. and Clayton P., 2021. Machine learning in 
+ground motion prediction. Computers & Geosciences, 
+148, 104700. 
+ 
+https://doi.org/10.1016/j.cageo.2021.104700 
+ 
+Kuang, W., Yuan, C. and Zhang, J., 2021. Real-time 
+determination of earthquake focal mechanism via 
+deep learning. Nature Communications, 12, 1-8. 
+ 
+https://doi.org/10.1038/s41467-021-21670-x 
+ 
+Kuyuk, H. S. and Susumu, O., 2018. Real-time classification 
+of earthquake using deep learning. Procedia Computer 
+Science, 140, 298–305.  
+ 
+https://doi.org/10.1016/j.procs.2018.10.316 
+ 
+Laurenti, L., Tinti, E., Galasso, F., Franco, L. and Marone, 
+C., 2022. Deep learning for laboratory earthquake 
+prediction and autoregressive forecasting of fault 
+zone stress. Earth and Planetary Science Letters, 598, 
+1-14.  
+ 
+https://doi.org/10.1016/j.epsl.2022.117825 
+ 
+Li, R., Lu, X., Li, S., Yang, H., Qiu, J., and Zhang, L., 2020. 
+DLEP: A Deep Learning Model for Earthquake 
+Prediction. 2020 International Joint Conference on 
+Neural Networks (IJCNN). 1-8. 
+https://doi.org/10.1109/IJCNN48605.2020.9207621 
+ 
+Nicolis O., Plaza F. and Salas R., 2021. Prediction of 
+intensity and location of seismic events using deep 
+learning. Spatial Statistics, 42, 100442. 
+ 
+https://doi.org/10.1016/j.spasta.2020.100442 
+ 
+Özger, Y., 2020. Sultan II. Abdülhamid Döneminde 
+İstanbul da Deprem Tahmini Tartışmaları ve Josef 
+Nowack ın Padişaha Gönderdiği Rapor. History Studies 
+International Journal of History, 12, 227–253.  
+ 
+https://doi.org/10.9737/hist.2020.828 
+ 
+Özmen, B., 2011. Kastamonu ve Yakın Çevresi İçin Deprem 
+Olasılığı Tahminleri. Türkiye Jeoloji Bülteni, 54, 109-
+122. 
+ 
+Öztürk, S. and Alkan, H., 2022. Van Gölü ve Civarı (Türkiye) 
+İçin Deprem Tahmini ve Tehlikesi Üzerine İstatistiksel 
+Bir Analiz ve Değerlendirme. Türk Deprem Araştırma 
+Dergisi, 4, 191-209. 
+ 
+https://doi.org/10.46464/tdad.1108730 
+ 
+Pura T., Güneş P., Güneş A. and Hameed AA., 2023. 
+Earthquake Prediction for the Düzce Province in the 
+Marmara Region Using Artificial Intelligence. Applied 
+Sciences, 13, 8642.  
+ 
+https://doi.org/10.3390/app13158642 
+ 
+Ren, T., Liu, X., Chen, H., Dimirovski, G. M., Meng, F., 
+Wang, P., Zhida, Z and Ma, Y., 2023. Seismic severity 
+estimation using convolutional neural network for 
+earthquake early warning. Geophysical Journal 
+International, 234, 1355-1362. 
+https://doi.org/10.1093/gji/ggad137 
+ 
+Sabah, L. and Bayraktar, H., 2020. Düzce Merkez ve 
+İlçelerinin Deprem Senaryolarına Göre Karşılaştırmalı 
+Olarak İncelenmesi. Düzce Üniversitesi Bilim ve 
+Teknoloji Dergisi, 8, 1695- 1705.  
+ 
+https://doi.org/10.29130/dubited.574013 
+ 
+Sebatlı Sağlam, A. and Cavdur, F., 2022. Earthquake 
+intensity estimation via an artificial neural network: 
+Examination of different network designs and training 
+algorithms. Journal of the Faculty of Engineering 
+Architecture of Gazi University, 37, 2133-2145. 
+https://doi.org/10.17341/gazimmfd.791337 
+ 
+Senkaya M., Silahtar A., Erkan EF. and Karaaslan H.,2024.   
+Prediction of local site influence on seismic 
+vulnerability using machine learning: A study of the 6 
+February 2023 Türkiye earthquakes. Engineering 
+Geology, 337, 107605. 
+ 
+https://doi.org/10.1016/j.enggeo.2024.107605 
+ 
+Sevinç, A. and Kaya, B., 2021. Derin Öğrenme ve 
+İstatistiksel Modelleme Yöntemiyle Sıcaklık Tahmini ve 
+Karşılaştırılması. European Journal of Science and 
+Technology, 28, 1222 – 1228. 
+ 
+https://doi.org/10.31590/ejosat.1014106 
+ 
+Sevinç, A. and Kaya, B., (2021). Derin Öğrenme Yöntemleri 
+ile Sıcaklık Tahmini: Diyarbakır İli Örneği. IDAP-2021: 
+5th International Artificial Intelligence and Data 
+Processing symposium, 217-225.  
+ 
+https://doi.org/10.53070/bbd.990966 
+ 
+Song, J., Zhu, J., Wei, Y., Li, S. and Li, S., 2022. Real-time 
+prediction of earthquake potential damage: A case 
+study for the January 8, 2022 MS 6.9 Menyuan 
+earthquake in Qinghai, China. Earthquake Research 
+Advances, 3, 100197.  
+ 
+https://doi.org/10.1016/j.eqrea.2022.100197 
+ 
+Sumy, D. F., Jenkins, M. R., McBride, S. K. and de Groot, R. 
+M., 2022. Typology development of earthquake 
+displays in free-choice learning environments, to 
+inform earthquake early warning education in the 
+United States. International Journal of Disaster Risk 
+Reduction, 73, 1-31.  
+ 
+https://doi.org/10.1016/j.ijdrr.2022.102802 
+ 
+
+--- Sayfa 13 ---
+ Deprem Şiddet Tahmini İçin Derin Öğrenme Yöntemlerinin Karşılaştırılması ve Model Önerisi, UYAR ve ÖZDEMİR. 
+534 
+Tan, A., Horasan, G., Kalafat, D. and Gülbaǧ, A., 2021. 
+Discrimination of earthquakes and quarries in Kula 
+District (Manisa, Turkey) and its vicinity by using linear 
+discriminate function method and artificial neural 
+networks. Bulletin of the Mineral Research and 
+Exploration, 164, 75–92.  
+ 
+https://doi.org/10.19111/bulletinofmre.757701 
+ 
+Topçu, O., Kara, T., Bulut, A. A., Salgın, Ö., and Bakıcı, S. 
+(2017). Küresel Seyrüsefer Uydu Sistemi (Gnss) Verileri 
+İle Deprem Tahmini Yapmak. 4. Uluslararası Deprem 
+Mühendisliği ve Sismoloji Konferansı. Eskişehir, 
+Türkiye. 
+ 
+Turgut, A., Temir, A., Aksoy, B. and Özsoy, K., 2019. Yapay 
+Zekâ Yöntemleri İle Hava Sıcaklığı Tahmini İçin Sistem 
+Tasarımı Ve Uygulaması. In Internatıonal Journal Of 3d 
+Prıntıng Technologıes And Dıgıtal Industry, 3, 244-253. 
+ 
+Utku, A. and Akcayol, M. A., 2020. Derin Öğrenme Tabanlı 
+Model ile Bir Olayın Sonraki Olma Zamanının Tahmini. 
+Journal of Polytechnic, 24, 1-15.  
+ 
+https://doi.org/10.2339/politeknik.620613 
+ 
+Wang, Q., Guo, Y., Yu, L. and Li, P., 2020. Earthquake 
+Prediction Based on Spatio-Temporal Data Mining: An 
+LSTM Network Approach. IEEE Transactions on 
+Emerging Topics in Computing, 8, 148–158.  
+ 
+https://doi.org/10.1109/TETC.2017.2699169 
+ 
+Wang Y., Li X., Wang Z. and Liu J., 2023. Deep learning for 
+magnitude prediction in earthquake early warning, 
+Gondwana Research, 123, 164-173. 
+ 
+https://doi.org/10.1016/j.gr.2022.06.009 
+ 
+Wu, Z., 2022. Evaluation of numerical earthquake 
+forecasting models. Earthquake Science, 35, 293–296.  
+ 
+https://doi.org/10.1016/j.eqs.2022.08.006 
+ 
+ 
+ 
+ 
+ 
+ 

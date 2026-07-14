@@ -1,0 +1,832 @@
+
+--- Sayfa 1 ---
+1 
+ 
+Physics-Based Seismic Hazard and Risk Assessment: 
+A New Paradigm for Earthquake Forecasting 
+ 
+Davide Zaccagnino1,2, * & Didier Sornette1, * 
+ 
+1 Institute of Risk Analysis, Prediction and Management (Risks-X), Academy for Advanced Interdisciplinary Studies, 
+Southern University of Science and Technology (SUSTech); 1088 Xueyuan Rd., Shenzhen, Guangdong, China, 518055 
+2 Istituto Nazionale di Geofisica e Vulcanologia (INGV), Rome, Via di Vigna Murata, 605, 00143, Italy.           
+ 
+* Davide Zaccagnino, zaccagnino@sustech.edu.cn;  Didier Sornette, dsornette@ethz.ch  
+                                                                                              
+ 
+Abstract  
+Epistemic uncertainty in probabilistic seismic hazard assessment (PSHA) is commonly addressed 
+through a logic-tree framework that combines weighted alternative models to characterize the range 
+of plausible hazard outcomes. Implicit in this approach is a critical assumption: that the available 
+model class provides an adequate representation of the underlying physics governing fault networks. 
+Yet current formulations remain highly simplified, neglecting nonlinear interactions, diverse fault slip 
+modes, multi-scale coupling, and the emergent dynamics that govern the nucleation and evolution of 
+large earthquakes. As a result, the standard treatment of epistemic uncertainty may introduce 
+systematic hazard bias and substantially underestimate forecast uncertainty. To formalize this 
+limitation, we introduce SHARP (Seismic Hazard Assessment and Risks with Physics), a new 
+framework that shifts the focus from selecting among imperfect models to quantifying their collective 
+distance from physical and observational constraints. Central to SHARP is the Model Adequacy 
+Distance (MAD), a quantitative metric of model inadequacy. MAD combines (i) a moment-weighted 
+scoring function scaling with seismic moment to reflect the disproportionate social and economic 
+impact of large events and (ii) compatibility measures derived from geodetic observations and 
+statistical properties of seismicity. We illustrate the approach with an application to the frequency-
+magnitude distribution of Southern California seismicity. SHARP establishes a rigorous foundation for 
+moving beyond conventional epistemic uncertainty toward a physics-grounded framework for seismic 
+hazard and risk assessment. 
+ 
+Key Points 
+1) PSHA logic trees assume models adequately represent complex fault physics, introducing potential bias.  
+2) Model Adequacy Distance quantifies how far models lie from physical constraints, revealing hidden 
+uncertainty. 
+3) SHARP connects empirical forecasting performance and physical constraints governing earthquake 
+dynamics. 
+ 
+Introduction 
+Epistemic uncertainty seeks to represent our imperfect knowledge of earthquake dynamics by integrating 
+forecasts from multiple models (Field et al., 2014; Marzocchi et al., 2021). This strategy implicitly assumes the 
+true behavior of fault systems lies within the span of these models, that is, that reality can be adequately 
+represented by some combination of their structures and forecasts.  
+
+--- Sayfa 2 ---
+2 
+ 
+We argue that this implicit assumption contradicts fundamental earthquake physics. Seismicity is inherently 
+complex, nonlinear, and multi-scale (Ben-Zion, 2008; Sornette, 1991). One of the most widely used and 
+empirically successful statistical frameworks, namely the self-exciting point processes of the ETAS class 
+(Ogata, 1988), captures important aspects of this complexity. In ETAS, the conditional intensity depends on 
+the entire past history of events, generating clustering, cascades, and collective behavior, particularly as the 
+branching ratio approaches criticality. Near this regime, the system exhibits scale-invariant features associated 
+with a branching transition. 
+However, this apparent complexity arises from a linear superposition of triggering contributions: each event 
+increases the future rate additively and independently of others. While this structure successfully reproduces 
+clustering statistics, it does not incorporate nonlinear stress interactions, threshold dynamics, or state-
+dependent constitutive evolution. In contrast, physically grounded nonlinear triggering frameworks, such as 
+the Multifractal Stress Activation (MSA) model (Sornette and Ouillon, 2005; Ouillon and Sornette, 2005), 
+embed stress transfer, activation processes, and damage accumulation within intrinsically nonlinear and 
+feedback-driven dynamics. 
+The distinction is therefore not one of history dependence or cascading, since both are well described by 
+ETAS, but of dynamical structure. In ETAS, large events emerge statistically from branching amplification, 
+whereas in nonlinear physics-based models they may arise from cooperative instabilities rooted in evolving 
+stress fields and material state. Current operational models generally lack explicit internal mechanisms for 
+stress-driven large-scale instability, treating major events statistically rather than as outcomes of a fully coupled 
+physical dynamics (Sornette, 2002). 
+Indeed, while all models are wrong to some degree because they inherently simplify incompletely understood 
+complexities of nature, some models seem implausible (Stein, 2025). In seismic hazard analysis, models often 
+continue to be used not because they have been rigorously validated but because they have never been 
+formally rejected: validation would require testing their predictions against large earthquakes, yet such events 
+are too infrequent to provide statistically reliable evidence (Mulargia et al., 2017). Addressing this issue 
+requires that we assess not only a model's statistical fit to relatively small events, but its physical plausibility. 
+For instance, hazard maps sometimes assign higher probabilities of large earthquakes to slow deforming 
+continental areas than to rapidly deforming interplate boundaries (e.g., New Madrid seismic zone vs California 
+(Stein, 2025)), exemplifying a model that satisfies statistical criteria yet violates the fundamental mechanical 
+constraint linking deformation to seismicity. As a further examples, Poissonian renewal models, that imply 
+faults deemed overdue are no more likely to rupture, contradict the basic physics of stress accumulation; 
+nevertheless, they remain part of the standard operational toolkit. Moreover, although most models include 
+earthquake triggering, they commonly neglect stress shadowing and treat seismicity as effectively decoupled 
+from crustal deformation, ignoring feedbacks from slow slip and aseismic creep (Bird and Liu, 2007). Many 
+also suffer from the ultraviolet divergence problem inherent in ETAS-like formulations, whereby the predicted 
+hazard becomes dominated by an unphysical proliferation of arbitrary small earthquakes (Helmstetter, 2003; 
+Li et al., 2025).  
+These examples reveal a common pathology: models are judged primarily by their ability to reproduce 
+earthquake catalogs dominated by small events, rather than by their consistency with the physics governing 
+large-earthquake generation, which is the central objective of seismic hazard assessment. They persist not 
+because they are demonstratively realistic, but because we lack quantitative metrics to measure their distance 
+from physical reality. Therefore, in this context, standard treatments of epistemic uncertainty risk creating an 
+illusion of control: they quantify disagreement among models that may be systematically distant from reality, 
+while offering no measure of how far these models lie from the true dynamics of earthquake generation (Figure 
+1).  
+This theoretical article advances a new perspective: rather than pursuing incremental refinements of existing 
+frameworks, we argue for the development a new generation of models grounded in fundamental physics 
+(Jordan, 2006). Such models should explicitly incorporate nonlinearity, geodetic mechanical coupling and the 
+mechanisms by which large-scale organisation emerges from multi-scale clustering (Sornette and Virieux, 
+1992). We formalize this vision quantitatively and outline a strategy for constructing a physics-based scoring 
+framework tailored to the forecast of large earthquakes.  
+The Seismic Hazard Assessment and Risks with Physics (SHARP) we introduce here is enabled by the 
+employment of a Model Adequacy Distance (MAD). It reframes the evaluation of seismic hazard models, 
+shifting the central question from "Does it fit the data?" to "Is it physically plausible? Is it consistent with the 
+data? And does it address the objective of quantifying large earthquakes’ risks?” 
+ 
+
+--- Sayfa 3 ---
+3 
+ 
+Quantifying the adequacy of forecasting models 
+The standard epistemic framework operates on the principle of selecting, from among the available options, 
+the explanation that appears best supported by the data. A common extension in seismology and hazard 
+analysis considers a set of models 𝑀1, 𝑀2, … , 𝑀𝑁, assign them weights π𝑖 reflecting belief, skill or uncertainty 
+and build an integrated forecast, rather than relying on a single “best model” (Herrmann and Marzocchi, 2023; 
+Selva et al., 2024). Here, the core error is the assumption that the system’s true behaviour, R, lies within the 
+subspace spanned by the existing models.  
+Let us define the model space, ℳ, as the space of all conceivable models. The set {𝑀𝑖} of available models 
+represents a tiny cluster in ℳ. R could be very distant from this cluster. Standard epistemic uncertainty, 𝑈𝑒𝑝𝑖𝑠𝑡, 
+measures the dispersion σ{𝑀𝑖} within the model set {𝑀𝑖} but it does not account for the distance between R and 
+the centroid of our models 𝑀̅, i.e., to the systematic bias, b = d(𝑅, 𝑀̅) of the models. When b ≫σ{𝑀𝑖}, 𝑈𝑒𝑝𝑖𝑠𝑡 
+becomes a severe underestimate of our actual error. 
+We propose to assess a model's adequacy, at least for specific purposes, following the spirit of Sornette et al. 
+(2007) and Marzocchi and Jordan (2014), rather than continuing the routine practice of selecting models 
+primarily on their ability to reproduce small to moderate seismicity. We define this formally as follows.  
+Let 𝒞= {𝐶1, 𝐶2, … , 𝐶𝐾} be a set of criteria a model must satisfy to be considered minimally adequate for 
+capturing real earthquake dynamics at the scales relevant for forecasting and hazard. These criteria should 
+reflect established physical constraints rather than only statistical fit. To be operational and non-redundant, 
+these criteria must target independent and physically distinct dimensions of earthquake system behavior. Each 
+should isolate a specific structural property of the dynamics and be quantifiable through objective, benchmark-
+based scoring. 
+Here, we focus on the theoretical definition of the problem and its proposed solution without discussing how 
+such criteria should be practically defined and implemented; this important issue is discussed in the next 
+sections.  
+Model adequacy is formalized as a mapping Ψ: ℳ→𝒜, where ℳ denotes the space of candidate models 
+and 𝒜 the adequacy space. The latter is defined by 𝐾 evaluation criteria (with 𝐾= 3 in our implementation), 
+so that 𝒜= [0,1]𝐾, a 𝐾-dimensional unit hypercube whose axes correspond to distinct adequacy criteria. For 
+a given model 𝑀∈ℳ, the adequacy mapping yields a score vector Ψ(𝑀) = (𝜓1(𝑀), 𝜓2(𝑀), … , 𝜓𝐾(𝑀)), where 
+each component 𝜓𝑗(𝑀) ∈[0,1] quantifies the degree to which 𝑀 satisfies criterion 𝐶𝑗. A score of 1 denotes full 
+compliance with the benchmark associated with 𝐶𝑗, whereas 0 indicates complete inadequacy relative to that 
+criterion. The Ideal Adequate Model (IAM, 𝑀∗) perfectly satisfies all criteria: Ψ(𝑀∗) = 1 = (1,1, … ,1).  
+We define a set of Model Adequacy Distances (𝑀𝐴𝐷γ(𝑀)) as 
+𝑀𝐴𝐷γ(𝑀) = 𝑑γ(Ψ(𝑀), 1) = (∑
+𝑤𝑗(1 −ψ𝑗(𝑀))
+γ
+𝐾
+𝑗=1
+)
+1/γ
+                                                                                       (1) 
+where 𝑤𝑗 are weights reflecting the relative importance of each criterion and the exponent γ can take any real 
+number value corresponding to different ways to combine the criteria in an overall metric. A high MAD value 
+indicates a 'bad' model, i.e., structurally inconsistent with the nature of fault systems. See Figure 1 for a visual 
+representation.  
+The choice γ = 2,  inspired by Kennedy and O’Hagan (2001), corresponds to a distance related to a standard 
+deviation of the scores across all criteria: 
+𝑀𝐴𝐷2(𝑀) = 𝑑2(Ψ(𝑀), 1) = (∑
+𝑤𝑗(1 −ψ𝑗(𝑀))
+2
+𝐾
+𝑗=1
+)
+1/2
+                                                                                     (2) 
+The choice γ = 1 gives a distance corresponding to a weighted average of the scores:  
+𝑀𝐴𝐷1(𝑀) = 𝑑1(Ψ(𝑀), 1) = ∑
+𝑤𝑗(1 −ψ𝑗(𝑀))
+𝐾
+𝑗=1
+= 1 −  ∑
+𝑤𝑗 ψ𝑗(𝑀)
+𝐾
+𝑗=1
+                                                             (3) 
+The choice γ →0 gives the weighted geometric average of the scores 
+ 
+
+--- Sayfa 4 ---
+4 
+ 
+ 
+Figure 1: Conceptual representation of the Model Adequacy Distance (MAD). The true behaviour of 
+seismicity (light blue surface) is complex and extends beyond the limited domains of current models 
+(colored patches). MAD (red dashed lines) quantifies the structural bias of each model, revealing that 
+epistemic uncertainty (pink sphere) merely measures disagreement within an ensemble of 
+assumptions, not the distance to reality.  
+ 
+𝑀𝐴𝐷0(𝑀) = 𝑑0(Ψ(𝑀), 1) = ∏
+(1 −ψ𝑗(𝑀))
+𝑤𝑗
+𝐾
+𝑗=1
+                                                                                               (4) 
+The choice γ →+∞ gives 
+𝑀𝐴𝐷+∞(𝑀) = 𝑑+∞(Ψ(𝑀), 1) = 𝑀𝑎𝑥𝑗=1
+𝐾
+(1 −ψ𝑗(𝑀)) = 1 − 𝑀𝑖𝑛𝑗=1
+𝐾ψ𝑗(𝑀)                                                            (5) 
+and thus considers the criterion that is the least well fulfilled. 
+The choice γ →−1 gives the harmonic mean, which is influenced by the best scores. 
+The choice γ →−∞ gives 
+𝑀𝐴𝐷−∞(𝑀) = 𝑑−∞(Ψ(𝑀), 1) = 𝑀𝑖𝑛𝑗=1
+𝐾
+(1 −ψ𝑗(𝑀)) = 1 −𝑀𝑎𝑥𝑗=1
+𝐾ψ𝑗(𝑀)                                                          (6) 
+and thus considers the criterion that is best fulfilled.  
+Summarising, positive γ values make the MAD metric dominated by the poorest (worst) adequacy scores, 
+whereas negative γ values make it dominated by the strongest (best) scores. For γ > 0, and increasingly so 
+as γ grows, the MAD metric becomes larger whenever any single criterion performs badly; this encourages 
+developing models that perform well in all adequacy conditions. For γ < 0, the metric instead rewards models 
+that excel on one or a few criteria, even if their performance on the others is weaker. The choice of γ is informed 
+by the goal of the analysis; we propose, as best practice, to estimate 𝑀𝐴𝐷γ(𝑀) as a function of γ selected in 
+a range of both positive and negative values in order to get an all-round evaluation for the physical score of 
+each model.  
+
+--- Sayfa 5 ---
+5 
+ 
+To make the Model Adequacy Distance (MAD) operational for decision making, we reinterpret it as 
+a trust variable (Sornette et al., 2007) that directly informs whether a model should be used in scientific, 
+engineering, or societal applications (e.g., for building codes or risk standards). Recall that MAD takes values 
+in [0,1], where MAD = 0 corresponds to perfect adequacy with respect to all empirical constraints, and MAD =
+1 to complete inadequacy. We then introduce a mapping 
+ trust: MAD = m ∈[0,1] →[0,1],          m ↦trust(𝑚),                                                                                         (7) 
+such that trust(0) = 1 and trust(1) = 0, and trust(𝑚) is strictly decreasing in m. 
+In analogy with the probability-weighting function of Kahneman and Tversky’s Cumulative Prospect Theory 
+(Kahneman and Trevsky, 1979), a standard model of decision-making under uncertainty designed to rank risky 
+alternatives, we interpret trust(𝑚) as a “subjective” transformation of the “objective” MAD value. For small 
+MAD (nearly adequate models), trust(𝑚) is convex and lies below the reference line trust = 1 −m, which 
+encodes a rapid loss of trust in response to even modest violations of key constraints. As MAD increases 
+further, the function crosses this reference diagonal and becomes concave, approaching trust(1) = 0 for 
+strongly inadequate models. This shape captures the idea that once a model is already poor, additional 
+degradation in MAD has a comparatively smaller incremental impact on an already low level of trust. The 
+resulting function transforms MAD from a purely descriptive adequacy score into a decision-oriented trust 
+metric that can be directly embedded into engineering safety margins, regulatory thresholds, and model 
+selection procedures. To specify trust(𝑚), we use a Prelec-type probability-weighting function (Prelec, 1998) 
+to set 
+trust(𝑚) = exp[−η (−ln(1 −𝑚))α] ,    0 ≤𝑚≤1;    η > 0 and 0 < α < 1.                                                       (8) 
+This parametrisation has the desired properties: trust(0) = 1, 𝑡𝑟𝑢𝑠𝑡(1) = 0, it is monotonically decreasing, so 
+that trust decreases as MAD increases; for 0 < α < 1, the function is convex near m = 0 and concave 
+near m = 1, with a single inflection point. Moreover, for typical values of η and 0 < α < 1, trust(𝑚) < 1 −
+m   for small MAD (pessimistic, fast trust loss) and trust(𝑚) > 1 −m for large MAD, ensuring a single crossing 
+of the line y = 1 −m. 
+See Figure 2 for a visual representation.  
+ 
+Figure 2: Trust(MAD) curves for four choices of the Prelec-type parameters (𝜶, 𝜼). All functions 
+decrease monotonically from 𝐭𝐫𝐮𝐬𝐭(𝟎) = 𝟏 to 𝐭𝐫𝐮𝐬𝐭(𝟏) = 𝟎, showing rapid early trust loss (convex 
+region) followed by slower decline for highly inadequate models (concave region). The dashed line 
+indicates the linear reference 𝟏−𝐌𝐀𝐃.  
+
+--- Sayfa 6 ---
+6 
+ 
+From adequacy to action: trust, bias correction, and decision-making 
+The previous section introduced the Model Adequacy Distance (MAD) as a structural measure of how far a 
+model deviates from fundamental physical constraints. A high MAD indicates that a model is structurally 
+inadequate (i.e., it violates the basic physics of earthquake systems) and should be used with caution 
+regardless of its apparent statistical fit. However, measuring inadequacy is only the first step. The question 
+that follows is: how do we translate this structural information into practical hazard assessments? 
+The standard epistemic hazard is 
+ 𝑃𝑠𝑡𝑎𝑛𝑑𝑎𝑟𝑑(𝐻) = ∑
+π𝑖
+𝑁
+𝑖=1
+⋅𝑃( 𝐻∣𝑀𝑖) .  
+ 
+ 
+ 
+ 
+ 
+                                       (9) 
+In this formulation, H denotes the hazardous event or hazard state of interest, e.g., the probability that ground 
+shaking exceeds a threshold, that a structure fails, or that a particular natural hazard scenario occurs. 
+Correspondingly, P(𝐻) is the probability assigned to that hazard event. For each model 𝑀𝑖, the 
+quantity P( 𝐻∣𝑀𝑖) is 
+the 
+conditional 
+probability 
+of 
+the 
+hazard H according 
+to 
+model 𝑀𝑖. 
+The 
+weights π𝑖 represent the epistemic probabilities assigned to the models themselves in a standard model-
+ensemble framework. We now proceed to describe how we construct the weights π𝑖′𝑠 and the conditional 
+probabilities P( 𝐻∣𝑀𝑖)’s for each of the N models.  
+Given a set {𝑀1, 𝑀2, … , 𝑀𝑛} of available models, we propose to use the trust function defined in the previous 
+section as a weighting mechanism that modulates our confidence in the standard epistemic hazard 
+estimate 𝑃standard(𝐻) defined above. The trust value associated with the ensemble’s MAD quantifies the 
+degree to which the aggregated model prediction can be relied upon in decision making. Formally, the weight 
+of model 𝑀𝑖 to insert in expression (9) is given by  
+π𝑖= trust(𝑀𝐴𝐷(𝑀𝑖)),                                                                                                                                     (10)  
+where 𝑀𝐴𝐷(𝑀𝑖) is the MAD measure of model 𝑀𝑖. 
+To determine the conditional probability P( 𝐻∣𝑀𝑖) of model 𝑀𝑖, we consider a complementary way to quantify 
+structural inadequacy, which is to analyse how each model’s performance deteriorates as one considers 
+increasingly large earthquakes. Rather than assuming that past residuals directly approximate future errors, 
+we interpret such residuals as diagnostics of structural bias, i.e., empirical indications of how the model 
+diverges from the physical behaviour of seismic systems at different magnitude scales. For a target magnitude 
+threshold 𝑀target, we define the magnitude-conditioned residual of model 𝑀𝑖 over a hindcast period as              
+ε𝑖(𝑀target) =
+1
+𝑁obs(𝑀target) ∑
+(log λ𝑖(𝑀𝑘, 𝑥𝑘, 𝑡𝑘) −log λref (𝑘))
+𝑘:𝑀𝑘≥𝑀target
+                                                                                  (11) 
+where 𝑁obs(𝑀target) is the number of observed earthquakes of magnitude M ≥𝑀target, and λref(𝑘) is a non-
+parametric reference rate (e.g., kernel density or local empirical moment release rate). The associated 
+dispersion, σε𝑖(𝑀target) provides a first empirical estimate of the variability and structural mismatch of 
+model 𝑀𝑖 at this scale. 
+By repeating this analysis over a sequence of increasing 𝑀target, we obtain a magnitude-dependent bias 
+profile for each model. A systematic increase of ε𝑖(𝑀target) with threshold magnitude suggests that the model 
+progressively fails to reproduce the physics of large-event nucleation. Because large events are sparse, this 
+scaling must be estimated over multiple temporal and spatial scales, potentially using spatial multiscale 
+aggregation to stabilize the statistics. In the model-adequacy (MAD) framework, these magnitude-conditioned 
+biases do not define a corrected forecast directly. Instead, they inform a bias distribution representing the 
+uncertainty due to structural inadequacy. For a target hazard level H (e.g., the rate of M ≥6 earthquakes), we 
+define a distribution of corrected forecasts (Crow and Shimizu, 1988): 
+𝑃adequacy( 𝐻∣𝑀𝑖) = LogNormal(log Φ (𝑀𝑖) + μbias, σbias)                                                                                   (12) 
+Depending on the chosen precise hazard variable, Φ(𝑀𝑖) may be the expected number of events above a 
+magnitude 𝑀target, the annualized rate λ𝑖(𝐻) of the relevant hazard, the intensity-measure parameter used in 
+PSHA (e.g., mean PGA exceedance rate), or any other scalar metric summarizing the model’s forecast for 
+
+--- Sayfa 7 ---
+7 
+ 
+hazard H. μbias,𝑖 and σbias,𝑖 are inferred from the sequence ε𝑖(𝑀target) and σε𝑖(𝑀target) at a magnitude level 
+consistent with hazard H. This distribution reflects our uncertainty about the structural deviation of 
+model 𝑀𝑖 from physical reality.  
+The log-normal specification in Eq. 12 is motivated by the structural nature of model inadequacy of seismic 
+hazard assessment that we have introduced. First, the true hazard rate is strictly positive; any admissible 
+probability model must respect this constraint. Second, structural bias is inherently multiplicative rather than 
+additive. When a model omits a physical mechanism, such as stress shadowing or fault interaction, the 
+resulting error typically scales with the predicted rate itself. A model that underestimates the occurrence of M6 
+events by a factor 𝑋 will generally underestimate M7 events by a similar factor, not by a fixed additive number 
+of events per year. A log-normal distribution naturally reflects this proportional structure: multiplicative 
+deviations in rate become additive deviations in log-space, which are mathematically tractable and statistically 
+interpretable. Third, the log-normal distribution captures the expected asymmetry of structural uncertainty at 
+extreme magnitudes. Underprediction can be arbitrarily large: a model that fails to represent runaway rupture 
+dynamics may underestimate the largest events by orders of magnitude. Overprediction, by contrast, is 
+bounded by the physical constraint that rates cannot fall below zero. The log-normal function accommodates 
+this asymmetry through its heavy right tail, representing the possibility of severe underforecasting. 
+Alternative distributions are conceivable, each encoding a different view of structural inadequacy. The Gamma 
+distribution, for example, is also positive and skewed but has a lighter right tail than the log-normal function. It 
+would be appropriate only if one assumed that structural bias cannot generate extremely large underestimates, 
+which is an assumption difficult to defend given that current hazard models largely omit the physics governing 
+large-event generation. Fully non-parametric approaches are conceptually appealing but practically infeasible 
+in the large-magnitude regime, where data are sparse and some form of regularized extrapolation is 
+unavoidable. 
+Then, the adequacy-corrected ensemble hazard becomes 
+𝑃adequacy(𝐻) = ∑
+π𝑖
+𝑁
+𝑖=1
+⋅LogNormal(log Φ (𝑀𝑖) + μbias,𝑖, σbias,𝑖)                                                                           (13) 
+which typically exhibits heavier tails than the standard epistemic mixture 𝑃standard(𝐻). This accounts for the 
+empirical fact that models tend to underperform when extrapolated toward the domain of rare high-impact 
+events. 
+ 
+Operational criteria for assessing models’ adequacy 
+While the previous sections introduced the model adequacy framework from a theoretical perspective, 
+culminating in the general formulation given by Eqs. (9) and (13) with (10), we have not yet specified how it 
+should be implemented in practice. In particular, the construction of the Model Adequacy Distance MAD(M) 
+and the associated trust measure requires explicit definition of the criteria entering the adequacy mapping and 
+the corresponding scoring functions. We therefore now detail how the MAD function is operationally 
+constructed. Specifically, we propose three practical criteria that evaluate a model’s ability to: (1) forecast 
+large, high-impact earthquakes through physically consistent mechanisms; (2) remain compatible with 
+independent geodetic observations; and (3) reproduce key statistical properties of seismicity. 
+ 
+Criterion 1: Moment-Weighted Forecasting Skill (MWFS). This criterion is the most important because it 
+evaluates whether the model correctly forecasts the rate, location, and timing of large seismic moment release, 
+focusing model evaluation on the societal impact of earthquakes and checking its consistency with the 
+underlying physics of strain energy release. For a testing period T, the model provides a rate density forecast 
+(λ(𝑚, 𝑥, 𝑡)). For an observed catalog containing N events {(𝑀𝑖, 𝑥𝑖, 𝑡𝑖), 𝑖= 1, … , 𝑁}, where 𝑀𝑖 is the seismic 
+moment-based magnitude, 𝑥𝑖 is the epicenter and 𝑡𝑖 is the occurrence time of earthquake i, the score is built 
+on a Moment-Weighted Log-Likelihood (MW-LL) defined as 
+MWLL = ∑
+𝑤(𝑀𝑖) log λ (𝑀𝑖, 𝑥𝑖, 𝑡𝑖)
+𝑁
+𝑖=1
+−∫𝑤(𝑚) λ(𝑚, 𝑥, 𝑡)dm  dx dt,                                                                                    (14) 
+
+--- Sayfa 8 ---
+8 
+ 
+where the weight w(𝑀𝑖) = 103/2 𝑀𝑖 reflects the seismic moment release. This choice for w(𝑀𝑖) follows directly 
+from the well-established scaling between moment magnitude and seismic moment, 𝑀0 ∝10
+3
+2𝑀. Since seismic 
+moment 𝑀0 is the physically relevant measure of strain energy release, weighting each event by 10
+3
+2𝑀𝑖 ensures 
+that the score scales proportionally to the actual seismic moment released by earthquakes. This preserves 
+consistency with energy considerations and prevents the evaluation metric from being dominated by the far 
+more numerous small-magnitude events. This score reconciles model evaluation with the main goal of 
+reproducing the physics of large-event generation. Performance is measured against a null model. The score 
+(ψ1) is defined as a normalized information gain per moment bin using a logistic transformation that maps the 
+real-valued information gain to the interval [0,1]: 
+ψ1 =
+1
+1+exp(−𝑘 I),                                                                                                                                                                              (15)  
+with  
+ I =
+MWLLmodel−MWLLnull
+∑𝑤(𝑀𝑖)
+𝑖
+,                                                                                                                                                            (16) 
+where k > 0 is a sensitivity parameter that controls how rapidly the score increases with positive information 
+gain. This formulation ensures that I = 0 (model performs as well as the null) returns ψ1 = 0.5 while I > 0 gives 
+0.5 < ψ1 < 1, approaching 1 for large positive gains and, finally, that I < 0 for 0 < ψ1 < 0.5 as an output, 
+penalizing models worse than the null. 
+ 
+Criterion 2: Geodetic Strain-Consistency (GSC). This criterion tests whether the model's long-term 
+seismicity is mechanically consistent with the observed crustal deformation field, ensuring it obeys the 
+fundamental long-term tectonic energy budget. For a region (Ω), the long-term seismic moment release rate 
+from the model,  
+𝑀siṁ =
+1
+𝑇sim ∑101.5𝑀𝑘+9.1
+𝑘
+,                                                                                                                                                           (17) 
+where the sum is over events in a sufficiently long simulation (𝑇sim), must equal the tectonic moment 
+accumulation rate, 𝑀tecṫ, derived from geodetic data (e.g., GNSS velocities) 
+𝑀tecṫ = μ ∫𝜒(𝑥)Σ̇(𝑥)
+Ω
+ 𝑑A,                                                                                                                                                                  (18) 
+where μ is the average shear modulus, 𝜒 is the seismic coupling which provides a measure of the amount of 
+the long-term geodetic deformation expected to be converted into seismic slip,  Σ̇(𝑥) is the geodetically inferred 
+strain rate. The score ψ2 evaluates the mechanical consistency of the model by penalizing spatially incoherent 
+or unbalanced moment release. It is defined as 
+ψ2 = exp (1 − 𝑒
+(𝑀𝑠𝑖𝑚̇−𝑀𝑡𝑒𝑐𝑡̇
+𝜎𝑀̇
+)
++
+𝑀𝑠𝑖𝑚̇−𝑀𝑡𝑒𝑐𝑡̇
+𝜎𝑀̇
+) × exp(−𝐷𝐾𝐿(𝑃𝑠𝑖𝑚∥𝑃𝑡𝑒𝑐𝑡)),                                                           (19) 
+and is explicitly composed of two complementary terms. The first term measures the consistency of the total 
+moment budget: it penalizes discrepancies between the modelled seismic moment release rate 𝑀̇sim and the 
+geodetically inferred tectonic moment accumulation rate 𝑀̇tect, normalized by the uncertainty 𝜎𝑀̇. It is 
+constructed so that the penalty is minimized (ψ2 → 1) when 𝑀𝑠𝑖𝑚̇ = 𝑀𝑡𝑒𝑐𝑡̇, increases approximately linearly 
+when 𝑀𝑠𝑖𝑚̇ < 𝑀𝑡𝑒𝑐𝑡̇ (undershoot), and increases exponentially when 𝑀𝑠𝑖𝑚̇ > 𝑀𝑡𝑒𝑐𝑡̇ (overshoot). This linear-
+exponential asymmetry is introduced to encode the physical constraint 𝑀𝑠𝑖𝑚̇ ≲𝑀𝑡𝑒𝑐𝑡̇ over long timescales. 
+However, over the relatively short temporal horizons of available data, real overshooting is possible, especially 
+in regions featured by complex tectonic settings. The second term evaluates the spatial coherence of moment 
+release. It uses the Kullback-Leibler divergence 𝐷KL to quantify the difference between the spatial distribution 
+of simulated seismic moment release 𝑃seism and that of geodetic moment accumulation 𝑃tect. This term 
+penalizes models that release moment in locations inconsistent with where strain is accumulating. By 
+construction, 𝜓2 →1 when both the total moment budget and its spatial distribution agree with geodetic 
+constraints and decreases as either the global balance or the spatial pattern becomes inconsistent with 
+tectonic loading. 
+
+--- Sayfa 9 ---
+9 
+ 
+Criterion 3: Multiscale Clustering and Emergence (MCE). This criterion evaluates whether the model 
+spontaneously reproduces the complex, scale-invariant clustering observed in real seismicity, from short-term 
+aftershock cascades to the long-term organization of fault systems. Failure to do so suggests that clustering 
+is imposed through ad hoc prescriptions rather than arising from realistic emergent dynamics. Indeed, natural 
+seismicity displays clustering over a broad continuum of temporal and spatial scales, reflecting the underlying 
+nonlinear processes governing earthquake interactions. As a first-order characterization, a model must 
+reproduce:  
+(1) Short-term triggering (aftershocks; Utsu and Ogata, 1995). We propose using the branching ratio 𝑛, i.e., 
+the average number of direct offsprings per event, estimated via the Expectation-Maximization algorithm for 
+an ETAS model fitted to the catalog (Veen and Schoenberg, 2008). This metric is useful to test model's 
+efficiency in generating aftershock cascades. The comparison between the observed branching ratio and the 
+output of the model returns the similarity score ϕ𝑛= exp (−
+|n sim−n obs|
+σ𝑛
+), where n 
+sim is from a long-term simulated 
+catalog and is compared to the observed n 
+obs (with uncertainty σ𝑛).  
+(2) Intermediate- and long-term clustering (Kagan and Jackson, 1991) driven by fault system interactions. The 
+global coefficient of variation given by the ratio between the standard deviation and the mean of interevent 
+times in the catalog, 𝐶𝑣= στ/μτ, is a simple quantity to assess the presence of periods of large-scale activation 
+or quiescence driven by stress transfer beyond direct triggering.  As we have already done in the case of the 
+branching ratio and following the same functional form, we introduce the similarity score ϕ𝐶𝑣=
+exp (−
+|𝐶𝑣𝑠𝑖𝑚−𝐶𝑣𝑜𝑏𝑠|
+σ𝐶𝑣
+).  
+(3) Multiscale spatial organization reflecting fault network complexity. We propose to employ the fractal 
+correlation dimension 𝐷2 (Grassberger and Procaccia, 1983) for the characterization of the spatial patterns of 
+epicenters (or hypocenters, depending on the quality of localizations). This choice is a compromise between 
+computational efficiency and physical accuracy: indeed, seismicity forms multifractal clusters (Geilikman et al., 
+1990) or even more complex hierarchical structures (Ouillon et al., 1995; 1996) but their spectral reconstruction 
+is time consuming, strongly affected by location uncertainties and often unnecessary, while the fractal 
+dimension can provide a compact measure of the scale-depending clustering of seismicity. Then, using the 
+same approach already employed for the branching ratio and the coefficient of variation, we define the 
+similarity score ϕ𝐷2 = exp (−
+|𝐷2
+𝑠𝑖𝑚−𝐷2
+𝑜𝑏𝑠|
+σ𝐷2
+).  
+(4) Scaling of magnitudes as measured by the b-value. While often imposed a priori, a physically consistent 
+model should reproduce the correct Gutenberg-Richter b-value from its internal dynamics. The consistency 
+between simulations and results can be assessed through the similarity score ϕ𝑏= exp (−
+|b sim−b obs|
+σ𝑏
+), 
+Finally, we quantify the overall ability of the model to reproduce the fractal-scaling-temporal properties of 
+seismicity by combining the four “orthogonal” metrics defined above within the third criterion score defined by  
+ψ3 = ϕn ⋅ϕ𝐶𝑣⋅ϕ𝐷2 ⋅ϕ𝑏.                                                                                                                                  (20) 
+The third criterion score is thus defined as the product of the four individual performance measures, so that 
+overall adequacy requires simultaneous success on all components. Because the aggregation is multiplicative, 
+the combined score remains close to 1 only if each individual score is itself close to 1. Even if only one 
+component is small, indicating failure on a single essential criterion, the overall score is proportionally reduced, 
+regardless of strong performance on the others. This multiplicative structure therefore enforces 
+complementarity rather than compensability: deficiencies cannot be “healed” by excellence elsewhere. The 
+product formulation reflects the principle that physical plausibility requires concurrent satisfaction of all core 
+constraints. 
+The three criteria described above are complementary by construction, jointly spanning distinct and non-
+overlapping aspects of earthquake dynamics: C1 (MWFS) probes specific predictive skill focused on large 
+events in retrospective tests; C2 (GSC) checks large-scale physical consistency with tectonic forcing; C3 
+(MCE) assesses the multi-scale organizational structure and emergent properties generated by the model's 
+internal dynamics. Therefore, a model scoring highly on all three would demonstrate its ability to correctly 
+forecast major earthquakes, would operate within the correct energy budget dictated by plate tectonics, and 
+would spontaneously generate the complex spatiotemporal patterns and correct magnitude scaling 
+characteristic of real fault systems. Such a model can be considered “adequate”.  
+
+--- Sayfa 10 ---
+10 
+ 
+It is important to note that the model-adequacy framework does not explicitly penalize model complexity. In 
+contrast to criteria such as AIC or BIC, which introduce theoretical corrections to discourage 
+overparameterization, MAD evaluates model performance empirically rather than through parametric 
+penalties. 
+MAD assigns greater weight to the largest seismic events. As a result, a model that attains an excellent 
+retrospective fit by introducing additional parameters to capture random fluctuations or transient patterns will 
+inevitably be exposed in prospective testing: subsequent large events will occur at different magnitudes, 
+locations, or under conditions that invalidate those fitted idiosyncrasies. Such failure is not merely a statistical 
+artifact but an empirical indication that the model’s added parameters encode assumptions lacking generality. 
+MAD quantifies this empirical inadequacy, and the associated “trust” transformation translates it into an 
+operational decision rule: models that fail to anticipate the future distribution of large earthquakes, however 
+well they reproduce past data, are structurally inadequate and should be rejected. 
+ 
+Application to the frequency-magnitude distribution in Southern California  
+We implement the MAD framework to evaluate six competing earthquake recurrence models in Southern 
+California. The analysis uses seismic events from the SCEC catalog (Hauksson et al., 2012) above the 
+completeness magnitude (M ≥ 2.7). The catalog is temporally divided into a learning period (1 January 1981 
+to 31 December 2009) for model calibration, and a testing period (1 January 2010 to 31 December 2025) for 
+pseudoprospective evaluation. The testing period is pseudoprospective in the sense that it follows the learning 
+period chronologically and is not used in any model fitting, mimicking a true forward forecast. We have 
+preventively applied our framework on synthetics where catalogs are simulated with the known six different 
+models of frequency-magnitude distribution to check its functioning.  
+In order to illustrate the MAD framework, we focus on the first and most important criterion, the Moment-
+Weighted Forecasting Skill (MWFS). Since only one criterion is considered, the definition 𝑀𝐴𝐷γ(𝑀) =
+𝑑γ(Ψ(𝑀), 1) = 1 −ψ (𝑀) becomes independent of the exponent γ. The analysis is conducted in two different 
+configurations: a whole-region analysis treating the study area as a single, fully connected domain, and a 
+spatially tessellated analysis dividing the region into a 12 × 12 grid (144 squared cells). This dual approach 
+allows us to assess both global model performance and spatial heterogeneity in model adequacy, with 
+implications for understanding the physical processes governing earthquake occurrence across different 
+tectonic settings. 
+For each spatial cell containing sufficient data, we employ all six models described below using only learning-
+period data. The null model serves as the reference for computing information gain. We then evaluate each 
+model's forecast against the testing-period data using a moment-weighted log-likelihood score Ψ1 that 
+emphasizes performance on larger-magnitude events. The scores obtained in each cell are aggregated to 
+compute global information gain 𝐼, from which we derive MAD, and trust values.  
+ 
+Whole-region analysis 
+We apply the MAD framework to a set of six competing models for the frequency-magnitude distribution of 
+earthquakes in Southern California, as a first step, to the entire catalog as a single spatial unit. The six models 
+are 1) the standard Gutenberg-Richter (GR) model (Gutenberg and Richter, 1944), 2) the Tapered GR model 
+(Kagan, 2002; Sornette and Sornette, 1999), 3) the Double GR model (Vere-Jones, 2005; Saichev and 
+Sornette, 2005), 4) the GR with extreme event (GR-E) modelled using a Gaussian additional term - this model 
+is statistically equivalent to the proposed characteristic earthquakes (Schwartz and Coppersmith, 1984) or to 
+the dragon-king events (Sornette, 2009), 5) the tapered GR with Gaussian extreme and 6) the Double GR  law 
+with Gaussian extreme.  
+ 
+They are described hereafter together with their performance in terms of MAD and trust.  
+1) We employ the Gutenberg-Richter (GR) model as null hypothesis for reference 
+𝜆(𝑚) = 𝛽𝑒−𝛽(𝑚−𝑀𝑚𝑖𝑛)                                                                                                                                        (21) 
+The Tapered Gutenberg-Richter (GR) model, 
+ 𝜆(𝑚) = 𝛽𝑒−𝛽(𝑚−𝑀𝑚𝑖𝑛) ⋅exp (−
+10𝑏(𝑀𝑥−𝑚)
+𝑏ln 10
+),                                                                                                      (22) 
+
+--- Sayfa 11 ---
+11 
+ 
+where 𝑀𝑥 is the Kagan’s corner magnitude, 𝛽= 𝑏ln(10), and b is the b-value,  
+achieved the highest performance of I = 1.276, 𝜓1 = 1.00, and almost top trust = 0.99 (Figure 3). Its excellent 
+performance indicates that the progressive deficit of very large earthquakes relative to unbounded GR 
+extrapolation is a stable, generalizable property of California seismicity at large scales.  
+The Double GR model,  
+λ(𝑚) = {
+𝛽𝑠𝑒−𝛽𝑠(𝑚−𝑀𝑚𝑖𝑛), 𝑚< 𝑀𝑝
+β𝑙𝑒−β𝑙(𝑚−𝑀𝑝), 𝑚≥𝑀𝑝
+                                                                                                                    (23) 
+with the constraint 𝑏𝑙> 𝑏𝑠, also performs well (I = 0.140, ψ1 = 0.802, trust = 0.625, Figure 3). The positive 
+information gain confirms that the magnitude-frequency slope steepens at larger sizes over a quite large range 
+of magnitudes. This is, like in the previous case, a physical effect of finite fault dimensions. However, the lower 
+trust value reflects instability in the estimated pivot size 𝑀𝑝 within the magnitude range, penalizing this 
+additional complexity relative to the smoother taper formulation. 
+The GR with extreme earthquake (GR-E) model, defined as 
+λ(𝑚) = Λ𝑏𝑔β𝑒−β(𝑚−𝑀𝑚𝑖𝑛) + Λ𝑒𝑥𝑡
+1
+σ√2π 𝑒−(𝑚−𝑀𝑒𝑥𝑡)2
+2σ2
+,                                                                                               (24) 
+performs slightly below the null (I = -0.01, ψ1 = 0.48, trust = 0.42, Figure 3). Here Λ𝑏𝑔 and Λ𝑒𝑥𝑡 are weight 
+coefficients and 𝜎 provides the measure of the width of the Gaussian contribution generated by the extreme 
+event. Physically, this indicates that extreme earthquake behavior, defined as repeat ruptures of nearly 
+identical size, is not a stationary property of fault systems at the spatial scales of our catalog compared to the 
+observation period. The specific magnitude of the largest event in the learning period did not predict the largest 
+event in the testing period, and imposing a fixed bump degrades forecast skill.  
+Tapered GR model with Extreme event reaches a very similar performance compared to the Tapered GR 
+model.  
+Conversely, the Double GR + Extreme model fails spectacularly in pseudoprospective testing (I = -0.78, ψ1 = 
+0.00, trust = 0.06, Figure 3). Despite excellent in-sample fit, its highly parameterized structure actually overfits 
+the specific realization of large events in the learning period. The apparent b-value transition and extreme 
+magnitude are not stable properties of the fault system, but, rather, likely artifacts of specific temporal windows. 
+We think this is an excellent example of the MAD principle: structural inadequacy is revealed not by in-sample 
+statistics but by prospective forecasting failure weighted by seismic moment. See Figure 3 for a visual 
+summary.  
+ 
+Spatially tessellated analysis 
+Partitioning the study region into T = 144 (12x12) independent cells 𝑐 introduces spatial heterogeneity that 
+alters model rankings. Here, the total moment-weighted log-likelihood is aggregated from all cells 
+𝑀𝑊𝐿𝐿𝑡𝑜𝑡𝑎𝑙= ∑
+𝑀𝑊
+𝑇
+𝑐=1
+𝐿𝐿𝑐.                                                                                                                             (25) 
+The aggregation of log-likelihoods from single cells follows from the principle that the total log-likelihood of 
+spatially independent observations is the sum of their log-likelihoods. Then, the information gain reads  
+𝐼 = 
+𝑀𝑊𝐿𝐿𝑚𝑜𝑑𝑒𝑙−𝑀𝑊𝐿𝐿𝑛𝑢𝑙𝑙
+∑𝑤(𝑀𝑖)
+ ,                                                                                                                                  (26) 
+where 𝑤(𝑀𝑖) = 101.5𝑀𝑖, computed from the summed likelihoods. This aggregation properly weights each cell's 
+contribution by its observed seismic moment release. 
+The most notable change is the Double GR + Extreme model, which soared from worst to best performer (I = 
+2.97, ψ1 = 1.00, trust = 1.00, Figure 4). This inversion reveals that its adequacy is highly spatially variable. In 
+cells containing major faults with clear extreme earthquakes (see Figure 5), the model well captures the 
+emergence of large earthquakes beyond the standard predictions of the GR law. In other cells, it overfits noise.  
+The Double GR and Tapered GR models maintained positive information gain (I = 0.052 and I = 0.063, 
+respectively) with moderate trust values (0.50 and 0.52). Their performance degrades relative to the whole-
+region analysis because spatial heterogeneity was previously averaged out. The Tapered GR + Extreme 
+shows a modest positive skill (I = 0.02, ψ1 = 0.55, trust = 0.46), while the GR + Extreme model again performed  
+
+--- Sayfa 12 ---
+12 
+ 
+ 
+Figure 3: Output of six models’ assessment for frequency-magnitude distributions in Southern 
+California (seismic events from the SCEC catalog with M ≥ 3 are used - which guarantees 
+completeness; data from 1/1/1981 to 31/12/2009 are employed for calibration, while from 1/1/2010 to 
+31/12/2025 for testing). The performance of double Gutenberg-Richter (double GR), Kagan’s tapered 
+GR, Kagan’s tapered GR with extreme earthquake, GR with extreme magnitude earthquake (GR-E) and 
+double GR with extreme earthquake is assessed compared to the standard GR law implemented as 
+null hypothesis. In (A) the output of the Moment-Weighted Forecasting Skill (MWFS, criterion 1) is 
+shown; (B) represents the Model Adequacy Distance (MAD) (since we only consider one criterion, all 
+the definition of MAD given in the main text are equivalent); in (C) the values of trust(MAD) are plotted 
+as bars, while in (D) they are located along the trust curve (selected parameters: 𝜶 = 0.5, 𝜼 = 1.0). 
+ 
+poorly (I = -0.42, ψ1 = 0.015, trust = 0.13), confirming that the simple bump is generally not a well-defined 
+structure in earthquake magnitude statistics. 
+The null GR model has ψ1= 0.50, MAD = 0.50, trust = 0.43 by construction; it can be interpreted as a threshold. 
+Models with trust > 0.43 demonstrate better predictive skills; models with trust < 0.43 are inadequate and 
+should rejected for hazard applications.  
+ 
+Conclusions 
+We have developed a physics-based framework (SHARP) for evaluating seismic hazard models that moves 
+beyond conventional measures of epistemic uncertainty. By introducing the Model Adequacy Distance (MAD), 
+inspired by Kennedy and O’Hagan (2001), we have provided a quantitative metric for assessing structural 
+adequacy rather than merely comparing models within an existing ensemble. The associated trust(MAD) 
+function translates this adequacy into an operational quantity suitable for decision-making contexts. 
+To ensure that evaluation aligns with the fundamental objective of hazard assessment, we complemented 
+MAD with magnitude-dependent bias diagnostics and a moment-weighted scoring framework. These tools 
+explicitly prioritize the accurate representation of large-earthquake generation and strain-energy release, 
+shifting emphasis away from goodness-of-fit metrics dominated by small events. We illustrated the approach 
+
+--- Sayfa 13 ---
+13 
+ 
+ 
+Figure 4: Output of six models’ assessment for frequency-magnitude distributions in Southern 
+California (seismic events from the SCEC catalog with M ≥ 2.7 are used - which guarantees 
+completeness; data from 1/1/1981 to 31/12/2009 are employed for calibration, while from 1/1/2010 to 
+31/12/2025 for testing). Here, the catalog is analysed in its spatial components introducing a grid of 
+12x12 squared cells; the performance of each model is assessed within each element of the lattice and 
+then aggregated. The performance of double Gutenberg-Richter (double GR), Kagan’s tapered GR, 
+Kagan’s tapered GR with extreme earthquake, GR with extreme earthquake (GR-E) and double GR with 
+extreme magnitude earthquake is assessed compared to the standard GR law implemented as null 
+hypothesis. In (A) the output of the Moment-Weighted Forecasting Skill (MWFS, criterion 1) is shown; 
+(B) represents the Model Adequacy Distance (MAD) (since we only consider one criterion, all the 
+definition of MAD given in the main text are equivalent); in (C) the values of trust(MAD) are plotted as 
+bars, while in (D) they are located along the trust curve (selected parameters: 𝜶 = 0.5, 𝜼 = 1.0). 
+through an application to Southern California seismicity, examining six alternative frequency-magnitude 
+formulations and demonstrating how the framework discriminates among them based on physical plausibility 
+rather than statistical fit alone. 
+Together, these developments establish a coherent bridge between empirical forecasting performance and 
+the physical constraints governing earthquake dynamics. Progress in forecasting large earthquakes will not 
+emerge solely from the “data deluge” alone. It requires fundamentally new ways of evaluating, weighting, and 
+constructing models and new conceptual eyes capable of recognising the hidden physics of large-event 
+nucleation and cascade emergence. 
+ 
+Data and Resources 
+No data and software were produced to realize this research.  
+ 
+Acknowledgements 
+The authors acknowledge useful discussions with Michele Matteo Cosimo Carafa, Carlo Doglioni, Giuseppe 
+Petrillo and Seth Stein.  
+
+--- Sayfa 14 ---
+14 
+ 
+ 
+Figure 5: Maps of the spatial distribution of trust(MAD) - with 0.5° Gaussian smoothing - for each (A-F) 
+of the six alternative models for frequency-magnitude distribution in Southern California (seismic 
+events from the SCEC catalog with M ≥ 2.7 on a grid of 12x12 cells are used - which guarantees 
+completeness; data from 1/1/1981 to 31/12/2009 are employed for calibration, while from 1/1/2010 to 
+31/12/2025 for testing).  
+ 
+Authors contribution 
+D.Z.: Conceptualization, methodology, validation, software, analysis, and visualization, writing-first draft, 
+review and editing.  
+D.S.: Conceptualization, methodology, visualization, project administration, supervision, funding acquisition, 
+writing-first draft, review and editing.  
+During the final stage of preparing this manuscript, the authors used DeepSeek and ChatGPT to improve the 
+clarity and fluency of certain sections. All AI-generated suggestions were carefully reviewed and edited by the 
+authors to ensure accuracy and consistency with the original work. The authors confirm that the content is 
+original and take full responsibility for the published article. All authors agreed with the final version of the 
+manuscript.  
+
+--- Sayfa 15 ---
+15 
+ 
+Declaration of competing interests 
+Authors declare no competing interests. 
+ 
+Fundings 
+This work is partially supported by the National Natural Science Foundation of China (Grant no. T2350710802, 
+U2039202), and the Center for Computational Science and Engineering at Southern University of Science and 
+Technology. 
+ 
+References  
+1. Ben-Zion, Y. (2008). Collective behavior of earthquakes and faults: Continuum-discrete transitions, 
+progressive evolutionary changes, and different dynamic regimes, Rev. Geophys. 46, RG4006. 
+2. Bird, P., and Liu, Z. (2007). Seismic hazard inferred from tectonics: California, Seismol. Res. Lett. 78, 
+37-48. 
+3. Crow, E. L., and Shimizu, K. (Eds.) (1988). Lognormal distributions: Theory and applications, 
+Statistics: Textbooks and Monographs 88, Marcel Dekker, New York. 
+4. Field, E. H., et al. (2014). Uniform California Earthquake Rupture Forecast, Version 3 (UCERF3) - The 
+Time‐Independent Model, Bull. Seismol. Soc. Am. 104, 1122-1180. 
+5. Geilikman, M. B., Golubeva, T. V., and Pisarenko, V. F. (1990). Multifractal patterns of seismicity. 
+Earth Planet. Sci. Lett. 99(1-2), 127-132. 
+6. Gneiting, T., and Raftery, A. E. (2007). Strictly proper scoring rules, prediction, and estimation, J. Am. 
+Stat. Assoc. 102, 359-378. 
+7. Grassberger, P., and Procaccia, I. (1983). Measuring the strangeness of strange attractors. Physica 
+D 9(1-2), 189-208. 
+8. Gutenberg, B., Richter, C. F. (1944). Frequency of earthquakes in California. Bull. Seismol. Soc. Am. 
+34(4), 185-188. 
+9. Hauksson, E., Yang, W., Shearer, P.M. (2012). Waveform relocated earthquake catalog for southern 
+California (1981 to June 2011). Bull. Seismol. Soc. Am. 102(5), 2239-2244. 
+10. Helmstetter, A. (2003). Is earthquake triggering driven by small earthquakes? Phys. Rev. Lett. 91(5), 
+058501. 
+11. Herrmann, M. and Marzocchi, W. (2023). Maximizing the forecasting skill of an ensemble model, 
+Geophys. J. Intern. 234 (1), 73-87. 
+12. Jordan, T. H. (2006). Earthquake predictability, brick by brick, Seismol. Res. Lett. 77, 3-6. 
+13. Kagan, Y. Y. (2002). Seismic moment distribution revisited: I. Statistical results. Geophys. J. Intern. 
+148(3), 520-541. 
+14. Kagan, Y. Y., and Jackson, D. D. (1991). Long-term earthquake clustering. Geophys. J. Intern. 104(1), 
+117-133. 
+15. Kahneman, D., and Tversky, A. (1979). Prospect theory: An analysis of decision under risk. 
+Econometrica 47(2), 363-391. 
+16. Kennedy, M. C., and O'Hagan, A. (2001). Bayesian calibration of computer models, J. R. Stat. Soc. B. 
+63, 425-464. 
+17. Li, J., Wu, Z., Zhuang, Z., Jiang, C., and Sornette, D. (2025). Revisiting Seismicity Criticality:  A new 
+framework for bias correction of statistical seismology model calibrations, J. Geophys. Res. Solid Earth 
+130, e2024JB029337. 
+18. Marzocchi, W., and Jordan, T. H. (2014). Testing for ontological errors in probabilistic forecasting 
+models of natural systems, Proc. Natl. Acad. Sci. U.S.A. 111, 11973-11978. 
+19. Marzocchi, W., Taroni, M., and Selva, J. (2015). Accounting for epistemic uncertainty in PSHA: Logic 
+tree and ensemble modeling. Bull. Seismol. Soc. Am. 105(4), 2151-2159. 
+20. Mulargia, F., Stark, P. B., and Geller, R. J. (2017). Why is probabilistic seismic hazard analysis (PSHA) 
+still used?. Phys. Earth Planet. Inter. 264, 63-75. 
+21. Ogata, Y. (1988). Statistical models for earthquake occurrences and residual analysis for point 
+processes, J. Am. Stat. Assoc. 83, 9-27. 
+22. Ouillon, G. and Sornette D. (2005). Magnitude-Dependent Omori Law: Theory and Empirical Study, J. 
+Geophys. Res. 110, B04306, doi:10.1029/2004JB003311.  
+
+--- Sayfa 16 ---
+16 
+ 
+23. Ouillon, G., D. Sornette and C. Castaing (1995). Organization of joints and faults from 1 cm to 100 km 
+scales revealed by Optimized Anisotropic Wavelet Coefficient Method and Multifractal analysis, 
+Nonlinear Processes in Geophys. 2, 158-177. 
+24. Ouillon, G., C. Castaing and D. Sornette (1996). Hierarchical scaling of faulting, J. Geophys. Res. 
+101, B3, 5477-5487. 
+25. Prelec, D. (1998). The probability weighting function. Econometrica, 497-527. 
+26. Saichev, A. and Sornette, D. (2005). Vere-Jones' Self-Similar Branching Model, Phys. Rev. E 72, 
+056122. 
+27. Selva, J., S. Argyroudis, F. Cotton, S. Esposito, S.M. Iqbal, S. Lorito, B. Stojadinovic, R. Basili, A. 
+Hoechner, A. Mignan, K. Pitilakis, H.K. Thio and Giardini, D. (2024). A novel multiple-expert protocol 
+to manage uncertainty and subjective choices in probabilistic single and multi-hazard risk analyses, 
+Intern. J. Disaster Risk Reduct. 110, 104641. 
+28. Serafini, F., Naylor, M., Lindgren, F., Werner, M. J., and Main, I. (2022). Ranking earthquake forecasts 
+using proper scoring rules: Binary events in a low probability environment, Geophys. J. Int. 230, 1419-
+1440. 
+29. Sornette D. (1991). Self-organized criticality in plate tectonics, in the Proceedings of the NATO ASI 
+"Spontaneous formation of space-time structures and criticality", Geilo, Norway 2-12 april 1991, edited 
+by T. Riste and D. Sherrington, Dordrecht, Boston, Kluwer Academic Press, vol. 349, p.57-106. 
+30. Sornette, D. (2002). Predictability of catastrophic events: Material rupture, earthquakes, turbulence, 
+financial crashes, and human birth, Proc. Natl. Acad. Sci. 99, 2522-2529. 
+31. Sornette, D. (2009). Dragon-Kings, Black Swans and the Prediction of Crises, Intern. J. Terraspace 
+Science Eng. 1(3), 1-17. 
+32. Sornette, D., Davis, A. B., Ide, K., Vixie, K. R., Pisarenko, V., and Kamm, J. R. (2007). Algorithm for 
+Model Validation: Theory and Applications, Proc. Nat. Acad. Sci. 104 (16), 6562-6567.  
+33. Sornette D. and Ouillon G. (2005). Multifractal Scaling of Thermally-Activated Rupture Processes, 
+Phys. Rev. Lett. 94, 038501. 
+34. Sornette, D. and Sornette, A. (1999). General theory of the modified Gutenberg-Richter law for large 
+seismic moments, Bull. Seism. Soc. Am. 89, N4:1121-1130. 
+35. Sornette D. and Virieux J. (1992). A theory linking large time tectonics and short time deformations of 
+the lithosphere, Nature 357, 401-403. 
+36. Stein, S., Neely, J. S., Spencer, B. D., and Salditch, L. (2025). All models are wrong, but some models 
+seem implausible, AGU25. 
+37. Schwartz, D. P., and Coppersmith, K. J. (1984). Fault behavior and characteristic earthquakes: 
+Examples from the Wasatch and San Andreas fault zones. J. Geophys. Res. 89(B7), 5681-5698. 
+38. Utsu, T., and Ogata, Y. (1995). The centenary of the Omori formula for a decay law of aftershock 
+activity. J. Phys. Earth 43(1), 1-33. 
+39. Veen, A., and Schoenberg, F. P. (2008). Estimation of space-time branching process models in 
+seismology using an em-type algorithm. J. Am. Stat. Assoc. 103(482), 614-624. 
+40. Vere-Jones, D. (2005). A class of self-similar random measure. Adv. Appl. Prob. 37(4), 908-914. 
+ 

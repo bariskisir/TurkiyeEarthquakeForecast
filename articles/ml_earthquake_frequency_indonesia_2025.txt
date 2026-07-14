@@ -1,0 +1,1187 @@
+
+--- Sayfa 1 ---
+ORIGINAL PAPER
+Received: 27 June 2024 / Accepted: 27 November 2025 / Published online: 3 January 2026
+© The Author(s) 2025
+	
+ Wenwen Hou
+Hou.Wenwen@autonoma.cat
+1	
+Department of Mathematics, Faculty of Science, Universitat Autònoma de Barcelona, 
+Bellaterra 08193, Spain
+Statistical and machine learning methods for multi-step 
+earthquake frequency forecasting in indonesian regions
+Wenwen Hou1
+Natural Hazards (2026) 122:40
+https://doi.org/10.1007/s11069-025-07744-9
+Abstract
+Despite the devastating impact of earthquakes, they offer potential for machine learn­
+ing prediction to mitigate damage. This study explores the application of common al­
+gorithms like Random Forests, Support Vector Machines (SVMs), XGBoost, and Long 
+Short-Term Memory (LSTM) networks alongside the Autoregressive Integrated Moving 
+Average (ARIMA) framework for earthquake frequency forecasting in Indonesian regions. 
+A novel hybrid model combining machine learning with ARIMA for multi-step forecasting 
+is introduced. Surprisingly, the LSTM model, renowned for its strong predictive capability 
+in nonlinear relationships, performed significantly lower than traditional machine learning 
+methods based on metrics such as Root Mean Square Error (RMSE) and Mean Absolute 
+Error (MAE). The results highlight the superior predictive capability of the hybrid ARI­
+MA-XGBoost and ARIMA-RandomForest models in multi-step forecasting. These find­
+ings underscore the continued relevance and effectiveness of traditional machine learning 
+approaches in earthquake data prediction, suggesting avenues for future research to refine 
+hybrid models and improve multi-step regression forecasting accuracy.
+Keywords  ARIMA · Random forest · LSTM · Support vector regression · XGBoost
+1  Introduction
+Earthquakes pose a significant threat to human life, especially in urban areas within seis­
+mic zones. Despite acknowledged challenges in accurately predicting earthquakes by the 
+USGS, numerous scientists are dedicated to refining prediction models. Seismic time series 
+data exhibits distinctive characteristics, but the infrequency of seismic events presents a 
+formidable obstacle to achieving precise predictions, even in the era of advanced artificial 
+intelligence. Moreover, limited data (Mignan and Broccardo 2020) availability significantly 
+impairs prediction models’ performance (Carlson et  al. 1994), necessitating exploration 
+1 3
+
+--- Sayfa 2 ---
+Natural Hazards (2026) 122:40
+and development of appropriate methodologies within earthquake engineering research, 
+inundated with various statistical models. Such endeavors will contribute to enhancing 
+our understanding of earthquake dynamics and improving urban resilience against seismic 
+hazards (McGuire 2008; Probabilities 1995; Wang 2011). Furthermore, seismic research 
+issues are diverse, with some scholars focusing on utilizing machine learning models for 
+discriminating and classifying seismic events (Gulia and Wiemer 2019; Linville et al. 2019; 
+Meier et al. 2019). Meanwhile, there is a growing expansion of machine learning techniques 
+in seismology (Kong et al. 2019) provides a comprehensive overview of five prominent 
+research domains within seismology where ML algorithms demonstrate significant poten­
+tial: earthquake detection and phase selection, earthquake early warning (EEW) systems, 
+ground motion prediction, seismic tomography, and seismic geodesy. Among these areas, 
+earthquake early warning exhibits a relatively closer alignment with earthquake prediction 
+research, indicating promising avenues for future exploration.
+Reynen and Audet (2017) suggest utilizing supervised machine learning algorithms to 
+discriminate between explosions and earthquakes, thereby mitigating potential erroneous 
+reporting of seismic events by governmental authorities. They introduce a novel approach 
+employing machine learning techniques for event classification and detection within seis­
+mic networks. Asim et al. (2017) investigate the Hindu Kush region, leveraging time series 
+data of seismic activity with machine learning classifiers to forecast earthquake magnitudes. 
+Wrona et al. (2018) employ machine learning techniques for seismic profiling, demonstrat­
+ing enhanced efficiency in seismic profiling. Ghosh et al. (2019) highlight the emergence 
+of the support vector machine algorithm, augmenting its applicability in various domains 
+where linear decision boundaries may be insufficient.
+Although various prediction models are available for earthquakes, it’s important to note 
+that these methods may not be suitable for short-term earthquake prediction as some precur­
+sory signals are not specific to earthquakes. For instance, ionospheric disturbances caused 
+by seismic activity may indicate the occurrence of natural phenomena such as solar storms 
+(Astafyeva 2019). Additionally, certain features may differ depending on the geographic 
+location or season (Arkan et al. 2023). Time series analysis serves to explore patterns and 
+trends in data over time, enabling the prediction of future trends and revealing cyclical 
+patterns. In seismology, time series analysis has been applied to study the time intervals 
+between earthquakes (Gulia and Wiemer 2019; Li et al. 2022; Mousavi et al. 2020), where 
+"natural time" emerged as one prevalent method for analyzing complex time series, particu­
+larly seismic time series. Parameterizable time series models offer a re-parameterization of 
+time suitable for investigating various geophysical systems (Bardossy and Duckstein 2022; 
+Kvas et al. 2019; Mousavi et al. 2020). Presently, commonly used time series models include 
+AR, MA, ARIMA models, among others (Ambrosino et al. 2020; Mandrikova et al. 2021). 
+Predicting time series data is also a crucial area of research in seismic engineer area. In the 
+context of time series data forecasting, the initial inclination gravitated towards employing 
+time series models, such as AR (Autoregressive), MA (Moving Average), ARIMA (Autore­
+gressive Integrated Moving Average), and analogous models (Amei et al. 2012; Gao et al. 
+2021; Musarat et al. 2021). Furthermore, hybrid models that combine ARIMA with machine 
+learning algorithms are gaining traction. Júnior et al. (2019) present a hybrid system to iden­
+tify an optimal function for combining linear and nonlinear models’ predictions. Nguyen 
+(2020) propose a novel approach that combines ARIMA and Statistical Machine Learning 
+Models for water level forecasting. Ma et al. (2020) propose a method termed NN-ARIMA 
+1 3
+40 
+Page 2 of 21
+
+--- Sayfa 3 ---
+Natural Hazards (2026) 122:40
+for predicting network-wide traffic state, integrating ARIMA with machine learning. Zhang 
+et al. (2020) introduce a physics-guided convolutional neural network (PhyCNN) for data-
+driven structural earthquake response modeling. To address the research gap, our study 
+employs various hybrid models to forecast earthquake frequency in Indonesia. We con­
+tribute by addressing: 1. research background and motivation, focusing on the importance 
+and challenges of earthquake prediction in Indonesia, 2. detailed introduction of the hybrid 
+models utilized, including their principles and application in earthquake frequency predic­
+tion, and 3. presentation of empirical research results and analysis, evaluating model perfor­
+mance and discussing implications for earthquake prediction research and practice, along 
+with suggestions for future studies.
+2  Methodologies
+2.1  Data visualization
+2.1.1  Data source and collection
+The US Geological Survey (USGS) [https://earthquake.usgs.gov/earthquakes/] provides 
+reliable global seismic data. Our focus is on time series analysis using earthquake frequency 
+and dates. Data spans January 1906 to December 2022 for Indonesia (Table 1). Notably, 
+according to USGS assessments, Indonesia stands out as the most seismically active coun­
+try. The dataset employed in this study is derived from the monthly frequency of earth­
+quakes with magnitudes equal to or greater than 6.
+2.1.2  Descriptive statistics and temporal trends
+Figure 1 illustrates the temporal distribution of earthquake occurrences in Indonesia on 
+yearly, monthly, and daily scales. These visualizations reveal fluctuations in seismic activ­
+ity across different time resolutions. Notably, the yearly frequency plot shows an overall 
+increasing trend after the 1970 s (Fig. 2), followed by slight volatility in recent decades. The 
+Date
+Latitude
+Longitude
+Depth 
+(km)
+Magnitude
+Type
+1906-06-01 −2.495
+138.560
+35
+7.84
+earth­
+quake
+1906-10-28 −4.345
+101.985
+60
+6.01
+earth­
+quake
+1906-10-29 0.185
+128.202
+15
+6.35
+earth­
+quake
+1906-11-05 −2.349
+130.160
+35
+6.43
+earth­
+quake
+1907-01-04 2.681
+95.530
+25
+8.20
+earth­
+quake
+–
+–
+–
+–
+–
+–
+2021-11-01 0.208
+96.709
+8
+6.00
+earth­
+quake
+2022-11-18 −4.904
+100.786
+25
+6.90
+earth­
+quake
+Table 1  Sample of earthquake 
+events in Indonesia (1906–2022)
+ 
+1 3
+Page 3 of 21 
+40
+
+--- Sayfa 4 ---
+Natural Hazards (2026) 122:40
+monthly and daily frequency charts further highlight the temporal clustering of events and 
+the sporadic occurrence of seismic bursts.
+To better understand long-term temporal variations in seismic activity, Fig. 2 presents the 
+monthly earthquake frequency from 1906 to 2022, along with a 12-month rolling average. 
+The smoothed line effectively reveals cyclical patterns and fluctuations in seismic activity, 
+mitigating the short-term volatility present in raw monthly data. Notably, several peaks in 
+the rolling average correspond to periods of elevated seismicity, highlighting the usefulness 
+of this approach in identifying trends over time.
+Regarding the distribution of earthquake magnitudes, as shown in Fig. 3, it is evident that 
+most events are concentrated between magnitude 6.0 and 6.5. The histogram with KDE in 
+Fig. 2  Monthly earthquake frequency in Indonesia from 1906 to 2022, overlaid with a 12-month rolling 
+average
+ 
+Fig. 1  Yearly, monthly, and daily earthquake frequency in Indonesia (1906–2022)
+ 
+1 3
+40 
+Page 4 of 21
+
+--- Sayfa 5 ---
+Natural Hazards (2026) 122:40
+the upper panel reveals a right-skewed distribution, suggesting that high-magnitude earth­
+quakes are relatively rare. Meanwhile, the boxplot in the lower panel clearly highlights the 
+presence of several extreme outliers above magnitude 7.5, indicating occasional but signifi­
+cant seismic events within the dataset.
+Figure 4 illustrates the spatial distribution of shallow seismic events (< 70 km) in Indo­
+nesia. The color gradient ranging from blue to red represents the varying earthquake magni­
+tudes. A high density of events with magnitudes between 6.0 and 7.0 is observed, indicating 
+a relatively active seismic zone.
+Table 2 provides a summary of the earthquake dataset spanning from 1906 to 2022. On 
+average, 0.74 events occurred per month, with magnitudes ranging from 6.0 to 8.6. The 
+mean and standard deviation of magnitudes are 6.42 and 0.43, respectively.
+2.1.3  Data validation via gutenberg–richter law
+To further evaluate the characteristics and completeness of this seismic data,, the Guten­
+berg-Richter law (Kijko and Smit 2017) serves as a tool for assessing the quality of seismic 
+data. The law postulates a logarithmic relationship between the number of earthquakes with 
+Fig. 3  Distribution of earthquake magnitudes with KDE and boxplot
+ 
+1 3
+Page 5 of 21 
+40
+
+--- Sayfa 6 ---
+Natural Hazards (2026) 122:40
+magnitudes greater than or equal to a certain threshold and the magnitude itself. It is math­
+ematically expressed as:
+	
+log10(N) = a −bM
+(1)
+Here, log10(N) represents the logarithm of the earthquake count, M denotes the magnitude, 
+and a and b are empirically derived constants. The intercept a on the logarithmic scale is 
+associated with the total seismic activity in a particular region, while the slope b governs 
+the relative frequency of earthquakes across different magnitudes (Kijko and Smit 2017).
+Statistic
+Value
+Time span
+1906-06-01 to 2022-11-18
+Total number of earthquake events
+1040
+Average events per month
+0.74
+Maximum monthly count
+10
+Minimum monthly count
+0
+Mean magnitude
+6.42
+Standard deviation (magnitude)
+0.43
+Maximum magnitude
+8.60
+Minimum magnitude
+6.00
+Table 2  Descriptive statistics for 
+earthquake events in indonesia 
+(1906–2022)
+ 
+Fig. 4  The distribution of earthquakes with magnitudes greater than 6 in Indonesia during 1906–2022
+ 
+1 3
+40 
+Page 6 of 21
+
+--- Sayfa 7 ---
+Natural Hazards (2026) 122:40
+Figure 5 clearly illustrates a linear relationship between the logarithm of seismic fre­
+quency and magnitude, indicating that the selected dataset conforms to the Gutenberg–
+Richter law. This observation suggests that the quality of the data is satisfactory, as it aligns 
+with the expected pattern described by the law. The fitted regression equation shown in the 
+plot is:
+	
+log10(N) = 7.75 −0.91M
+(2)
+where N denotes the cumulative number of earthquakes with magnitude greater than or 
+equal to M. The negative slope indicates an inverse relationship between magnitude and 
+frequency, implying that larger earthquakes occur less frequently. The high coefficient of 
+determination (R2 = 0.955) further confirms the strong linear fit and supports the reliability 
+of the selected dataset.
+2.2  Multi-step forecast
+2.2.1  Dataset partitioning for forecasting
+The dataset was divided into training and testing subsets to evaluate model performance on 
+unseen data. Specifically, the training period spans from January 1906 to December 2021, 
+while the testing period covers January 2022 to December 2022. This split ensures that the 
+models are trained on a sufficiently long historical window and are evaluated against recent 
+seismic patterns.
+As illustrated in Fig. 6, the training and testing sets are visualized separately to empha­
+size the temporal division. This setup provides a robust framework for assessing forecasting 
+accuracy on future monthly earthquake frequencies. The following sections introduce each 
+forecasting method applied within this framework.
+Fig. 5  Relationship between earthquake magnitudes and log frequency of occurrence
+ 
+1 3
+Page 7 of 21 
+40
+
+--- Sayfa 8 ---
+Natural Hazards (2026) 122:40
+2.2.2  Support vector regression
+Support Vector Regression (SVR) differs substantially from most regression algorithms in 
+that it focuses on minimizing errors (Al Banna et al. 2020) within a specific range, rather 
+than attempting to minimize the sum of squared errors. Support Vector Regression (Aljarah 
+et al. 2018) is a machine learning algorithm that utilizes the principles of Support Vec­
+tor Machines (SVM) for regression tasks. It aims to predict continuous target variables by 
+constructing a hyperplane that maximizes the margin around a subset of the training data, 
+known as support vectors. Additionally, SVR employs kernel functions such as polynomial 
+and Gaussian radial basis functions to address nonlinear relationships, thereby capturing 
+complex patterns in the data and rendering it a robust tool for handling nonlinear regres­
+sion problems. The algorithm seeks to find the optimal hyperplane that minimizes the error 
+between the predicted values and the actual target values, while simultaneously maximizing 
+the margin around the hyperplane (Ghosh et al. 2019).
+And the general formulation of Support Vector Regression (SVR) is as follows:
+	
+f (x) = βx′ + b.
+
+(3)
+	
+J (β) = 1
+2β′β.
+
+(4)
+	
+|yn −(x′
+nβ + b)| ≤ε 
+(5)
+Where xn represents a multivariate set of N observations accompanied by their respective 
+observed response values yn, and β is the weight vector. To optimize the given objective 
+and achieve a smoother surface, the aim is to determine a function f (x) that minimizes the 
+norm value (β′β) while maintaining a flat profile. This objective can be framed as a convex 
+optimization problem to facilitate efficient minimization. Subject to the constraint that all 
+residuals have values smaller than ϵ, we seek to optimize the objective function 4.
+Fig. 6  Visualization of the training (1906–2021) and testing (2022–2023) sets for earthquake frequency 
+prediction
+ 
+1 3
+40 
+Page 8 of 21
+
+--- Sayfa 9 ---
+Natural Hazards (2026) 122:40
+2.2.3  Random forest
+Random Forest is a popular ensemble learning method in machine learning that combines 
+multiple decision trees to perform classification and regression tasks (Rigatti 2017). It oper­
+ates by creating a multitude of decision tree models, each trained on different subsets of the 
+training data and utilizing random feature subsets. The Random Forest algorithm constructs 
+an ensemble of decision trees by repeatedly partitioning the training data into subsets and 
+fitting individual decision trees on these subsets. Each tree is trained independently, using 
+a random subset of features at each node split, which introduces randomness and diversity 
+into the model. Random forest regression involves the computation of an unweighted aver­
+age over a set of predictions:
+	
+f (x) =
+(
+1
+N
+N
+∑
+n=1
+f(x; θn)
+)
+
+(6)
+This averaging process is a key characteristic of random forest regression, where x repre­
+sents the input vector, while θn refers to independent and identically distributed (iid) ran­
+dom vectors.
+2.2.4  XGboost regression
+XGBoost (Chen and Guestrin 2016) regression operates by iteratively building decision 
+trees in a sequential manner, where each subsequent tree is trained to correct the mistakes 
+made by the previous trees. During the training process, XGBoost minimizes a specific 
+loss function that measures the discrepancy between the predicted values and the actual 
+target values. The XGBoost objective function is to minimize the loss function at iteration t 
+including the regularization terms, and can be expressed as follows:
+	
+L(t) =
+n
+∑
+i=1
+l
+(
+yi, ˆy(t−1)
+i
++ ft (xi)
+)
++ Ω(ft)
+(7)
+In this case, the function l represents a differentiable convex loss function, which quantifies 
+the discrepancy between the prediction ˆyi and the target yi. The term Ω, on the other hand, 
+imposes a penalty on the model’s complexity. Considering ˆyt
+i as the prediction for the i −th 
+instance at the t −th iteration, the objective requires the addition of ft to minimize the fol­
+lowing objective function.
+2.2.5  Autoregressive integrated moving average
+ARIMA models consist of three main components (Zhang 2018): autoregressive (AR), dif­
+ferencing (I), and moving average (MA). To gain a comprehensive understanding of the 
+functioning of an ARIMA (Fattah et al. 2018) model, it becomes imperative to familiarize 
+oneself with three integral components encapsulated within its name. AR(p) is a regression 
+model in which the predictors are the lagged values of y, extending up to the p −th time in 
+1 3
+Page 9 of 21 
+40
+
+--- Sayfa 10 ---
+Natural Hazards (2026) 122:40
+the past. In this context, p represents the count of lagged observations incorporated into the 
+model, while ε denotes white noise at time t. Additionally, the model includes a constant 
+term denoted as c and parameters represented by ϕs:
+	
+ˆyt = c + ϕ1yt−1 + ϕ2yt−2 + . . . + ϕpyt−p + εt
+(8)
+Through a repetitive process of differencing, performed d times, the original series is trans­
+formed into a stationary state. Stationarity of a time series implies that its characteristics 
+remain consistent regardless of the specific point in time at which the series is observed. To 
+accomplish this differencing, a backshift operator denoted as B is employed as equation 9. 
+As a result, the first-order difference is represented as equation 10. In a broader context, the 
+d −th order difference can be expressed as equation 11.
+	
+Byt = yt−1
+
+(9)
+	
+y′
+t = yt −yt−1 = (1 −B) yt 
+(10)
+	
+y′
+t = (1 −B)d yt 
+(11)
+In a moving average model, a regression-like framework is employed to incorporate past 
+forecast errors. Within this equation (11), ϵ represents white noise at time t, c represents a 
+constant term, and θs represent the parameters involved.
+	
+ˆyt = c + θ1εt−1 + θ2εt−2 + . . . + θqεt−q
+(12)
+The combination of the aforementioned three types of models yields the resultant 
+ARIMA(p,d,q) model, which is denoted as equation 13.
+	
+ˆy′
+t = c + ϕ1ˆy′
+t−1 + . . . + ϕpy′
+t−p + θ1εt−1 + . . . + θqεt−q + εt
+(13)
+By combining these three components, ARIMA models can capture complex temporal pat­
+terns and make accurate predictions (Nepal et al. 2020). The order of an ARIMA model is 
+denoted as ARIMA (p, d, q), where p represents the order of the autoregressive component, 
+d represents the order of differencing, and q represents the order of the moving average 
+component.
+2.2.6  Long short-term memory based with bayesian optimization
+Long Short-Term Memory (LSTM) (Staudemeyer and Morris 2019) is a deep learning 
+model used for handling sequential data, particularly suitable for sequences with long-term 
+dependencies. Its core principle involves controlling the input, output, and forgetting of 
+information through gate mechanisms, effectively capturing and utilizing long-term depen­
+1 3
+40 
+Page 10 of 21
+
+--- Sayfa 11 ---
+Natural Hazards (2026) 122:40
+dencies, thereby addressing the gradient vanishing and exploding issues in traditional 
+Recurrent Neural Networks (Sahoo et al. 2019). The core computation formulas of LSTM 
+are as follows.
+Firstly, the activation values of the input gate (it) and the forget gate (ft) are defined as:
+	
+it = σ (Wxixt + Whiht−1 + bi)
+
+(14)
+	
+ft = σ (Wxfxt + Whfht−1 + bf)
+
+(15)
+Here, (xt) is the input at the current time step, (ht−1 is the hidden state from the previous 
+time step, (Wxi, Whi, Wxf, Whf) are weight matrices,(bi, bf) are bias vectors, and (σ) is 
+the sigmoid function. Next, the activation value of the candidate memory cell (C′
+t) is com­
+puted as:
+	
+C′
+t = tanh (Wxcxt + Whcht−1 + bc)
+(16)
+Then, the memory cell state (Ct) is updated based on the activation values of the input gate 
+and forget gate:
+	
+Ct = ft ⊙Ct−1 + it ⊙C′
+t
+(17)
+Here, (⊙) represents element-wise multiplication. Finally, the activation value of the output 
+gate (ot) and the hidden state (ht) at the current time step are calculated as:
+	
+ot = σ (Wxoxt + Whoht−1 + bo)
+
+(18)
+	
+ht = ot ⊙tanh (Ct)
+
+(19)
+The LSTM model utilizes these gate units to capture and utilize long-term dependencies 
+in sequential data, thereby achieving good performance in handling sequential data. We 
+adopted a Long Short-Term Memory (LSTM) network framework based on Bayesian opti­
+mization to forecast earthquake frequencies (Meng et al. 2023). Bayesian optimization (Wil­
+son et al. 2018) is a parameter optimization method based on Bayesian inference, aiming to 
+efficiently find the optimal solution of a target function. The LSTM model is parameterized 
+by several hyperparameters, including the number of neurons, layers, training epochs, and 
+learning rate in each LSTM layer. Algorithm 1 illustrates our algorithm process.
+1 3
+Page 11 of 21 
+40
+
+--- Sayfa 12 ---
+Natural Hazards (2026) 122:40
+Algorithm 1  LSTM model training with bayesian optimization
+2.2.7  Hybrid model
+In this study, a hybrid model approach (Nguyen et al. 2019) is employed, combining the 
+ARIMA model with SVM, Random Forest, and XGBOOST for prediction purposes. Based 
+on this research, we construct a new hybrid model. The methodology involves several steps: 
+Firstly, the ARIMA model is utilized to generate fitted predicted values. Next, the residu­
+als, which represent the differences between the fitted and observed values, are computed. 
+Subsequently, a machine learning model is constructed to establish a regression relationship 
+between the residuals and the observed values. Finally, the future residuals are predicted, 
+and the resulting predictions are transformed to obtain the actual frequency values. This 
+integrated approach allows for a comprehensive and accurate prediction framework. Figure  
+7 presents a schematic diagram illustrating the structural framework of the hybrid model.
+In this study, we propose a hybrid modeling approach that integrates the Autoregres­
+sive Integrated Moving Average (ARIMA) model with advanced machine learning tech­
+niques such as Support Vector Machine (SVM), Random Forest (RF), and Extreme Gradient 
+Boosting (XGBoost) for the purpose of time series prediction. This methodology exploits 
+the linear prediction capabilities of traditional time series models and the nonlinear pattern 
+recognition strengths of machine learning algorithms, thus enhancing the overall predictive 
+accuracy.
+Initially, the ARIMA model is employed to fit the time series data and generate the pre­
+liminary predicted values, denoted as ˆyARIMA
+t
+. The ARIMA model captures the linear com­
+ponents of the data through the following relationship:
+1 3
+40 
+Page 12 of 21
+
+--- Sayfa 13 ---
+Natural Hazards (2026) 122:40
+	
+yt = ˆyARIMA
+t
++ εt 
+(20)
+where yt is the observed value at time t, ˆyARIMA
+t
+ represents the ARIMA model’s predicted 
+value, and εt denotes the residual, defined as the discrepancy between the actual value and 
+the ARIMA predicted value:
+	
+εt = yt −ˆyARIMA
+t
+
+(21)
+Fig. 7  Schematic illustration depicting the structure of the hybrid model approach
+ 
+1 3
+Page 13 of 21 
+40
+
+--- Sayfa 14 ---
+Natural Hazards (2026) 122:40
+The next phase involves modeling the residuals εt, which encapsulate the nonlinear patterns 
+not captured by the ARIMA model. To achieve this, we employ a machine learning model 
+to establish a predictive relationship between the residuals and the ARIMA predictions. Let 
+f(·) represent the machine learning model, then the residuals are predicted as:
+	
+ˆεt = f(ˆyARIMA
+t
+)
+(22)
+During the forecasting stage, future values are initially predicted using the ARIMA model 
+ˆyARIMA
+t+k
+ for a lead time k. Subsequently, the machine learning model is applied to these 
+ARIMA predictions to estimate the corresponding future residuals ˆεt+k:
+	
+ˆεt+k = f(ˆyARIMA
+t+k
+)
+(23)
+Finally, the overall future predicted values ˆyt+k are obtained by combining the ARIMA 
+model predictions with the predicted residuals:
+	
+ˆyt+k = ˆyARIMA
+t+k
++ ˆεt+k
+(24)
+This integrated framework synergistically combines the linear forecasting capabilities of 
+the ARIMA model with the machine learning models’ ability to capture complex nonlinear 
+relationships, resulting in a more robust and accurate prediction mechanism.
+Algorithm 2  Hybrid model for time series prediction
+3  Results and discussion
+3.1  Performance evaluation
+Mean Absolute Error (MAE), Root Mean Square Error (RMSE) and R-square are com­
+monly used evaluation metrics in the field of statistics and machine learning to assess the 
+performance of predictive models. RMSE penalizes larger errors more than MAE due to 
+the squaring operation, making it sensitive to outliers. Like MAE, a lower RMSE value 
+indicates better prediction accuracy, with zero representing a perfect prediction. R-squared, 
+or coefficient of determination, assesses how well the independent variables explain the 
+1 3
+40 
+Page 14 of 21
+
+--- Sayfa 15 ---
+Natural Hazards (2026) 122:40
+variability in the dependent variable in a regression model. It ranges from 0 to 1, with higher 
+values indicating a better fit of the model to the data. The root mean square error (RMSE), 
+the mean absolute error (MAE) and R-square are computed for the dataset as follows:
+	
+MAE = 1
+n
+n
+∑
+i=1
+|ei|
+
+(25)
+	
+RMSE =
+
+
+
+ 1
+n
+n
+
+i=1
+e2
+i
+
+(26)
+	
+R2 = 1 −SSres
+SStot
+
+(27)
+In addition to these error-based metrics, the Akaike Information Criterion (AIC) is used to 
+compare the relative quality of statistical models for a given dataset. AIC balances the trade-
+off between model goodness-of-fit and complexity, penalizing models with more parameters 
+to avoid overfitting. It is defined as:
+	
+AIC = 2k −2 ln(L)
+(28)
+where k is the number of parameters in the model and L is the maximum value of the 
+likelihood function. A lower AIC value indicates a better model in terms of both fit and 
+parsimony.
+To assess the statistical significance of differences between models, we further compute 
+the Delta AIC (∆i) and Akaike weights (wi). The Delta AIC is calculated as:
+	
+∆i = AICi −min(AIC)
+(29)
+Models with ∆i ≤2 are generally considered to have substantial support (Burnham and 
+Anderson 2002), while those with ∆i > 10 are regarded as having essentially no support.
+The Akaike weight wi provides a normalized measure of the relative likelihood of each 
+model being the best among the set, defined as:
+	
+wi =
+e−0.5·∆i
+∑R
+r=1 e−0.5·∆r 
+(30)
+where R is the total number of candidate models. These weights sum to one and allow 
+probabilistic interpretation of model performance. A detailed comparison of candidate mod­
+els based on these criteria is presented in Sect 3.2.
+3.2  Multi-step forecasting evaluation
+After taking the first-order difference, as shown in the Fig. 8, the ACF rapidly decays with 
+increasing lag order, eventually approaching zero. The PACF typically truncates abruptly 
+1 3
+Page 15 of 21 
+40
+
+--- Sayfa 16 ---
+Natural Hazards (2026) 122:40
+after the lag order exceeds the truncation point of the sequence, with most lag values having 
+zero partial autocorrelation coefficients. Therefore, the model should be an ARIMA model.
+Multi-step prediction extends the forecast horizon to the next 12 months in this study. 
+Table 3 presents a comparison of candidate ARIMA models based on the Akaike Informa­
+tion Criterion (AIC), Delta AIC (∆i), and Akaike weights. The ARIMA(0,1,3) model yields 
+the lowest AIC value and the highest weight, suggesting it is the most supported model. Sev­
+eral other models, such as ARIMA(2,1,1) and ARIMA(1,1,2), also have small ∆i values, 
+indicating competitive performance and model plausibility.
+Akaike weights quantify the relative likelihood of each model being the best among the 
+set, given the data and candidate models. In this case, the ARIMA (0,1,3) model has an 
+Akaike weight of 0.173, meaning it holds approximately 17.3% of the total model weight. 
+While this is the highest among the candidates, it also indicates some model uncertainty, as 
+no single model dominates with overwhelming support.
+Model (p,d,q)
+AIC
+∆i
+wi
+Akaike weight
+(0,1,3)
+4107.626
+0.000
+1.000
+0.173
+(2,1,1)
+4107.976
+0.350
+0.840
+0.145
+(1,1,2)
+4109.027
+1.401
+0.496
+0.086
+(1,1,3)
+4109.480
+1.854
+0.396
+0.069
+(3,1,1)
+4109.598
+1.972
+0.373
+0.065
+(2,1,2)
+4109.623
+1.997
+0.368
+0.064
+(1,0,3)
+4109.647
+2.021
+0.364
+0.063
+(1,1,1)
+4109.768
+2.142
+0.343
+0.059
+(3,0,1)
+4110.044
+2.417
+0.299
+0.052
+(2,0,2)
+4111.110
+3.484
+0.175
+0.030
+Table 3  Model comparison based 
+on AIC, Delta AIC, and Akaike 
+weights
+ 
+5
+0
+5
+1920
+1940
+1960
+1980
+2000
+2020
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0
+12
+24
+36
+Lag
+ACF
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0
+12
+24
+36
+Lag
+PACF
+Fig. 8  Autocorrelation and partial autocorrelation analysis
+ 
+1 3
+40 
+Page 16 of 21
+
+--- Sayfa 17 ---
+Natural Hazards (2026) 122:40
+Based on the model comparison presented in Table 3 (derived from Akaike Information 
+Criterion analysis), six ARIMA models with ∆AIC < 2 were selected for further evalu­
+ation, namely: ARIMA(0,1,3), ARIMA(2,1,1), ARIMA(1,1,2), ARIMA(1,1,3), ARIMA 
+(3,1,1), and ARIMA (2,1,2). These models demonstrate comparable model fitting quality 
+and are statistically acceptable alternatives.
+In terms of coefficient significance (Table 4), ARIMA(2,1,2) presents two non-significant 
+parameters, which weakens its explanatory power. Both ARIMA(2,1,1) and ARIMA(0,1,3) 
+show mostly significant coefficients, implying stronger model reliability.
+As shown in Table 5, the forecast performance across the six selected ARIMA mod­
+els is nearly identical, with RMSE values consistently at 1.14 and MAE ranging narrowly 
+between 0.83 and 0.84. Notably, ARIMA(2,1,1), ARIMA(2,1,2), and ARIMA(0,1,3) 
+achieve the lowest TIC value (0.50), indicating slightly better predictive accuracy relative 
+to the other models.
+Taken together, while the predictive performance is comparable across all six models, 
+ARIMA(2,1,1) and ARIMA(0,1,3) stand out as the most favorable candidates due to their 
+Table 5  Forecast error evaluation and Ljung–Box test results for ARIMA models
+Model
+RMSE
+MAE
+TIC
+Q-Stat
+Lag
+p-value
+ARIMA_211
+1.14
+0.83
+0.50
+6.23
+12
+0.90
+ARIMA_212
+1.14
+0.83
+0.50
+5.87
+12
+0.92
+ARIMA_112
+1.14
+0.84
+0.50
+6.99
+12
+0.86
+ARIMA_311
+1.14
+0.83
+0.51
+5.88
+12
+0.92
+ARIMA_013
+1.14
+0.83
+0.50
+5.93
+12
+0.92
+ARIMA_113
+1.14
+0.84
+0.51
+5.74
+12
+0.93
+Model
+Coefficient Estimate Std. error
+z-value
+p-value
+ARIMA_013
+ma1
+−0.88
+0.03
+−33.00
+0.00
+ARIMA_013
+ma2
+−0.03
+0.04
+−0.89
+0.37
+ARIMA_013
+ma3
+−0.06
+0.03
+−2.36
+0.02
+ARIMA_211
+ar1
+0.10
+0.03
+3.52
+0.00
+ARIMA_211
+ar2
+0.05
+0.03
+1.95
+0.05
+ARIMA_211
+ma1
+−0.98
+0.01
+−176.43
+0.00
+ARIMA_112
+ar1
+0.45
+0.19
+2.40
+0.02
+ARIMA_112
+ma1
+−1.33
+0.19
+−6.85
+0.00
+ARIMA_112
+ma2
+0.34
+0.19
+1.79
+0.07
+ARIMA_113
+ar1
+−0.15
+0.34
+−0.44
+0.66
+ARIMA_113
+ma1
+−0.73
+0.34
+−2.14
+0.03
+ARIMA_113
+ma2
+−0.17
+0.31
+−0.54
+0.59
+ARIMA_113
+ma3
+−0.08
+0.04
+−1.99
+0.05
+ARIMA_311
+ar1
+0.10
+0.03
+3.52
+0.00
+ARIMA_311
+ar2
+0.05
+0.03
+1.98
+0.05
+ARIMA_311
+ar3
+−0.02
+0.03
+−0.62
+0.54
+ARIMA_311
+ma1
+−0.98
+0.01
+−168.18
+0.00
+ARIMA_212
+ar1
+−0.16
+0.36
+−0.44
+0.66
+ARIMA_212
+ar2
+0.08
+0.04
+1.94
+0.05
+ARIMA_212
+ma1
+−0.73
+0.36
+−2.02
+0.04
+ARIMA_212
+ma2
+−0.25
+0.35
+−0.71
+0.48
+Table 4  Coefficient significance 
+tests for ARIMA models
+ 
+1 3
+Page 17 of 21 
+40
+
+--- Sayfa 18 ---
+Natural Hazards (2026) 122:40
+Table 6  Results of hybrid ARIMA and machine learning over test dataset
+ARIMA-SVR
+ARIMA-random forest
+ARIMA-XGBOOST
+ARIMA-LSTM
+RMSE
+0.30
+0.15
+0.15
+1.14
+MAE
+0.25
+0.14
+0.14
+0.83
+R-squared
+0.94
+0.98
+0.98
+0.08
+Fig. 10  Performance comparison of traditional machine learning models in hybrid forecasting with 
+ARIMA
+ 
+Fig. 9  Residual autocorrelation and histogram plots for ARIMA (0,1,3) and ARIMA (2,1,1) models
+ 
+1 3
+40 
+Page 18 of 21
+
+--- Sayfa 19 ---
+Natural Hazards (2026) 122:40
+stronger coefficient significance, lower information criterion values, and superior diag­
+nostic results. Between the two, ARIMA(0,1,3) offers a slightly more parsimonious struc­
+ture with fewer estimated parameters. Given the comparable performance of both models, 
+ARIMA(0,1,3) was ultimately selected for this study due to its simplicity and satisfactory 
+overall adequacy.Building on this baseline, hybrid models are further explored to enhance 
+forecasting performance by integrating ARIMA with machine learning techniques.
+To further enhance forecasting performance beyond traditional ARIMA models, Table 6 
+presents a comparative analysis of hybrid forecasting approaches, including ARIMA-SVR, 
+ARIMA-Random Forest, ARIMA-XGBOOST, and ARIMA-LSTM, reveals insightful per­
+formance metrics crucial for discussion. Notably, ARIMA-Random Forest and ARIMA-
+XGBOOST demonstrate superior predictive accuracy, as evidenced by their lower Root 
+Mean Square Error (RMSE) and Mean Absolute Error (MAE) values compared to ARIMA-
+SVR and ARIMA-LSTM. Specifically, ARIMA-Random Forest and ARIMA-XGBOOST 
+achieve RMSE and MAE values of 0.15 and 0.14, respectively, indicating their effective­
+ness in minimizing forecasting errors.
+Furthermore, the high R-squared values of 0.98 for both ARIMA-Random Forest and 
+ARIMA-XGBOOST affirm their robustness in capturing the variance in the data, highlight­
+ing their superior performance in predicting earthquake frequency. Conversely, ARIMA-
+SVR and ARIMA-LSTM exhibit comparatively higher RMSE and MAE values, implying 
+less precise predictions. However, it’s worth noting that R-squared values are unavailable 
+for ARIMA-LSTM, limiting a comprehensive comparison. Overall, the findings underscore 
+the efficacy of ensemble methods such as Random Forest and XGBOOST in earthquake 
+frequency forecasting, offering promising avenues for future research and practical applica­
+tions in disaster management and mitigation strategies (Fig 9).
+Figure 10 depicts the predictive performance of traditional machine learning models 
+SVR, RF, and XGBoost in conjunction with ARIMA. It is evident that the forecasting accu­
+racy of ARIMA-RF and ARIMA-XGBoost, based on tree regression and ensemble meth­
+ods, closely matches the true values of the data.
+4  Conclusion
+In our multi-step forecasting, ARIMA-RF and ARIMA-XGBoost hybrid models outper­
+form others significantly. Incorporating residuals enhances seismic frequency time series 
+analysis, offering insights into earthquake prediction models. Surprisingly, LSTM model 
+performance lags behind integrated models, challenging assumptions about deep learn­
+ing superiority. Future research should explore models incorporating residual features for 
+enhanced interpretability and predictive accuracy. Critically assessing model strengths and 
+limitations is vital. Our study’s limitations include a small sample size, prompting inves­
+tigation into longer and more accurate prediction models. Leveraging these insights can 
+improve hybrid models and multi-step regression prediction accuracy.
+Acknowledgements  I would also like to thank the anonymous reviewers for their valuable comments and 
+suggestions, which helped improve the quality of this paper.
+Author contributions  The author, Wenwen Hou, is solely responsible for the design, execution, and writing 
+of this research paper.
+1 3
+Page 19 of 21 
+40
+
+--- Sayfa 20 ---
+Natural Hazards (2026) 122:40
+Funding  Open Access Funding provided by Universitat Autonoma de Barcelona. This research did not 
+receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+Declarations
+Conflict of interest  The author declares that there are no competing financial or non-financial interests 
+directly or indirectly related to the work submitted for publication. All research was conducted independently 
+and without any Conflict of interest.
+Ethical approval  This study did not involve any experiments with human participants or animals, and thus 
+ethical approval was not required.
+Open Access  This article is licensed under a Creative Commons Attribution 4.0 International License, 
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as 
+you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons 
+licence, and indicate if changes were made. The images or other third party material in this article are 
+included in the article’s Creative Commons licence, unless indicated otherwise in a credit line to the material. 
+If material is not included in the article’s Creative Commons licence and your intended use is not permitted 
+by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the 
+copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.
+References
+Aljarah Ibrahim et al (2018) Simultaneous feature selection and support vector machine optimization using 
+the grasshopper optimization algorithm. Cognitive Comput 10(3):478–495
+Al Banna MH, Taher KA, Kaiser MS, Mahmud M, Rahman MS, Hosen AS, Cho GH (2020) Application 
+of artificial intelligence in predicting earthquakes: state-of-the-art and future challenges. IEEE Access 
+8:192880–192923
+Amei A, Fu W, Ho C-H (2012) Time series analysis for predicting the occurrences of large scale earthquakes. 
+Int J App Sci Tech 2(7):75. 
+Arkan E, Işik E, Harirchian E, Topçubaşi M, Avcil F (2023) Architectural characteristics and determination 
+seismic risk priorities of traditional masonry structures: a case study for Bitlis (Eastern Türkiye). Build­
+ings 13(4):1042
+Asim KM, Martínez-Álvarez F, Basit A, Iqbal T (2017) Earthquake magnitude prediction in Hindukush 
+region using machine learning techniques. Natural Hazards 85:471–486
+Astafyeva E (2019) Ionospheric detection of natural hazards. Rev Geophysics 57(4):1265–1288
+Ambrosino F, Thinová L, Briestenský M, Šebela S, Sabbarese C (2020) Detecting time series anomalies 
+using hybrid methods applied to Radon signals recorded in caves for possible correlation with earth­
+quakes. Acta Geodaetica et Geophysica 55:405–420
+Burnham KP, Anderson DR (eds) (2002) Model selection and multimodel inference: a practical information-
+theoretic approach. Springer, New York
+Bardossy A, Duckstein L (2022) Fuzzy rule-based modeling with applications to geophysical, biological, and 
+engineering systems. CRC Press, London
+Chen T, Guestrin C (2016) Xgboost: A scalable tree boosting system. In: Proceedings of the 22nd Acm Sig­
+kdd International Conference on Knowledge Discovery and Data Mining, pp. 785–794.
+Carlson JM, Langer JS, Shaw BE (1994) Dynamics of earthquake faults. Rev Modern Physics 66(2):657
+Fattah J, Ezzine L, Aman Z, El Moussami H, Lachhab A (2018) Forecasting of demand using ARIMA model. 
+Int J Engi Bus Manage 10:1847979018808673
+Gao Y, Mosalam KM, Chen Y, Wang W, Chen Y (2021) Auto-regressive integrated moving-average machine 
+learning for damage identification of steel frames. Appl Sci 11(13):6084
+Ghosh R, Sinha N, Biswas SK (2019) Automated eye blink artefact removal from EEG using support vector 
+machine and autoencoder. IET Signal Process 13(2):141–148
+Gulia L, Wiemer S (2019) Real-time discrimination of earthquake foreshocks and aftershocks. Nature 
+574(7777):193–199
+Júnior DSdOS, Oliveira JF, Mattos Neto PS (2019) An intelligent hybridization of ARIMA with machine 
+learning models for time series forecasting. Knowl-Based Syst 175:72–86
+1 3
+40 
+Page 20 of 21
+
+--- Sayfa 21 ---
+Natural Hazards (2026) 122:40
+Kvas A, Behzadpour S, Ellmer M, Klinger B, Strasser S, Zehentner N, Mayer-Gürr T (2019) ITSG-
+Grace2018: Overview and evaluation of a new GRACE-only gravity field time series. J Geophysi Res: 
+Solid Earth 124(8):9332–9344
+Kijko A, Smit A (2017) Estimation of the frequency-magnitude Gutenberg-Richter b-value without making 
+assumptions on levels of completeness. Seismol Res Lett 88(2A):311–318
+Kong Q, Trugman DT, Ross ZE, Bianco MJ, Meade BJ, Gerstoft P (2019) Machine learning in seismology: 
+Turning data into insights. Seismol Res Lett 90(1):3–14
+Linville L, Pankow K, Draelos T (2019) Deep learning models augment analyst decisions for event discrimi­
+nation. Geophys Res Lett 46(7):3643–3651
+Li S, Xu W, Li Z (2022) Review of the SBAS InSAR Time-series algorithms, applications, and challenges. 
+Geodesy Geodyn 13(2):114–126
+Musarat MA, Alaloul WS, Rabbani MBA, Ali M, Altaf M, Fediuk R, Vatin N, Klyuev S, Bukhari H, Sadiq A 
+(2021) Kabul river flow prediction using automated ARIMA forecasting: A machine learning approach. 
+Sustainability 13(19):10720
+Ma T, Antoniou C, Toledo T (2020) Hybrid machine learning algorithm and statistical time series model for 
+network-wide traffic forecast. Trans Res Part C: Emerg Tech 111:352–372
+Mignan A, Broccardo M (2020) Neural network applications in earthquake prediction (1994–2019): Meta-
+analytic and statistical insights on their limitations. Seismol Res Lett 91(4):2330–2342
+McGuire RK (2008) Probabilistic seismic hazard analysis: Early history. Earthquake Engin & Struct Dyn 
+37(3):329–338
+Mousavi SM, Ellsworth WL, Zhu W, Chuang LY, Beroza GC (2020) Earthquake transformer–an atten­
+tive deep-learning model for simultaneous earthquake detection and phase picking. Nature Commun 
+11(1):3952
+Mandrikova O, Fetisova N, Polozov Y (2021) Hybrid model for time series of complex structure with 
+ARIMA components. Mathematics 9(10):1122
+Meng H, Geng M, Han T (2023) Long short-term memory network with Bayesian optimization for health 
+prognostics of lithium-ion batteries based on partial incremental capacity analysis. Reliab Engin & Syst 
+Safety 236:109288
+Meier M-A, Ross ZE, Ramachandran A, Balakrishna A, Nair S, Kundzicz P, Li Z, Andrews J, Hauksson E, 
+Yue Y (2019) Reliable real-time seismic signal/noise discrimination with machine learning. J Geophys 
+Res: Solid Earth 124(1):788–800
+Nguyen XH (2020) Combining statistical machine learning models with ARIMA for water level forecasting: 
+The case of the Red river. Adv Water Resour 142:103656
+Nguyen A, Kodikara KTL, Chan TH, Thambiratnam DP (2019) Deterioration assessment of buildings using 
+an improved hybrid model updating approach and long-term health monitoring data. Struct health monit 
+18(1):5–19
+Nepal B, Yamaha M, Yokoe A, Yamaji T (2020) Electricity load forecasting using clustering and ARIMA 
+model for energy management in buildings. Japan Archit Rev 3(1):62–76
+Probabilities WGoCE, (1995) Seismic hazards in southern California: probable earthquakes, 1994 to 2024. 
+Bulletin Seismol Soc America 85(2):379–439
+Reynen A, Audet P (2017) Supervised machine learning on a network scale: Application to seismic event 
+classification and detection. Geophys J Int 210(3):1394–1409
+Rigatti SJ (2017) Random forest. Journal of Insurance Medicine 47(1):31–39. ISBN: 0743-6661 Publisher: 
+American Academy of Insurance Medicine 1700 Magnavox Way. Fort Wayne, IN, p 46804
+Sahoo BB, Jha R, Singh A, Kumar D (2019) Long short-term memory (LSTM) recurrent neural network for 
+low-flow hydrological time series forecasting. Acta Geophysica 67(5):1471–1481
+Staudemeyer RC, Morris ER (2019) Understanding LSTM–a tutorial into long short-term memory recurrent 
+neural networks. arXiv arXiv:1909.09586
+Wang Z (2011) Seismic hazard assessment: issues and alternatives. Pure Appl Geophys 168:11–25
+Wilson J, Hutter F, Deisenroth M (2018) Maximizing acquisition functions for Bayesian optimization. 
+Advances in neural information processing systems 31
+Wrona T, Pan I, Gawthorpe RL, Fossen H (2018) Seismic facies analysis using machine learning. Geophysics 
+83(5):83–95
+Zhang M (2018) Time series: Autoregressive models ar, ma, arma, arima. University of Pittsburgh
+Zhang R, Liu Y, Sun H (2020) Physics-guided convolutional neural network (phycnn) for data-driven seismic 
+response modeling. Eng Struct 215:110704
+Publisher's Note  Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+1 3
+Page 21 of 21 
+40

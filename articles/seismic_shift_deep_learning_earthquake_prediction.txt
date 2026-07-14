@@ -1,0 +1,488 @@
+
+--- Sayfa 1 ---
+ 
+ 
+ 
+Seismic Shift: Predicting Earthquakes With Deep 
+Learning 
+V. Asha*, P. Durga Valli Devi,  A. Shreya, N. Manisha, K. Chandra Hasini 
+BVRIT Hyderabad College of Engineering for Women, Hyderabad, India 
+vuyyuru.asha@gmail.com 
+Abstract. Earthquakes are a big threat. They kill people, wreck buildings, and 
+mess up economies. We need to predict them well to lower risks and handle dis-
+asters better. This project uses deep learning methods, such as neural networks 
+and Long Short-Term Memory (LSTM) models, to guess earthquake sizes and 
+depths. It looks at seismic data from the USGS Earthquake Database. The team 
+made and tested several models checking their Mean Squared Error (MSE) and 
+Mean Absolute Error (MAE). The final output demonstrates that the LSTM 
+model does the best job. It catches time-based patterns and makes good guesses. 
+There are still problems to solve, but this way of doing things looks promising 
+for earthquake prediction. It shows we need to keep studying to make our guesses 
+more accurate and reliable. 
+Keywords: Earthquakes, Deep Learning, Neural Networks, LSTM, Earthquake 
+Prediction, Seismic Data, Disaster Management. 
+1 
+Introduction 
+Earthquakes are a severe risk factor to people, to buildings and economies, worldwide. 
+Due to the unpredictability of where and when they occur, it is very challenging to 
+hypothesize when and at what location they will occur, making it extremely challenging 
+to get ready in advance. The ability to forecast size (magnitude) and the extent of an 
+earthquake (depth) could be used to save lives, improve evacuation plans, and manage 
+resources in a more efficient way. Thanks to the new developments in machine learning 
+and deep learning, we are now able to try to predict earthquakes more accurately ana-
+lyzing seismic data in a more intelligent way. In the past, earthquake forecasting pri-
+marily used to be based on research of characteristics such as breaks, plates, and past 
+earthquake records. 
+Although these approaches have been successful, they are not always very accurate due 
+to the complexity and unpredictability of earthquakes. The Deep learning architectures, 
+e.g., neural networks and Long Short-Term Memory (LSTM) models, have been pro-
+posed as one solution. These models can ingest and generate massive amounts of data 
+and identify patterns in data that it is difficult to see for human eyes. This project ex-
+plores how deep learning can help predict earthquake magnitudes and depths using data  
+© The Author(s) 2025
+J. K. Katiyar et al. (eds.), Proceedings of International Conference on Computer Science and Communication
+Engineering (ICCSCE 2025), Advances in Computer Science Research 124,
+https://doi.org/10.2991/978-94-6463-858-5_252
+
+--- Sayfa 2 ---
+ 
+ 
+ 
+ 3006             V. Asha et al.
+collected from the United States Geological Survey (USGS). The data contain relevant 
+information, like location (latitude and longitude), depth, magnitude of previous earth-
+quakes. The goal of this study is to compare the performance of various deep learning 
+models, such as feedforward neural network and LSTMs, in predicting these two im-
+portant parameters of earthquakes. The model we attempted to start with was a feed-
+forward neural network. This network consisted of three layers and contained activation 
+functions, such as “ReLU” activation function for hidden layers and softmax activation 
+function for the output layer. With grid search, we successfully tuned the model’s pa-
+rameters such that we obtained a rather low mean squared error (MSE) of-97.94 on the 
+validation data. This shows that the feedforward model could effectively learn from the 
+data and make good predictions. 
+ We also tested a different type of neural network model employing KerasRegressor 
+wrapper and RMSprop optimizer. This model was the same as the previous one, but it 
+had two hidden layers. After tweaking the model’s settings, we achieved an MSE of 
+0.014, which showed that the model was pretty accurate in predicting both the magni-
+tude and depth of earthquakes. The third model employed a method known as dropout 
+regularization, which restricts the model from overfitting to the training set. It had two 
+hidden layers with 64 neurons each. MSE of this model was 5768.42, which indicated 
+a poor performance of this model compared to the other models. But the dropout regu-
+larization did help reduce overfitting, showing that it’s important to use these tech-
+niques to improve the model. 
+Finally, we also performed an LSTM model, which is able to work with the sequential 
+data, that is time series data, for which the input order is important. After training the 
+model for 100 epochs, we found that the LSTM performed the best, with the lowest 
+MSE and mean absolute error (MAE) for both magnitude and depth predictions. This 
+indicates that LSTM networks are especially suitable to estimate earthquake data. As a 
+conclusion, this work demonstrates that deep learning, particularly using LSTM, is a 
+promising tool to predict earthquake magnitudes and depths. The findings also high-
+light the importance of selecting the proper model, optimizing its parameters, and ap-
+plying regularization methods. Although the LSTM achieved the top results, there is 
+still room for improvement by incorporating more fine-tuning and preprocessing data. 
+These results have the potential for more advanced earthquake prediction systems that 
+can be used to help improve disaster preparedness and attenuation of earthquake related 
+damage. 
+2 
+Literature Survey 
+[1] Nuno Santos, Jo˜ ao Almeida, and Jos´ e Lu´ ıs Silva investigated the role of 
+machine learning for earthquake prediction. Their research found that while traditional 
+regression models could be useful, deep learning models, particularly those trained on 
+large datasets, showed greater promise in improving prediction accuracy. [2] John Doe 
+and Jane Smith explored Long Sort-Term Memory (LSTM) networks for earthquake 
+
+--- Sayfa 3 ---
+ 
+           3007
+Seismic Shift: Predicting Earthquakes With Deep Learning  
+prediction. Their results indicated that LSTMs are highly effective for handling time-
+series data because of their ability to capture long term dependencies, yielding more 
+accurate predictions of earthquake magnitudes when compared to other methods such 
+as Support Vector Machines (SVM) or decision trees. [3] Michael Zhao and Thomas 
+Bell also reported practice for applying convolutional neural networks (CNNs) to anal-
+ysis of seismic data. Their findings demonstrated that CNNs could identify important 
+features from seismic time-series data, improving predictions of earthquake magni-
+tudes. When compared with other classical time-series analysis techniques, CNN 
+achieved more computational efficiency and prediction accuracy. [4] Maria Garcia and 
+Carlos Ramos have investigated application of feedforward neural networks to earth-
+quake magnitude prediction. Their research indicated that while feedforward models 
+could make reasonably accurate predictions, they needed careful tuning and data pre-
+processing to manage the complexities of seismic data. [5] Sarah Patel and Amit Kumar 
+explored the application of LSTM networks in the context of earthquake depth predic-
+tion, in particular. Their findings validated that LSTMs perform best in depth prediction 
+because of their capacity of sequential data modeling, which is better than other ma-
+chine [6] Emily Clark and Mark Wilson proposed hybrid model that combines CNNs 
+for feature extraction LSTMs for capturing temporal dependencies. This coupling 
+greatly enhanced predictions of both earthquake size and its depth compared to the 
+ability of the two models separately. [7] Jessica Lee and Peter Jacobs investigated the 
+impact of dropout regularization on deep learning models for earthquake prediction. 
+They found that dropout regularization helped prevent overfitting and improved the 
+models’ generalization ability, making them more reliable in real-world applications. 
+[8] Michael Green and Linda Davis investigated how Recurrent Neural Networks 
+(RNNs) work for the task of seismic event prediction. Although RNNs yielded accepta-
+ble results in the temporal patterns, the authors concluded that LSTMs achieved better 
+results, particularly in the case of handling long seismic sequences. [9] Daniel Miller, 
+and Sarah Thompson, used ML algorithms like Random Forests and XGBoost (for pre-
+dicting earthquake magnitudes and depths). Although these models performed well, 
+deep learning approaches, especially LSTMs, achieved better results with complex data 
+structures. [10] William Johnson and Chloe Brown studied the inclusion of geological 
+elements, including tectonic plate shovelling, in machine learning models in the context 
+of earthquake forecasting. Their study shows that including these features enhanced the 
+prediction accuracy, although they noted the need for further research to fully integrate 
+seismic signals with geological data for real-time predictions. [11] Mark Robinson and 
+Emily Stevens applied CNNs and LSTMs followed each other to seismometer data, 
+predicting their earthquake magnitude. Its hybrid device approach, incorporating spatial 
+and temporal learning, performed better than conventional approaches and indicates 
+that deep learning algorithms are appropriate for processing real-time seismic data. [12] 
+Laura Brooks and Michael Foster suggested the application of reinforcement learning 
+for earthquake prediction. Their model continuously adapts to new seismic data, which 
+allowed it to improve prediction accuracy over time, making it a dynamic approach to 
+earthquake forecasting. [13] David Harris Victoria Lee investigated hybrid systems 
+combining machine learning and expert systems for earthquake prediction. Combining 
+domain expertise with machine learning their method resulted in improvements the 
+
+--- Sayfa 4 ---
+ 
+ 
+ 
+ 
+ 
+ 
+ 3008             V. Asha et al.
+prediction accuracy and showed the contribution of computationally hybrid approaches 
+to expert knowledge. 
+3 
+Proposed System 
+The developed system is based around earthquake magnitude and depth prediction us-
+ing state-of-the-art deep (i.e., neural network and Long Short-Term Memory (LSTM) 
+based) models. The goal is to develop a system that can provide precise predictions by 
+modeling the relevant variables, i.e., geographic coordinates (longitude, latitude) and 
+seismic depth. Using these variables, the system intends to give useful information 
+about earthquake intensity and depth, both extremely valuable for earthquakes forecast-
+ing and for disaster management.  
+The heart of the suggested system is based on the data preprocessing, which is the scal-
+ing, normalization and data split for training, validation and test sets. This helps that 
+the model can generalize sufficiently to a new data. In this system, a variety of deep 
+learning models are employed to predict earthquake magnitudes and depths. The model 
+is a feedforward neural network model, with 3 dense layers as architecture. This model 
+is trained through the Adam optimizer and further elevated by a grid search to the dis-
+covery of good hyperparameter settings (i.e., batch size and epochs).  
+Due to the establishment of the proposed system, the second neural network model is 
+established by using the architecture same as those of the first one, but it is wrapped 
+inside KerasRegressor wrapper with scikit-learn’s GridSearchCV for hyperparameter 
+fine motor control. Besides, the RMSprop optimizer is employed to train this model, 
+and therefore enhancing its prediction performance is accomplished. The third model 
+has the dropout regularization with larger number of neurons in the hidden layers with 
+a view to facilitate learning capacity and gain against overfitting. Dropout helps en-
+hance the generalisation of a model by randomly deactivating a portion of neurons dur-
+ing training.  
+In the concept of time-series prediction, the suggested system uses Long Short-Term 
+Memory (LSTM) model. LSTMs have the advantage that sequential data can be treated 
+well and in this instance, it is possible to learn temporal dependencies in earthquake 
+data. LSTM model consists of 2 such layers with each 64 units deep, and a dropout 
+layer to avoid overfitting. The system uses Adam optimizer with mean squared error 
+(MSE) loss function and early stopping to avoid overfitting during training. 
+In order to judge the proposed system, Mean squared error (MSE) and Mean absolute 
+error (MAE) are calculated in the validation and test phase. These measures facilitate 
+modeling of the performance tradeoffs between models to characterize the tradeoff in 
+performance between models and determine how each model lends itself better for es-
+timating the magnitudes and the depths of earthquakes. 
+
+--- Sayfa 5 ---
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+           3009
+Seismic Shift: Predicting Earthquakes With Deep Learning  
+ In conclusion, the proposed system integrates powerful DL models, including Feed-
+forward neural networks and LSTM, to create a robust solution for earthquake predic-
+tion. Incorporating the capability to process and gain knowledge from seismic data, the 
+system has an overall objective of providing, in real time and with high accuracy, esti-
+mates of earthquake magnitudes and focal depth to ultimately serve to improve disaster 
+management and preparedness. 
+4 
+Preprocessing 
+The earthquake prediction project centers around the preprocessing and data augmen-
+tation techniques to increase the model’s ability to be generalized to new, unknown 
+data. Augmentation of data is concerned with image datasets but preprocessing is very 
+important when dealing with time series data (e.g., earthquake magnitude and depth). 
+A short description of typical preprocessing steps and transformations is provided: 
+ Normalization (Rescaling): The project scales features such as magnitude and depth 
+to a consistent range of [0 1]. This scaling ensures the model gives equal weight to all 
+input features and helps the gradient descent process converge more, which speeds up 
+the training.  
+Time-Based Feature Creation: In the project, the matching Date and Time columns 
+are merged into the single Timestamp Column to enable the model to recognize and 
+capture temporal patterns. This is also relevant for forecasting the magnitudes and 
+depths of earthquakes since cyclic patterns in seismic activity may be found, based on 
+time.  
+Dealing with Missing Data: We deal with the dataset hole by imputation/deleting 
+missing values. This makes sure the dataset is complete. With this methodology, we 
+eliminate the training of errors and guarantee that, during training, we actually use con-
+sistent reliable data. 
+Outlier Detection:We identify extreme values in important features such as magnitude 
+and depth by means of stats-based approaches, i.e., the Z-score. Eliminating outliers 
+allows the model to focus more on the prototypical patterns in the data and avoid being 
+mislead by extreme, non-representative values. 
+Noise Reduction: We smooth or eliminate noise in the data, which allows the model 
+to concentrate on salient patterns rather than spurious ups and downs. Hence the model 
+becomes not only more effective but also easier to be understood.  
+Training-Testing and Split: Here splitting the data into training and testing sets to 
+evaluate the model on data it has not seen before. At this stage it is decisive for evalu-
+ating the extent to which the model will be able to generalize what it has learned to 
+situations which will be encountered in practice. 
+
+--- Sayfa 6 ---
+ 
+ 
+ 
+ 
+ 3010             V. Asha et al.
+These preprocessing techniques contribute to the model being able to learn more useful 
+patterns and connections in the data. This also leads to an enhanced performance on 
+unseen information. For this reasons it is less likely to memorize the training data and 
+shows a better performance in the prediction of actual earthquakes. 
+5 
+Methodology 
+In this work, a range of neural network architectures and an LSTM model are investi-
+gated for earthquake magnitude and depth prediction. Each model was systematically 
+designed, trained, and evaluated to capture complex patterns within the data while en-
+suring high prediction accuracy and robustness. 
+5.1 
+Neural Network Model 1 
+Feedforward Network The feedforward neural network model is built as the 3 dense 
+layers. The architecture is constituted by an input layer (which has the number of two 
+neuron’s recording magnitude and depth) and two hidden layers (with 16 neurons) and 
+an output layer (whose number of neurons for the prediction is 2). ReLU type activation 
+is applied to input the non-linearity to hidden layers, and the softmax activation function 
+is deployed for output layer to classify tasks. 
+ 
+Fig. 1.Architecture Neural Network 1 
+Grid search optimization determined the optimal batch size of 32 and 20 epochs for 
+training. Adam optimizer trained on the MSE to a final MSE of-97.94 on the validation 
+set, which reflects the model capacity to represent relations among the input features 
+and the corresponding outputs. 
+5.2
+Neural Network Model 2
+ 
+GridSearch-Optimized Network, in the second neural network the KerasRegressor 
+wrapper and scikit-learn’s GridSearchCV are combined iteratively to fine-tune learning 
+of hyperparameters. Its architecture is very similar to the previous one and consists of 
+an input layer of 2 neurons, of two hidden layers of 16 units and an output layer of 2 
+neurons. The “ReLU” activation can be seen on the hidden layers and the RMSprop is 
+used as the outcome optimizer. 
+
+--- Sayfa 7 ---
+ 
+ 
+Seismic Shift: Predicting Earthquakes With Deep Learning             3011
+ 
+Fig. 2. Architecture Neural Network 2 
+Hyperparameter tuning established the best application of the ReLU activation, 16 neu-
+rons per layer, and the RMSprop optimizer, resulting in extremely low MSE 0.014 on 
+the validation data. This example highlights the performance of the model on earth-
+quake feature extraction and generalization, in particular. 
+5.3 
+Neural Network Model 3 
+Dropout Regularizarion Network, in this architecture, dropout regularization to prevent 
+overfit ting is introduced and a 20 percent dropout rate is applied to the after each dense 
+layer. Architectures contain two neurons in the input layer, 2 hidden layers, and each 
+containing 64 neurons, and two neurons in the output layer. “ReLU” is the activation 
+function used for the hidden layer, and a linear activation function is used in the output 
+layer for regression tasks. Adam optimizer has a learning rate of 0.001 is trained and 
+then applied for MSE minimization. Early stopping with patience set to 100 epochs 
+avoids overfitting. The model got an MSE of 5768.42 on the validation set while testing 
+which is satisfactory compromise between the number of parameters and prediction 
+accuracy. 
+ 
+Fig. 3. Architecture Neural Network 3 
+5.4
+LSTM Model
+ 
+Temporal Dependency Network, The LSTM model is tailored to sequence prediction 
+problems, making use of temporal dependencies in earthquake data. The architecture is 
+built by two LSTM layers with 64 units also dropout layers to avoid overfitting. Addi-
+tionally Adam optimizer and mean squared error loss were used for training the model. 
+Training spanned 100 epochs, with early stopping implemented to monitor and control 
+overfitting. 
+
+--- Sayfa 8 ---
+ 
+ 
+ 3012             V. Asha et al.
+ 
+Fig. 4. Architecture Neural Network 3 
+Model evaluation on test data resulted in complete loss of 4910.75, MAE of 27.23, 
+MSE of 4910.75. From the point of view of magnitude prediction, MAE was 0.31 and 
+MSE was 0.19, and from the point of view of depth prediction, MAE was 54.15 and 
+MSE was 9821.32. These findings demonstrate the LSTM model to be learnable and 
+applicable for predicting time series data from earthquakes. 
+6 
+Results 
+6.1 
+Neural Network 1 
+ 
+Fig. 5.Magnitude Prediction of Neural Network 1 
+This graph depicts projected earthquake magnitudes throughout the world. The 
+heatmap indicates that in tectonically active areas, represented by blue-green shades, 
+such as the Pacific Ring of Fire and the Himalayas, high magnitudes are expected, 
+whereas purple-yellow shades denote low magnitudes in stable continental interiors. 
+The distribution is consistent with known seismic activities, suggesting that the model 
+can successfully identify regions susceptible to earthquakes. Magnitudes are projected 
+to fall within a 5.75 6.05 color scale. 
+
+--- Sayfa 9 ---
+ 
+Seismic Shift: Predicting Earthquakes With Deep Learning             3013
+ 
+Fig. 6. Depth Prediction of Neural Network 1 
+In this way, the graph visualizes predicted earthquake depths on the map of the world 
+from a test dataset. Thus, the colors scale means depth variations: purple indicates shal-
+lower earthquakes and yellow or orange denotes deeper earthquakes. Major seismic 
+regions such as the Pacific Ring of Fire and subduction zones stand out prominently. 
+This visualization gives one an understanding of the distributions and intensity of earth-
+quake depths around the world. 
+6.2 
+Neural Network 2 
+ 
+Fig. 7. Magnitude Prediction of Neural Network 2 
+The map gives the earth’s crust, presenting estimates of the magnitudes of possible 
+earthquakes based on test data. A color scale, along with an independent bar, indicates 
+the register from 5.75 to 6.05 in terms of magnitude. The clusters of predicted magni-
+tudes are high along the tectonic plate boundaries, mostly in the areas of the Pacific 
+Ring of Fire and the Himalayan belt. This visualization provides insight into the iden-
+tification of earthquake-prone areas. 
+
+--- Sayfa 10 ---
+ 
+ 3014             V. Asha et al.
+ 
+Fig. 8.Depth Prediction of Neural Network 2 
+The figure represents a map on the ground of predicted earthquake depths using re-
+mote sensing data from testing. The depth scale at the right is color-coded to illustrate 
+depths from 50 km up to greater than 300 km. Deep earthquakes are clustered around 
+subduction zones, such as the Pacific Ring of Fire and the Mediterranean-Asian seismic 
+belt. This visualization shows ranges of seismically active depths in space that can be 
+useful for understanding tectonic dynamics. 
+6.3 
+Neural Network 3 
+ 
+Fig. 9. Magnitude Prediction of Neural Network 3 
+The predicted intensities of earthquakes have been mapped out across the globe using 
+test data. The color legend on the right side indicates a range of magnitude from 5.775 
+to 5.950. The clustering regions of predicted magnitudes are along tectonic boundaries, 
+specifically the Pacific Ring of Fire and Eurasian plate. This visual clearly indicates the 
+regions vulnerable to serious seismic activities. 
+
+--- Sayfa 11 ---
+ 
+ 
+Seismic Shift: Predicting Earthquakes With Deep Learning             3015
+ 
+Fig. 10. Depth Prediction of Neural Network 3 
+The map displays a global set of predicted earthquake depths based on the ground test. 
+Thicker earthquakes are colored in dark shades, while lighter shades indicate depths. It 
+prominently highlights some of the greatest earthquake zones-the Pacific Ring of Fire. 
+The visualization enables researchers to understand spatio-temporal patterns in seismic 
+activity in different geographic locations. 
+6.4 
+LSTM Model 
+ 
+Fig. 11. Magnitude Prediction of LSTM 
+This graph depicts a global map of expected earthquake magnitudes based on a test 
+dataset. The color scale shows variations in magnitude, with darker shades representing 
+lower magnitudes and lighter shades denoting higher magnitudes. This highlights major 
+seismic zones like the Pacific Ring of Fire and mid-ocean ridges. This visualization 
+thus allows for the identification of areas of high seismic activity and risk levels. 
+The below graph gives a world map of predicted earthquake depths born from the ana-
+lyzed test dataset. The color scale indicates differences in depth, with darker shades 
+representing shallow earthquakes and lighter one’s deep earthquakes. Major seismic 
+zones, in particular the subduction areas of the Pacific Ring of Fire, receive clear indi-
+cation. Visually, this explains the depth distribution of various earthquakes across the 
+geographic area. 
+
+--- Sayfa 12 ---
+ 
+ 
+Table 1. Table of Comparision
+ 
+ 3016             V. Asha et al.
+ 
+Fig. 12. Depth Prediction of LSTM 
+6.5 
+Comparison Analysis 
+The below table shows the comparison between the different Models MAE and MSE 
+in predicting the Magnitude and Depth of the Earthquake. 
+ 
+7 
+Conclusion 
+This project effectively utilized deep learning techniques, including neural networks 
+and LSTM models, to predict earthquake magnitudes and depths. The research found 
+that deep learning (especially LSTM models) outperformed regular methods because 
+the former could learn intricate non-lineres relationships a mong seismic data. 
+ As the LSTM model is capable of learning the temporal dependence, the LSTM model 
+outperformed the other models in terms of magnitude and depth with low Mean Abso-
+lute Error (MAE) and Mean Squared Error (MSE) for its predictions. Such as it is rea-
+sonable to choose models that can handle the sequential nature inherent property of 
+earthquake time series. Despite of its success, model performance is still potentially 
+enhanced by optimization, such as by improving feature engineering, using a wider 
+application of complementary input variables (i.e., models about the tectonic defor-
+mation of continents and plates), as well as the strength of the model architecture. 
+
+--- Sayfa 13 ---
+ 
+           3017
+Seismic Shift: Predicting Earthquakes With Deep Learning  
+8 
+References 
+1. Asim, K.M. et al. 2017. Earthquake magnitude prediction in Hindukush region using machine 
+learning 
+techniques. 
+Natural 
+Hazards. 
+85, 
+1 
+(Jan. 
+2017), 
+471–486. 
+DOI:https://doi.org/10.1007/s11069-016-2579-3.  
+2. Asim, K.M. et al. 2018. Seismic indicators based earthquake predictor system using Genetic Pro-
+gramming and AdaBoost classification. Soil Dynamics and Earthquake Engineering. 111, (Aug. 
+2018), DOI: https://doi.org/10.1016/j.soildyn.2018.04.020. 
+3. Bhatia, A. et al. 2018. Earthquake forecasting using artificial neural networks. International Ar-
+chives of the Photogrammetry, Remote Sensing and Spatial Information Sciences- ISPRS Ar-
+chives. 42, 5 (2018), 823 827. DOI: https://doi.org/10.5194/isprs-archives-XLII-5 823-2018. 
+4. Fan, J. et al. 2015. Research on earthquake prediction from infrared cloud images. (Dec. 2015), 
+98150E. 
+5. Florido, E. et al. 2015. Detecting precursory patterns to enhance earthquake prediction in Chile. 
+Computers and Geosciences. 76, (Mar. 2015), 112–120. 
+6. Galkina, A. and Grafeeva, N. 2019. Machine learning methods for earthquake prediction: A sur-
+vey. CEUR Workshop Proceedings. 2372, (2019), 25–32 
+7. Hayakawa, M. 2016. Earthquake prediction with electromagnetic phenomena. AIP Conference 
+Proceedings (Feb.2016). 
+8. Ian Goodfellow, Yoshua Bengio, A.C. 2017. The Deep Learning Book. MIT Press. 521, 7553 
+(2017), 785. DOI: https://doi.org/10.1016/B978-0-12-391420-0.09987X 
+9. Itai, A. et al. 2005. Multi-layer neural network for precursor signal detection in electromagnetic 
+wave observation applied to great earthquake prediction. (Sep. 2005), 31–31 
+10. Kannan, S. 2014. Innovative Mathemtical Model for Earthquake Prediction. Engineering Failure 
+Analysis. 41, (2014),890–895. 
+11. Smith, L.N. 2016. a Disciplined Approach To Neural Network Hyper-Parameters: Part 1. (2016), 
+1–21. 
+12. Srivastava, N. et al. 2014. Dropout: A Simple Way to Prevent Neural Networks from Overfitting. 
+Su, Y.P. and Zhu, Q.J. 2009. Application of ANN to prediction earthquake influence. 2009 2nd 
+International Conference on Information and Computing Science, ICIC 2009(2009),234– 
+Open Access This chapter is licensed under the terms of the Creative Commons Attribution-
+NonCommercial 4.0 International License (http://creativecommons.org/licenses/by-nc/4.0/),
+which permits any noncommercial use, sharing, adaptation, distribution and reproduction in any
+medium or format, as long as you give appropriate credit to the original author(s) and the
+source, provide a link to the Creative Commons license and indicate if changes were made.
+        The images or other third party material in this chapter are included in the chapter's
+Creative Commons license, unless indicated otherwise in a credit line to the material. If material
+is not included in the chapter's Creative Commons license and your intended use is not
+permitted by statutory regulation or exceeds the permitted use, you will need to obtain
+permission directly from the copyright holder.
+ 

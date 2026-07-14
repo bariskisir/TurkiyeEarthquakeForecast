@@ -1,0 +1,737 @@
+
+--- Sayfa 1 ---
+A TIME-SCALED ETAS MODEL FOR EARTHQUAKE
+FORECASTING ∗
+Muralidharan K.
+Department of Statistics, Faculty of Science
+The Maharaja Sayajirao University of Baroda
+Vadodara, Gujarat, India
+muralikustat@gmail.com
+Agniva Das
+Department of Statistics, Faculty of Science
+The Maharaja Sayajirao University of Baroda
+Vadodara, Gujarat, India
+agniva.d-statphd@msubaroda.ac.in
+ABSTRACT
+The Himalayan region, including Nepal, is prone to frequent and large earthquakes. Accurate
+forecasting of these earthquakes is crucial for minimizing loss of life and damage to infrastructure. In
+this study, we propose various time-scaled Epidemic Type Aftershock Sequence (ETAS) models to
+forecast earthquakes in Nepal. The ETAS model is a statistical model that describes the temporal
+and spatial patterns of aftershocks following a main shock. A dataset of earthquake occurrences in
+Nepal from 2000 to 2020 was collected, and this data was used to fit the models showcased in this
+article. Our results show that the time-scaled ETAS model is able to accurately forecast earthquake
+occurrences in Nepal, and could be a useful tool for earthquake early warning systems in the region.
+Keywords Earthquake Prediction · Spatio-Temporal Point Process · Time-Scaled ETAS · Seismic Risk Modeling ·
+Triggered vs Background Seismicity · Probabilistic Forecasting · Time Series Hazard Modeling · Maximum Likelihood
+Estimation · De-clustering Algorithm · Nepal Earthquake Data
+1
+Introduction
+The Himalayan region, including Nepal, is prone to frequent and large earthquakes. Accurate forecasting of these
+earthquakes is crucial for minimizing loss of life and damage to infrastructure. Earthquake forecasting is a complex
+and interdisciplinary field, involving the integration of data from various sources, including seismology, geology, and
+statistics. One important aspect of earthquake forecasting is the study of aftershocks, which are smaller earthquakes
+that occur after a main shock. Aftershocks can provide valuable information on the state of the fault and the likelihood
+of future earthquakes. In this study, we propose a time-scaled Epidemic Type Aftershock Sequence (ETAS) model to
+forecast earthquakes in Nepal. The ETAS model is a statistical model that describes the temporal and spatial patterns of
+aftershocks following a main shock. The study of aftershocks following a main shock is crucial for understanding the
+state of the fault and the likelihood of future earthquakes [1, 2]. One important aspect of earthquake forecasting is the
+study of aftershocks, which are smaller earthquakes that occur after a main shock. Aftershocks can provide valuable
+information on the state of the fault and the likelihood of future earthquakes.
+In recent years, various statistical models have been proposed for forecasting earthquakes, including the Epidemic
+Type Aftershock Sequence (ETAS) model [3]. The ETAS model is a statistical model that describes the temporal and
+spatial patterns of aftershocks following a main shock. The model is based on the assumption that the occurrence of
+aftershocks is influenced by both the main shock and the previous aftershocks.
+The ETAS model [3] has been widely used in various regions around the world, including Japan [4], California [1], and
+Italy [2] wherein, the ETAS model was found to be able to accurately forecast earthquake occurrences.
+∗Citation: Muralidharan Kunnummal & Agniva Das. Data-centric Approaches to Industrial Decisions: Technology,
+Digitisation and Business Decisions. Asset Analytics. Springer Singapore. 1st Ed. pp. 97 - 114. ISBN 978-981-96-7556-2.(2025).
+DOI:https://doi.org/10.1007/978-981-96-7556-2
+arXiv:2505.24412v2  [stat.AP]  6 Aug 2025
+
+--- Sayfa 2 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+However, the ETAS model has not been widely applied in the Himalayan region, including Nepal. The Himalayan
+region is characterized by a high level of seismic activity and a complex tectonic setting. Therefore, it is important to
+develop a model that is specifically tailored to the characteristics of this region.
+In this study, we propose a time-scaled ETAS model to forecast earthquakes in Nepal. The time-scaled ETAS model takes
+into account the time-dependent behaviour of aftershocks, which is important for accurately forecasting earthquakes in
+regions with high seismic activity such as Nepal.
+The dataset of earthquake occurrences in Nepal from 2000 to 2020 was collected and used to fit the time-scaled ETAS
+model. The model was then validated using the earthquake data from Nepal. The results of this study will provide
+valuable insights into the characteristics of earthquakes in Nepal and will be useful for earthquake early warning systems
+in the region.
+The dataset used in this study was collected from ANSS global comprehensive catalogue (available at http://
+earthquake.usgs.gov/earthquakes/search/). It includes information on all earthquakes that occurred in Nepal
+between Jan 1, 1990 and May 31, 2022. The data includes the date, time, magnitude, and location (Nepal and
+surrounding areas including the rectangle formed by coordinates 27˘30 ◦N and 79˘88 ◦E) of each earthquake, with
+magnitude restriction m0 = 5.0. We have used the depth variable for the proportional hazards time-scaling.
+The dataset was cleaned and pre-processed to ensure that it met the requirements of the time-scaled ETAS model. This
+included removing any duplicate or missing data, and ensuring that the magnitude and location of each earthquake were
+accurate.
+The dataset used in this study is the most comprehensive and up-to-date dataset of earthquakes in Nepal, and provides a
+valuable resource for studying the characteristics of earthquakes in the region.
+The ETAS model is a statistical model that is used to describe the temporal and spatial patterns of earthquakes,
+specifically the aftershocks that follow a main shock event. The model is based on the assumption that the rate of
+aftershocks is influenced by both the magnitude and frequency of the main shock, as well as the spatial distribution
+of previous aftershocks [5]. It has been widely used in seismology to analyze seismic data and make predictions
+about future earthquake activity. Consider a temporal marked process X consisting of N events. Let (ti, xi, yi, mi)
+denote the vector containing the time, longitude, latitude and magnitude of the ith earthquake i = 1, 2, . . . , N, whose
+distribution parametrized by constants β and θ, is marked by the conditional intensity function λ (t, x, y, m | Ht),
+where, Ht = {(ti, xi, yi, mi) ∈X | ti < t} (occurrence history of the earthquakes up to time t), satisfying
+λ (t, x, y, m | Ht) = vβ (m) .λθ (t, x, y | Ht)
+(1)
+where,
+vβ (m) = β exp [−β (m −m0)]; β > 0, m > m0
+(2)
+is the probability density function of the magnitude of an event and
+λθ (t, x, y | Ht) = eu (x, y) +
+X
+i: ti<t
+κA,α (mi) gc,p (t −ti) fD,γ,q (x −xi; y −yi; mi)
+(3)
+where, eu(x, y) is the stationary background seismicity rate, κA,α (mi) is the expected number of triggered events
+(aftershocks) generated from an event of magnitude mi and it can be expressed as
+κA,α (mi) = A exp [α (m −m0)];
+m > m0
+(4)
+where, A > 0 and α > 0 are unknown (fixed) parameters, gc,p (t −ti) is the probability density function of the
+occurrence time of a triggered event generated from an event of magnitude mi occurring at time ti, assumed to be a
+function of the time lag (t −ti) and independent of mi, expressed as
+gc,p (t −ti) =
+p −1
+c
+ 
+1 + t −ti
+c
+−p
+; t > ti
+(5)
+where, c > 0 and p > 1 are unknown (fixed) parameters andfD,γ,q (x −xi; y −yi; mi) is the probability density
+function of the occurrence location of a triggered event generated from an event of magnitude mi occurring at the
+location (xi, yi) assumed to be dependent on each other, such that the radially symmetric joint density function is given
+by
+fD,γ,q (x −xi; y −yi; mi) =
+q −1
+π D exp [γ (mi −m0)]
+×
+ 
+1 + (x −xi)2 + (y −yi)2
+D exp [γ (mi −m0)]
+!−q
+(6)
+2
+
+--- Sayfa 3 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+where, D > 0, γ > 0 and q > 1 are unknown (fixed) parameters.
+Note: This assumption is overlooked in the case where we have used the time-scaled ETAS later in this section. Instead,
+there we have assumed exponential and gamma distributions for event magnitudes.
+Each event is categorised as either a background (spontaneous) event or an event that is triggered by a preceding
+event. The background events are produced by a Poisson process characterised by an intensity eu(x, y), which remains
+stationary over time. The relaxing coefficient µ in eu (x, y) = µ u(x, y) is introduced to accelerate the convergence of
+the model fitting algorithm. Prior events, whether classified as background or triggered, produce subsequent events in
+accordance with a non-stationary Poisson process characterised by the following intensity function:
+X
+i: ti<t
+κA,α (mi) gc,p (t −ti) fD,γ,q (x −xi; y −yi; mi)
+(7)
+The expected number of triggered events generated from a typical event, regardless of magnitude is
+Z ∞
+m0
+κA,α (m) vβ (m) dm =
+Aβ
+β −α
+(8)
+Now,
+Aβ
+β−α < 1 implies the existence of a stationary model, which in turn results in the total spatial intensity function
+being of the form:
+Λ (x, y) = lim
+T →∞
+1
+T
+Z T
+0
+λθ (t, x, y | Ht) dt
+= µu (x, y) + lim
+T →∞
+ 
+1
+T
+X
+i: ti<T
+κA,α (mi) fD,γ,q (x −xi; y −yi; mi)
+Z T
+ti
+gc,p (t −ti) dt
+!
+≈µu (x, y) + 1
+T
+X
+i: ti<T
+κA,α (mi) fD,γ,q (x −xi; y −yi; mi)
+(9)
+and the clustering (triggering) coefficient which quantifies the clustering effect relative to the total spatial intensity at
+any location (x, y) is given by
+ω (x, y) = 1 −u (x, y)
+Λ (x, y)
+(10)
+[6] suggested the probability of event j being a background event as
+1 −pj =
+µu (xj, yj)
+λθ
+ tj, xj, yj
+Htj
+
+(11)
+where, pj = P
+i: ti<tj pij is interpreted as the probability that event j is triggered by a previous event, where
+pij =
+( κA,α(mi) gc,p(t−ti) fD,γ,q(x−xi;y−yi;mi)
+λθ(tj, xj, yj|Htj)
+tj > ti
+0
+tj ≤ti
+(12)
+where pij is interpreted as the probability that event j is triggered by event i. Since, the log-likelihood function can be
+expressed as
+l (β, θ| HT ) =
+N
+X
+i=1
+δi log (λβ, θ(ti, xi, yi, mi|Hti))
+−
+Z ∞
+m0
+Z tstart+T
+tstart
+Z Z
+S
+λβ,θ (t, x, y, m | Ht) dx dy dt dm
+(13)
+where,
+δi =
+1
+i is a target event.
+0
+otherwise.
+rendering it separable into two parts as
+l (β, θ | HT ) = l1 (β | HT ) + l2 (θ | HT )
+(14)
+3
+
+--- Sayfa 4 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+where,
+l1 (β | HT ) =
+N
+X
+i=1
+δi log (λβ, θ(ti, xi, yi, mi|Hti))
+(15)
+l2 (θ | HT ) =
+Z ∞
+m0
+Z tstart+T
+tstart
+Z Z
+S
+λβ,θ (t, x, y, m | Ht) dx dy dt dm
+(16)
+and the MLE of β is given by
+ˆβ =
+N ′
+PN
+i=1 δi (mi −m0)
+and ˆθ (MLE of θ) is obtained by minimizing
+ξ (θ) = −l2 (θ | HT )
+iteratively using a suitable optimization algorithm. We have followed the example of [5, 4, 6] by using the Davidon-
+Fletcher-Powell algorithm. An alternative approach [7] that has been used to fit some of the time-scaled models is
+described below. [8, 9] and [10] have both proposed methods for time scaling that are alternatives to the ideal time
+scale. One alternative time scaling method proposed by [11] is called the "calibration time scale". Calibration time
+scale is a time scale that is used to make a non-identifiable model identifiable by adjusting the scaling of the time axis.
+The method uses a transformation of the time axis, which is chosen to make the model identifiable, without changing
+the underlying hazard function. Another alternative is the "Proportional Hazard Time scale" [12], which is based on the
+proportional hazards model. In this method, the hazard function is assumed to be proportional to a baseline hazard
+function and an explanatory variable. The time scale is chosen such that the coefficient of the explanatory variable is
+equal to one, which simplifies the interpretation of the model.
+Here are a few examples of different time scale options [13, 14, 15, 16] and their corresponding assumptions:
+• Ideal Time Scale: The hazard function is constant over time. This assumption is often made when there is no
+clear understanding of the underlying process generating the data, or when the data is too sparse to accurately
+estimate a more complex hazard function. This can be represented as tZ = ϕ1 (t) = t, say.
+• Calibration Time Scale: The hazard function is non-constant over time, but a transformation of the time
+axis is used to make the model identifiable without changing the underlying hazard function. The method
+assumes that the model is non-identifiable without the calibration time scale, but identifiable with it. Here,
+tZ = ϕ2 (t, ω) = t
+ω, say.
+• Proportional Hazards Time Scale: The hazard function is proportional to a baseline hazard function and an
+explanatory variable. The time scale is chosen such that the coefficient of the explanatory variable is equal
+to one, which simplifies the interpretation of the model. This method assumes that the hazard function is
+proportional to a baseline hazard function and an explanatory variable. Mathematically, tZ = ϕ3 (t, Z (t)) =
+t
+Z(t), say.
+• Log-Linear Time Scale: The hazard function is a log-linear function of time. This method assumes that the
+hazard function is a log-linear function of time, which can be useful when the data exhibit a clear trend over
+time. Here, tZ = ϕ4 (t) = log t, say.
+• Power Time Scale: The hazard function is a power function of time. This method assumes that the hazard
+function is a power function of time, which can be useful when the data exhibit a clear trend over time. Hence,
+we have tZ = ϕ5 (t, ω) = tω, say.
+It’s important to note that the choice of time scale can have a significant impact on the results and interpretation of the
+model and it’s essential to validate the assumptions and check the results with other models or different time scales.
+The time-scaled ETAS model is a statistical framework that characterises the temporal and spatial distributions of
+aftershocks following a main shock. It modifies the time scale to facilitate the differentiation between background events
+and triggered events based on the intervals between occurrences. The model utilises the Epidemic Type Aftershock
+Sequence (ETAS) framework and incorporates the time-dependent characteristics of aftershocks. A set of factors, such
+as the main shock’s intensity, the background rate of earthquakes, and the pace at which aftershocks decrease over time,
+constitute the model. The parameters are estimated from the data utilising a maximum likelihood estimation technique.
+A collection of spatial and temporal kernels, estimated via maximum likelihood estimation, define the spatio-temporal
+component of the time-scaled ETAS model, which also takes into consideration the temporal clustering of aftershocks
+and the spatial distribution of earthquakes.
+4
+
+--- Sayfa 5 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+We have obtained results for model performance of the ETAS model via two approaches. The first approach leads to
+assuming the ETAS model as a Marked Point Process and maximizing the resulting log-likelihood (read: minimizing
+negative log-likelihood) iteratively using the optimization procedure proposed by [17]. By this approach, we have, for
+each type of time-scaled data, considered the ETAS model as a Ground Intensity Function for two models where the
+underlying probability distribution of event magnitudes is either exponential or gamma, and estimates of the parameters
+have been thus compared. The second approach entails a similar path, except that for likelihood maximization (or
+negative log likelihood minimization), we opt for the Davidon – Fletcher – Powell (DFP) algorithm for parameter
+optimization, similar to the model proposed by [3, 6, 4], coined Iterative Stochastic De-clustering Method (ISDM) in
+the paper [5].
+2
+Results
+Table 1 compares the outputs of the ETAS model (un-scaled time) as fitted using the Iterative Stochastic De-clustering
+Method (assuming that event magnitudes follow a radially symmetric joint density function) and the alternative models
+where the ETAS model is used as a Ground Intensity Function, assuming exponential and gamma distributions of event
+magnitudes.
+Table 1: Parameter Estimates using ETAS model as Ground Intensity Function
+
+tZ = ϕ1 (t) = t
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+0.001451
+0.001398
+A
+5.3 × 10−5
+6.91 × 10−5
+α
+1.713889
+1.647376
+c
+0.540771
+0.59556
+p
+1.133662
+1.126354
+D
+0.228004
+0.265632
+β
+—
+0.367643
+Log-likelihood
+-7837.83
+-7795.65
+Clearly, we can see that both the models perform equally in this regard, although the Gamma model fares marginally
+better than the Exponential model in this case. For both the models that we see above,µ or the background seismicity
+rate of the process represents the average number of events occurring per unit time in the absence of any triggering effect,
+which is very low, indicating that more often, the earthquakes occurring in this region have been due to some triggering
+event. α, the triggering rate parameter is seen to be almost identical, and is slightly higher in the exponential model
+than the gamma model indicating that using the gamma model may result in some relatively negligible underestimation
+of the triggering rate. The gamma model does have a more pronounced clustering parameter c, which represents
+the probability of an event being able to trigger one or more consequent events. The parameter p, or the probability
+distribution parameter of the model which represents the distribution of the time between an event and its triggered
+events, is also slightly higher in the exponential model than the gamma model. This may be attributed to the parameter
+β, which is responsible for the variation in the magnitude of earthquakes in the region. D denotes the spatial decay
+parameter of the model and it represents the rate at which the triggering effect decreases with distance. As can be
+inferred from the table itself, we can see that they are almost identical in case of either exponential or gamma distribution
+of magnitudes. A may be interpreted as the minimum number of aftershocks expected in case of an earthquake at
+minimum threshold m = m0. Again, as the estimate of A is very close to zero, we can expect that aftershocks are rare,
+and for number of aftershocks to be high, the magnitude of the triggering earthquake needs to be very high.
+However, comparing the same model with the ETAS model fitted using ISDM and likelihood optimized using the
+DFP algorithm, we have the results in Table 2. From Table 2, we can safely say that the ISDM approach yielded
+much better results from the point of view of fit. From the interpretation viewpoint as well, we can see that this set
+of parameter estimates indicate significantly higher background intensity, higher value of number of aftershocks at
+minimum magnitude threshold (approximately 1 in 5, in this case), almost identical α indicating that the triggering
+rate estimate may be accurate. We see a significantly lower value of c in this case, which may indicate low clustering
+rate, but we have applied an iteratively de-clustered algorithm here, so the lower value of c may be justified. The p
+parameter may be identical for both the models, indicating that the distribution of time between earthquakes may be
+similar, although the same cannot be said for D, which is lower than that of the previous model, indicating that the
+rate of decrease in triggering effect per unit distance is lower. Additionally, a significantly higher value of β indicates
+higher variation in the magnitude over the entire area.γ and q are the shape and the scale parameters of the radially
+symmetric PDF fD,γ,q (x −xi; y −yi; mi) respectively, and may be treated as hyperparameters, to be used for tuning
+5
+
+--- Sayfa 6 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+Table 2: Parameter Estimates using ETAS model using ISDM optimized using DFP
+
+tZ = ϕ1 (t) = t
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+1.1153
+0.0383
+A
+0.2102
+0.0906
+α
+1.5979
+0.0263
+c
+0.0071
+0.1552
+p
+1.1395
+0.0139
+β
+3.5912
+0.124
+D
+0.0033
+0.191
+q
+1.8398
+0.0457
+γ
+1.2236
+0.073
+Log-likelihood
+-497.874
+(AIC = 1011.749)
+the model for better accuracy. Tables 3, 4, 5, 6 and 7 are models fitted using the ETAS Ground Intensity Function with
+Exponential and Gamma event magnitude approach after using various time-scales discussed earlier.
+Table 3: Parameter Estimates using ETAS model as Ground Intensity Function
+
+tZ = ϕ2 (t, ω) = t
+ω, ω = 5
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+0.01451
+0.01397782
+A
+0.00053
+0.000691442
+α
+1.71387
+1.647391
+c
+0.05408
+0.05955264
+p
+1.13366
+1.126352
+D
+0.228
+0.2656316
+β
+—
+0.116257
+Log-likelihood
+-5433.9
+-5391.755
+Table 4: Parameter Estimates using ETAS model as Ground Intensity Function
+
+tZ = ϕ2 (t, ω) = t
+ω, ω = 1000
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+1.450546
+1.397766
+A
+0.05301076
+0.06915157
+α
+1.713874
+1.65
+c
+0.000540705
+0.000595452
+p
+1.133651
+1.126342
+D
+0.2280044
+0.2656312
+β
+—
+0.01162555
+Log-likelihood
+-626.1306
+-583.9576
+Here, we can see that increasing the time scale to near 1000 provides better log-likelihood. However, higher values
+of ω have not yielded better results. One may use a search algorithm to find a scale parameter to maximize the
+log-likelihood, but such algorithms may require costlier processing hardware. The parameter estimates in Table 4 is
+closer in interpretation to the ISDM model than the unscaled ETAS model with exponentially or gamma distributed
+magnitudes and also induces better fit in that regard. For the results in Table 5, we have used the average depth of all
+minor earthquakes, between two major quakes (magnitude > 5), as a usage measure.
+Just like the rest of the cases, the Gamma model fares only slightly better than the Exponential model. However,
+the choice of the Depth variable as a usage measure is not found to be suitable for scaling purposes. The parameter
+estimates are closer to the unscaled ETAS model than the iteratively de-clustered ETAS model. Hence using depth
+as a covariate for time scaling seems unsuitable. One may opt for other usage measures like increase in height of a
+particular Himalayan range per unit time, which may be an interesting variable to use in this regard. Another variable
+that may be potentially used as a usage measure can be the rate of depletion of ice caps in the Himalayas with time.
+Some interesting outtakes may potentially arise from such analyses. However, collection of such data may be arduous
+at the ground level, as government records may not even be available in certain cases.
+6
+
+--- Sayfa 7 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+Table 5: Parameter Estimates using ETAS model as Ground Intensity Function
+n
+tZ = ϕ3 (t, Z (t)) =
+t
+Z(t)
+o
+Parameter
+Exponential Model
+Gamma Model
+µ
+0.0002956871
+0.0002937223
+A
+0.2932234
+0.3480650
+α
+0.5707210
+0.4834184
+c
+0.03981759
+0.05134718
+p
+1.113115
+1.117977
+D
+0.2280044
+0.3000280
+β
+—
+0.3114590
+Log-likelihood
+-5148.079
+-5075.610
+Table 6: Parameter Estimates using ETAS model as Ground Intensity Function
+
+tZ = ϕ1 (t) = t
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+0.66566
+0.21001
+A
+0.12828
+2.19703
+α
+1.36808
+0.9307
+c
+5.47117
+0.58414
+p
+0.91649
+1.32135
+D
+0.228
+1.57623
+β
+—
+1.57623
+Log-likelihood
+-4461.1
+-3637.2
+Although the log-scale does not induce a good enough log-likelihood to compete with the calibration or proportional
+hazards time scale, it does fare significantly better than the unscaled model. This goes to show that a combination
+of other scales with the log scale may potentially provide a better model. The Power Scale taken at ω = 1
+2 give the
+Table 7: Parameter Estimates using ETAS model as Ground Intensity Function
+
+tZ = ϕ1 (t) = t
+	
+Parameter
+Exponential Model
+Gamma Model
+µ
+0.2996577
+0.2603446
+A
+0.2401597
+0.3450314
+α
+1.48376
+1.39805
+c
+0.0002384452
+0.0002525749
+p
+0.9817204
+0.9741814
+D
+0.2280044
+0.2703550
+β
+—
+0.01578156
+Log-likelihood
+-974.8525
+-928.1033
+best result at a log-likelihood in the neighbourhood of negative one thousand, which is still better than the log-linear
+scale or even the proportional hazards scale. Here again, the estimates of model parameters indicate a situation closer
+that estimated by the iteratively de-clustered model. One may note that usage of calibration time scale in this regard,
+translates to easier likelihood optimization as opposed to other scales. One may use, as in our case, iterative algorithms
+in search of calibration parameter values that maximize log-likelihood. Using the power-scale implies that a stronger
+algorithm may be required to find that optimum.
+However, the calibration time scale performs best when compared with the other time scales in terms of model fit.
+Having said that, the best performance has been that of the model generated using ISDM optimized using FDP algorithm.
+The figures provided below may provide some insight onto the earthquake patterns observed in Nepal since January 11,
+1990.
+Fig. 1 indicates an outlier at April 25, 2015, where multiple great earthquakes occurred in quick succession in the
+regions as indicated by the circles in the above map. Fig. 2 marks the spatial neighbourhoods where background
+intensity is higher and neighbourhoods that are clustering prone. From Fig. 2, it can be said that background seismicity
+rate is higher in the north-western part of Nepal (Karnali region), whereas the total spatial seismicity rate and the
+clustering coefficient is significantly higher in central Nepal (Kathmandu and Narayani region). This indicates a
+higher potential of powerful aftershocks in the central Nepal region. However, earthquakes are more frequent in the
+7
+
+--- Sayfa 8 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+Figure 1: Location of epicentres (top-left panel), logarithm of frequency by magnitude (bottom-left panel), cumulative
+frequency v/s time (bottom-middle panel) and latitude, longitude and magnitude v/s time (right panels) of earthquakes
+with magnitude ≥5 occurring between 1990-01-11 and 2022-05-20 in Nepal and its proximity (27– 30 ◦N and 79–89
+◦E), extracted from the ANSS global comprehensive catalogue
+Figure 2: Plots of estimates of the background seismicity rate, total spatial intensity, clustering (triggering) coefficient
+and conditional intensity at t = tstart + T for the fitted ETAS model to the Nepal catalogue
+North-Western region. Fig. 3(top-left and top-right) shows the results of model diagnostics performed on the ETAS
+model. It has been observed that earthquakes closer to the Kathmandu region have low residuals, meaning that the
+background intensity and the clustering coefficient of that region is well represented by the model. However, as we
+move eastwards or westwards, we see a sharp increase in the residuals. This may be the result of varying levels of
+terrain elevation that have not been accounted for in our models. There may also be other underlying factors that
+need to be investigated in greater detail. In Fig. 3(bottom-left, and bottom-right), it can be seen that points on the
+plots of transformed times τj and the Q-Q plot of Uj lie approximately on the y = x line. To confirm, we performed
+a Kolmogorov-Smirnov test for goodness-of-fit. The p-value of 0.4386(> 0.05) indicates that Uj follows a U (0, 1)
+distribution, at a 5% level of significance.
+8
+
+--- Sayfa 9 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+Figure 3: Diagnostic plots for the fitted ETAS model to the Nepal catalogue: the temporal residuals (top-left), smoothed
+spatial residuals (top-right), transformed times τi against i (bottom-left) and the Q-Q plot of Ui (bottom-right)
+Figure 4: Most likely (Probability > 0.95) background and triggered events detected by estimated de-clustering
+probabilities pj
+Fig. 4 indicates that most of the quakes near the Kathmandu – Janakpur region are triggered whereas quakes occurring
+in the North-West region (Karnali region) mostly consist of background seismic activity.
+3
+Conclusions
+From the results obtained above, the following outtakes can be derived:
+• The Davidon-Powell-Fletcher algorithm, fares better than the Nelder-Mead Optimization algorithm for
+maximum likelihood estimation in this case. Additionally, the probability distribution of the magnitude,
+9
+
+--- Sayfa 10 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+if taken to be either exponential or gamma, fits very poorly on the data. The radially symmetric density
+assumption on the other hand yields a superior fit.
+• Judging by interpretability, we should take into account, the fact that, in case of the exponential or gamma
+assumption of magnitude distribution, the inherent interpretability of the model is increased, which loosely
+translates to better foundations for decision-making. The parameters of the radially symmetric density are
+complex to interpret and to base decisions on. However, they may be used as hyper-parameters in “deep”-er
+models, for obtaining better forecasts.
+• Although by a very small margin, among the theoretical distributions that have been postulated for magnitude
+probability distribution, the gamma model fares better in all types of time scales than the exponential model.
+That may be due to an extra parameter which makes the difference. However, having said that, the cost of
+including an extra parameter may prove costlier in terms of likelihood per additional covariate, if too many
+instances are to be trained to the model.
+• The residual map indicates lower values of residuals in the central part of the country whereas as we go from
+the centre outwards, residuals become higher. This may be a direct connection with the extent of urbanization
+in those areas to the magnitude and frequency. The areas having low variance in raw spatial residuals, are
+the more urbanized areas of the country, whereas relatively less inhabited areas have very high variation of
+magnitude. This may be solved by scaling the magnitudes along with time.
+• The conditional density and the clustering coefficient for central locations of the country have a higher
+probability of aftershocks than the locations, and as we go eastwards or westwards from the centre. One may
+take the usage measure as some variable highly correlated with the magnitude for this purpose.
+Although a lot of research in the sphere of seismological modelling is centered around exploiting the flexibility offered
+by the ETAS model to accommodate additional constraints or to bypass assumptions so as to introduce robustness,
+as evident by the recent works [18, 19, 20, 21, 22, 23], and the recent advances in the domain of time-scaling for
+lifetime data [24, 25, 26], collaboration between researchers in these two spheres seldom occurs, resulting in dearth of
+opportunities and unexplored possibilities. Ours seems to be one of the earlier attempts at bridging these two domains
+in comprehensive manner. However, the future seems hopeful, as there lies tremendous prospect in cross-collaborations
+with the computational domain as well, given that research in deep modelling is at the peak, with deep models for both,
+seismicity as well as for time-between-event responses, is now commonplace.
+Acknowledgments
+This was was supported in part by the Department of Statistics, Faculty of Sciences, The Maharaja Sayajirao University
+of Baroda, Vadodara, Gujarat, India, PIN–390002.
+References
+[1] Laura Gulia and Stefan Wiemer. The influence of tectonic regimes on the earthquake size distribution: A case
+study for italy. Geophysical Research Letters, 37(10), 2010.
+[2] Stefan Wiemer and Kei Katsumata. Spatial variability of seismicity parameters in aftershock zones. Journal of
+Geophysical Research: Solid Earth, 104(B6):13135–13151, 1999.
+[3] Yosihiko Ogata. Statistical models for earthquake occurrences and residual analysis for point processes. Journal
+of the American Statistical association, 83(401):9–27, 1988.
+[4] Yosihiko Ogata and Jiancang Zhuang. Space–time etas models and an improved extension. Tectonophysics,
+413(1-2):13–23, 2006.
+[5] Abdollah Jalilian. Etas: an r package for fitting the space-time etas model to earthquake data. Journal of Statistical
+Software, 88:1–39, 2019.
+[6] Jiancang Zhuang, Yosihiko Ogata, and David Vere-Jones. Analyzing earthquake clustering features by using
+stochastic reconstruction. Journal of Geophysical Research: Solid Earth, 109(B5), 2004.
+[7] Rupal Shah, K Muralidharan, and Ayush Parajuli. Temporal point process models for nepal earthquake aftershocks.
+International Journal of Statistics and Reliability Engineering, 7(2):275–285, 2020.
+[8] Thierry Duchesne and Jerry Lawless. Alternative time scales and failure time models. Lifetime data analysis,
+6:157–179, 2000.
+10
+
+--- Sayfa 11 ---
+A Time-Scaled ETAS Model for Earthquake Forecasting
+[9] Thierry Duchesne and Jerry Lawless. Semiparametric inference methods for general time scale models. Lifetime
+Data Analysis, 8:263–276, 2002.
+[10] Jerald F Lawless. Statistical models and methods for lifetime data. John Wiley & Sons, 2011.
+[11] Thierry Duchesne. Multiple Time Scales in Survival Analysis. PhD thesis, University of Waterloo, 1999.
+[12] Kh B Kordonsky and I Gertsbakh. Multiple time scales and the lifetime coefficient of variation: engineering
+applications. Lifetime data analysis, 3:139–156, 1997.
+[13] Kh B Kordonsky and IB Gertsbakh. Choice of the best time scale for system reliability analysis. European Journal
+of Operational Research, 65(2):235–246, 1993.
+[14] Kh B Kordonsky and IB Gertsbakh. System state monitoring and lifetime scales—i. Reliability Engineering &
+System Safety, 47(1):1–14, 1995.
+[15] David Oakes. Multiple time scales in survival analysis. Lifetime data analysis, 1:7–18, 1995.
+[16] Christof Sumereder and Hans Michael Muhr. Estimation of residual lifetime-theory and practical problems. In
+8th Höfler’s Days. Elektroinstitut Milan Vidmar, 2005.
+[17] John A Nelder and Roger Mead. A simplex method for function minimization. The computer journal, 7(4):308–
+313, 1965.
+[18] Emrah Altun, Deepesh Bhati, and Naushad Mamode Khan. A new approach to model the counts of earthquakes:
+Inarpqx (1) process. SN Applied Sciences, 3:1–17, 2021.
+[19] Nader Davoudi, Hamid Reza Tavakoli, Mehdi Zare, and Abdollah Jalilian. Aftershock probabilistic seismic hazard
+analysis for bushehr province in iran using etas model. Natural Hazards, 100(3):1159–1170, 2020.
+[20] F Hirose, K Tamaribuchi, and K Maeda.
+Characteristics of foreshocks revealed by an earthquake fore-
+casting method based on precursory swarm activity.
+Journal of Geophysical Research:
+Solid Earth,
+126(9):e2021JB021673, 2021.
+[21] Sujun Hong and Hirotaka Hachiya. Multi-stream based marked point process. In Asian Conference on Machine
+Learning, pages 1269–1284. PMLR, 2021.
+[22] Samarth Motagi, Sirish Namilae, Audrey Gbaguidi, Scott Parr, and Dahai Liu. Point-process modeling of
+secondary crashes. Plos one, 18(12):e0295343, 2023.
+[23] H Tavakoli, Nader Davoodi, Abdollah Jalilian, and Mehdi Zare. Aftershock forcasting experiment for bushehr
+province of iran using the epidemic-type aftershock sequence (etas) model. In 16th European Conf. Earthquake
+Engineering, pages 18–21, 2018.
+[24] Jerald F Lawless and Martin J Crowder. Models and estimation for systems with recurrent events and usage
+processes. Lifetime data analysis, 16:547–570, 2010.
+[25] Anastasiya Nekrasova and Vladimir Kossobokov. Seismic risk assessment for the infrastructure in the regions
+adjacent to the russian federation baikal–amur mainline based on the unified scaling law for earthquakes. Natural
+Hazards, 116(2):1995–2010, 2023.
+[26] Annamraju Syamsundar, Vallayil N Achutha Naikan, and Shaomin Wu. Alternative scales in reliability models
+for a repairable system. Reliability Engineering & System Safety, 193:106599, 2020.
+11

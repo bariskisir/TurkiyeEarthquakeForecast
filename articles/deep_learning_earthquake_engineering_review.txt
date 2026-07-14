@@ -1,0 +1,2326 @@
+
+--- Sayfa 1 ---
+1 
+ 
+Deep Learning in Earthquake Engineering: A Comprehensive Review 
+ 
+ 
+Yazhou Xie*
+Department of Civil Engineering, McGill University, Montreal, QC H3A0C3, Canada 
+ 
+ 
+ 
+Abstract 
+This article surveys the growing interest in utilizing Deep Learning (DL) as a powerful tool to address 
+challenging problems in earthquake engineering. Despite decades of advancement in domain knowledge, 
+issues such as uncertainty in earthquake occurrence, unpredictable seismic loads, nonlinear structural 
+responses, and community engagement remain difficult to tackle using domain-specific methods. DL offers 
+promising solutions by leveraging its data-driven capacity for nonlinear mapping, sequential data modeling, 
+automatic feature extraction, dimensionality reduction, optimal decision-making, etc. However, the 
+literature lacks a comprehensive review that systematically covers a consistent scope intersecting DL and 
+earthquake engineering. To bridge the gap, the article first discusses methodological advances to elucidate 
+various applicable DL techniques, such as multi-layer perceptron (MLP), convolutional neural network 
+(CNN), recurrent neural network (RNN), generative adversarial network (GAN), autoencoder (AE), 
+transfer learning (TL), reinforcement learning (RL), and graph neural network (GNN). A thorough research 
+landscape is then disclosed by exploring various DL applications across different research topics, including 
+vision-based seismic damage assessment and structural characterization, seismic demand and damage state 
+prediction, seismic response history prediction, regional seismic risk assessment and community resilience, 
+ground motion (GM) for engineering use, seismic response control, and the inverse problem of 
+system/damage identification. Suitable DL techniques for each research topic are identified, emphasizing 
+the preeminence of CNN for vision-based tasks, RNN for sequential data, RL for community resilience, 
+and unsupervised learning for GM analysis. The article also discusses opportunities and challenges for 
+leveraging DL in earthquake engineering research and practice, highlighting the need for open-access 
+multimodal big data and efforts to enhance model interpretability and incorporate physics information into 
+DL. Finally, the paper advocates for DL applications to further advance the research frontier of uncertainty 
+quantification in performance-based earthquake engineering. 
+ 
+Keywords: Deep learning, earthquake engineering, seismic damage, response prediction, seismic risk, 
+community resilience.  
+ 
+1. Introduction 
+While the history of Deep learning (DL) could be traced back several decades in the 1940s with the 
+early development of artificial neural networks (ANN), its renaissance only emerged in the 2010s because 
+of three factors: the availability of large-scale datasets, the significantly increased computing power, and 
+the evolution of algorithmic techniques in network architecture and training scheme. DL’s exceptional 
+performance stems from its ability to derive meaningful, high-level features from raw sensory data. This 
+capability is honed through statistical training and learning against large datasets, enabling the creation of 
+ 
+* Email: tim.xie@mcgill.ca 
+ 
+Preprint submitted to arXiv (May 14, 2024) 
+
+--- Sayfa 2 ---
+2 
+ 
+an efficient representation of the input space. To date, DL has seen remarkable advancements across various 
+domains, revolutionizing fields such as natural language processing [1], computer vision [2–4], speech 
+recognition [5], medical science [6], game play [7], robotics [8], autonomous vehicles [9], among others.  
+In recent years, earthquake-related fields have also seen a surge of interest in DL applications, which 
+motivated the research community to conduct several relevant state-of-the-art reviews. For instance, Xie et 
+al. (2020) [10] reviewed the promise of implementing machine learning (ML) techniques (e.g., artificial 
+neural network, support vector machine, decision tree, random forest) in four topic areas of earthquake 
+engineering, including seismic hazard analysis, system identification and damage detection, seismic 
+fragility assessment, and structural control for earthquake mitigation. Zhang et al. (2021) [11] presented 
+four DL algorithms, including feedforward neural network (FNN), recurrent neural network (RNN), 
+convolutional neural network (CNN), and generative adversarial network (GAN), and their applications in 
+geotechnical engineering. Avci et al. (2021) [12] focused on vibration-based damage detection in civil 
+structures where autoencoder (AE) and CNN have been pinpointed with predominant implementations. As 
+a data-rich subfield in geoscience, seismology has also benefited from the advancement of DL techniques, 
+which pushed the forefront of research on various seismological tasks [13]. Other related review articles 
+surveyed (1) DL-based computer vision technology in structural damage detection [14], (2) six commonly 
+used DL models in earthquake disaster assessment [15], and (3) the utilization of GAN for the generation 
+of synthetic seismic signals and its applications in seismic-related geophysical studies [16]. Most recently, 
+Cha et al. (2024) [17] also provided a comprehensive review of DL applications in structural health 
+monitoring.  
+  None of the aforementioned review articles covers a consistent research landscape that intersects DL 
+and earthquake engineering. The mismatch lies in either the methods surveyed (e.g., Xie et al. [10] focused 
+on ML techniques; Marano et al. [16] only surveyed GAN) or the field of interest, namely the fields of, e.g., 
+geotechnical engineering [11], seismology [13], and structural health monitoring [17] have overlapping yet 
+distinct DL applications compared to earthquake engineering. In particular, earthquake engineering is an 
+interdisciplinary engineering branch that describes earthquake hazards at the source, characterizes site 
+effects and structural responses, evaluates and mitigates seismic vulnerability and risk, as well as develops 
+seismic codes and standards. The multiple disciplines involved in earthquake engineering motivate the 
+current study to search and select nearly 200 DL-based journal publications from prominent academic 
+databases, such as Web of Science, Engineering Village, and Wiley Online Library. As shown in Figure 1, 
+the overall body of knowledge from these selected journal articles indicates a rapidly increasing research 
+frontier of exploring DL as an innovative tool to deal with various challenging research problems in 
+earthquake engineering. The associated rich body of knowledge warrants a separate, in-depth survey that 
+is currently missing in the literature.  
+ 
+ 
+Figure 1. The growing interest in DL applications in earthquake engineering 
+0
+10
+20
+30
+40
+50
+60
+70
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+Number of Papers
+Year
+Topic No.
+1   2   3   4  5   6  7
+
+--- Sayfa 3 ---
+3 
+ 
+ 
+DL applications in earthquake engineering can be grouped into different topic areas depending on the 
+types of data as the inputs and research tasks as the outputs. As illustrated in Figure 2, the main body of the 
+literature can be categorized into seven distinguishable research topics, including (1) vision-based seismic 
+damage assessment and structural characterization, (2) seismic demand and damage state prediction, (3) 
+seismic response history prediction, (4) regional seismic risk assessment and community resilience, (5) 
+ground motion for engineering use, (6) seismic response control, and (7) the inverse problem of 
+system/damage identification under seismic loads. Each research topic has triggered a different number of 
+studies (Figure 1) that applied a variety of DL techniques (Figure 2). It should be noted that these seven 
+research topics do not encompass a handful of extra relevant studies that deal with image data augmentation 
+[18], seismic damage classification through textual description [19], design of structural components [20] 
+and base isolators [21], etc.  
+Given the overall portrayal of the knowledge structure shown in Figure 2, the current study conducts a 
+comprehensive literature survey of DL applications in earthquake engineering by (1) introducing and 
+discussing the methodological advances for each identified DL technique and (2) disclosing a detailed 
+picture of DL applications in each research topic. The survey is then completed with an in-depth discussion 
+about the specific aspects of earthquake engineering that avail interesting opportunities, as well as pose 
+additional challenges, for DL.   
+ 
+ 
+Figure 2. DL to deal with different research topics in earthquake engineering (two images adapted from [22,23]) 
+ 
+2. Deep Learning Techniques Applied in Earthquake Engineering 
+A variety of DL techniques have been applied to deal with challenging problems in earthquake 
+engineering. Based on whether the training data is labeled, DL techniques can be broadly divided into 
+supervised learning, unsupervised learning, hybrid learning that combines both, and other relevant 
+techniques. As shown in Figure 3, the literature review identifies several DL techniques under each category 
+that have seen a wide spectrum of applications. This section briefly discusses the methodological advances 
+associated with each DL technique, as well as its applications to deal with different research topics 
+mentioned above.    
+Source: Vecteezy.com
+  
+  
+  
+  
+  
+  
+         
+         
+Field 
+Measurement
+Numerical 
+modeling
+Actuator
+Specimen
+Experimental
+testing
+Large-Volume Seismic Data
+Earthquake Engineering Applications
+Vision-based seismic damage assessment                        
+& structural characterization
+Seismic demand and damage state prediction
+Seismic response history prediction
+Regional seismic risk assessment and 
+community resilience
+Ground motion for engineering use
+Seismic response control
+Inverse problem – system/damage identification
+-8
+-4
+0
+4
+8
+0
+4
+8
+12
+16
+Third Floor Relative 
+Disp. (cm)
+Time (s)
+Uncontrolled
+Controlled
+Deep Learning
+1
+2
+3
+4
+5
+6
+7
+DNN
+CNN 
+LSTM
+GRU
+GAN
+AE
+TL
+RL
+GNN
+
+--- Sayfa 4 ---
+4 
+ 
+ 
+Figure 3. Widely applied deep learning techniques in earthquake engineering 
+2.1. Deep neural network - multi-layer perceptron 
+Some studies use the general terminology deep neural networks (DNN) to refer to all DL algorithms 
+that utilize more than three layers of neural networks. For the purpose of differentiating it from other 
+techniques mentioned below, DNN in this study instead refers to its foundation architecture of multi-layer 
+perceptron (MLP), a supervised learning technique with feedforward networks composed solely of fully 
+connected (FC) layers. As shown in Figure 4, the MLP in DL consists of a number of units (neurons) that 
+are connected by weighted links and organized through an input layer, multiple hidden layers, and an output 
+layer. An example of the computation at the kth layer can be written as 
+ 
+𝑎𝑗
+[𝑘] 𝑓(∑𝑊𝑖𝑗
+𝑛
+𝑖=1
+ 𝑎𝑖
+[𝑘−1] + 𝑏) 
+(1) 
+where Wij, 𝑎𝑖
+[𝑘−1], and 𝑎𝑗
+[𝑘] are the weights, input activations, and output activations, respectively, b is the 
+bias term, and f (·) is the nonlinear activation function that triggers a neuron to generate an output only if 
+the inputs cross a threshold. Various forms of commonly used nonlinear activation functions are also 
+presented in Figure 4. The feedforward networks of MLP ensure that all the computation is performed as a 
+sequence of operations on the outputs of a previous layer, whereas as shown in Equation (1), the FC layers 
+consider that all output activations are composed of a weighted sum of all input activations. The MLP aims 
+to tune the weights in the network such that the network performs a desired mapping of input-to-output 
+activations. The difference between the ideal and current mapping is referred to as the loss (L). When 
+training the MLP, the weights are usually updated using an optimization process termed gradient descent. 
+An efficient way to compute the partial derivatives of the gradient is through backpropagation, which 
+passes values backward through the network to compute how the loss is affected by each weight.  
+ 
+ 
+Figure 4. Multi-layer perceptron and various forms of nonlinear activation functions 
+DL
+Supervised
+DNN
+CNN
+RNN
+LSTM
+GRU
+Unsupervised
+GAN
+AE
+VAE
+Hybrid/Other
+TL
+RL
+GNN
+Input Layer
+Hidden Layers
+Output Layer
+X
+Ŷ
+Feed Forward
+Fully-Connected
+a[1]
+1
+a[1]
+2
+a[1]
+3
+a[1]
+n
+a[2]
+1
+a[2]
+2
+a[2]
+3
+a[2]
+n
+a[3]
+1
+a[3]
+2
+a[3]
+3
+a[3]
+n
+a[4]
+Sigmoid
+y = 1 / (1+e-x)
+Hyperbolic Tangent
+y = (ex - e-x) / (ex  + e-x)
+Rectified Linear Unit 
+(ReLU)
+y = max (0, x)
+Leaky ReLU
+y = max (αx, x), α = 0.1
+Exponential LU
+y =
+x,              x≥0
+α (ex - 1), x<0
+-1
+-0.5
+0
+0.5
+1
+-5
+0
+5
+-1
+0
+1
+-5
+0
+5
+-1
+0
+1
+-1
+0
+1
+-1
+0
+1
+-1
+0
+1
+-1
+0
+1
+-1
+0
+1
+
+--- Sayfa 5 ---
+5 
+ 
+ 
+ 
+MLP has been applied to address several regression and classification tasks in topic areas such as seismic 
+demand and damage state prediction, regional seismic risk assessment and community resilience, and 
+ground motion for engineering use. While MLP has been found suitable to deal with tabular datasets 
+consisting of scaler inputs, its applicability is somewhat challenged by other more advanced techniques 
+(e.g., CNN and RNN) when dealing with complex tasks that involve other forms of big data, such as image 
+or 2D data, and sequential data.   
+ 
+2.2. Convolutional neural network 
+As an extension of MLP, few modifications have been made in the CNN model architecture, which 
+resulted in a significant breakthrough of CNN in big data applications, particularly in dealing with image 
+data inputs with high accuracy and efficiency (e.g., the ImageNet Challenge [2]). The modifications include 
+the integration of 2D convolution layers, the addition of the pooling layer, and the associated sparse 
+connectivity versus all FC layers to reduce the required amount of storage and computation. Figure 5 shows 
+a typical 2D CNN that is composed of multiple convolutional and pooling layers, each generating a 
+successively higher level abstraction of the input data, termed a feature map that preserves essential yet 
+unique information. As shown in Figure 5, a convolution performs dot product operations between the input 
+and a kernel (i.e., namely filter or receptive field) and sums up the resulting products, where the 
+hyperparameter stride determines how the kernel slides over the input array in both width and height 
+directions. Furthermore, a pooling operation is applied to further reduce the dimensions of the input feature 
+map, enabling the network to be robust and invariant to small shifts and distortions. In particular, pooling 
+combines a set of values in its receptive field into a smaller number of values through operations such as 
+max, average, and min pooling (Figure 5).         
+ 
+ 
+Figure 5. A typical 2D Convolutional Neural Network, its convolution operation, and two forms of pooling  
+ 
+ 
+CNN bears the capability to automatically extract essential features from the input without the need for 
+human intervention. To date, the computer science community has developed various variants of CNN, 
+including VGGNet [24], MVSNet [25], AlexNet [26], RefineNet [27], RCNN [3], Faster R-CNN [28], 
+Mask R-CNN [29], YOLO [30], U-Net [31], ResNet [32], among others. CNN and its variants have seen 
+predominant applications in vision-based seismic damage assessment and structural characterization. 
+Besides, both 1D and 2D CNN have been implemented in dealing with scaler, sequential, and image data 
+Input
+Kernel
+Feature Maps
+Convolution
+Pooling
+Convolution
+Pooling
+Flatten 
+Layer
+Fully Connected Layer
+Output
+1 0 2 3
+5 6 7 8
+3 2 1 0
+1 2 3 4
+6 8
+3 4
+2x2 kernel; stride of 2
+Max Pooling
+Avg. Pooling
+3 5
+2 2
+Pooling
+1 0 2 3
+5 6 7 8
+3 2 1 0
+2 1 3 1
+3
+8
+0
+3
+3
+8
+0
+6
+1 2 8 6 1 1
+0 3 0 2 2 4
+0 0 0
+0 0 0
+1 0 1
+Convolution
+Kernel
+Input
+4 2 1 0
+5 2 6 7
+9 8 9 7
+0 5 2 6
+Output
+Typical CNN
+
+--- Sayfa 6 ---
+6 
+ 
+in research topics such as seismic demand and damage state prediction, seismic response history prediction, 
+and the inverse problem of system/damage identification.  
+2.3. Recurrent neural network 
+RNN is a powerful model for processing sequential data. Figure 6(a) illustrates the computational graph 
+of a representative RNN model; its network architecture is designed to produce an output at each time step 
+with recurrent connections between hidden units. The recurrent formulation is accompanied by the sharing 
+of parameters (e.g., shared weight matrices U, V, and W in Figure 6(a)), which ensures that each element 
+of the output is produced using the same update rule applied to previous outputs. The parameter sharing 
+also enables generalization in model learning through a few training samples. The RNN is typically trained 
+by the backpropagation through time algorithm, which obtains the gradients first on the internal nodes and 
+then on the parameter nodes. In addition to the RNN model shown in Figure 6(a), other important design 
+patterns for recurrent connections include (1) using the output at the previous step and (2) reading an entire 
+sequence to produce a single output [33].      
+Standard RNN has the issue of vanishing gradients, which makes learning long data sequences 
+challenging. One successful technique for addressing vanishing gradients came in the form of the long 
+short-term memory (LSTM) model developed by Hochreiter and Schmidhuber (1997) [34]. As shown in 
+Figure 6(b), LSTM resembles standard RNN but with each ordinary recurrent node replaced by a memory 
+cell, which is equipped with an internal state and three types of multiplicative gates. The forget gate deletes 
+information that is no longer needed; the input gate selects information to add to the cell state; and the 
+output gate decides what information is required for the current hidden state. The values of these three gates 
+are computed through fully connected layers with sigmoid activation functions, ensuring a scaled value 
+range of (0, 1). The input and output gates prevent irrelevant information from entering or leaving the cells, 
+whereas the forget gates enable unbiased and continuous predictions, as they can make cells completely 
+forget their previous states. As such, the vanishing gradient problem encountered by standard RNN is solved 
+through the memory cell by introducing a constant error flow, which enables LSTM to more effectively 
+tackle long data sequence problems.  
+A streamlined version of LSTM is the gated recurrent unit (GRU) [35], which is also designed to model 
+sequential data by allowing information to be selectively remembered or forgotten over time. GRU is 
+designed with fewer parameters, making it easier and more efficient to train the RNN model. As shown in 
+Figure 6(c), GRU directly uses the hidden state to transfer information through two gates, namely a reset 
+gate and an update gate. The reset gate decides how much past information to forget (i.e., for short-term 
+dependency), whereas the update gate allows long-term control of the data flow in time steps. The simpler 
+gating mechanism of GRU makes it a better candidate for increasing the speed performance of RNN models.  
+RNN and its variants of LSTM and GRU have been applied to deal with research problems that involve 
+sequential data, where the corresponding research topics include seismic response history prediction, 
+ground motion for engineering use, and seismic response control.  
+ 
+ 
+ 
+
+--- Sayfa 7 ---
+7 
+ 
+ 
+ 
+(a) The computational graph computes the training loss 
+of a recurrent network that maps an input sequence of x 
+values to a corresponding sequence of output o values. 
+A loss L measures how far each o is from the 
+corresponding training target y. The RNN has input to 
+hidden connections parametrized by a weight matrix U, 
+hidden-to-hidden recurrent connections parametrized by 
+a weight matrix W, and hidden-to-output connections 
+parametrized by a weight matrix V [33] 
+ 
+(b) LSTM cell and its operations 
+ 
+(c) GRU cell and its gates 
+Figure 6. A representative example of RNN and its two variants of LSTM and GRU 
+ 
+2.4. Generative adversarial network 
+As initially proposed for unsupervised learning, the generative adversarial network (GAN) was first 
+developed by Goodfellow et al. (2014) [36] as a generative model that consists of two interlinked neural 
+networks. As shown in Figure 7, G is the generator that takes random noise in the latent space as input to 
+produce fake samples that are close to real samples. On the contrary, D is the discriminator whose role is 
+to differentiate between real and fake samples. GAN is trained in an adversarial manner as a supervised 
+learning problem where the generator and discriminator are involved in a minimax two-player game. In 
+particular, GAN is trained for the generator to produce convincing fake data until the discriminator is 
+deceived approximately 50% of the time.  
+GAN has seen a handful of applications in earthquake engineering to deal with different research topics. 
+As discussed below, these research topics include (1) vision-based seismic damage assessment when 
+subjected to low data and imbalanced class [37], (2) seismic response history prediction for buildings under 
+undamaged and damaged conditions [38], (3) regional seismic risk assessment for generating seismic 
+hazard and damage maps [39], and (4) the generation of artificial ground motions for engineering use [40].  
+ 
+ 
+Figure 7. Architecture of GAN 
+y
+L
+o
+h
+x
+W
+U
+V
+Unfold
+y(t-1)
+L(t-1)
+o(t-1)
+h(t-1)
+x(t-1)
+W
+U
+V
+y(t)
+L(t)
+o(t)
+h(t)
+x(t)
+W
+U
+V
+y(t+1)
+L(t+1)
+o(t+1)
+h(t+1)
+x(t+1)
+W
+U
+V
+h(…)
+h(…)
+W
++
+Memory cell
+internal state
+C(t-1)
+C(t)
+σ
+Forget 
+gate
+F(t)
+Hidden state
+h(t-1)
+σ
+Input 
+gate
+I(t)
+tanh
+Input 
+node
+Ĉ(t)
+σ
+Output 
+gate
+O(t)
+Input X(t)
+tanh
+h(t)
+σ
+FC layer activation 
+function
+Elementwise 
+operator
+Copy
+Concatenate
+h(t-1)
+h(t)
+Input X(t)
++
+tanh
+σ
+1-
+σ
+Reset gate
+Update gate
+Hidden state
+Low 
+dimensional 
+latent space
+Generative 
+network G
+High 
+dimensional 
+sample space
+Real samples
+Generated 
+fake samples
+Discriminative 
+network D
+Real
+Fake
+Fine tuning
+
+--- Sayfa 8 ---
+8 
+ 
+ 
+2.5. Autoencoder  
+Autoencoder (AE) is another type of generative model used in unsupervised learning [33]. It is based on 
+the idea of finding representation of latent information through two main components: the encoder and the 
+decoder. As shown in Figure 8(a), the encoder converts the data input into a low-dimensional embedding 
+for a latent representation, whereas the decoder is designed to decompress the low-dimensional embedding 
+and reconstruct the input data. The encoder-decoder architecture essentially learns to compress the data 
+while minimizing the reconstruction error.  
+Variational autoencoder (VAE) [41] extends the traditional AE architecture by introducing a 
+probabilistic framework for generating the compressed representation of the input data. In particular, 
+traditional AE embeds the input into a vector representation, whereas VAE embeds the input into a pre-
+defined distribution in the latent space (Figure 8(b)). The latent space in VAE is regularized through KL 
+divergence to have latent variables follow independent standard Gaussian distributions. The regularizer 
+adopted in VAE avoids overfitting and makes latent variables continuous, interpretable, and sometimes 
+linked to certain features of the original data. 
+The capability of low-dimensional embedding of the original data makes AE and VAE a promising tool 
+to be used in seismic damage detection (e.g., [42]) and ground motion classification and generation (e.g., 
+[43]).  
+ 
+ 
+ 
+(a) autoencoder 
+(b) variational autoencoder 
+Figure 8. Architecture of (a) autoencoder and (b) variational autoencoder 
+2.6. Transfer learning 
+Transfer learning (TL) is a technique that utilizes a DL model previously trained for a given task (source 
+domain) as the base model for refinement against a new task (target domain), where less data is required 
+for the new training. The source and target domains typically share a similar learning task. TL helps quickly 
+tune the parameters for the new task and improves the model performance in generalization, accuracy, and 
+time efficiency. Different TL settings can be defined based on the type of task and the nature of the data 
+available in the source and target domains. In general, TL approaches can be categorized into instance-
+transfer, feature-representation-transfer, parameter-transfer, and relational-knowledge-transfer [44]. TL has 
+been combined with CNN to deal with several research tasks in vision-based seismic damage assessment 
+(e.g., [45,46]).   
+ 
+2.7. Reinforcement learning 
+Reinforcement learning (RL) is a sub-area of machine learning that deals with sequential decision-
+making [47]. It devises a framework where a computer agent learns to perform a task through repeated trail 
+and error interactions within a dynamic environment. The standard theory of RL is defined by a Markov 
+Decision Process where (1) the agent chooses an action according to the policy at the current state and (2) 
+the environment receives that action, produces a reward, and transfers to the next state. The objective of 
+Encoder
+Input
+Embedding
+Decoder
+Output
+Reconstruction Loss
+Input
+Latent Space
+Output
+Reconstruction Loss + KL Divergence
+Encoder
+Decoder
+
+--- Sayfa 9 ---
+9 
+ 
+RL is to find the optimal policy for the agent to maximize the expected cumulative reward over the future 
+(also termed the value of the state). RL involves managing a significant number of state-action pairs for a 
+track of value (reward) attached to each action, making it challenging to deal with real-world scenarios that 
+involve all different possibilities. In this regard, deep RL can be applied to combine RL with a deep artificial 
+neural network, which is trained to predict the values or evaluate the policies against all possible actions 
+under a given state. Deep RL can be model-based or model-free: the former learns a model to predict the 
+reaction of the environment under a given action, yet the latter directly learns the value and/or the policy 
+from experience (data). Widely used model-free deep RL algorithms include (1) value-based methods (e.g., 
+Deep Q-learning [48]) that update the value function to learn a suitable policy, (2) policy-based methods 
+that learn the policy directly [49], and (3) the actor-critic algorithm that computes the policy gradient using 
+a value-based critic function [50].  
+In earthquake engineering, deep RL has been primarily implemented in community resilience studies to 
+generate optimal reconstruction plans (e.g., [51]) or select optimal repair decisions (e.g., [52]), which helped 
+communities prioritize improvements to enhance and maximize seismic resilience.  
+ 
+2.8. Graph neural network 
+Graph neural networks (GNN) are specifically designed neural architectures operated on graph-structure 
+data, which consists of a collection of entities (nodes) with their relationships (edges) represented by a 
+graph. GNN aims to iteratively update the node representations by aggregating the representations of node 
+neighbors and their own representations in the previous iteration. Figure 9(a) illustrates a general design 
+framework for a GNN model [53]. A graph structure needs to be first defined as the model input. The 
+original data can have an explicit (e.g., transportation network) or implicit (e.g., image) graph structure with 
+directed/undirected edges, homogeneous/heterogeneous nodes and edges, and static/dynamic features. A 
+GNN model can then be constructed against a loss function that depends on the training setting (e.g., 
+supervised, unsupervised, or semi-supervised) and the learning tasks at node, edge, or graph level, as 
+illustrated in Figure 9(b). A GNN layer might be designed to have different computational modules, such 
+as propagation, skipping, sampling, and pooling [53]. GNN variants, such as graph convolutional networks, 
+graph attention networks, and graph recurrent networks, have demonstrated ground-breaking performance 
+on many DL tasks that involve graph structures with complex inter-node relationships and interdependency 
+[54].  
+In earthquake engineering, the field of regional seismic risk assessment and community resilience has 
+seen a couple of GNN applications. One application is for modeling the topology and interdependency of 
+complex infrastructure networks [183], and the other is combined with RL to select optimal repair decisions 
+for water distribution networks [52]. 
+  
+ 
+ 
+(a) general design framework 
+(b) graph learning tasks 
+Figure 9. (a) The general design framework and (b) graph learning tasks for GNN  
+ 
+Input
+……
+GNN Layers
+……
+……
+Output
+Loss Function (Training Setting, Task Setting)
+?
+?
+?
+Node
+classification
+regression 
+clustering
+Edge
+classification
+link prediction
+?
+Graph
+classification
+embedding
+generation
+?
+
+--- Sayfa 10 ---
+10 
+ 
+3. Deep Learning Applications in Earthquake Engineering 
+3.1. Vision-based seismic damage assessment and structural characterization 
+Vision-based seismic damage assessment 
+Many studies are motivated by the need for rapid and automated seismic damage assessment across a 
+large region for equipping first responders, decision makers, and stake-holders with an important source of 
+information to enable timely post-earthquake response, loss evaluation, and retrofit planning. The state of 
+research on vision-based seismic damage assessment can be generally classified into two categories. The 
+first is to deal with remote sensing imagery (i.e., satellite, aerial, and, particularly, UAV imagery) to achieve 
+regionwide detection of damaged or collapsed buildings in the wake of an earthquake event (e.g., [45,55], 
+Figure 10(a)). Studies in the second category have focused on handling ground photographs obtained 
+through (1) field surveys during earthquake reconnaissance practice and (2) lab testing of different 
+structural components to accomplish high-resolution seismic damage classification in physical states (e.g., 
+concrete cracking and spalling, rebar exposure, buckling, and fracture) and damage levels (e.g., slight, 
+moderate, extensive, complete) [56–58] (Figure 10(b) and (c)). Other than these two tasks, a handful of 
+studies have also considered leveraging image data to distinguish damage caused by corrosion versus 
+earthquake [46], predict stiffness and strength degradation [59], identify beam deflection [60], and detect 
+earthquake-induced secondary hazards, such as landslide [61] and ground failure [62]. 
+ 
+ 
+satellite 
+ 
+airborne 
+ 
+UAV 
+(a) building damage detection using remote sensing imagery (blue – detected damage, violet – false positive, 
+yellow – false negative) (adapted from [63]) 
+ 
+ 
+(b) damage level classification for earthquake 
+reconnaissance (Damage 1 – surface crack, Damage 2 – 
+spalling, Damage 3 – spalling with exposed rebars, and 
+Damage 4 – severely buckled rebars) (adapted from 
+[58]) 
+(c) damage assessment for experimentally tested 
+columns (Damage Sate 2 – left two, Damage State 4 – 
+3rd and 4th, Damage Sate 5 – last one) (adapted from 
+[56]) 
+Figure 10. Example studies on vision-based seismic damage assessment 
+CNN has been considered in many studies as the most effective DL tool to automatically extract strong 
+deep features for image classification and semantic segmentation, where widely-applied CNN-based 
+models include ResNet [64], U-Net [65], YOLO [66], Faster R-CNN [62], Mask R-CNN [67], RefineNet 
+[68], among others (Figure 11). CNN has also been combined with TL (e.g., [45,46,63,69]) to improve 
+model transferability and generalization against different datasets. The model performance of these DL 
+frameworks is commonly evaluated through confusion matrix (accuracy, recall, precision) and its derived 
+metrics such as overall accuracy (OA), kappa coefficient, F1 score for damage detection and classification, 
+as well as the intersection over union (IoU) that quantifies the degree of overlap between two image boxes 
+for damage segmentation (Figure 11).  
+
+--- Sayfa 11 ---
+11 
+ 
+A detailed review identifies several representative studies in the literature. The methodological 
+advancement from these studies include (1) the combination of aerial images and 3D point cloud features 
+to improve CNN model accuracy [103]; (2) the use of a RNN as a probabilistic anomaly detector on the 
+temporal changes of synthetic aperture radar (SAR) to estimate earthquake damage [100]; (3) the 
+application of TL to achieve structural component characterization, damage level classification, and 
+damage type determination [77]; (4) a convolutional AE model with flexible configurations for pixel-level 
+recognition of damaged buildings under diverse weather conditions [106]; (5) a novel loss function fusing 
+geometric consistency constraint with cross-entropy loss in a U-Net framework for post-earthquake 
+building segmentation with complex geometric features across multiple scales [65]; (6) a three-level CNN 
+approach with Bayesian optimization for hyperparameter selection for bridge system-level failure 
+classification, column detection, and damage localization [85]; (7) an integration of the DeepLab 
+framework with the linear iterative cluster method and mathematical morphological approach to obtain 
+clearer boundaries for damaged building areas [99]; (8) a multimodal and multitemporal optical/SAR 
+dataset for building damage mapping under earthquakes, tsunamis, and typhoons [70]; (9) a novel quantum 
+CNN approach to detect multiclass seismic damage of RC buildings from images [73]; (10) the balanced 
+semi-supervised GAN to resolve the low-data and imbalanced-class issue [37]; (11) a combination of 3D 
+point cloud and 2D image for 3D damage quantification [83]; and (12) a multi-task learning approach that 
+simultaneously accomplishes the semantic segmentation of seven-type structural components, three-type 
+seismic damage, and four-type deterioration states [57]. 
+ 
+ 
+ 
+ 
+Figure 11. Hierarchical distribution of studies for vision-
+based seismic damage assessment [37,45,46,55–116] 
+according to data source, DL approach, task topic, and 
+evaluation metric 
+Figure 12. Soft-story building classification from 
+street view images for Buckman in Portland, 
+Oregon, United States (adapted from [23]) 
+Vision-based structural characterization 
+Other than rapidly assessing structural damage after earthquake events, a dozen studies have made 
+attempts to handle cite-scale satellite and street view images for characterizing structural systems to support 
+the simulation of earthquake impacts and decision-making, as well as detecting potential structural defects 
+that are vulnerable to earthquake loading [117]. The DL involved is to deal with image-based structural 
+system classification or pixel-level semantic segmentation that extracts certain structural components; all 
+
+--- Sayfa 12 ---
+12 
+ 
+studies have shown the promise of utilizing CNN and its variants, such as Mask R-CNN [118], VGG [119], 
+SegNet [120], to achieve good model performance, which has been commonly evaluated through confusion 
+matrix and F1 score. Street view images are the primary type of image data well suited for DL to identify 
+soft-story buildings [23,121,122] (Figure 12), lateral-load resistant systems in material and type [123,124], 
+masonry buildings [118,119], and bridge components (e.g., columns, beams, and slabs) [120] and 
+substructure types (frame bent, wall, hammerhead wall) [125]. Satellite images have also been utilized to 
+classify the shapes of building roofs [117]. A somewhat unique attempt is to classify soils into different site 
+classes using images designed as a combination of the topographic slope and the mean horizontal-to-vertical 
+spectral ratio (HVSR) of earthquake recordings [126]. Instead of dealing with street view images of building 
+facades, which might be blocked in raw images, Chen et al. [127] segmented 3D point-cloud data in a city, 
+extracted point density features for buildings, and identified soft-story buildings using CNN models.  
+3.2. Seismic demand and damage state prediction 
+The studies compiled in this section focus on dealing with the significant computational challenge in 
+conducting nonlinear response history analyses (NRHA) of complex structural systems. DL models are 
+trained as surrogate models to predict the peak values from these analyses as seismic demands (e.g., 
+[128,129]), which are further utilized for damage state classification (e.g., [130,131]) and seismic fragility 
+assessment (e.g., [132,133]). As mainly targeting classes of structures for regional assessment, the devised 
+DL algorithms handle data inputs (i.e., those with varying values) from both GMs and structural attributes. 
+Figure 13 presents a chord diagram that summarizes the developed DL models with their applications to 
+address various types of data inputs. For GMs, viable input data formats include (1) the original time-series 
+signal handled by 1D CNN [128,134] and LSTM [135–137]; (2) feature parameters related to earthquake 
+(e.g., magnitude, epicenter distance) and intensity (e.g., peak ground acceleration, response spectra 
+acceleration) as scaler inputs for CNN [138,139], DNN [133,140,141], and Bayesian DL [142]; (3) the 
+spectrogram image processed through Duhamel integral [143], short-time Fourier transform (STFT), and 
+wavelet transform [130,131] to train the 2D CNN while accounting for temporal/spectral non-stationarity 
+of GM; and (4) the spectrum curve in the frequency domain (e.g., pseudo-acceleration spectrum [144] and 
+Fourier spectrum [145]) to train CNN and DNN models (Figure 13). Other than GMs, structural attributes 
+have been converted into data inputs in two ways. The first is to deal with one specific class of structures 
+where its peak responses are considered to be affected by influential feature parameters such as story 
+number [136], natural period [146], material property [147], etc. In contrast, the second approach considers 
+using cyclic hysteresis loops or monotonic force-displacement curves from pushover analyses 
+[129,142,148,149] to more sophisticatedly represent structural behaviors and train DL models.  
+As is typically phrased to replace NRHA, seismic demands and damage states as data outputs for 
+labeling and supervised learning have been obtained through numerical simulations. The performance of 
+DL models is evaluated through either the confusion matrix for damage state classification or regression 
+metrics, e.g., mean absolute error (MAE), mean square error (MSE), and R2, for seismic demand prediction.    
+A detailed review also identifies several unique and representative studies in the literature. The 
+methodological advancement from these studies includes (1) the stacked LSTM with specific network 
+architectures for improved accuracy and reduced training time [136]; (2) an AE model for seismic response 
+reconstruction where reconstruction errors are used to detect seismic damage [42]; (3) the use of floor 
+acceleration response history as data inputs to estimate inter-story drift and remaining stiffness ratio [150]; 
+(4) the Bayesian DL with a loss function proportional to the negative log likelihood of the Gaussian 
+distribution function to obtain the mean and variance of structural responses [142]; (5) the utilization of 
+flexibility matrix to represent the target structure where the difference between the two matrices is used to 
+identify seismic damage in near-real-time [151]; (6) the DNN prediction of modal contribution coefficients 
+to improve the accuracy of the response spectrum method [152]; and (7) the training of DNN to predict 
+high-fidelity results from low-fidelity simulations [132].   
+
+--- Sayfa 13 ---
+13 
+ 
+      
+ 
+ 
+Figure 13. DL models to handle different types of 
+data inputs for seismic demand and damage state 
+prediction (Nomenclature: GM – ground motion, Par. – 
+parameter, Spec. – spectrum, Stru. – structural, Hys. – 
+hysteresis) [42,128–159] 
+ 
+Figure 14. DL approach to handle different data 
+inputs from three data sources for seismic response 
+history prediction [38,160–200] 
+ 
+3.3. Seismic response history prediction 
+A more rigorous attempt to leverage DL as a surrogate model is to predict the entire time history of 
+structural responses during earthquake events. Figure 14 summarizes the state of research for seismic 
+response predictions in terms of the utilized DL models, their compatible data inputs, and the ways to 
+generate/obtain such data inputs and outputs. Most studies handle model inputs as sequential regression 
+problems to predict time-series response histories of different structural parameters, including inter-story 
+drift, floor acceleration, restoring force, etc., which are primarily generated through numerical simulations 
+(Figure 14). Although CNN is recognized for its capability in the classification of data with grid-like 
+topology (e.g., 2D images), 1D CNN has been applied to deal with GM inputs and structural response 
+outputs with time-sequence structures for extracting the deep features and describing the input-output 
+relationships (e.g., [174,180]). In contrast, as designed to learn sequential, time-varying, linear/nonlinear 
+patterns for regression problems, RNN (e.g., [197]), with specific model architecture such as GRU (e.g., 
+[172]) and LSTM (e.g., [160]), have shown the promise on seismic response modeling. In particular, LSTM 
+is favored in the literature with the highest number of applications (Figure 14) due to its added ability to 
+capture long-range data dependencies for predicting time-series responses. 
+Many studies are motivated to achieve a complete replacement of finite element modeling that predicts 
+seismic response histories using GMs as model inputs. Methodological advancements identified in the 
+relevant literature include (1) directly integrating DL into the time-stepping numerical integration schemes 
+to solve nonlinear dynamics [170,179,187]; (2) embedding physics constraints in the loss functions for 
+physics-informed DL with enhanced model performance [173,178,189,190]; (3) introducing the attention 
+mechanism that selects dominant features for a higher prediction accuracy [175,177]; (4) addressing 
+structural portfolios where structural attributes are also included as feature parameters to train DL models 
+[162,163,169,175]; and (5) comparing the model performance of LSTM, WaveNet, and 2D CNN in 
+accuracy, efficiency, and robustness [200].  
+The other research area deals with seismic structural health monitoring (SHM) that utilizes existing 
+structural responses (e.g., those obtained from shaking table tests and field measurements) as data inputs to 
+
+--- Sayfa 14 ---
+14 
+ 
+predict other response quantities of interest, forecast future responses, and pinpoint real-time damage 
+conditions. For instance, Park et al. [196] trained CNNs to estimate strain responses of structural members 
+from measured accelerations and displacements to support long-term monitoring in case of the absence or 
+defect of strain sensors. Pan et al. [165] addressed the limited sensor problem to predict bridge displacement 
+responses at unmeasured locations from those at measured locations. In a similar context, unsupervised DL 
+models with encoder-decoder networks have been developed to (1) provide seismic damage index with a 
+measure of uncertainty at each time instant [168], (2) forecast upcoming responses through historical 
+measurements [199], and (3) reconstruct structural responses in a healthy state and identify the seismic 
+damage based on the difference between input and reconstructed data [171]. Likewise, transient dynamic 
+response and damage classification were achieved by developing a GAN to predict building responses 
+under undamaged and damaged conditions [38].  
+3.4. Regional seismic risk assessment and community resilience 
+Studies in this section deal with regional seismic risk assessment (RSRiA) and community resilience. 
+RSRiA quantifies regional seismic impacts by convolving four sequential analysis modules: regional 
+seismic hazard analysis, exposure modeling, damage and fragility assessment, and loss assessment [201], 
+whereas community resilience studies further characterize post-earthquake function recovery for regional 
+seismic resilience assessment (RSReA), as well as conduct restoration planning and optimization that help 
+communities prioritize improvements to enhance/maximize seismic resilience [202]. RSRiA and RSReA 
+holistically integrate various underlying physics processes and uncertainties that often require conducting 
+a large number of Monte-Carlo simulations to deal with numerous interconnected structures. In this regard, 
+DL has been applied as surrogate models at different layers to reduce the associated computational burden.  
+ 
+ 
+Figure 15. DL applications in regional seismic risk assessment and resilient planning [39,51,52,139,203–210] 
+As summarized in Figure 15, DL applications spread the entire spectrum of analysis modules for RSRiA 
+and community resilience. In regional seismic hazard analysis, GRU has been applied to estimate the spatial 
+probability of earthquake occurrence [210], whereas CNN [208] and GAN [39] have been utilized to 
+develop surrogate models that directly generate GM intensity maps given earthquake source parameters. 
+Exposure modeling poses challenges to capturing the topology and interdependency information of 
+complex infrastructure networks, which has been addressed by developing a GNN model [203]. Seismic 
+damage and fragility assessment involve finite element modeling or nonlinear analysis procedures to obtain 
+probabilistic seismic demand models of different structural portfolios that vary in geometry, material 
+property, design detail, etc. The time-consuming modeling and analysis efforts are dealt with by developing 
+(1) a probabilistic CNN model that estimates area-wide structural damage given the spatial distribution of 
+seismic intensity levels [206]; (2) a GAN-based seismic damage map under earthquake source inputs [39]; 
+and (3) a DNN to estimate the variances and correlations of residuals in engineering demand parameters 
+Regional 
+seismic hazard 
+analysis
+Exposure 
+modeling
+Seismic 
+damage/fragility 
+assessment
+Seismic loss 
+assessment
+Seismic 
+resilience 
+assessment
+Restoration 
+planning and 
+optimization
+DNN for post-earthquake 
+connectivity of 
+transportation network 
+(Nabian and Meidani, 
+2018)
+Probabilistic CNN for 
+regional seismic 
+damage assessment 
+(Kim et al., 2020)
+Deep RL to generate 
+reconstruction plans 
+(Mudassir et al., 2021)
+LSTM to assess earthquake 
+vulnerability (Jena et al., 
+2021)
+CNN for seismic hazard 
+mapping (Jena et al., 
+2021)
+DNN for traffic 
+performance due to 
+bridge damage (Silva-
+Lopez et al., 2022)
+GNN for repair action 
+reward and RL for optimal 
+repair sequence (Fan et al., 
+2022)
+GAN for GM intensity 
+map (Li et al., 2023)
+GAN for seismic damage 
+map (Li et al., 2023)
+GRU for earthquake 
+occurrence (Jena et al., 
+2023)
+SRU for earthquake 
+vulnerability map (Jena 
+et al., 2023)
+DNN to estimate seismic 
+demand residuals (Kang 
+et al., 2023)
+GNN for network 
+topology and 
+interdependency 
+information (Yang et al., 
+2024)
+Deep RL for optimal repair 
+policies (Yang et al., 2024; 
+Ali Anwar and Zhang, 2024)
+
+--- Sayfa 15 ---
+15 
+ 
+[89]. For seismic loss assessment, seismic vulnerability maps have been generated using surrogate models 
+developed by SRU and LSTM that consider social, structural, and geotechnical factors [207,210]. RSReA 
+further examines the functionality states of structural systems, where DNNs have been applied to more 
+rapidly predict (1) the changes in traffic performance metrics due to bridge damage [209] and (2) post-
+earthquake connectivity of a transportation network [205]. To further support decision-making for 
+community resilience, a deep RL algorithm has been utilized to generate reconstruction plans by 
+considering the resources available and the needs of various stakeholders [51]. A convolutional GNN-
+integrated deep RL model has been developed to select optimal repair decisions to maximize the seismic 
+resilience of water distribution networks [52]. RL has also been applied to train neural networks that (1) 
+approximate the optimal repair policies by considering uncertainties of the restoration process [203] and (2) 
+simultaneously reduce retrofit costs and uncertain future consequences given seismic hazards [204].     
+3.5. Ground motion for engineering use 
+GM data has been used in various ways in earthquake engineering, ranging from ground motion models 
+for probabilistic hazard analysis and design spectra definition, to regional hazard simulation and validation, 
+time-series data as inputs for response history analysis and shaking table testing, and intensity measures for 
+constituting fragility curves, etc. Several attempts have been made to leverage DL to deal with GM data 
+that better serves its essential role in earthquake engineering research and practice (Figure 16). Dupuis et 
+al. [211] trained a DNN to estimate the quality (i.e., a score factor determined by high-frequency noise, 
+seismic waveform completeness, the slope and shape of the Fourier amplitude spectrum, instrument 
+malfunction, and records with multiple earthquakes) and minimum usable frequency of GM records from 
+earthquakes in New Zealand. The study is helpful for quality screening of GMs that will be particularly 
+acute for the development of empirical ground-motion models and validation of physics-based ground-
+motion simulations. Zhao et al. [212] trained a Siamese CNN to select GMs that have the mean response 
+spectrum matches the target spectrum in all periods, whereas Matinfar et al. [213] and Matsumoto et al. [40] 
+trained a GAN to generate artificial spectrum-compatible GMs with matching temporal and frequency 
+characteristics. Moreover, Ning and Xie [43] developed an analysis workflow that transforms and 
+reconstructs GMs through STFT, encodes and decodes their latent features through convolutional VAE, 
+and classifies and generates GMs by grouping and interpolating latent variables. Their study indicated that 
+using five classified, top-ranked motions, regardless of recorded or simulated accelerograms, can achieve 
+reasonable and efficient fragility estimates compared to the case that adopts 230 GMs. Bond et al. [214] 
+applied a similar AE approach for ground motion spectra clustering and selection. A couple of studies have 
+also focused on handling GMs with mainshocks and aftershocks. Ding et al. [215] developed DNN and 
+GAN to predict the spectral accelerations (Sa) of aftershocks using eight seismic variables and Sa of the 
+mainshock at 21 periods as the model inputs. Fayaz and Galasso [216] used LSTM to develop a generalized 
+ground-motion model that estimates consistent vectors of intensity measures for mainshocks and 
+aftershocks. A somewhat unique attempt was to deal with GMs recorded through smart devices – an RNN 
+was developed to detect and remove sliding motions in acceleration measurements from smart devices to 
+reproduce realistic seismic shaking in structures [217]. 
+ 
+ 
+Figure 16. DL to deal with ground motions for engineering use [40,43,211–217] 
+3.6. Seismic response control 
+Studies on structural control algorithms to intelligently control and mitigate seismic vibrations of 
+structures in real-time have once attracted significant attention in the earthquake engineering community. 
+Quality assessment
+• DNN (Dupuis et al., 2023)
+GM selection
+•CNN (Zhao et al., 2022)
+•Autoencoder (Ning and Xie, 
+2023; Bond et al., 2024)
+GM generation
+•GAN (Matinfar et al., 2023)
+•GAN (Matsumoto et al., 2023)
+•Autoencoder (Ning and Xie, 
+2023)
+Mainshock-aftershock
+•DNN, GAN (Ding et al., 2021)
+•LSTM (Fayaz and Galasso, 
+2022)
+GM from smart device
+•RNN (Na et al., 2022)
+
+--- Sayfa 16 ---
+16 
+ 
+In this field, DL has shown its applications to be embedded into structural control frameworks through two 
+modules. One is as a surrogate model, an emulator that predicts structural response history based on the 
+previous response, control signal, and GM input. DL models as structural surrogates include an RNN [218] 
+and an LSTM [219]. The other module is to train a DL-based controller that generates the new control 
+signal (or input force to activate a protective device) in real-time to achieve the desired structural response. 
+Such DL-based controllers have been trained through RNN [218] and RL [220,221], which determines the 
+optimal control force to maximize a reward function that reduces both structural responses and the required 
+control energy. To further enhance the efficiency and robustness of the control system, studies have also 
+focused on developing (1) LSTM-based RNN as a data-driven controller for rapid online adaptation and 
+processing, and pure online learning that minimizes reliance on pre-training [222] and (2) LSTM-based 
+decentralized control method for high-rise buildings to reduce control complexity and improve fault 
+tolerance [223]. In a separate study, LSTM was also used to classify earthquakes to determine the optimal 
+control parameters for a semi-active variable stiffness isolation system [224]. 
+3.7. Inverse problem – system/damage identification 
+Studies compiled in this section deal with the inverse problem where DL is trained against seismic 
+response measurements to identify the structural system or detect/classify seismic damage. CNN has shown 
+more applications than other DL methods (e.g., [225]). Two studies indicated success in identifying system 
+models and predicting component properties. Impraimakis [226] trained CNN to automatically detect the 
+model class based on measured responses without requiring the input information from the model. Zeng et 
+al. [227] developed a DNN and combined it with wavelet packet decomposition to simultaneously monitor 
+axial pressure and shear deformation for laminated rubber bearings. More studies proposed DL approaches 
+to train structural responses under different damage conditions and utilized the pre-trained model to identify 
+or classify seismic damage states.  Zhou et al. [228] trained an AE model based on hysteresis loop analysis 
+to predict the seismic damage index associated with stiffness degradation. Yu et al. [229] proposed a CNN 
+method to deal with FFT data from raw sensor measurements and identify local damage for buildings 
+installed with smart base isolators. Khodabandehlou et al. [230] developed a CNN to classify the seismic 
+damage state of a reinforced concrete bridge using a limited number of acceleration measurements from 
+the shake-table test. Lei et al. [231] detected structural damage subject to unknown seismic shaking by 
+coupling the CNN with wavelet-based transmissibility data that eliminates the influence of different seismic 
+excitations.   
+4. Challenges and Opportunities 
+The numerous DL applications reviewed indicate a significant surge of interest in the community in 
+leveraging this advanced data-driven tool to deal with challenging problems in earthquake engineering. 
+Over the decades, many of these problems have proven difficult to address despite the wealth of domain 
+knowledge, primarily due to factors such as the uncertainty in earthquake occurrence, the unpredictable 
+nature of the seismic load, the nonlinear structural response, the complex interdependency of the built 
+environment, and the imperative of engaging communities for risk reduction and post-earthquake recovery, 
+among others. Moving forward, DL is expected to be utilized as an essential tool for solving these problems, 
+leveraging its data-driven capacity to achieve nonlinear mapping, sequential data modeling, automatic 
+feature extraction, dimensionality reduction, optimal decision-making, etc.  
+This review paper indicated a viable pathway showing which DL technique is appropriate for which 
+category of problems. For instance, CNN and its variants should be considered with top priority to solve 
+vision-related tasks such as vision-based seismic damage assessment and structural characterization (Figure 
+11). Conversely, RNN, especially when employing LSTM units, is advantageous for dealing with temporal 
+relations in the data, making it well-suited for research tasks such as seismic response history prediction 
+(Figure 14) and real-time seismic response control (Section 3.6). Tailored for sequential decision-making, 
+RL finds its promising application domain in community resilience studies, encompassing post-earthquake 
+emergency response, recovery planning, and optimization (Figure 15). Unsupervised DL, such as GNN and 
+
+--- Sayfa 17 ---
+17 
+ 
+AE, are fertile with opportunities to deal with GMs for engineering use, where one example would be to 
+generate artificial GMs, as shown in Figure 16.   
+ 
+ 
+Figure 17. Cumulative distribution function for the size of training data used for vision-based seismic damage 
+assessment 
+ 
+However, the pursuit of DL in earthquake engineering does not come without challenges. First, DL is a 
+data-hungry technique, most often requiring the availability of massive, high-quality, labeled (for 
+supervised learning) datasets to ensure its superior performance. Figure 17 indicates the distribution of 
+training data sizes for DL applications in vision-based seismic damage assessment – the required quantity 
+of training data varies significantly, ranging from hundreds to thousands of hundreds, contingent upon the 
+type, scale, and resolution of the image data. Acquiring a sizable dataset may sometimes become intractable 
+when dealing with real-world earthquake events because large and damaging earthquakes are (fortunately) 
+rare. Also, a relevant concern would arise from the data unbalance issue – instances of seismic 
+damage/collapse would be scarce as opposed to undamaged cases. The skewed data distribution not only 
+complicates the DL training process, potentially leading to an overfitted model, but may also undermine 
+the utilization of the DL model as, for instance, the cost for a false negative of true seismic damage might 
+be high. In this regard, efforts should be made to synchronize the advancement of applicable DL techniques 
+with the creation of accessible open-source datasets (e.g., [232]). One solution is to leverage data fusion 
+techniques to develop multimodal, multitemporal, and heterogeneous datasets composed of different 
+resolutions, data types (image, video, text, tabular, and sequential data), earthquake events, seismic regions, 
+data sources (experimental testing, remote sensing, field measurement, and numerical simulation), and 
+structural and infrastructure systems [70]. Accordingly, cutting-edge DL techniques such as TL [44], 
+diffusion models [233], attention mechanisms [234], ensemble learning [235], self-supervised learning 
+[236], and transformer models [237] can be explored to achieve a unified representation of complex big 
+data for different research tasks in earthquake engineering.      
+The understanding of the underlying physics has been considered arguably the most essential weapon 
+for the community to address various earthquake engineering problems. Conversely, the black-box nature 
+of DL models might cause an atmosphere of skepticism regarding their interpretability, reliability, 
+robustness, and generalizability. DL applications in earthquake engineering are often safety-critical, making 
+it crucial to interpret, understand, and trust the model’s decision-making process. While the interpretability 
+of DL raises a concern in some relevant studies, no work has yet made efforts to explain the model’s learned 
+parameters and weights, as well as understand the model behavior in depth. In this regard, different 
+interpretability approaches, e.g., gradient-based attribution methods [238,239], guided back-propagation 
+[240], concept activation vectors [241], deconvolution [242], class activation maps [243], layer-wise 
+relevance propagation [244], etc., can be applied along with domain knowledge towards explainable DL 
+for earthquake engineering.      
+0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1
+1.E+02
+1.E+03
+1.E+04
+1.E+05
+1.E+06
+Cumulative Distribution 
+Function
+Size of Training Datasets
+
+--- Sayfa 18 ---
+18 
+ 
+One more rigorous attempt is to integrate physics information into the development of DL models. Table 
+1 lists relevant studies in earthquake engineering that develop physics-informed DL models. These studies 
+focus on the prediction of seismic response histories of structural systems, where physical laws are obtained 
+from the equations of motion (EOM) governing structures’ dynamics equilibriums. Therefore, physical 
+constraints are introduced into the model training process by (1) implicitly incorporating physics loss into 
+the loss function (Table 1), (2) embedding DL into the time-stepping integration method to solve the EOM 
+[170,187], and (3) employing a GNN to represent the physical system (i.e., graph nodes for mass nodes, 
+graph edges for dynamic interactions between nodes, and the adjacency matrix for the physical topology) 
+[195]. While the embedding of physics into DL bears the potential to alleviate overfitting, reduce the need 
+for big data, as well as improve the model robustness, accuracy, and extrapolation ability [190], these 
+studies also underscore the premise that the seismic behavior of a structure needs to be fully characterized 
+through an equivalent yet simplified multi-degrees of freedom (MDOF) system. This assumption poses a 
+challenge when confronted with real-world structural systems, which may comprise numerous components 
+forming a high-dimensional parameter space with complex topology, dynamics, and nonlinearity. Other 
+than seismic response history prediction, the application of physics-informed DL is rarely observed in 
+addressing other subjects in earthquake engineering.  
+ 
+Table 1. Applications of physics-informed DL in earthquake engineering 
+Paper 
+Research Topic Number a 
+DL Model 
+Physics Information 
+Xiong et al. [173] 
+3 
+CNN 
+Loss Function 
+Liu et al. [178] 
+3 
+LSTM 
+Loss Function 
+Guo et al. [170] 
+3 
+Residual Network 
+Time-step integration 
+Zhang et al. [190] 
+3 
+LSTM 
+Loss Function 
+Eshkevari et al. [187] 
+3 
+RNN 
+Time-step integration 
+Zhang et al. [189] 
+3 
+CNN 
+Loss Function 
+Chen et al. [195] 
+3 
+GNN 
+Graph Node and Edge 
+Chou et al. [150] 
+2, 3 
+LSTM, CNN 
+Loss Function 
+a Research topic number is shown in Figure 2.  
+ 
+As the earthquake engineering community is moving away from relying on prescriptive approaches to 
+increasingly embracing a probabilistic way of thinking [201], one important area for DL applications that 
+remains relatively underexplored lies in uncertainty quantification. The literature review identifies a handful 
+of relevant studies. Eltouny and Liang [168] presented an uncertainty-aware early warning system that can 
+provide near real-time SHM under seismic hazards. Stephenson et al. [100] applied RNN to forecast a 
+probability distribution of the coherence between pre- and post-event SAR images, providing a measure of 
+confidence in the identification of seismic damage. Noureldin et al. [141] proposed ensemble probabilistic 
+DL models toward quality-driven prediction intervals of seismic responses for low- to mid-rise buildings 
+with limited irregularity. Kim et al. [142] adopted Bayesian DL for predicting both the mean and variance 
+of seismic responses. Ali Anwar and Zhang [204] integrated Deep RL into a risk optimization framework 
+to simultaneously reduce retrofit costs and uncertain future consequences given seismic hazards. Ning and 
+Xie [43] targeted uncertainties in GMs; they devised a VAE model to classify and select a small set of 
+motions that achieve reliable and efficient seismic fragility assessment. Feng et al. [132] trained a DNN 
+model to predict the probabilistic distribution of high-fidelity results from low-fidelity simulations. These 
+studies should serve as a starting point to advocate for additional endeavors that can further advance the 
+research frontier of uncertainty quantification in earthquake engineering. 
+
+--- Sayfa 19 ---
+19 
+ 
+ 
+5. Conclusion 
+This paper conducts a comprehensive literature survey of Deep Learning (DL) applications in 
+earthquake engineering. The survey starts with an introduction and discussion of the methodological 
+advances for elucidating several applicable DL techniques. A thorough research landscape is disclosed, 
+examining the extent of DL applications across various research topics, including vision-based seismic 
+damage assessment and structural characterization, seismic demand and damage state prediction, seismic 
+response history prediction, regional seismic risk assessment and community resilience, ground motion 
+(GM) for engineering use, seismic response control, and the inverse problem of system/damage 
+identification. The review delineates suitable DL techniques for different research topics, highlighting the 
+superior performance of CNN for vision-based tasks, RNN for sequential data, RL for community resilience, 
+and unsupervised learning for dealing with GMs. The paper also discusses opportunities and challenges for 
+leveraging DL to further advance earthquake engineering research and practice. The scarcity of labeled 
+datasets and the imbalance of seismic damage instances pose hurdles for DL training, emphasizing the 
+urgent need for open-access multimodel big data, against which cutting-edge DL techniques need to be 
+explored and applied. Additionally, concerns arise regarding the interpretability and trustworthiness of DL 
+models in safety-critical applications. Efforts to enhance model interpretability and incorporate physics into 
+DL are crucial (yet still challenging for real-world complex structural systems) to foster trust and 
+understanding within the community. While DL also shows the potential to address uncertainty 
+quantification in earthquake engineering, additional research is advocated to further advance this research 
+frontier. 
+ 
+Acknowledgments 
+The author would like to thank Xiaoyu Liu and Chunxiao Ning from McGill University for preparing 
+an initial list of relevant publications for this review article. 
+ 
+References 
+1. 
+OpenAI, Achiam J, Adler S, Agarwal S, Ahmad L, Akkaya I, et al. GPT-4 Technical Report 2023; 4: 1–100. 
+2. 
+Russakovsky O, Deng J, Su H, Krause J, Satheesh S, Ma S, et al. ImageNet Large Scale Visual Recognition Challenge. 
+International Journal of Computer Vision 2015; 115(3): 211–252. DOI: 10.1007/s11263-015-0816-y. 
+3. 
+Girshick R, Donahue J, Darrell T, Malik J. Rich feature hierarchies for accurate object detection and semantic 
+segmentation. Proceedings of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition 2014: 
+580–587. DOI: 10.1109/CVPR.2014.81. 
+4. 
+Shelhamer E, Long J, Darrell T. Fully Convolutional Networks for Semantic Segmentation. IEEE Transactions on Pattern 
+Analysis and Machine Intelligence 2017; 39(4): 640–651. DOI: 10.1109/TPAMI.2016.2572683. 
+5. 
+Hinton G, Deng L, Yu D, Dahl G, Mohamed AR, Jaitly N, et al. Deep neural networks for acoustic modeling in speech 
+recognition: The shared views of four research groups. IEEE Signal Processing Magazine 2012; 29(6): 82–97. DOI: 
+10.1109/MSP.2012.2205597. 
+6. 
+Esteva A, Kuprel B, Novoa RA, Ko J, Swetter SM, Blau HM, et al. Dermatologist-level classification of skin cancer with 
+deep neural networks. Nature 2017; 542(7639): 115–118. DOI: 10.1038/nature21056. 
+7. 
+Silver D, Huang A, Maddison CJ, Guez A, Sifre L, Van Den Driessche G, et al. Mastering the game of Go with deep 
+neural networks and tree search. Nature 2016; 529(7587): 484–489. DOI: 10.1038/nature16961. 
+8. 
+Levine S, Finn C, Darrell T, Abbeel P. End-to-end training of deep visuomotor policies. Journal of Machine Learning 
+Research 2016; 17: 1–40. 
+9. 
+Shalev-Shwartz S, Shammah S, Shashua A. Safe Multi-agent Reinforcement Learning for Autonomous Driving. Proc 
+NIPS Workshop Learn, Inference Control Multi-Agent Syst 2016. DOI: 10.5626/ktcp.2018.24.12.670. 
+10. 
+Xie Y, Ebad Sichani M, Padgett JE, DesRoches R. The promise of implementing machine learning in earthquake 
+engineering: A state-of-the-art review. Earthquake Spectra 2020; 36(4): 1769–1801. DOI: 10.1177/8755293020919419. 
+11. 
+Zhang W, Li H, Li Y, Liu H, Chen Y, Ding X. Application of deep learning algorithms in geotechnical engineering: a 
+
+--- Sayfa 20 ---
+20 
+ 
+short critical review. vol. 54. Springer Netherlands; 2021. DOI: 10.1007/s10462-021-09967-1. 
+12. 
+Avci O, Abdeljaber O, Kiranyaz S, Hussein M, Gabbouj M, Inman DJ. A review of vibration-based damage detection in 
+civil structures: From traditional methods to Machine Learning and Deep Learning applications. Mechanical Systems and 
+Signal Processing 2021; 147. DOI: 10.1016/j.ymssp.2020.107077. 
+13. 
+Mousavi SM, Beroza GC. Deep-learning seismology. Science 2022; 377(6607). DOI: 10.1126/science.abm4470. 
+14. 
+Lingxin Z, Junkai S, Baijie Z. A review of the research and application of deep learning-based computer vision in structural 
+damage detection. Earthquake Engineering and Engineering Vibration 2022; 21(1): 1–21. DOI: 10.1007/s11803-022-
+2074-7. 
+15. 
+Jia J, Ye W. Deep Learning for Earthquake Disaster Assessment: Objects, Data, Models, Stages, Challenges, and 
+Opportunities. Remote Sensing 2023; 15(16). DOI: 10.3390/rs15164098. 
+16. 
+Marano GC, Rosso MM, Aloisio A, Cirrincione G. Generative adversarial networks review in earthquake-related 
+engineering fields. Springer Netherlands; 2023. DOI: 10.1007/s10518-023-01645-7. 
+17. 
+Cha YJ, Ali R, Lewis J, Büyükӧztürk O. Deep learning-based structural health monitoring. Automation in Construction 
+2024; 161(February). DOI: 10.1016/j.autcon.2024.105328. 
+18. 
+Gao Y, Kong B, Mosalam KM. Deep leaf-bootstrapping generative adversarial network for structural image data 
+augmentation. Computer-Aided Civil and Infrastructure Engineering 2019; 34(9): 755–773. DOI: 10.1111/mice.12458. 
+19. 
+Mangalathu S, Burton H V. Deep learning-based classification of earthquake-impacted buildings using textual damage 
+descriptions. 
+International 
+Journal 
+of 
+Disaster 
+Risk 
+Reduction 
+2019; 
+36(February): 
+101111. 
+DOI: 
+10.1016/j.ijdrr.2019.101111. 
+20. 
+Lu X, Liao W, Zhang Y, Huang Y. Intelligent structural design of shear wall residence using physics-enhanced generative 
+adversarial networks. Earthquake Engineering and Structural Dynamics 2022; 51(7): 1657–1676. DOI: 10.1002/eqe.3632. 
+21. 
+Liao W, Wang X, Fei Y, Huang Y, Xie L, Lu X. Base-isolation design of shear wall structures using physics-rule-co-
+guided self-supervised generative adversarial networks. Earthquake Engineering and Structural Dynamics 2023; 52(11): 
+3281–3303. DOI: 10.1002/eqe.3862. 
+22. 
+Vecteezy. Damaged building vector illustration. Building destroyed 2024: 1. https://www.vecteezy.com/vector-
+art/19049844-damaged-building-vector-illustration-building-destroyed. 
+23. 
+Wang C, Hornauer S, Yu SX, McKenna F, Law KH. Instance segmentation of soft-story buildings from street-view images 
+with semiautomatic annotation. Earthquake Engineering and Structural Dynamics 2023; 52(8): 2520–2532. DOI: 
+10.1002/eqe.3805. 
+24. 
+Simonyan K, Zisserman A. Very deep convolutional networks for large-scale image recognition. 3rd International 
+Conference on Learning Representations, ICLR 2015 - Conference Track Proceedings 2015: 1–14. 
+25. 
+Yao Y, Luo Z, Li S, Fang T, Quan L. MVSNet: Depth inference for unstructured multi-view stereo. Lecture Notes in 
+Computer Science (Including Subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics) 2018; 
+11212 LNCS: 785–801. DOI: 10.1007/978-3-030-01237-3_47. 
+26. 
+Krizhevksy A, Sutskever I, Hinton GE. ImageNet Classification with Deep Convolutional Neural Networks. Advances in 
+Neural Information Processing Systems 25 (NIPS 2012) 2012: 1–9. DOI: 10.1016/B978-0-12-374105-9.00493-7. 
+27. 
+Lin G, Milan A, Shen C, Reid I. RefineNet: Multi-path refinement networks for high-resolution semantic segmentation. 
+Proceedings - 30th IEEE Conference on Computer Vision and Pattern Recognition, CVPR 2017 2017; 2017-Janua: 5168–
+5177. DOI: 10.1109/CVPR.2017.549. 
+28. 
+Ren S, He K, Girshick R, Sun J. Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks. 
+Advances in Neural Information Processing Systems 28 (2015) 2015: 1–9. DOI: 10.4324/9780080519340-12. 
+29. 
+He K, Gkioxari G, Dollar P, Girshick R. Mask R-CNN. Proceedings of the IEEE International Conference on Computer 
+Vision (ICCV) 2017: 2961–2969. 
+30. 
+Redmon J, Divvala S, Girshick R, Farhadi A. You Only Look Once: Unified, Real-Time Object Detection Joseph. 
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) 2016: 779–788. DOI: 
+10.1145/3243394.3243692. 
+31. 
+Ronneberger O, Fischer P, Brox T. U-Net: Convolutional Networks for Biomedical Image Segmentation. International 
+Conference on Medical Image Computing and Computer-Assisted Intervention 2015; 9351(Cvd): 12–20. DOI: 
+10.1007/978-3-319-24574-4. 
+32. 
+He K, Zhang X, Ren S, Sun J. Deep residual learning for image recognition. Proceedings of the IEEE Computer Society 
+Conference on Computer Vision and Pattern Recognition 2016; 2016-Decem: 770–778. DOI: 10.1109/CVPR.2016.90. 
+33. 
+Goodfellow I, Bengio Y CA. Deep learning. MIT press; 2016. 
+34. 
+Hochreiter S, Schmidhuber J. Long Short-Term Memory. Neural Computation 1997; 1780: 1735–1780. 
+35. 
+Cho K, Van Merriënboer B, Gulcehre C, Bahdanau D, Bougares F, Schwenk H, et al. Learning phrase representations 
+using RNN encoder-decoder for statistical machine translation. EMNLP 2014 - 2014 Conference on Empirical Methods 
+
+--- Sayfa 21 ---
+21 
+ 
+in Natural Language Processing, Proceedings of the Conference 2014: 1724–1734. DOI: 10.3115/v1/d14-1179. 
+36. 
+Ian Goodfellow, Pouget-Abadie J, Mirza M, Xu B, Warde-Farley D, Ozair S, et al. Generative Adversarial Nets. Advances 
+in Neural Information Processing Systems 27 (NIPS 2014) 2014: 1–9. DOI: 10.1007/s10994-023-06367-0. 
+37. 
+Gao Y, Zhai P, Mosalam KM. Balanced semisupervised generative adversarial network for damage assessment from low-
+data imbalanced-class regime. Computer-Aided Civil and Infrastructure Engineering 2021; 36(9): 1094–1113. DOI: 
+10.1111/mice.12741. 
+38. 
+Gatti F, Rosafalco L, Colombera G, Mariani S, Corigliano A. Multi-storey shear type buildings under earthquake loading: 
+Adversarial learning-based prediction of the transient dynamics and damage classification. Soil Dynamics and Earthquake 
+Engineering 2023; 173(April): 108141. DOI: 10.1016/j.soildyn.2023.108141. 
+39. 
+Li S, Farrar C, Yang Y. Efficient regional seismic risk assessment via deep generative learning of surrogate models. 
+Earthquake Engineering and Structural Dynamics 2023; 52(11): 3435–3454. DOI: 10.1002/eqe.3849. 
+40. 
+Matsumoto Y, Yaoyama T, Lee S, Hida T, Itoi T. Fundamental study on probabilistic generative modeling of earthquake 
+ground motion time histories using generative adversarial networks. Japan Architectural Review 2023; 6(1). DOI: 
+10.1002/2475-8876.12392. 
+41. 
+DOERSCH C. Tutorial on Variational Autoencoders. ArXiv 2021: 1–23. DOI: arXiv:1606.05908. 
+42. 
+Cao X, Chen L, Chen J, Li J, Lu W, Liu H, et al. Seismic damage identification of high arch dams based on an unsupervised 
+deep learning approach. Soil Dynamics and Earthquake Engineering 2023; 168(September 2022): 107834. DOI: 
+10.1016/j.soildyn.2023.107834. 
+43. 
+Ning C, Xie Y. Convolutional variational autoencoder for ground motion classification and generation toward efficient 
+seismic fragility assessment. Computer-Aided Civil and Infrastructure Engineering 2023: 1–21. DOI: 
+10.1111/mice.13061. 
+44. 
+Pan SJ, Yang Q. A survey on transfer learning. IEEE Transactions on Knowledge and Data Engineering 2010; 22(10): 
+1345–1359. DOI: 10.1109/TKDE.2009.191. 
+45. 
+Abdi G, Jabari S. A Multi-Feature Fusion Using Deep Transfer Learning for Earthquake Building Damage Detection. 
+Canadian Journal of Remote Sensing 2021; 47(2): 337–352. DOI: 10.1080/07038992.2021.1925530. 
+46. 
+Dogan G, Hakan Arslan M, Ilki A. Detection of damages caused by earthquake and reinforcement corrosion in RC 
+buildings 
+with 
+Deep 
+Transfer 
+Learning. 
+Engineering 
+Structures 
+2023; 
+279(January): 
+115629. 
+DOI: 
+10.1016/j.engstruct.2023.115629. 
+47. 
+Sutton RS, Barto AG. Reinforcement Learning: An Introduction. 2nd editio. The MIT Press; 2014. DOI: 
+10.1108/k.1998.27.9.1093.3. 
+48. 
+Mnih V, Kavukcuoglu K, Silver D, Rusu AA, Veness J, Bellemare MG, et al. Human-level control through deep 
+reinforcement learning. Nature 2015; 518(7540): 529–533. DOI: 10.1038/nature14236. 
+49. 
+Sutton RS, McAllester DA, Singh SP MY. Policy gradient methods for reinforcement learning with function 
+approximation. Advances in Neural Information Processing Systems 1999; 12(1057–1063). 
+50. 
+Mnih V, Mirza M, Graves A, Harley T, Lillicrap TP, Silver D. Asynchronous Methods for Deep Reinforcement Learning 
+arXiv : 1602 . 01783v2 [ cs . LG ] 16 Jun 2016 2016; 48. 
+51. 
+Mudassir G, Howard EE, Pasquini L, Arbib C, Clementini E, Marco A Di, et al. Toward Effective Response to Natural 
+Disasters: 
+A 
+Data 
+Science 
+Approach. 
+IEEE 
+Access 
+2021; 
+9(October 
+2020): 
+167827–167844. 
+DOI: 
+10.1109/ACCESS.2021.3135054. 
+52. 
+Fan X, Zhang X, Yu X. A graph convolution network-deep reinforcement learning model for resilient water distribution 
+network repair decisions. Computer-Aided Civil and Infrastructure Engineering 2022; 37(12): 1547–1565. DOI: 
+10.1111/mice.12813. 
+53. 
+Zhou J, Cui G, Hu S, Zhang Z, Yang C, Liu Z, et al. Graph neural networks: A review of methods and applications. AI 
+Open 2020; 1(September 2020): 57–81. DOI: 10.1016/j.aiopen.2021.01.001. 
+54. 
+Wu Z, Pan S, Chen F, Long G, Zhang C, Yu PS. A Comprehensive Survey on Graph Neural Networks. IEEE Transactions 
+on Neural Networks and Learning Systems 2021; 32(1): 4–24. DOI: 10.1109/TNNLS.2020.2978386. 
+55. 
+Ji M, Liu L, Buchroithner M. Identifying collapsed buildings using post-earthquake satellite imagery and convolutional 
+neural networks: A case study of the 2010 Haiti Earthquake. Remote Sensing 2018; 10(11). DOI: 10.3390/rs10111689. 
+56. 
+Tazarv M, Won K, Jang Y, Hart K, Greeneway E. Post-earthquake serviceability assessment of standard RC bridge 
+columns using computer vision and seismic analyses. Engineering Structures 2022; 272(September): 115002. DOI: 
+10.1016/j.engstruct.2022.115002. 
+57. 
+Xu Y, Qiao W, Zhao J, Zhang Q, Li H. Vision-based multi-level synthetical evaluation of seismic damage for RC structural 
+components: a multi-task learning approach. Earthquake Engineering and Engineering Vibration 2023; 22(1): 69–85. 
+DOI: 10.1007/s11803-023-2153-4. 
+58. 
+Ghosh Mondal T, Jahanshahi MR, Wu RT, Wu ZY. Deep learning-based multi-class damage detection for autonomous 
+
+--- Sayfa 22 ---
+22 
+ 
+post-disaster reconnaissance. Structural Control and Health Monitoring 2020; 27(4): 1–15. DOI: 10.1002/stc.2507. 
+59. 
+Miao Z, Ji X, Wu M, Gao X. Deep learning-based evaluation for mechanical property degradation of seismically damaged 
+RC columns. Earthquake Engineering and Structural Dynamics 2023; 52(8): 2498–2519. DOI: 10.1002/eqe.3749. 
+60. 
+Chou JS, Karundeng MA, Truong DN, Cheng MY. Identifying deflections of reinforced concrete beams under seismic 
+loads by bio-inspired optimization of deep residual learning. Structural Control and Health Monitoring 2022; 29(4): 1–
+24. DOI: 10.1002/stc.2918. 
+61. 
+Li Y, Cui P, Ye C, Marcato Junior J, Zhang Z, Guo J, et al. Accurate prediction of earthquake-induced landslides based 
+on deep learning considering landslide source area. Remote Sensing 2021; 13(17). DOI: 10.3390/rs13173436. 
+62. 
+Hacıefendioğlu K, Başağa HB, Demir G. Automatic detection of earthquake-induced ground failure effects through Faster 
+R-CNN deep learning-based object detection using satellite images. Natural Hazards 2021; 105(1): 383–403. DOI: 
+10.1007/s11069-020-04315-y. 
+63. 
+Nex F, Duarte D, Tonolo FG, Kerle N. Structural building damage detection with deep learning: Assessment of a state-
+of-the-art CNN in operational conditions. Remote Sensing 2019; 11(23). DOI: 10.3390/rs11232765. 
+64. 
+Kawabe K, Horie K, Inoguchi M, Matsuoka M, Torisawa K, Liu W, et al. Extraction of Story-Collapsed Buildings By the 
+2016 Kumamoto Earthquake Using Deep Learning. 17th World Conference on Earthquake Engineering 2020: 1–9. 
+65. 
+Wang Y, Jing X, Xu Y, Cui L, Zhang Q, Li H. Geometry-guided semantic segmentation for post-earthquake buildings 
+using optical remote sensing images. Earthquake Engineering and Structural Dynamics 2023; 52(11): 3392–3413. DOI: 
+10.1002/eqe.3966. 
+66. 
+Ma H, Liu Y, Ren Y, Yu J. Detection of collapsed buildings in post-earthquake remote sensing images based on the 
+improved YOLOv3. Remote Sensing 2020; 12(1). DOI: 10.3390/RS12010044. 
+67. 
+Bai Y, Sezen H, Yilmaz A. End-to-end deep learning methods for automated damage detection in extreme events at various 
+scales. 
+Proceedings 
+- 
+International 
+Conference 
+on 
+Pattern 
+Recognition 
+2020: 
+5736–5743. 
+DOI: 
+10.1109/ICPR48806.2021.9413041. 
+68. 
+Wang J, Lei Y, Yang X, Zhang F. A refinement network embedded with attention mechanism for computer vision based 
+post-earthquake 
+inspections 
+of 
+railway 
+viaduct. 
+Engineering 
+Structures 
+2023; 
+279: 
+115572. 
+DOI: 
+10.1016/j.engstruct.2022.115572. 
+69. 
+Ogunjinmi PD, Park SS, Kim B, Lee DE. Rapid Post-Earthquake Structural Damage Assessment Using Convolutional 
+Neural Networks and Transfer Learning. Sensors 2022; 22(9): 1–20. DOI: 10.3390/s22093471. 
+70. 
+Adriano B, Yokoya N, Xia J, Miura H, Liu W, Matsuoka M, et al. Learning from multimodal and multitemporal earth 
+observation data for building damage mapping. ISPRS Journal of Photogrammetry and Remote Sensing 2021; 175(July 
+2020): 132–143. DOI: 10.1016/j.isprsjprs.2021.02.016. 
+71. 
+Bai Y, Zha B, Sezen H, Yilmaz A. Engineering deep learning methods on automatic detection of damage in infrastructure 
+due to extreme events. Structural Health Monitoring 2023; 22(1): 338–352. DOI: 10.1177/14759217221083649. 
+72. 
+Bernabe S, Gonzalez C, Fernandez A, Bhangale U. Portability and Acceleration of Deep Learning Inferences to Detect 
+Rapid Earthquake Damage from VHR Remote Sensing Images Using Intel OpenVINO Toolkit. IEEE Journal of Selected 
+Topics in Applied Earth Observations and Remote Sensing 2021; 14: 6906–6915. DOI: 10.1109/JSTARS.2021.3075961. 
+73. 
+Bhatta S, Dang J. Multiclass seismic damage detection of buildings using quantum convolutional neural network. 
+Computer-Aided Civil and Infrastructure Engineering 2023: 1–18. DOI: 10.1111/mice.13084. 
+74. 
+Chen F, Yu B. Earthquake-Induced Building Damage Mapping Based on Multi-Task Deep Learning Framework. IEEE 
+Access 2019; 7: 181396–181404. DOI: 10.1109/ACCESS.2019.2958983. 
+75. 
+Ci T, Liu Z, Wang Y. Assessment of the degree of building damage caused by disaster using convolutional neural networks 
+in combination with ordinal regression. Remote Sensing 2019; 11(23). DOI: 10.3390/rs11232858. 
+76. 
+Fujita S, Hatayama M. Estimation Method for Roof‐damaged Buildings from Aero-Photo Images During Earthquakes 
+Using Deep Learning. Information Systems Frontiers 2021: 351–363. DOI: 10.1007/s10796-021-10124-w. 
+77. 
+Gao Y, Mosalam KM. Deep Transfer Learning for Image-Based Structural Damage Recognition. Computer-Aided Civil 
+and Infrastructure Engineering 2018; 33(9): 748–768. DOI: 10.1111/mice.12363. 
+78. 
+Hong Z, Yang Y, Liu J, Jiang S, Pan H, Zhou R, et al. Enhancing 3D Reconstruction Model by Deep Learning and Its 
+Application in Building Damage Assessment after Earthquake. Applied Sciences (Switzerland) 2022; 12(19). DOI: 
+10.3390/app12199790. 
+79. 
+Ji M, Liu L, Du R, Buchroithner MF. A comparative study of texture and convolutional neural network features for 
+detecting collapsed buildings after earthquakes using pre- and post-event satellite imagery. Remote Sensing 2019; 11(10). 
+DOI: 10.3390/rs11101202. 
+80. 
+Ji M, Liu L, Zhang R, Buchroithner MF. Discrimination of earthquake-induced building destruction from space using a 
+pretrained CNN model. Applied Sciences (Switzerland) 2020; 10(2). DOI: 10.3390/app10020602. 
+81. 
+Ji X, Zhuang Y, Miao Z, Cheng Y. Vision-based seismic damage detection and residual capacity assessment for an RC 
+
+--- Sayfa 23 ---
+23 
+ 
+shaking table test structure. Earthquake Engineering and Structural Dynamics 2023; 52(3): 806–827. DOI: 
+10.1002/eqe.3788. 
+82. 
+Kalantar B, Ueda N, Al-Najjar HAH, Halin AA. Assessment of convolutional neural network architectures for earthquake-
+induced building damage detection based on pre-and post-event orthophoto images. Remote Sensing 2020; 12(21): 1–20. 
+DOI: 10.3390/rs12213529. 
+83. 
+Kong Q, Gu J, Xiong B, Yuan C. Vision-aided three-dimensional damage quantification and finite element model 
+geometric updating for reinforced concrete structures. Computer-Aided Civil and Infrastructure Engineering 2023; 38(17): 
+2378–2390. DOI: 10.1111/mice.12967. 
+84. 
+Levine NM, Narazaki Y, Spencer BF. Development of a building information model-guided post-earthquake building 
+inspection framework using 3D synthetic environments. Earthquake Engineering and Engineering Vibration 2023; 22(2): 
+279–307. DOI: 10.1007/s11803-023-2167-y. 
+85. 
+Liang X. Image-based post-disaster inspection of reinforced concrete bridge systems using deep learning with Bayesian 
+optimization. Computer-Aided Civil and Infrastructure Engineering 2019; 34(5): 415–430. DOI: 10.1111/mice.12425. 
+86. 
+Lin Q, Ci T, Wang L, Mondal SK, Yin H, Wang Y. Transfer Learning for Improving Seismic Building Damage 
+Assessment. Remote Sensing 2022; 14(201): 1–15. DOI: 10.1179/030716984803274756. 
+87. 
+Ma H, Liu Y, Ren Y, Wang D, Yu L, Yu J. Improved CNN classification method for groups of buildings damaged by 
+earthquake, based on high resolution remote sensing images. Remote Sensing 2020; 12(2). DOI: 10.3390/rs12020260. 
+88. 
+Miao Z, Ji X, Okazaki T, Takahashi N. Pixel-level multicategory detection of visible seismic damage of reinforced 
+concrete components. Computer-Aided Civil and Infrastructure Engineering 2021; 36(5): 620–637. DOI: 
+10.1111/mice.12667. 
+89. 
+Miura H, Aridome T, Matsuoka M. Deep learning-based identification of collapsed, non-collapsed and blue tarp-covered 
+buildings from post-disaster aerial images. Remote Sensing 2020; 12(12). DOI: 10.3390/rs12121924. 
+90. 
+Miyamoto T, Yamamoto Y. Using 3-D Convolution and Multimodal Architecture for Earthquake Damage Detection 
+Based on Satellite Imagery and Digital Urban Data. IEEE Journal of Selected Topics in Applied Earth Observations and 
+Remote Sensing 2021; 14: 8606–8613. DOI: 10.1109/JSTARS.2021.3102701. 
+91. 
+Naito S, Tomozawa H, Mori Y, Nagata T, Monma N, Nakamura H, et al. Building-damage detection method based on 
+machine learning utilizing aerial photographs of the Kumamoto earthquake. Earthquake Spectra 2020; 36(3): 1166–1187. 
+DOI: 10.1177/8755293019901309. 
+92. 
+Pan X, Yang TY. Postdisaster image-based damage detection and repair cost estimation of reinforced concrete buildings 
+using dual convolutional neural networks. Computer-Aided Civil and Infrastructure Engineering 2020; 35(5): 495–510. 
+DOI: 10.1111/mice.12549. 
+93. 
+Patterson B, Leone G, Pantoja M, Behrouzi A. Deep learning for automated image classification of seismic damage to 
+built infrastructure. 11th National Conference on Earthquake Engineering 2018, NCEE 2018: Integrating Science, 
+Engineering, and Policy 2018; 10: 6561–6571. 
+94. 
+Rahman T, Ahmed Y, Alam T, Shakil MHR, Hossain MT, Khan FN, et al. Evaluation of Earthquake Resistance of Urban 
+Buildings using Image Processing and Machine Learning Techniques. 2020 IEEE Asia-Pacific Conference on Computer 
+Science and Data Engineering, CSDE 2020 2020. DOI: 10.1109/CSDE50874.2020.9411582. 
+95. 
+Rashidian V, Baise LG, Koch M, Moaveni B. Detecting demolished buildings after a natural hazard using high resolution 
+rgb satellite imagery and modified u‐net convolutional neural networks. Remote Sensing 2021; 13(11). DOI: 
+10.3390/rs13112176. 
+96. 
+Saida T, Rashid M, Nemoto Y, Tsukamoto S, Asai T, Nishio M. CNN-based segmentation frameworks for structural 
+component and earthquake damage determinations using UAV images. Earthquake Engineering and Engineering 
+Vibration 2023; 22(2): 359–369. DOI: 10.1007/s11803-023-2174-z. 
+97. 
+Settou T, Kholladi MK, Ben Ali A. Improving damage classification via hybrid deep learning feature representations 
+derived from post-earthquake aerial images. International Journal of Image and Data Fusion 2022; 13(1): 1–20. DOI: 
+10.1080/19479832.2020.1864787. 
+98. 
+Seydi ST, Rastiveis H, Kalantar B, Halin AA, Ueda N. BDD-Net: An End-to-End Multiscale Residual CNN for 
+Earthquake-Induced Building Damage Detection. Remote Sensing 2022; 14(9). DOI: 10.3390/rs14092214. 
+99. 
+Song D, Tan X, Wang B, Zhang L, Shan X, Cui J. Integration of super-pixel segmentation and deep-learning methods for 
+evaluating earthquake-damaged buildings using single-phase remote sensing imagery. International Journal of Remote 
+Sensing 2020; 41(3): 1040–1066. DOI: 10.1080/01431161.2019.1655175. 
+100. 
+Stephenson OL, Kohne T, Zhan E, Cahill BE, Yun SH, Ross ZE, et al. Deep Learning-Based Damage Mapping with 
+InSAR Coherence Time Series. IEEE Transactions on Geoscience and Remote Sensing 2022; 60. DOI: 
+10.1109/TGRS.2021.3084209. 
+101. 
+Sun G, Hao Y, Rong J, Shi S, Ren J. Combined Deep Learning and Multiscale Segmentation for Rapid High Resolution 
+Damage Mapping. Proceedings - 2017 IEEE International Conference on Internet of Things, IEEE Green Computing and 
+
+--- Sayfa 24 ---
+24 
+ 
+Communications, IEEE Cyber, Physical and Social Computing, IEEE Smart Data, IThings-GreenCom-CPSCom-
+SmartData 2017 2017; 2018-Janua: 1101–1105. DOI: 10.1109/iThings-GreenCom-CPSCom-SmartData.2017.238. 
+102. 
+Takhtkeshha N, Mohammadzadeh A, Salehi B. A Rapid Self-Supervised Deep-Learning-Based Method for Post-
+Earthquake Damage Detection Using UAV Data (Case Study: Sarpol-e Zahab, Iran). Remote Sensing 2023; 15(1). DOI: 
+10.3390/rs15010123. 
+103. 
+Vetrivel A, Gerke M, Kerle N, Nex F, Vosselman G. Disaster damage detection through synergistic use of deep learning 
+and 3D point cloud features derived from very high resolution oblique aerial images, and multiple-kernel-learning. ISPRS 
+Journal of Photogrammetry and Remote Sensing 2018; 140: 45–59. DOI: 10.1016/j.isprsjprs.2017.03.001. 
+104. 
+Wang Y, Cui L, Zhang C, Chen W, Xu Y, Zhang Q. A Two-Stage Seismic Damage Assessment Method for Small, Dense, 
+and Imbalanced Buildings in Remote Sensing Images. Remote Sensing 2022; 14(4): 1–30. DOI: 10.3390/rs14041012. 
+105. 
+Wang Y, Jing X, Chen W, Li H, Xu Y, Zhang Q. Geometry-informed deep learning-based structural component 
+segmentation of post-earthquake buildings. Mechanical Systems and Signal Processing 2023; 188(March 2022): 110028. 
+DOI: 10.1016/j.ymssp.2022.110028. 
+106. 
+Wang Y, Jing X, Cui L, Zhang C, Xu Y, Yuan J, et al. Geometric consistency enhanced deep convolutional encoder-
+decoder for urban seismic damage assessment by UAV images. Engineering Structures 2023; 286(November 2022): 
+116132. DOI: 10.1016/j.engstruct.2023.116132. 
+107. 
+Xiong C, Li Q, Lu X. Automated regional seismic damage assessment of buildings using an unmanned aerial vehicle and 
+a convolutional neural network. Automation in Construction 2020; 109(October 2019): 102994. DOI: 
+10.1016/j.autcon.2019.102994. 
+108. 
+Xiu H, Shinohara T, Matsuoka M, Inoguchi M, Kawabe K, Horie K. Collapsed building detection using 3D point clouds 
+and deep learning. Remote Sensing 2020; 12(24 1): 24. DOI: 10.3390/rs12244057. 
+109. 
+Xu Y, Wei S, Bao Y, Li H. Automatic seismic damage identification of reinforced concrete columns from images by a 
+region-based deep convolutional neural network. Structural Control and Health Monitoring 2019; 26(3): 1–22. DOI: 
+10.1002/stc.2313. 
+110. 
+Yang W, Zhang X, Luo P. Transferability of convolutional neural network models for identifying damaged buildings due 
+to earthquake. Remote Sensing 2021; 13(3): 1–20. DOI: 10.3390/rs13030504. 
+111. 
+Ye XW, Ma SY, Liu ZX, Ding Y, Li ZX, Jin T. Post-earthquake damage recognition and condition assessment of bridges 
+using UAV integrated with deep learning approach. Structural Control and Health Monitoring 2022; 29(12): 1–15. DOI: 
+10.1002/stc.3128. 
+112. 
+Yoon S, Spencer BF, Lee S, Jung HJ, Kim IH. A novel approach to assess the seismic performance of deteriorated bridge 
+structures by employing UAV-based damage detection. Structural Control and Health Monitoring 2022; 29(7): 1–18. 
+DOI: 10.1002/stc.2964. 
+113. 
+Zhan Y, Liu W, Maruyama Y. Damaged Building Extraction Using Modified Mask R-CNN Model Using Post-Event 
+Aerial Images of the 2016 Kumamoto Earthquake. Remote Sensing 2022; 14(4). DOI: 10.3390/rs14041002. 
+114. 
+Zhang W, Wang R, Chen X, Jia D, Zhou Z. Systematic assessment method for post-earthquake damage of regional 
+buildings using adaptive-network-based fuzzy inference system. Journal of Building Engineering 2023; 78(August): 
+107682. DOI: 10.1016/j.jobe.2023.107682. 
+115. 
+Zheng Y, Gao Y, Lu S, Mosalam KM. Multistage semisupervised active learning framework for crack identification, 
+segmentation, and measurement of bridges. Computer-Aided Civil and Infrastructure Engineering 2022; 37(9): 1089–
+1108. DOI: 10.1111/mice.12851. 
+116. 
+Zou D, Zhang M, Bai Z, Liu T, Zhou A, Wang X, et al. Multicategory damage detection and safety assessment of post-
+earthquake reinforced concrete structures using deep learning. Computer-Aided Civil and Infrastructure Engineering 2022; 
+37(9): 1188–1204. DOI: 10.1111/mice.12815. 
+117. 
+Guo Y, Wang C, Yu SX, McKenna F, Law KH. AdaLN: A Vision Transformer for Multidomain Learning and Predisaster 
+Building Information Extraction from Images. Journal of Computing in Civil Engineering 2022; 36(5): 1–12. DOI: 
+10.1061/(asce)cp.1943-5487.0001034. 
+118. 
+Wang C, Antos SE, Triveno LM. Automatic detection of unreinforced masonry buildings from street view images using 
+deep learning-based image segmentation. Automation in Construction 2021; 132(February): 103968. DOI: 
+10.1016/j.autcon.2021.103968. 
+119. 
+Rueda-Plata D, González D, Acevedo AB, Duque JC, Ramos-Pollán R. Use of deep learning models in street-level images 
+to classify one-story unreinforced masonry buildings based on roof diaphragms. Building and Environment 2021; 
+189(August 2020). DOI: 10.1016/j.buildenv.2020.107517. 
+120. 
+Narazaki Y, Hoskere V, Hoang TA, Fujino Y, Sakurai A, Spencer BF. Vision-based automated bridge component 
+recognition with high-level scene consistency. Computer-Aided Civil and Infrastructure Engineering 2020; 35(5): 465–
+482. DOI: 10.1111/mice.12505. 
+121. 
+Yu Q, Wang C, McKenna F, Yu SX, Taciroglu E, Cetiner B, et al. Rapid visual screening of soft-story buildings from 
+
+--- Sayfa 25 ---
+25 
+ 
+street view images using deep learning classification. Earthquake Engineering and Engineering Vibration 2020; 19(4): 
+827–838. DOI: 10.1007/s11803-020-0598-2. 
+122. 
+Kalfarisi R, Hmosze M, Wu ZY. Detecting and Geolocating City-Scale Soft-Story Buildings by Deep Machine Learning 
+for Urban Seismic Resilience. Natural Hazards Review 2022; 23(1): 1–12. DOI: 10.1061/(asce)nh.1527-6996.0000541. 
+123. 
+Aravena Pelizari P, Geiß C, Aguirre P, Santa María H, Merino Peña Y, Taubenböck H. Automated building 
+characterization for seismic risk assessment using street-level imagery and deep learning. ISPRS Journal of 
+Photogrammetry and Remote Sensing 2021; 180(March): 370–386. DOI: 10.1016/j.isprsjprs.2021.07.004. 
+124. 
+Gonzalez D, Rueda-Plata D, Acevedo AB, Duque JC, Ramos-Pollán R, Betancourt A, et al. Automatic detection of 
+building typology using deep learning methods on street level images. Building and Environment 2020; 177(January): 1–
+12. DOI: 10.1016/j.buildenv.2020.106805. 
+125. 
+Zhang X, Beck C, Lenjani A, Bonthron L, Lund A, Liu X, et al. Enabling Rapid Large-Scale Seismic Bridge Vulnerability 
+Assessment Through Artificial Intelligence. Transportation Research Record 2023; 2677(2): 1354–1372. DOI: 
+10.1177/03611981221112950. 
+126. 
+Ji K, Zhu C, Yaghmaei-Sabegh S, Lu J, Ren Y, Wen R. Site classification using deep-learning-based image recognition 
+techniques. Earthquake Engineering and Structural Dynamics 2023; 52(8): 2323–2338. DOI: 10.1002/eqe.3801. 
+127. 
+Chen PY, Wu ZY, Taciroglu E. Classification of Soft-Story Buildings Using Deep Learning with Density Features 
+Extracted from 3D Point Clouds. Journal of Computing in Civil Engineering 2021; 35(3): 1–11. DOI: 
+10.1061/(asce)cp.1943-5487.0000968. 
+128. 
+Hu J, Wen W, Zhang C, Zhai C, Pei S, Wang Z. Rapid peak seismic response prediction of two-story and three-span 
+subway stations using deep learning method. Engineering Structures 2024; 300(August 2023): 117214. DOI: 
+10.1016/j.engstruct.2023.117214. 
+129. 
+Kim T, Kwon OS, Song J. Deep learning based seismic response prediction of hysteretic systems having degradation and 
+pinching. Earthquake Engineering and Structural Dynamics 2023; 52(8): 2384–2406. DOI: 10.1002/eqe.3796. 
+130. 
+Lu X, Xu Y, Tian Y, Cetiner B, Taciroglu E. A deep learning approach to rapid regional post-event seismic damage 
+assessment using time-frequency distributions of ground motions. Earthquake Engineering and Structural Dynamics 2021; 
+50(6): 1612–1627. DOI: 10.1002/eqe.3415. 
+131. 
+Mangalathu S, Jeon JS. Ground Motion-Dependent Rapid Damage Assessment of Structures Based on Wavelet Transform 
+and Image Analysis Techniques. Journal of Structural Engineering 2020; 146(11). DOI: 10.1061/(asce)st.1943-
+541x.0002793. 
+132. 
+Methods C, Mech A, Feng D cheng, Chen S zhi, Taciroglu E. Deep learning-enhanced efficient seismic analysis of 
+structures with multi-fidelity modeling strategies. Computer Methods in Applied Mechanics and Engineering 2024; 
+421(May 2023): 116775. DOI: 10.1016/j.cma.2024.116775. 
+133. 
+Wang M, Zhang H, Dai H, Shen L. A deep learning-aided seismic fragility analysis method for bridges. Structures 2022; 
+40(November 2021): 1056–1064. DOI: 10.1016/j.istruc.2022.04.058. 
+134. 
+Wen W, Zhang C, Zhai C. Rapid seismic response prediction of RC frames based on deep learning and limited building 
+information. Engineering Structures 2022; 267(July): 114638. DOI: 10.1016/j.engstruct.2022.114638. 
+135. 
+Ahmed B, Mangalathu S, Jeon JS. Seismic damage state predictions of reinforced concrete structures using stacked long 
+short-term memory neural networks. Journal of Building Engineering 2022; 46(September 2021): 103737. DOI: 
+10.1016/j.jobe.2021.103737. 
+136. 
+Ahmed B, Mangalathu S, Jeon JS. Generalized stacked LSTM for the seismic damage evaluation of ductile reinforced 
+concrete buildings. Earthquake Engineering and Structural Dynamics 2023; 52(11): 3477–3503. DOI: 10.1002/eqe.3869. 
+137. 
+Xu Y, Lu X, Cetiner B, Taciroglu E. Real-time regional seismic damage assessment framework based on long short-term 
+memory neural network. Computer-Aided Civil and Infrastructure Engineering 2021; 36(4): 504–521. DOI: 
+10.1111/mice.12628. 
+138. 
+Chen PY, Guan X. A multi-source data-driven approach for evaluating the seismic response of non-ductile reinforced 
+concrete 
+moment 
+frames. 
+Engineering 
+Structures 
+2023; 
+278(December 
+2022): 
+115452. 
+DOI: 
+10.1016/j.engstruct.2022.115452. 
+139. 
+Kang C, Kim T, Kwon OS, Song J. Deep neural network-based regional seismic loss assessment considering correlation 
+between EDP residuals of building structures. Earthquake Engineering and Structural Dynamics 2023; 52(11): 3414–
+3434. DOI: 10.1002/eqe.3775. 
+140. 
+Li C, Li H, Chen X. Fast seismic response estimation of tall pier bridges based on deep learning techniques. Engineering 
+Structures 2022; 266(June): 114566. DOI: 10.1016/j.engstruct.2022.114566. 
+141. 
+Noureldin M, Abuhmed T, Saygi M, Kim J. Explainable probabilistic deep learning framework for seismic assessment of 
+structures using distribution-free prediction intervals. Computer-Aided Civil and Infrastructure Engineering 2023; 38(12): 
+1677–1698. DOI: 10.1111/mice.13015. 
+142. 
+Kim T, Song J, Kwon OS. Probabilistic evaluation of seismic responses using deep learning method. Structural Safety 
+
+--- Sayfa 26 ---
+26 
+ 
+2020; 84(August 2019): 101913. DOI: 10.1016/j.strusafe.2019.101913. 
+143. 
+Su Z, Yu J, Xiao X, Wang J, Wang X. Deep learning seismic damage assessment with embedded signal denoising 
+considering three-dimensional time–frequency feature correlation. Engineering Structures 2023; 286(April): 116148. DOI: 
+10.1016/j.engstruct.2023.116148. 
+144. 
+Shen Z, Pan P, Zhang D, Huang S. Rapid Structural Safety Assessment Using a Deep Neural Network. Journal of 
+Earthquake Engineering 2022; 26(5): 2625–2641. DOI: 10.1080/13632469.2020.1785586. 
+145. 
+Wang J, Xie Y, Guo T, Du Z. Predicting seismic interaction effect between soil and structure group using convolutional 
+neural network. Structures 2023; 50(November 2022): 1011–1020. DOI: 10.1016/j.istruc.2023.02.087. 
+146. 
+Li J, He Z, Zhao X. A data-driven building’s seismic response estimation method using a deep convolutional neural 
+network. IEEE Access 2021; 9: 50061–50077. DOI: 10.1109/ACCESS.2021.3065837. 
+147. 
+Parida SS, Bose S, Apostolakis G. Earthquake data augmentation using wavelet transform for training deep learning based 
+surrogate models of nonlinear structures. Structures 2023; 55(May): 638–649. DOI: 10.1016/j.istruc.2023.05.122. 
+148. 
+Kim T, Kwon OS, Song J. Response prediction of nonlinear hysteretic systems by deep neural networks. Neural Networks 
+2019; 111: 1–10. DOI: 10.1016/j.neunet.2018.12.005. 
+149. 
+Soleimani-Babakamali MH, Zaker Esteghamati M. Estimating seismic demand models of a building inventory from 
+nonlinear static analysis using deep learning methods. Engineering Structures 2022; 266(July): 114576. DOI: 
+10.1016/j.engstruct.2022.114576. 
+150. 
+Chou JY, Liu CY, Chang CM. Story drift and damage level estimation of buildings using relative acceleration responses 
+with multi-target deep learning models under seismic excitation. Earthquake Engineering and Structural Dynamics 2023; 
+52(8): 2554–2571. DOI: 10.1002/eqe.3856. 
+151. 
+Kim M, Song J. Near-Real-Time Identification of Seismic Damage Using Unsupervised Deep Neural Network. Journal 
+of Engineering Mechanics 2022; 148(3): 1–15. DOI: 10.1061/(asce)em.1943-7889.0002066. 
+152. 
+Kim T, Kwon OS, Song J. Deep learning-based response spectrum analysis method for building structures. Earthquake 
+Engineering and Structural Dynamics 2024(January): 1–18. DOI: 10.1002/eqe.4086. 
+153. 
+Dang-Vu H, Nguyen QD, Chung TC, Shin J, Lee K. Frequency-based Data-driven Surrogate Model for Efficient 
+Prediction of Irregular Structure’s Seismic Responses. Journal of Earthquake Engineering 2022; 26(14): 7319–7336. DOI: 
+10.1080/13632469.2021.1961940. 
+154. 
+Sajedi S, Liang X. Filter Banks and Hybrid Deep Learning Architectures for Performance-Based Seismic Assessments of 
+Bridges. Journal of Structural Engineering 2022; 148(12): 1–15. DOI: 10.1061/(asce)st.1943-541x.0003501. 
+155. 
+Wang J, Xie Y, Guo T, Du Z. Predicting the Influence of Soil–Structure Interaction on Seismic Responses of Reinforced 
+Concrete 
+Frame 
+Buildings 
+Using 
+Convolutional 
+Neural 
+Network. 
+Buildings 
+2023; 
+13(2). 
+DOI: 
+10.3390/buildings13020564. 
+156. 
+Xiong C, Zheng J, Xu L, Cen C, Zheng R, Li Y. Multiple‐input convolutional neural network model for large‐scale seismic 
+damage assessment of reinforced concrete frame buildings. Applied Sciences (Switzerland) 2021; 11(17). DOI: 
+10.3390/app11178258. 
+157. 
+Yuan X, Tanksley D, Jiao P, Li L, Chen G, Wunsch D. Encoding Time-Series Ground Motions as Images for 
+Convolutional Neural Networks-Based Seismic Damage Evaluation. Frontiers in Built Environment 2021; 7(April). DOI: 
+10.3389/fbuil.2021.660103. 
+158. 
+Yuan X, Tanksley D, Li L, Zhang H, Chen G, Wunsch D. Faster post-earthquake damage assessment based on 1d 
+convolutional neural networks. Applied Sciences (Switzerland) 2021; 11(21). DOI: 10.3390/app11219844. 
+159. 
+Zhang W, Ghahari F, Arduino P, Taciroglu E. A deep learning approach for rapid detection of soil liquefaction using 
+time–frequency images. Soil Dynamics and Earthquake Engineering 2023; 166(July 2022): 107788. DOI: 
+10.1016/j.soildyn.2023.107788. 
+160. 
+Zhang R, Chen Z, Chen S, Zheng J, Büyüköztürk O, Sun H. Deep long short-term memory networks for nonlinear 
+structural 
+seismic 
+response 
+prediction. 
+Computers 
+and 
+Structures 
+2019; 
+220: 
+55–68. 
+DOI: 
+10.1016/j.compstruc.2019.05.006. 
+161. 
+Xu Z, Chen J, Shen J, Xiang M. Recursive long short-term memory network for predicting nonlinear structural seismic 
+response. Engineering Structures 2022; 250(October 2021): 113406. DOI: 10.1016/j.engstruct.2021.113406. 
+162. 
+Yazdanpanah O, Chang M, Park M, Kim CY. Seismic response prediction of RC bridge piers through stacked long short-
+term memory network. Structures 2022; 45(September): 1990–2006. DOI: 10.1016/j.istruc.2022.10.015. 
+163. 
+Kundu A, Ghosh S, Chakraborty S. A long short-term memory based deep learning algorithm for seismic response 
+uncertainty quantification. Probabilistic Engineering Mechanics 2022; 67(October 2021): 103189. DOI: 
+10.1016/j.probengmech.2021.103189. 
+164. 
+Wang T, Li H, Noori M, Ghiasi R, Kuok SC. Probabilistic Seismic Response Prediction of Three-Dimensional Structures 
+Based on Bayesian Convolutional Neural Network. Sensors 2022(22): 3775. DOI: 10.1007/978-3-030-94514-5_3. 
+
+--- Sayfa 27 ---
+27 
+ 
+165. 
+Pan Y, Ventura CE, Li T. Sensor placement and seismic response reconstruction for structural health monitoring using a 
+deep neural network. Bulletin of Earthquake Engineering 2022; 20(9): 4513–4532. DOI: 10.1007/s10518-021-01266-y. 
+166. 
+Xu Y, Lu X, Fei Y, Huang Y. Iterative self-transfer learning: A general methodology for response time-history prediction 
+based on small dataset. Journal of Computational Design and Engineering 2022; 9(5): 2089–2102. DOI: 
+10.1093/jcde/qwac098. 
+167. 
+Yi R, Li X, Zhu S, Li Y, Xu X. A deep leaning method for dynamic vibration analysis of bridges subjected to uniform 
+seismic 
+excitation. 
+Soil 
+Dynamics 
+and 
+Earthquake 
+Engineering 
+2023; 
+168(January): 
+107830. 
+DOI: 
+10.1016/j.soildyn.2023.107830. 
+168. 
+Eltouny KA, Liang X. Uncertainty-aware structural damage warning system using deep variational composite neural 
+networks. Earthquake Engineering and Structural Dynamics 2023; 52(11): 3345–3368. DOI: 10.1002/eqe.3892. 
+169. 
+Taghavi Ganji H, Seylabi E. An LSTM RNN proposal for surrogate modeling the dynamic response of buried structures 
+to earthquake plane waves in soil half-spaces. Computers and Geotechnics 2023; 164(April): 105796. DOI: 
+10.1016/j.compgeo.2023.105796. 
+170. 
+Guo J, Enokida R, Li D, Ikago K. Combination of physics-based and data-driven modeling for nonlinear structural seismic 
+response prediction through deep residual learning. Earthquake Engineering and Structural Dynamics 2023; 52(8): 2429–
+2451. DOI: 10.1002/eqe.3863. 
+171. 
+Kim M, Song J. Seismic damage identification by graph convolutional autoencoder using adjacency matrix based on 
+structural modes. Earthquake Engineering and Structural Dynamics 2023(October 2023): 815–837. DOI: 
+10.1002/eqe.4047. 
+172. 
+Wu Y, Yin Z, Zhang H, Geng W. Prediction of nonlinear seismic response of underground structures in single- and multi-
+layered soil profiles using a deep gated recurrent network. Soil Dynamics and Earthquake Engineering 2023; 168(July 
+2022): 107852. DOI: 10.1016/j.soildyn.2023.107852. 
+173. 
+Xiong Q, Kong Q, Xiong H, Liao L, Yuan C. Physics-informed deep 1D CNN compiled in extended state space fusion 
+for seismic response modeling. Computers & Structures 2024; 291: 107215. DOI: 10.1016/j.compstruc.2023.107215. 
+174. 
+Huang P, Chen Z, Liu Z. Nonparametric probabilistic seismic demand model and fragility analysis of subway stations 
+using deep learning techniques. Underground Space (China) 2023; 11: 63–80. DOI: 10.1016/j.undsp.2022.10.009. 
+175. 
+Wang J, Jiang Y, Huang Q, Guan X, Dai K. An adapted LSTM-DRRNet approach for predicting floor acceleration 
+response spectrum. Engineering Structures 2023; 295(April): 116849. DOI: 10.1016/j.engstruct.2023.116849. 
+176. 
+Xiang P, Zhang P, Zhao H, Shao Z, Jiang L. Seismic response prediction of a train-bridge coupled system based on a 
+LSTM neural network. Mechanics Based Design of Structures and Machines 2023; 0(0): 1–23. DOI: 
+10.1080/15397734.2023.2260469. 
+177. 
+Liao Y, Lin R, Zhang R, Wu G. Attention-based LSTM (AttLSTM) neural network for Seismic Response Modeling of 
+Bridges. Computers and Structures 2023; 275: 106915. DOI: 10.1016/j.compstruc.2022.106915. 
+178. 
+Liu F, Li J, Wang L. PI-LSTM: Physics-informed long short-term memory network for structural response modeling. 
+Engineering Structures 2023; 292(April 2022): 116500. DOI: 10.1016/j.engstruct.2023.116500. 
+179. 
+Wang T, Li H, Noori M, Ghiasi R, Kuok SC, Altabey WA. Seismic response prediction of structures based on Runge-
+Kutta recurrent neural network with prior knowledge. Engineering Structures 2023; 279: 115576. DOI: 
+10.1016/j.engstruct.2022.115576. 
+180. 
+Zhong Z, Ni B, Shi Y, Shen J, Du X. Convolutional neural network-based seismic fragility analysis of subway station 
+structure considering spatial variation of site shear-wave velocity. Computers and Geotechnics 2023; 163(August). DOI: 
+10.1016/j.compgeo.2023.105741. 
+181. 
+Maharjan S, Guidio B, Jeong C. Convolutional neural network for identifying effective seismic force at a DRM layer for 
+rapid reconstruction of SH ground motions. Earthquake Engineering & Structural Dynamics 2023(August): 1–30. DOI: 
+10.1002/eqe.4049. 
+182. 
+Peng H, Yan J, Yu Y, Luo Y. Time series estimation based on deep Learning for structural dynamic nonlinear prediction. 
+Structures 2021; 29(November 2020): 1016–1031. DOI: 10.1016/j.istruc.2020.11.049. 
+183. 
+Zhou Y, Meng S, Lou Y, Kong Q. Physics-Informed Deep Learning-Based Real-Time Structural Response Prediction 
+Method. Engineering 2023. DOI: 10.1016/j.eng.2023.08.011. 
+184. 
+Gao X, Ji X, Zhang Y, Zhuang Y, Cai E. Structural displacement estimation by a hybrid computer vision approach. 
+Mechanical Systems and Signal Processing 2023; 204(April): 110754. DOI: 10.1016/j.ymssp.2023.110754. 
+185. 
+Meng S, Zhou Y, Gao Z. Engineering Applications of Artificial Intelligence Refined self-attention mechanism based real-
+time structural response prediction method under seismic action. Engineering Applications of Artificial Intelligence 2024; 
+129(July 2022): 107380. DOI: 10.1016/j.engappai.2023.107380. 
+186. 
+Fan G, Li J, Hao H, Xin Y. Data driven structural dynamic response reconstruction using segment based generative 
+adversarial networks. Engineering Structures 2021; 234(January): 111970. DOI: 10.1016/j.engstruct.2021.111970. 
+187. 
+Sadeghi Eshkevari S, Takáč M, Pakzad SN, Jahani M. DynNet: Physics-based neural architecture design for nonlinear 
+
+--- Sayfa 28 ---
+28 
+ 
+structural response modeling and prediction. Engineering Structures 2021; 229(November 2020). DOI: 
+10.1016/j.engstruct.2020.111582. 
+188. 
+Oh BK, Park Y, Park HS. Seismic response prediction method for building structures using convolutional neural network. 
+Structural Control and Health Monitoring 2020; 27(5): 1–17. DOI: 10.1002/stc.2519. 
+189. 
+Zhang R, Liu Y, Sun H. Physics-guided convolutional neural network (PhyCNN) for data-driven seismic response 
+modeling. Engineering Structures 2020; 215(February): 110704. DOI: 10.1016/j.engstruct.2020.110704. 
+190. 
+Zhang R, Liu Y, Sun H. Physics-informed multi-LSTM networks for metamodeling of nonlinear structures. Computer 
+Methods in Applied Mechanics and Engineering 2020; 369: 113226. DOI: 10.1016/j.cma.2020.113226. 
+191. 
+Wu RT, Jahanshahi MR. Deep Convolutional Neural Network for Structural Dynamic Response Estimation and System 
+Identification. Journal of Engineering Mechanics 2019; 145(1). DOI: 10.1061/(asce)em.1943-7889.0001556. 
+192. 
+He S, Liao Y, Sun PP, Zhang R. Deep learning enabled seismic fragility evaluation of structures subjected to mainshock 
+‑ aftershock earthquakes. Urban Lifeline 2024. DOI: 10.1007/s44285-024-00013-4. 
+193. 
+Mekaoui N, Hada S, Saito T. Deep learning model for prediction of non-linear cyclic hysteresis of seismic isolation devices: 
+Full-scale experimental validation. Soil Dynamics and Earthquake Engineering 2023; 169(March): 107873. DOI: 
+10.1016/j.soildyn.2023.107873. 
+194. 
+Kim HS. Development of seismic response simulation model for building structures with semi-active control devices using 
+recurrent neural network. Applied Sciences (Switzerland) 2020; 10(11). DOI: 10.3390/app10113915. 
+195. 
+Chen Z, Wang N, Sun H. Graph oscillators: Physics-guided graph modeling of mass–spring–damper systems for trajectory 
+prediction and damage localization. Mechanical Systems and Signal Processing 2024; 212(February): 111297. DOI: 
+10.1016/j.ymssp.2024.111297. 
+196. 
+Seon Park H, Hwan An J, Jun Park Y, Kwan Oh B. Convolutional neural network-based safety evaluation method for 
+structures 
+with 
+dynamic 
+responses. 
+Expert 
+Systems 
+with 
+Applications 
+2020; 
+158: 
+113634. 
+DOI: 
+10.1016/j.eswa.2020.113634. 
+197. 
+Huang Y, Han X, Zhao L. Recurrent neural networks for complicated seismic dynamic response prediction of a slope 
+system. Engineering Geology 2021; 289(May): 106198. DOI: 10.1016/j.enggeo.2021.106198. 
+198. 
+Torky AA, Ohno S. Deep learning techniques for predicting nonlinear multi-component seismic responses of structural 
+buildings. Computers and Structures 2021; 252: 106570. DOI: 10.1016/j.compstruc.2021.106570. 
+199. 
+Li T, Pan Y, Tong K, Ventura CE, De Silva CW. Attention-Based Sequence-to-Sequence Learning for Online Structural 
+Response Forecasting under Seismic Excitation. IEEE Transactions on Systems, Man, and Cybernetics: Systems 2022; 
+52(4): 2184–2200. DOI: 10.1109/TSMC.2020.3048696. 
+200. 
+Ning C, Xie Y, Sun L. LSTM, WaveNet, and 2D CNN for nonlinear time history prediction of seismic responses. 
+Engineering Structures 2023; 286(April): 116083. DOI: 10.1016/j.engstruct.2023.116083. 
+201. 
+Du A, Wang X, Xie Y, Dong Y. Regional seismic risk and resilience assessment : Methodological development , 
+applicability , and future research needs – An earthquake engineering perspective 2023; 233(July 2021). 
+202. 
+Koliou M, van de Lindt JW, McAllister TP, Ellingwood BR, Dillard M, Cutler H. State of the research in community 
+resilience: Progress and challenges. Sustainable and Resilient Infrastructure 2020; 5(3): 131–151. DOI: 
+10.1080/23789689.2017.1418547. 
+203. 
+Yang S, Zhang Y, Lu X, Guo W, Miao H. Multi-agent deep reinforcement learning based decision support model for 
+resilient community post-hazard recovery. Reliability Engineering and System Safety 2024; 242(April 2023): 109754. DOI: 
+10.1016/j.ress.2023.109754. 
+204. 
+Ali G, Zhang X. Deep reinforcement learning for intelligent risk optimization of buildings under hazard. Reliability 
+Engineering and System Safety 2024; 247(February): 110118. DOI: 10.1016/j.ress.2024.110118. 
+205. 
+Nabian MA, Meidani H. Deep Learning for Accelerated Seismic Reliability Analysis of Transportation Networks. 
+Computer-Aided Civil and Infrastructure Engineering 2018; 33(6): 443–458. DOI: 10.1111/mice.12359. 
+206. 
+Kim T, Song J, Kwon OS. Pre- and post-earthquake regional loss assessment using deep learning. Earthquake Engineering 
+and Structural Dynamics 2020; 49(7): 657–678. DOI: 10.1002/eqe.3258. 
+207. 
+Jena R, Naik SP, Pradhan B, Beydoun G, Park HJ, Alamri A. Earthquake vulnerability assessment for the Indian 
+subcontinent using the Long Short-Term Memory model (LSTM). International Journal of Disaster Risk Reduction 2021; 
+66(October). DOI: 10.1016/j.ijdrr.2021.102642. 
+208. 
+Jena R, Pradhan B, Naik SP, Alamri AM. Earthquake risk assessment in NE India using deep learning and geospatial 
+analysis. Geoscience Frontiers 2021; 12(3): 101110. DOI: 10.1016/j.gsf.2020.11.007. 
+209. 
+Silva-Lopez R, Baker JW, Poulos A. Deep Learning–Based Retrofitting and Seismic Risk Assessment of Road Networks. 
+Journal of Computing in Civil Engineering 2022; 36(2): 1–12. DOI: 10.1061/(asce)cp.1943-5487.0001006. 
+210. 
+Jena R, Shanableh A, Al-Ruzouq R, Pradhan B, Gibril MBA, Ghorbanzadeh O, et al. An Integration of Deep Learning 
+and Transfer Learning for Earthquake-Risk Assessment in the Eurasian Region. Remote Sensing 2023; 15(15). DOI: 
+
+--- Sayfa 29 ---
+29 
+ 
+10.3390/rs15153759. 
+211. 
+Dupuis M, Schill C, Lee R, Bradley B. A deep-learning-based model for quality assessment of earthquake-induced ground-
+motion records. Earthquake Spectra 2023(February). DOI: 10.1177/87552930231195113. 
+212. 
+Zhao G, Xu L, Zhu X, Lin S, Xie L. Spectrum-matched ground motion selection method based on Siamese Convolutional 
+Neural 
+Networks. 
+Soil 
+Dynamics 
+and 
+Earthquake 
+Engineering 
+2022; 
+163(September): 
+107515. 
+DOI: 
+10.1016/j.soildyn.2022.107515. 
+213. 
+Matinfar M, Khaji N, Ahmadi G. Deep convolutional generative adversarial networks for the generation of numerous 
+artificial spectrum-compatible earthquake accelerograms using a limited number of ground motion records. Computer-
+Aided Civil and Infrastructure Engineering 2023; 38(2): 225–240. DOI: 10.1111/mice.12852. 
+214. 
+Bond RB, Ren P, Hajjar JF, Sun H. An unsupervised machine learning approach for ground-motion spectra clustering and 
+selection. Earthquake Engineering and Structural Dynamics 2024; 53(3): 1107–1124. DOI: 10.1002/eqe.4062. 
+215. 
+Ding Y, Chen J, Shen J. Prediction of spectral accelerations of aftershock ground motion with deep learning method. Soil 
+Dynamics and Earthquake Engineering 2021; 150(June 2020): 106951. DOI: 10.1016/j.soildyn.2021.106951. 
+216. 
+Fayaz J, Galasso C. A Generalized Ground Motion Model for consistent Mainshock-Aftershock Ground Motion Intensity 
+Measures using Deep Neural Networks. 12th National Conference on Earthquake Engineering, NCEE 2022 2022(July). 
+217. 
+Na Y, El-Tawil S, Ibrahim A, Eltawil A. Stick-Slip Classification Based on Machine Learning Techniques for Building 
+Damage 
+Assessment. 
+Journal 
+of 
+Earthquake 
+Engineering 
+2022; 
+26(11): 
+5848–5865. 
+DOI: 
+10.1080/13632469.2021.1891156. 
+218. 
+He YA, Wu J. Control of structural seismic response by self-recurrent neural network (SRNN). Earthquake Engineering 
+and 
+Structural 
+Dynamics 
+1998; 
+27(7): 
+641–648. 
+DOI: 
+10.1002/(SICI)1096-9845(199807)27:7<641::AID-
+EQE741>3.0.CO;2-D. 
+219. 
+Zhang H, Wang L, Shi W. Seismic control of adaptive variable stiffness intelligent structures using fuzzy control strategy 
+combined with LSTM. Journal of Building Engineering 2023; 78(August): 107549. DOI: 10.1016/j.jobe.2023.107549. 
+220. 
+Radmard Rahmani H, Chase G, Wiering M, Könke C. A framework for brain learning-based control of smart structures. 
+Advanced Engineering Informatics 2019; 42(May): 100986. DOI: 10.1016/j.aei.2019.100986. 
+221. 
+Armand GM, Shirai K. Determination of optimum friction damper sliding force in vibration control using deep 
+reinforcement learning. 17th World Conference on Earthquake Engineering (17WCEE), Sendai, Japan, 2021. 
+222. 
+Wang Z, Ubertini F, Laflamme S. Ensemble of long short-term memory recurrent neural network for semi-active control 
+of tuned liquid wall damper. Engineering Structures 2022; 270(July): 114771. DOI: 10.1016/j.engstruct.2022.114771. 
+223. 
+Li Z, Tu J, Zhang J. Seismic response of high-rise buildings using long short-term memory intelligent decentralized control 
+system. JVC/Journal of Vibration and Control 2023; 29(9–10): 1981–1995. DOI: 10.1177/10775463221074478. 
+224. 
+Lin TK, Lu LY, Chuang CK, Lin TK. Development and Experimental Verification of an Intelligent Isolation System 
+Based on Long Short-Term Memory Module Model for Ground Motion Characteristics Prediction. Structural Control and 
+Health Monitoring 2023; 10(1): STR-83-1-STR-83-6. DOI: 10.14455/ISEC.2023.10(1).STR-83. 
+225. 
+Liu H, Zhang Y. Deep learning-based brace damage detection for concentrically braced frame structures under seismic 
+loadings. Advances in Structural Engineering 2019; 22(16): 3473–3486. DOI: 10.1177/1369433219859389. 
+226. 
+Impraimakis M. A convolutional neural network deep learning method for model class selection. Earthquake Engineering 
+and Structural Dynamics 2023(June): 1–31. DOI: 10.1002/eqe.4045. 
+227. 
+Zeng Y, He Z, Pan P. A deep learning method to monitor axial pressure and shear deformation of rubber bearings under 
+coupled compression and shear loading. Earthquake Engineering and Structural Dynamics 2023; 52(11): 3304–3321. 
+DOI: 10.1002/eqe.3895. 
+228. 
+Zhou C, Chase JG, Rodgers GW. Degradation evaluation of lateral story stiffness using HLA-based deep learning 
+networks. Advanced Engineering Informatics 2019; 39(September 2018): 259–268. DOI: 10.1016/j.aei.2019.01.007. 
+229. 
+Yu Y, Wang C, Gu X, Li J. A novel deep learning-based method for damage identification of smart building structures. 
+Structural Health Monitoring 2019; 18(1): 143–163. DOI: 10.1177/1475921718804132. 
+230. 
+Khodabandehlou H, Pekcan G, Fadali MS. Vibration-based structural condition assessment using convolution neural 
+networks. Structural Control and Health Monitoring 2019; 26(2): 1–12. DOI: 10.1002/stc.2308. 
+231. 
+Lei Y, Zhang Y, Mi J, Liu W, Liu L. Detecting structural damage under unknown seismic excitation by deep convolutional 
+neural network with wavelet-based transmissibility data. Structural Health Monitoring 2021; 20(4): 1583–1596. DOI: 
+10.1177/1475921720923081. 
+232. 
+Gao Y, Mosalam KM. PEER Hub ImageNet: A Large-Scale Multiattribute Benchmark Data Set of Structural Images. 
+Journal of Structural Engineering 2020; 146(10): 1–13. DOI: 10.1061/(asce)st.1943-541x.0002745. 
+233. 
+Sohl-Dickstein J, Weiss EA, Maheswaranathan N, Ganguli S. Deep unsupervised learning using nonequilibrium 
+thermodynamics. 32nd International Conference on Machine Learning, ICML 2015 2015; 3: 2246–2255. 
+234. 
+Niu Z, Zhong G, Yu H. A review on the attention mechanism of deep learning. Neurocomputing 2021; 452: 48–62. DOI: 
+
+--- Sayfa 30 ---
+30 
+ 
+10.1016/j.neucom.2021.03.091. 
+235. 
+Ganaie MA, Hu M, Malik AK, Tanveer M, Suganthan PN. Ensemble deep learning: A review. Engineering Applications 
+of Artificial Intelligence 2022; 115(June): 105151. DOI: 10.1016/j.engappai.2022.105151. 
+236. 
+Liu X, Zhang F, Hou Z, Mian L, Wang Z, Zhang J, et al. Self-Supervised Learning: Generative or Contrastive. IEEE 
+Transactions on Knowledge and Data Engineering 2023; 35(1): 857–876. DOI: 10.1109/TKDE.2021.3090866. 
+237. 
+Vaswani A, Shazeer N, Parmar N, Uszkoreit J, Jones L, Gomez AN, et al. Attention Is All You Need. 31st Conference on 
+Neural Information Processing Systems 2017: 1–11. DOI: 10.1145/3583780.3615497. 
+238. 
+Simonyan K, Vedaldi A, Zisserman A. Deep inside convolutional networks: Visualising image classification models and 
+saliency maps. 2nd International Conference on Learning Representations, ICLR 2014 - Workshop Track Proceedings 
+2014: 1–8. 
+239. 
+Sundararajan M, Taly A, Yan Q. Axiomatic attribution for deep networks. 34th International Conference on Machine 
+Learning, ICML 2017 2017; 7: 5109–5118. 
+240. 
+Springenberg JT, Dosovitskiy A, Brox T, Riedmiller M. Striving for simplicity: The all convolutional net. 3rd 
+International Conference on Learning Representations, ICLR 2015 - Workshop Track Proceedings 2015: 1–14. 
+241. 
+Kim B, Wattenberg M, Gilmer J, Cai C, Wexler J, Viegas F, et al. Interpretability beyond feature attribution: Quantitative 
+Testing with Concept Activation Vectors (TCAV). 35th International Conference on Machine Learning, ICML 2018 2018; 
+6: 4186–4195. 
+242. 
+Zeiler MD, Fergus R. Visualizing and understanding convolutional networks. Lecture Notes in Computer Science 
+(Including Subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics) 2014; 8689 
+LNCS(PART 1): 818–833. DOI: 10.1007/978-3-319-10590-1_53. 
+243. 
+Zhou B, Khosla A, Lepedriza A, Oliva A, Torralba A. Learning deep features for discriminative localization. Proceedings 
+of 
+the 
+IEEE 
+Conference 
+on 
+Computer 
+Vision 
+and 
+Pattern 
+Recognition 
+2016: 
+2921–2929. 
+DOI: 
+10.5465/ambpp.2004.13862426. 
+244. 
+Bach S, Binder A, Montavon G, Klauschen F, Müller KR, Samek W. On pixel-wise explanations for non-linear classifier 
+decisions by layer-wise relevance propagation. PLoS ONE 2015; 10(7): 1–46. DOI: 10.1371/journal.pone.0130140. 
+ 

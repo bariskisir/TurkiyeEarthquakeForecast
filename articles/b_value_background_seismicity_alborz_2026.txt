@@ -1,0 +1,1068 @@
+
+--- Sayfa 1 ---
+ 
+1 
+Exceedance Probabilities for Large Earthquakes 
+From DIY Local Earthquake Ensemble Nowcasting and Forecasting: 
+Magnitude, Natural Time, and Calendar Time 
+ 
+John B Rundle1,2,3, Ian Baughman1,  Andrea Donnellan4,3, Lisa Grant Ludwig5, Geoffrey Fox6, 
+Kazuyoshi Nanjo7 
+ 
+1 University of California, Davis, CA 
+2 Santa Fe Institute, Santa Fe, NM 
+3 Jet Propulsion Laboratory, Pasadena, CA 
+4 Purdue University, West Lafayette, IN 
+5 University of California, Irvine, CA 
+6 University of Virginia, Charlottesville, VA 
+7Shizuoka University, Japan 
+ 
+Abstract 
+ 
+This paper focuses on the problem of anticipating the local occurrence of future large 
+earthquakes.  "Local" is defined as the probability of a large earthquake occurring with a 
+defined circle of arbitrary radius surrounding a point of interest.  The main (and for that 
+matter, the only) assumption for all these works is that the Gutenberg-Richter (GR) 
+magnitude-frequency relation holds.  Here we describe a method for computing calendar 
+time forecasts in a local area for large earthquakes of a target magnitude MT using a count 
+small earthquakes MS < MT in the area.  Using the idea that the GR relation is valid throughout 
+the surrounding region, we define an ensemble of earthquakes in larger surrounding regions 
+to be used in computing the forecast.  What follows is simple data mining.  The method has 
+significant skill, as defined by the Receiver Operating Characteristic (ROC) test, which 
+improves as time since the last major earthquake increases.  The probability is conditioned 
+on the number of small earthquakes n(t) that have occurred since the last large earthquake.  
+The probability is computed directly as the Positive Predictive Value (PPV) associated with 
+the ROC curve. The method is validated by comparison to the UCERF3 forecasts for the 
+UCERF3-defined geographic boxes centered on Los Angeles and San Francisco.   The method 
+is then applied to a 125-KM radius circular area around Los Angeles, California, following the 
+January 17, 1994 magnitude M6.7 Northridge earthquake, and short term forecasts (1 year 
+and 5 year ) are computed. 
+ 
+Key Words.  Earthquakes, Nowcasting, Forecasting, Exceedance Probabilities 
+ 
+1 Introduction 
+1.1 Earthquake Nowcasting 
+Previous papers have developed several techniques for earthquake nowcasting.  The 
+nowcasting approach is based on "natural time", which is defined as counts of small 
+earthquakes [1-4].   Natural time is the time scale that is relevant to the system dynamics, so 
+
+--- Sayfa 2 ---
+ 
+2 
+earthquake nowcasting uses natural time to track the progression of the fault system 
+through its cycle of large earthquake activity. The term "nowcasting "is used in the same 
+sense as for weather and economic nowcasting [5,6], tracking the current state of a system 
+in the recent past, current time, and the near future.  Methods to produce earthquake 
+nowcasts are the subject of many previous papers [5-39].    
+The nowcasting method is applied to a small circle of arbitrary radius surrounding a 
+point of interest, typically a city.  Computing the probability then involves a data mining 
+phase using an expanding series or ensemble of larger rectangular regions surrounding the 
+circle.  These regions then comprise the ensemble for the method.  Each member of the 
+ensemble contains a number of earthquake "cycles" which begin and end on earthquakes 
+larger than a target magnitude MT.  Each cycle contains a number of "small" earthquakes MS 
+< MT.  The similarity of the Gutenberg-Richter statistics for the local region and the 
+surrounding ensemble regions is used to construct a time-scaling for the times in the 
+ensemble cycles.   
+After time-scaling the calendar forecast times for the ensemble members, we then 
+consider each cycle of activity in a given ensemble.  Collections of time-scaled cycles of 
+activity that have fewer small events than the number in the circle are considered to 
+represent a set of might-have-been past histories for activity in the circle.  Collections of 
+time-scaled cycles of activity that have more small events than the number in the circle are 
+considered to represent a set of possible future activity for the circle.  Examples of the data 
+for a circular region of radius 125 KM around Los Angeles, CA, and a selection of the 
+ensembles is shown in Table 1. 
+The next step involves computation of the ROC curve for each member of the ensemble, 
+a plot of the True Positive Rate (TPR) vs. the False Positive Rate (FPR) [40,41].   Once we are 
+in possession of these curves, we compute the ensemble mean curve and its standard 
+deviation.  The area under the ROC curve (AUROC, or "skill") can be interpreted as the ability 
+of a model to discriminate between, or to correctly classify,  different categories of events.  
+In our case, an event is the occurrence of a major earthquake vs. non-occurrence [40,41].  
+The method then uses a simple data mining method on the longer earthquake cycles to 
+compute the probability of future events.   
+This current paper is the third of a three-part series introducing methods for computing 
+local earthquake forecasts and associated probabilities of future large earthquakes from 
+local earthquake nowcasts.  The first paper [15] detailed a method to compute local forecasts 
+for a fixed future natural time interval, where natural time is the count of small earthquakes 
+since the last large earthquake.  The second paper [16] extended these methods to calendar 
+time forecasts using an ensemble-of-regions approach.  Here the local region of interest, a 
+circle of radius rC surrounding a central geographic point of interest, is enclosed by an 
+expanding series (ensemble) of regions.   
+To summarize our results: 
+• Local ensemble probabilities for large earthquakes can be computed using only 
+counts of small earthquakes  
+• Ensemble exceedance probabilities for magnitude and earthquake occurrence time 
+can be computed for evaluating risk profiles 
+
+--- Sayfa 3 ---
+ 
+3 
+• To test the basic assumption of uniformity of statistics, a nowcast transform can be 
+defined to adjust the regional statistics to enforce uniformity within the ensembles of 
+events 
+• The method is then validated/benchmarked by comparison to the accepted current 
+USGS forecasts. 
+2 Nowcast Function and the Ensemble Method 
+We begin by considering a circular region of radius 125 km (Figure 1a) surrounding a 
+point of interest, in this case, the city of Los Angeles, CA [5,15,16].  Figure 1a also shows an 
+ensemble of expanding rectangular regions.  The last major earthquake within this circle was 
+the magnitude M6.7 Northridge, CA earthquake on January 17, 1994.  We wish to compute 
+the probability of the next large earthquake of target magnitude MT ³ 6 occurring within the 
+circular region, whose radius was chosen mainly because it is about twice the radial 
+dimension of the aftershocks of the Northridge earthquake.   
+2.1 Scaled Similarity 
+These ensemble regions are assumed to posses Gutenberg-Richter magnitude-frequency 
+(GR) statistics that are the same or similar to the statistics in the circular region.  This 
+assumption can be stated as an assumption of "scaled similarity", that when the temporal 
+statistics of the members of the ensemble are appropriately scaled in time, the members can 
+be regarded as statistical "copies" of the earthquakes in the circular region. 
+The specific form of the GR law that is used here is: 
+𝑁 = 𝑒!(#!"##)  
+ 
+ 
+ 
+ 
+(1) 
+where N is the number of small earthquakes of magnitude MS for every large target 
+earthquake MT, and b is a parameter that is usually near b ~1 but can typically vary by ± 0.05 
+or so. 
+2.2 Step 1: The Nowcast Function and Earthquake Cycles 
+The first step in the analysis is to introduce a nowcast function F(n): 
+Φ(𝑛) = 1 − 𝑒%(&/() 
+ 
+ 
+ 
+ 
+ 
+(2) 
+where n is the number of small earthquakes of magnitude MS since the last large earthquake 
+of target magnitude MT [16].  Equation (2) was chosen as a consequence of the observation 
+[42], since validated many times by others [6], that aside from aftershock clustering, 
+earthquakes occur randomly in time with Poisson statistics.  In addition, [] has shown that 
+equation (2) generally characterizes the interval statistics (Figure 1b) between large 
+earthquakes MT.  Note that in the figures, we plot the nowcast value as ranging between 
+[0%,100%] rather than [0,1]. 
+2.3 Step 2: Construct Ensemble of Cycles 
+Using equation (2), build a series of "large earthquake cycles" in the ensembles, shown 
+schematically in Figure 2, surrounding the circular region and centered on Los Angeles 
+(Figure 1a).  Each of the cycles begins and ends at the time of a target earthquake.  So an 
+ensemble member with NENS large earthquakes will have J = NENS -1 cycles by this definition.  
+
+--- Sayfa 4 ---
+ 
+4 
+These cycles of activity represent the data mining set for the simple machine learning 
+application.   
+The ith ensemble member will have a set of J cycles ni,j denoted by Ci:   
+𝐶){𝑛)} = {𝑛),+, 𝑛),,, 𝑛),-, . . . , 𝑛),.}  
+ 
+ 
+ 
+(3) 
+Here ni,j is the number of small earthquakes in the jth cycle of the ith ensemble. 
+2.4 Step 3: Scale the Forecast Time for Each Ensemble Member 
+Build conditional ROC curves for each member of the ensemble using the following 
+method, then compute the mean ROC curve from the ensemble ROC curves. The curves are 
+conditioned on the number of small events that have occurred prior to calculation of the ROC 
+curve. 
+We choose a forecast time of interest TF,C for the next target earthquake in the circular 
+region.  The number of small events in the circle will be designated as nC, and the 
+corresponding rate of small earthquake occurrence within the circle is designated as RC.    
+Clearly each member of the expanding ensemble will have a larger number of small 
+events than the number of small events in the circle.  The ith ensemble member will have a 
+total number ni of small earthquakes, and a corresponding rate of occurrence Ri.   
+In Step 2, we scale the forecast time interval for each member of the ensemble, TF,i , 
+according to [15,16]: 
+𝑇/,) = 1
+0$
+0%2 𝑇/,1   
+ 
+ 
+ 
+ 
+(4) 
+2.5 Step 4:  Build Conditional Receiver Operating Characteristic (ROC) Curves 
+To build the conditional ROC curves for each of the ensembles, we adopt a set of threshold 
+values for the time series amplitudes [10-14].  For each ensemble member, we classify all 
+points on the nowcast timeseries by sweeping the threshold values over all amplitudes of 
+the time series on the interval [0,1]. 
+We start by selecting an arbitrary threshold value t.  Given a small event occurring at 
+time t, we ask if nowcast value of that event is above or below the threshold.  We also ask if 
+the next target earthquake MT occurs after time t but within the time interval t + TF,i , where 
+again, TF,i is the scaled forecast time for that ensemble member.  Classification is then given 
+by: 
+• TP, if the nowcast value is above the threshold t, and the next target earthquake 
+occurs within t + TF,i 
+• FP, if the nowcast value is above the threshold t,  and no earthquake occurs within 
+interval  t + TF,i 
+• FN, if the nowcast value is below the threshold t, and the next target earthquake 
+occurs within interval t + TF,i 
+• TN, if the nowcast value is below the threshold t, and no target earthquake occurs 
+within interval t + TF,i  
+It should be emphasized that the conditional ROC diagram is conditioned on the current 
+number of events in the circle.  For example, if the current number of  small earthquakes in 
+
+--- Sayfa 5 ---
+ 
+5 
+the circle is, for example 100, then no cycles of length less than 100 are used in the 
+classification.  Examples of conditional ROC diagrams are shown in Figure 3.  Cyan curves 
+represent the ROC curves for the ensemble members, the red curve is the ensemble mean, 
+and the dashed curves are the standard deviations. 
+Classifying all points on an ensemble timeseries will then produce a confusion matrix, 
+or contingency table, composed of the quantities TP, TN, FP, FN .  We should also explicitly 
+note that these quantities are functions only of the threshold values, t, so that we have TP(t), 
+TN(t), FP(t), FN(t).  Conditional ROC curves for each member of the ensemble are computed, 
+and the mean and standard deviation of the curves are computed.  From each confusion 
+matrix, we compute the True Positive Rate (TPR) and the False Positive Rate (FPR): 
+ 
+TPR = TP/(TP + FN)  
+ 
+ 
+ 
+(5) 
+FPR = FP/(FP + TN) 
+As discussed, the basic assumption in this method is that the catalog statistics of the 
+surrounding region are the same as the statistics of the circular region.  Or more specifically, 
+we make what amounts to an ergodic assumption, that time averages can be replaced by 
+space (or ensemble) averages.  In the present paper, we will introduce below a "nowcast 
+transform" that enforces the equality of the GR statistics of the ensemble of regions with the 
+statistics of the circular region.  
+2.6 Step 5: Compute Positive Predictive Value (PPV) from the ROC Curves 
+Once the conditional ROC curve is computed for a member of the ensemble, the Positive 
+Predictive Value (PPV) is then computed: 
+PPV = TP/(TP + FP)  
+ 
+ 
+ 
+(6) 
+The PPV value is the probability of a future large earthquake of target magnitude MT during 
+the forecast interval TF,C.     
+To compute the PPV values (probabilities) at the times of the small events following the 
+last large event in the circle, we use as  threshold values t  the nowcast values Φ(𝑛1)for the 
+small events in the circle.  So if there are 100 small earthquakes within the circle since the 
+last large earthquake, we compute 100 values for Φ(𝑛1) and use these as our threshold set 
+[t (𝑛1)] º [F(𝑛1)].  Note that each of these small earthquakes has a calendar time t.   
+Each of these small earthquakes in the circle then has a defined nowcast value, an index, 
+and an occurrence time, all of which are associated with the small event.  Again, note that the 
+TP, FP, TN, FN are functions of the threshold only, which in this special case is the event 
+nowcast value.  Since the nowcast value is also a threshold, this association allows us to 
+identify specific event sequence numbers and event times with a PPV value.  Figure 4 shows 
+examples of calendar forecasts of this type for both 1 year and 5 year time scales. 
+3 Conditional Exceedance Curves 
+Here we compute conditional exceedance curves (survivor distributions), conditioned on 
+the number of small earthquakes that have occurred prior to computation of the 
+probabilities.   
+
+--- Sayfa 6 ---
+ 
+6 
+3.1 Step 6: Compute Magnitude Exceedance 
+To build a magnitude exceedance probability, we note that all the cycles in an ensemble 
+are terminated  (and begin) with a magnitude M ³ MT.  Thus we can build a set consisting of 
+the next, or terminating, magnitudes Mi,j  for each interval ni,j: 
+𝐶){𝑀)} = {𝑀),+, 𝑀),,, 𝑀),-, . . . , 𝑀),.} 
+ 
+ 
+ 
+ 
+(7) 
+Considering both 𝐶){𝑀)} and 𝐶){𝑛)}, we then build a combined set of intervals and 
+magnitudes: 
+𝐶{𝑀} = ⋃{𝑀),+, 𝑀),,, 𝑀),-, . . . , 𝑀),.}
+),2
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(8) 
+𝐶{𝑛} = ⋃{𝑛),+, 𝑛),,, 𝑛),-, . . . , 𝑛),.}
+),2
+  
+ 
+ 
+ 
+ 
+ 
+where the ⋃{}
+),2
+ indicates the union of all sets of ensemble intervals and magnitudes into a 
+single large set. 
+Once we have these two large sets, we can construct the conditional survivor 
+distributions (exceedance probabilities) for terminating magnitudes.  Survivor distributions 
+for terminating magnitudes are shown in Figure 5a.   
+Conditional exceedance curves are shown for several examples of natural times (small 
+event counts), for 0 small events (immediately after the last large earthquake), for 448 small 
+events (the current count in the circular region), and for the current-plus-mean-projected 
+number of small events in the circular region.  The mean projected number is the average 
+number expected until just before the next large earthquake.  This mean projected number 
+is computed by finding the mean of all intervals larger than the current number, 448, minus 
+the current number.  Note that a light smoothing has been applied to these curves. 
+3.2 Step 7:  Compute Magnitude Exceedance for 25%, 50%, 75% Probability 
+Figure 6 analyzes this conditional exceedance data further by computing the 25%, 50% 
+(median), and 75% exceedance probabilities as a function of the number of small events that 
+have occurred.  Note the blue vertical line, which indicates the number of small earthquakes 
+that have occurred to date, which is 448.  As more small earthquakes occur in the future, the 
+magnitude exceedance probabilities, particularly for the median (50%) and 25% level will 
+begin to increase sharply.   
+3.3 Calendar Time Exceedance 
+To compute the calendar exceedance, or waiting time until the next large earthquake MT, 
+we first create the set C(DTi) of combined ensemble time intervals DTi corresponding to the 
+natural time intervals in equation (8): 
+ 
+𝐶{∆𝑇} = ⋃{∆𝑇),+, ∆𝑇),,, ∆𝑇),-, . . . , ∆𝑇),.}
+),2
+ 
+ 
+ 
+(9) 
+ 
+Next we scale the time intervals DTi -> DT'i using the inverse of the scaling factor in equation 
+(4): 
+ 
+
+--- Sayfa 7 ---
+ 
+7 
+∆𝑇
+6),2 = 1
+0%
+0$2 ∆𝑇),2 
+ 
+ 
+ 
+ 
+(10) 
+ 
+leading to: 
+𝐶{∆𝑇
+6} = ⋃{∆𝑇
+6),+, ∆𝑇
+6),,, ∆𝑇
+6),-, . . . ∆𝑇
+6),.}
+),2
+ 
+ 
+     (11) 
+ 
+Using the sets (8) and (11), we can then construct the conditional exceedance curves for 
+the waiting times, both in natural and calendar times.  Results will be discussed below. 
+4 Discussion: Testing the Ensemble Method 
+Now we test the results of the ensemble method, and explore ways to build ensemble 
+forecasts using two additional ideas.  These involve the following: 
+1.  We introduce a  "Nowcast Transform" to test the assumption of scaled similarity of the 
+GR statistics in the ensemble. 
+2.  We filter cycle intervals at the 95% confidence level to test an assumption that outliers 
+may determine the statistics. 
+4.1 "Nowcast Transform" 
+We define this simple method to test the assumption that the statistics of the ensemble 
+members produce a stable forecast result, and to examine the assumption that the statistics 
+of the ensembles being similar to the circle are reasonable. 
+Using equation (2) we compute the nowcast value for a typical interval in ensemble i:  
+Φ(𝑛),2) = 1 − 𝑒%(&%,'/(%) 
+ 
+ 
+ 
+(12) 
+where the scale Ni for ensemble member i is computed from equation (1): 
+𝑁) = 𝑒!%(#!"##)  
+ 
+ 
+ 
+ 
+(13) 
+and where bi is the b-value for ensemble member i. 
+To compute the transformed intervals n'i,j , we invert equation (2), by making the 
+equivalence Φ(𝑛),2)  = Φ(𝑛′),2) , and using the statistics of the circular region: 
+𝑛′),2 = − 𝑁1  𝑙𝑜𝑔[1 − Φ(𝑛),2)]  
+ 
+ 
+ 
+(14) 
+and where bC and NC represent the statistics of the circle : 
+𝑁1 = 10!$ (#! % ##)  
+ 
+ 
+ 
+ 
+(15) 
+This process ensures that the transformed ensembles have the same b-value, bC, as the circle.  
+Thus the GR interval statistics of the ensembles are the same as those of the circular region. 
+But in altering the values of the ni,j intervals, we also need to consider the times at which 
+these transformed events occur.  There are two cases, one in which ni,j > n'i,j and another in 
+which n'i,j > ni,j.  We have therefore developed a simple algorithm to assign the small event 
+times for the small events in the intervals: 
+
+--- Sayfa 8 ---
+ 
+8 
+• For the case ni,j > n'i,j we choose event times in ni,j  at random, and remove a 
+sufficient number of these.  Continue until the necessary number of times have 
+been removed. 
+• For the case n'i,j > ni,j we pick two neighboring times randomly, find the mean of 
+these two times, and insert that mean time between the two chosen times.  
+Continue until the necessary number of times have been assigned. 
+A major feature of this simple algorithm is that the basic structure of the event times is 
+preserved.  Where times are densely clustered, as in aftershock intervals, proportionately 
+more times are added or removed.  Where times are sparse, as when quiescence prevails, 
+fewer times are added or removed.  Thus changes to the temporal density of small event 
+times is proportional to the original density of times.  Other algorithms are clearly also 
+possible. 
+As a final point, since the nowcast transform alters the number of small events in an 
+ensemble, the scaled forecast time must also be further scaled by modifying equation (4) as: 
+𝑇/,) = 1
+0$
+04%2 𝑇/,1 
+ 
+ 
+ 
+ 
+(16) 
+4.2 Filtering the Earthquake Cycles 
+In the filter method, we consider the set of intervals 𝐶{𝑛} from equation (8).  We compute 
+the mean µ and standard deviation s  of the intervals, and reject any intervals that are larger 
+than a value µ +2s  corresponding to the 95% confidence limit.  From that point, we repeat 
+the analysis from the foregoing.   
+5 Discussion and Examples 
+5.1 Choice of Circular Region 
+As before, we applied our methods to a circular region of radius 125 km surrounding 
+Los Angeles, CA, using a target magnitude MT = 6 and small earthquake MS = 3.49.  The most 
+recent large earthquake in the circle was the Northridge earthquake, having magnitude 
+M=6.7, occurring on January 17, 1994. 
+The choice of circle radius is of course arbitrary, but we use a rule of thumb that the 
+radius should be at least twice the linear dimension of the aftershock zone of the previous 
+large earthquake in the circle (see Figure 1).  In addition, [38] has conducted a more 
+quantitative analysis of appropriate circle radius for similar earthquake magnitudes in 
+Greece, and also arrived at a radius of 125 km.   
+An additional criterion for the choice of radius is the "radius of significant ground 
+shaking" for a given magnitude, for example the distance at which one might experience 
+Mercalli Intensity VI (PGA ~ 0.1g) shaking.  This distance is about 100-150 km for an MT = 6 
+earthquake, which is our minimum size for the forecast [48,49]. 
+5.2 Examples of Nowcast and Filtered Calculations 
+With these considerations, we can now calculate the ROC curves,  the PPV calendar time 
+forecasts, and exceedance curves for the original ensembles, the transformed ensembles and 
+for the filtered ensembles.   
+
+--- Sayfa 9 ---
+ 
+9 
+Figure 7 shows plots of the PPV curves for the original intervals, the filtered intervals, 
+and the nowcast transformed intervals. The plot for the original intervals (Figure 7 left) 
+repeats a plot from Figure 4 for convenience of comparison.  The results show that the final 
+value of PPV for the original intervals are the smallest of the three, which are in order from 
+left to right, 29%, 35%, and 43%.  While generally consistent, the three plots should be 
+viewed as alternative views of the forecast probabilities.   
+Figure 8 are the corresponding magnitude exceedance curves for the three types of 
+intervals, and Figure 9 shows the same magnitude exceedances for the 25%, 50% (median), 
+and 75% exceedance probabilities as a function of the number of small events that have 
+occurred.  Again, the three sets of plots are generally consistent. 
+We now compute calendar time exceedance probabilities, the waiting times or lifetimes 
+DL(t), for large earthquake occurrence.  To do this, we need to scale the conditional lifetimes 
+since the last large earthquake MT within each interval ni,j.  To that end, let the lifetime within 
+an interval ni,j in ensemble i be denoted by ∆𝐿(𝑡)),2 .   Then we scale the lifetimes by the 
+inverse of the factor in equation (4): 
+∆𝐿′(𝑡)),2 = 1
+0%
+0$2 ∆𝐿(𝑡)),2 
+ 
+ 
+ 
+(17) 
+where now ∆𝐿′),2 is the scaled lifetime since the last large earthquake.  We then use the scaled 
+lifetimes to compute the exceedance probabilities. 
+Figure 10 shows the comparison for the calendar time exceedance probabilities.  In all 
+three cases, we show the Poisson probability curve (dashed line) that is based on the average 
+interval between large earthquakes.    Similar to Figure 5, we show the curves for several 
+calendar times in the earthquake recurrence cycles.  These exceedance curves are for 
+immediately after the last large earthquake, at the current time (Today); at the current time 
+plus 15 years; and at the current time plus 30 years.  Note that a light smoothing has been 
+applied to these curves. 
+A feature of these calendar time curves is that once the initial large earthquake clustering 
+period has passed, the lifetime until the next large earthquake becomes longer and longer as 
+time passes, until the next large earthquake does eventually occur, as noted in [43-47].  This 
+feature, can be inferred by comparing the zero time curve with the Poisson curve.  Initially 
+the zero time curve lies below the Poisson curve until a cutoff is reached (shorter waiting 
+times more probable).  Subsequently,  the zero time curve lies above the Poisson curve 
+(longer waiting times more probable). 
+We can then repeat the exceedance curve calculation for natural time (small event 
+counts) using equation (8) directly (Figure 11).  Conditional exceedance curves are shown 
+for several examples of natural times (small event counts): for 0 small events (immediately 
+after the last large earthquake); for 448 small events (the current count in the circular 
+region); and for the current-plus-mean-projected number of small events in the circular 
+region.  The mean projected number is the average number of small events expected until 
+just before the next large earthquake.  This mean projected number is computed by finding 
+the mean of all intervals larger than the current number, 448, minus the current number.  
+Note that a light smoothing has been applied to these curves. 
+
+--- Sayfa 10 ---
+ 
+10 
+In this case however, one finds the more intuitively expected result that the longer it has 
+been in natural time since the last large earthquake MT, the shorter the expected natural time 
+until the next large earthquake.  Or stated another way, as time since the last large 
+earthquake increases, the probability increases for a shorter lifetime, or time to the next 
+large earthquake. 
+The reason for the different implications of the calendar and natural time curves is  the 
+increasing, nonlinear small earthquake quiescence as time passes.  This observation has 
+been discussed in [12].  There  it was concluded that the reason for this anomalous slowing 
+down in calendar time (relative to the Poisson curve) is due to an anomalous 
+stiffening/strengthening of the crustal rigidity as the next earthquake approaches, due to the 
+closure of small cracks that, when open, weaken the crust.  And as the rigidity of the crust 
+increase, a transition occurs from sliding via unstable stick slip to sliding via stable slip 
+[6,50], as is well known from many laboratory experiments. 
+6 Validating/Benchmarking the Forecasts 
+An important consideration is to validate the forecasts by comparison to a recognized, 
+accepted forecast or benchmark.  The obvious choices are the UCERF2 time-independent 
+forecast, and the UCERF3 time-dependent forecast [51,52].  Figure 12 shows the 
+comparison.  The UCERF2 forecast for magnitude 6.7, produced in 2007, computed a 30 year 
+forecast of 67% for the Los Angeles box, a rectangular region that we show in the new Figure 
+5, and a 63% for the San Francisco Bay area for that rectangular box.  In 2016, the UCERF3 
+forecast published the 30 year forecast of 60% for the same Los Angeles box.  The UCERF2 
+30-yr forecast is especially relevant because we are past the midpoint of the 30-year time 
+window.  The UCERF3 time-dependent forecast is a valid comparison because it is the official 
+USGS forecast. 
+The UCERF3 forecast was produced in 2014, whereas the ensemble forecast was 
+produced now.  But the numbers are similar, and within the quoted error bounds for the 
+ensemble method.  This similarity provides a useful benchmark for evaluating the quality of 
+the ensemble forecast. 
+7 Concluding Remarks 
+We have developed a new method for earthquake forecasting for arbitrary forecast 
+times and for small geographic regions encompassing multiple earthquake faults.  It is 
+generally not as appropriate for individual faults, where quiescence may be the normal mode 
+of behavior.  Since the forecasts are conducted in regions, rather than on individual faults, 
+stability of the Gutenberg-Richter statistics and the associated b-value are observed using 
+least squares fits to the magnitude-frequency curves [53].  The assumption of similar 
+Gutenberg-Richter statistics also amounts to the assumption that we confine analysis to a 
+single tectonic province [53]. 
+The method is appropriate for use when a forecast for such small regions is desired on 
+a frequent basis, and can be carried out rapidly and easily on a laptop computer in a few 
+minutes of computation.  For that reason, the ensemble method constitutes a convenient 
+addition to present forecast methods. 
+ 
+
+--- Sayfa 11 ---
+ 
+11 
+Author Contributions.  Conceptualization, JBR, IB, AD, LGL, GF and KN; methodology, JBR 
+and KN; software, JBR and KN; validation, JBR, IB and KN; formal analysis, JBR; investigation, 
+JBR; resources, JBR and IB; data curation, JBR; writing—original draft preparation, JBR; 
+writing—review and editing, AD, LGL, GF and KN; visualization, JBR; supervision, JBR; 
+project administration, JBR.; funding acquisition, JBR. All authors have read and agreed to 
+the published version of the manuscript.” 
+ 
+Funding. Funding for this project has been provided by a generous gift from Dr. John 
+LaBrecque  to the University of California, Davis.   
+ 
+Data Availability Statement. Data for this paper was downloaded from the USGS 
+earthquake catalog for California, and are freely available there.  An included method in the 
+Python code mentioned above can be used to download these data for analysis. Python code 
+that can be used to reproduce the results of this paper can be found at the Zenodo site:   
+https://doi.org/10.5281/zenodo.19390594 
+ 
+Acknowledgements. The authors would also like to acknowledge an informative 
+conversation with Jeanne Hardebeck of the USGS.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 12 ---
+ 
+12 
+References 
+1. Varotsos, P., Sarlis, N.V. and Skordas, E.S. Spatiotemporal complexity aspects on the 
+interrelation between Seismic Electric Signals and seismicity, 2001. Practica of Athens 
+Academy, 76, 294-321. 
+2. Varotsos, P., Sarlis, N.V. and Skordas, E.S. 2011.  Natural Time Analysis: The new view of 
+time. Precursory Seismic Electric Signals, Earthquakes and other Complex Time-Series. 
+Springer-Verlag, Berlin Heidelberg. 
+3. Varotsos, P., Sarlis, N.V. and Skordas, E.S. 2014.  Study of the temporal correlations in the 
+magnitude time series before major earthquakes in Japan. J. Geophys. Res. Space Phys., 
+119, 9192-9206. 
+4. Holliday, JR, Rundle, JB, Turcotte, DL, Klein, W. and Tiampo, KF, 2006. Space-time 
+correlation and clustering of major earthquakes, Phys. Rev. Lett., 97, 238501.  
+5. Rundle, J.B., Donnellan, A., Grant Ludwig, L, Gong, G., Turcotte, D.L. and Luginbuhl, M. 
+2016.  Nowcasting earthquakes. Earth and Space Science, 3, 480-486.  
+6. Rundle, J.B., Stein, S., Donnellan, A., Turcotte, D.L. Klein, W., and Saylor, C., 2021. The 
+complex dynamics of earthquake fault systems: New approaches to forecasting and 
+nowcasting of earthquakes, Reports on Progress in Physics, 84, 7, 076801. 
+7. Rundle, J.B., Luginbuhl, M., Giguere, A., and Turcotte, D.L. 2018.  Natural time, 
+nowcasting and the physics of earthquakes: Estimation of risk to global megacities. Pure 
+Appl. Geophys., 175, 647-660. 
+8. Rundle, J.B., Luginbuhl, M., Khapikova, P. et al. Nowcasting Great Global Earthquake and 
+Tsunami Sources,  Pure Appl. Geophys. doi:10.1007/s00024-018-2039-y (2019a) 
+9. Rundle, JB, Giguere, A, Turcotte, DL, Crutchfield, JP, and Donnellan, A, 2019.  Global 
+seismic nowcasting with Shannon information entropy, Earth and Space Science, 6, 456-
+472. 
+10. Rundle, J. B., and Andrea Donnellan, 2020. Nowcasting earthquakes in Southern 
+California with machine learning: Bursts, swarms, and aftershocks may be related to 
+levels of regional tectonic stress, Earth and Space Science 7.9 : e2020EA0010 
+11. Rundle, J.B., Donnellan, A., Fox, G., Crutchfield, J.P. and Granat, R., 2021. Nowcasting 
+earthquakes: Imaging the earthquake cycle in California with machine learning. Earth 
+and Space Science, 8(12), p.e2021EA001757.  
+12. Rundle, J.B., Yazbeck, J., Donnellan, A., Fox, G., Ludwig, L.G., Heflin, M. and Crutchfield, J.  
+2022. Optimizing earthquake nowcasting with machine learning: The role of strain 
+hardening in the earthquake cycle. Earth and Space Science, 9(11), p.e2022EA002343. 
+13. Rundle, J.B., Donnellan, A., Fox, G. and Crutchfield, J.P., 2022. Nowcasting earthquakes by 
+visualizing the earthquake cycle with machine learning: A comparison of two methods. 
+Surveys in Geophysics, 43(2), pp.483-50. 
+14. Rundle, J.B., Baughman, I. and Zhang, T., 2024. Nowcasting earthquakes with stochastic 
+simulations: Information entropy of earthquake catalogs. Earth and Space Science, 11(6), 
+p.e2023EA003367 
+15. Rundle, J.B., Baughmann, I., Donnellan, A., Ludwig, L.G., Fox, G.C. and Nanjo, K., 2025. 
+Calendar Time Local Earthquake Forecasts from Earthquake Nowcasts: A Do-It-Yourself 
+(DIY) Ensemble Method. arXiv preprint arXiv:2512.06572. 
+
+--- Sayfa 13 ---
+ 
+13 
+16. Rundle, J.B., Baughman, I., Donnellan, A., Grant Ludwig, L. and Fox, G.C., 2026. From local 
+earthquake nowcasting to natural time forecasting: A simple do-it-yourself (DIY) 
+method. Earth and Space Science, 13(1), p.e2025EA004820. 
+17. Fox, G.C., Rundle, J.B., Donnellan, A. and Feng, B., 2022. Earthquake nowcasting with deep 
+learning. Geohazards, 3(2), pp.199-226. 
+18. Jafari, A., Fox, G., Rundle, J.B., Donnellan, A. and Ludwig, L.G., 2024. Time series foundation 
+models and deep learning architectures for earthquake temporal and spatial nowcasting. 
+GeoHazards, 5(4), pp.1247-1274. 
+19. Pasari, S., and Mehta, A. 2018. Nowcasting earthquakes in the northwest Himalaya and 
+surrounding regions. Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci., XLII-5, 855–
+859 (2018). 
+20. Pasari, S. and Sharma, Y., 2020. Contemporary earthquake hazards in the West-northwest 
+Himalaya: A statistical perspective through natural times. Bulletin of the Seismological 
+Society of America, 91(6), pp.3358-3369. 
+21. Pasari, S. Nowcasting earthquakes in the Bay-of-Bengal region. Pure Appl. Geophys. 23, 
+537-559 (2019). 
+22. Pasari, S. 2020. Stochastic Modeling of Earthquake Interevent Counts (Natural Times) in 
+Northwest Himalaya and Adjoining Regions. In: Bhattacharyya, S., Kumar, J. and Ghoshal, 
+K. Mathematical Modeling and Computational Tools, Springer Proceedings in Mathematics 
+& Statistics, 320, 495-501, Springer, Singapore 
+23. Pasari, S., Simanjuntak, A.V., Neha and Sharma, Y., 2021. Nowcasting earthquakes in 
+Sulawesi island, Indonesia. Geoscience Letters, 8(1), p.27 
+24. Pasari, S., 2023. Nowcasting earthquakes in Iran: A quantitative analysis of earthquake 
+hazards through natural times. Journal of African Earth Sciences, 198, p.104821 
+25. Devi, S. and Pasari, S., 2025. Nowcasting earthquakes in the Philippines archipelago. 
+Journal of Seismology, 29(2), pp.505-524. 
+26. Devi, S. and Pasari, S., 2025. Earthquake cycle progression in major city regions of Taiwan 
+through nowcasting technique. Journal of Seismology, 29(3), pp.603-623. 
+27. Pasari, S. and Neha, 2022. Nowcasting-based earthquake hazard estimation at major 
+cities in New Zealand. Pure and Applied Geophysics, 179(5), pp.1597-1612. 
+28. Pasari, S. and Sharma, Y., 2021. Quantifying the current state of earthquake hazards in 
+Nepal. Applied Computing and Geosciences, 10, p.100058. 
+29. Pasari, S., Simanjuntak, A.V., Mehta, A., Neha and Sharma, Y., 2021. The current state of 
+earthquake potential on Java Island, Indonesia. Pure and Applied Geophysics, 178(8), 
+pp.2789-28 
+30. Devi, S., Pasari, S. and Mehta, A., 2025. Seismic cycle progression in major cities of 
+Myanmar using earthquake nowcasting. Journal of Seismology, 29(6), pp.1691-1707 
+31. Devi, S., Pasari, S. and Mehta, A., 2025. Seismic cycle progression in major cities of 
+Myanmar using earthquake nowcasting. Journal of Seismology, 29(6), pp.1691-1707 
+32. Devi, S. and Pasari, S., 2025, September. Earthquake Hazard Evaluation in Peninsular 
+India with Nowcasting Approach. In 2025 IEEE International Conference on Next-Gen 
+Technologies of Artificial Intelligence and Geoscience Remote Sensing (EarthSense) (pp. 1-
+5). IEEE 
+33. Pasari, S., Simanjuntak, A.V., Mehta, A., Neha and Sharma, Y., 2021. A synoptic view of the 
+natural time distribution and contemporary earthquake hazards in Sumatra, Indonesia. 
+Natural Hazards, 108(1), pp.309-321. 
+
+--- Sayfa 14 ---
+ 
+14 
+34. Bhatia, A., Pasari, S. and Mehta, A., 2018. Earthquake forecasting using artificial neural 
+networks. The international archives of the photogrammetry, remote sensing and spatial 
+information sciences, 42, pp.823-827. 
+35. Pasari, S., 2018, November. Stochastic modeling of earthquake interevent counts 
+(Natural Times) in Northwest Himalaya and adjoining regions. In International 
+conference on applied and computational mathematics (pp. 495-501). Singapore: Springer 
+Singapore. 
+36. Shafiee, A.H., Mesgar Asl, H. and Samani, B., 2025. Determination of earthquake potential 
+score for the western margin of the Lut Block, Iran, using the nowcasting method. Journal 
+of Seismology, pp.1-15. 
+37. Chouliaras, G, 2009.  Seismicity anomalies prior to 8 June 2008, Mw=6.4 earthquake in 
+Western Greece, Nat. Hazards Earth Syst. Sci., 9, 327–335  
+38. Chouliaras, G., Skordas, E.S. and Sarlis, N.V., 2023. Earthquake nowcasting: Retrospective 
+testing in Greece. Entropy, 25(2), p.379. 
+39. Perez-Oregon, Jennifer, Fernando Angulo-Brown, and Nicholas Vassiliou Sarlis. 2020.  
+Nowcasting Avalanches as Earthquakes and the Predictability of Strong Avalanches in 
+the Olami-Feder-Christensen Model. Entropy 22.11: 1228.  
+40. Mandrekar, J.N., 2010. Receiver operating characteristic curve in diagnostic test 
+assessment. Journal of thoracic oncology, 5(9), pp.1315-1316. 
+41. Powers, David M.W. 2011. Evaluation: From Precision, Recall and F-Measure to ROC, 
+Informedness, Markedness & Correlation, Journal of Machine Learning Technologies. 2 
+(1): 37–63 
+42. Gardner, J. K., and Leon Knopoff, 1974.  Is the sequence of earthquakes in Southern 
+California, with aftershocks removed, Poissonian?,  Bulletin of the seismological society of 
+America 64.5, 1363-1367. 
+43. Davis, P.M., Jackson, D.D. and Kagan, Y.Y., 1989. The longer it has been since the last 
+earthquake, the longer the expected time till the next?. Bulletin of the Seismological Society 
+of America, 79(5), pp.1439-1456. 
+44. Sornette, D. and Knopoff, L., 1997. The paradox of the expected time until the next 
+earthquake. Bulletin of the Seismological Society of America, 87(4), pp.789-798 
+45. Corral, Á., 2005. Time-decreasing hazard and increasing time until the next earthquake. 
+Physical Review E—Statistical, Nonlinear, and Soft Matter Physics, 71(1), p.017101 
+46. Jonsdottir, K., Lindman, M., Roberts, R., Lund, B. and Bödvarsson, R., 2006. Modelling 
+fundamental waiting time distributions for earthquake sequences. Tectonophysics, 
+424(3-4), pp.195-208. 
+47. Guglielmi, A.V. and Zotov, O.D., 2022. About the waiting time for a strong earthquake. 
+arXiv preprint arXiv:2209.00176 
+48. Manyele, A. and Mwambela, A., 2014. Simulated PGA Shaking Maps for the Magnitude 
+6.8 Lake Tanganyika earthquake of December 5, 2005 and the observed damages across 
+South Western Tanzania. IJSRP, 4, pp.1-5 
+49. Minson, S.E., Baltay, A.S., Cochran, E.S., McBride, S.K. and Milner, K.R., 2021. Shaking is 
+almost always a surprise: The earthquakes that produce significant ground 
+motion. Bulletin of the Seismological Society of America,  92(1), pp.460-468 
+50. Dieterich, J.H., 1979. Modeling of rock friction: 1. Experimental results and constitutive 
+equations. Journal of Geophysical Research: Solid Earth, 84(B5), pp.2161-2168. 
+
+--- Sayfa 15 ---
+ 
+15 
+51. Field, E.H., Arrowsmith, R.J., Biasi, G.P., Bird, P., Dawson, T.E., Felzer, K.R., Jackson, D.D., 
+Johnson, K.M., Jordan, T.H., Madden, C. and Michael, A.J., 2014. Uniform California 
+earthquake rupture forecast, version 3 (UCERF3)—The time-independent model. 
+Bulletin of the Seismological Society of America, 104(3), pp.1122-1180. 
+52. Field, E.H., Dawson, T.E., Felzer, K.R., Frankel, A.D., Gupta, V., Jordan, T.H., Parsons, T., 
+Petersen, M.D., Stein, R.S., Weldon, R.J. and Wills, C.J., 2009. Uniform California 
+earthquake rupture forecast, version 2 (UCERF 2). Bulletin of the Seismological Society 
+of America, 99(4), pp.2053-2107. 
+53. Schorlemmer, D., Wiemer, S. and Wyss, M., 2005. Variations in earthquake-size 
+distribution across different stress regimes. Nature, 437(7058), pp.539-542. 
+ 
+ 
+
+--- Sayfa 16 ---
+ 
+16 
+8 Tables 
+ 
+Table 1.  Statistical data for selected ensemble members for cycles between successive 
+magnitude M³6 earthquakes from 1980.0-present. Min/Max Cycle Length is the 
+minimum/maximum number of small earthquakes among the cycles for that region size.  
+Total Small EQ entry is  the total number of small earthquakes in the catalog for the circle or 
+ensemble member since 1980 for the range M ³ 3.5.  Least squares fits in each ensemble 
+member are used to compute the Gutenberg-Richter b-values.  The range of magnitude 
+values used for computing the b-values are between M = 3.5 and M = 6.5. 
+ 
+ 
+ 
+Ensemble Number 
+ 
+1 
+5 
+10 
+15 
+20 
+25 
+30 
+Region 
+Size 
+125 Km 
+LA Circle 
+3.6o x 3.6o 
+Rectangle 
+4.0o x 4.0o 
+Rectangle 
+4.5o x 4.5o 
+Rectangle 
+5.0o x 5.0o 
+Rectangle 
+5.5o x 5.5o 
+Rectangle 
+6.0o x 6.0o 
+Rectangle 
+6.5o x 6.5o 
+Rectangle 
+Total  
+Small EQ 
+600 
+6286 
+6657 
+7345 
+7803 
+8026 
+8192 
+8777 
+Number 
+Cycles 
+- 
+22 
+24 
+27 
+29 
+32 
+33 
+41 
+Min Cycle 
+Length 
+- 
+15 
+10 
+10 
+10 
+2 
+6 
+7 
+Max Cycle 
+Length 
+- 
+657 
+797 
+800 
+825 
+730 
+755 
+798 
+b-value 
+0.93 ± .02 
+0.96 ± .01 
+0.96 ± .01 
+0.97 ± .01 
+0.98 ± .01 
+0.96 ± .01 
+0.97 ± .01 
+0.94 ± .01 
+ 
+ 
+ 
+
+--- Sayfa 17 ---
+ 
+17 
+ 
+9 Figure Captions 
+Figure 1.  Left:  Regional seismicity (small dots) used in this paper.  Large earthquakes are 
+shown as red circles.  A region of radius 125 KM around the city of Los Angeles is shown as 
+a blue circle.  Right:  Green bars show the histogram of the number of small earthquakes 
+between large earthquakes.  Solid red stair-step line is the Cumulative Distribution Function 
+(CDF) corresponding to the histogram.  Magenta dashed lines are the standard deviations 
+from the CDF, computed using a bootstrap method.  Red dot is the current count (= 448) of 
+small earthquakes in the circular region since the January 17, 1994 Magnitude 6.7 
+Northridge, CA earthquake.  Current count corresponds to a CDF/Nowcast Poisson value of 
+94.1%.  Blue dashed line is the Poisson CDF, which we use as the "Nowcast Function", and is 
+based on the average (Gutenberg Richter) number of small earthquakes in the region (see 
+equation (1) in the text).   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 18 ---
+ 
+18 
+ 
+Figure 2.  Schematic illustration of the ensemble method.  Left:  A series of expanding 
+regions (white rectangles) are constructed surrounding the circular region.  Right:  Using 
+the nowcast function (equation (2)) a time series of nowcast earthquake cycles for each 
+region in the ensemble is constructed using the small earthquakes 3.49 < MS < MT between 
+the large target earthquakes MT ³ 6.0.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 19 ---
+ 
+19 
+Figure 3.  Conditional Receiver Operating Characteristic (ROC) diagrams for an ensemble of 
+30 regions from 3.6o to 6.5o surrounding Los Angeles, CA, at 0.1o interval half-widths, with a 
+forecast time of TF  = 5 years.  a) ROC diagram computed after no small earthquakes have 
+occurred.  b) ROC diagram computed after 150 small earthquakes have occurred. c) ROC 
+diagram computed after 300 small earthquakes have occurred.  d) ROC diagram computed 
+after 448 small earthquakes have occurred, which is the number in the circle to date.  The 
+diagrams are conditional because only cycles with more events than the designated number 
+(0, 150, 300, 448) of events are used to compute the ROC curves. Cyan curves are for the 
+various ensemble members.  Red curve is the mean value, dashed curves are the 1 standard 
+deviation curves.  Diagonal line is the no skill line.  Skill for the curves are, respectively, 0.47, 
+0.78, 0.86, 0.90, showing that skill improves progressively as the  earthquake cycle proceeds. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 20 ---
+ 
+20 
+Figure 4.  Plots of PPV, the probability of a future M ³ 6 earthquake, as function of time since 
+the M6.7 Northridge, CA earthquake on 1/17/1994.  a) Ensemble size = 30, Forecast time 
+interval TF = 1 year.  b) Ensemble size = 60, Forecast time interval TF = 1 year.  c) Ensemble 
+size = 30, Forecast time interval TF = 5 years.  d)  Ensemble size = 60, Forecast time interval 
+TF = 5 years.  Cyan curves are for the various ensemble members.  Red curve is the mean of 
+the cyan curves, the ensemble probability, and dashed curves are the 1-standard deviation 
+curves.  In figures a) and b), probability immediately after the mainshock is high, indicating 
+a tendency for mainshock clustering.   In figures c) and d), tectonic reloading over time 
+following the Northridge earthquake is the primary process that can be seen. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 21 ---
+ 
+21 
+Figure 5.  Conditional Exceedance Probabilities for magnitude of the terminating target 
+earthquake M ³ MT,  after a number of small earthquakes have occurred.  a)  Base case, just 
+after the last large earthquake, in which no small earthquakes have yet occurred.  b)  Current 
+case for number of small earthquakes (448) that have occurred.  c) A future time at which 
+615 small earthquakes have occurred. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 22 ---
+ 
+22 
+Figure 6.  Plot of expected terminating magnitude vs. natural time (small event counts) for 
+25%, 50%, and 75% values of exceedance probability.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 23 ---
+ 
+23 
+Figure 7.  Comparison of PPV vs. calendar time forecasts for original observed intervals, 
+filtered intervals, and transformed intervals, for a 60 month (5 year) period using ensembles 
+of size 30 members.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 24 ---
+ 
+24 
+Figure 8.  Terminating magnitude exceedance probabilities for original observed intervals, 
+filtered intervals, and transformed intervals, using 30 ensemble members.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 25 ---
+ 
+25 
+Figure 9.  Magnitude exceedance probabilities vs. natural time for original observed 
+intervals, filtered intervals, and transformed intervals for 25%, 50%, and 75% values of 
+exceedance probability. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 26 ---
+ 
+26 
+Figure 10.  Calendar time exceedance probabilities for original observed intervals, filtered 
+intervals, and transformed intervals.  Conditional curves are shown for elapsed times 
+(following the last large earthquake) of 0 years; Today, 31.91 years, the current elapsed time 
+following the 1994 Northridge earthquake; Today + 15 years from now; and Today + 30 
+years from now. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- Sayfa 27 ---
+ 
+27 
+Figure 11.  Natural time exceedance probabilities for original observed intervals, filtered 
+intervals, and transformed intervals.  Conditional curves are shown for elapsed natural times 
+(following the last large earthquake) of 0 small events; Today, 448 small events, the current 
+number following the 1994 Northridge earthquake; Today + 150 additional small 
+earthquakes; and Today + 300 additional small events. 
+ 
+ 
+ 
+ 
+
+--- Sayfa 28 ---
+ 
+28 
+Figure 12.  Validation of the ensemble method by comparing to the UCERF3 time-dependent 
+forecast (Field et al., 2014) for the Los Angeles and San Francisco boxes defined in the 
+UCERF3 forecast.  The forecast curves at right begin at the time of the 1994 Northridge 
+earthquake for the Los Angeles box,  and the 1989 Loma Prieta earthquake for the San 
+Francisco box,  respectively.  The current values of the Los Angeles and San Francisco 
+ensemble 30-year forecasts are listed in the figure, together with the UCERF3 30-year 
+forecasts. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

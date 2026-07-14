@@ -1,0 +1,2573 @@
+
+--- Sayfa 1 ---
+QuakeFormer: A Uniform Approach to Earthquake Ground Motion
+Prediction Using Masked Transformers
+Yitian Feng1,2, Weiqiang Zhu∗1,3, and Xinzheng Lu†2
+1Department of Earth and Planetary Science, University of California, Berkeley, CA, USA
+2Department of Civil Engineering, Tsinghua University, Beijing, China
+3Berkeley Seismological Laboratory, University of California, Berkeley, Berkeley, CA, USA
+Abstract
+Ground motion prediction (GMP) models are critical for hazard reduction before, during and after
+destructive earthquakes. In these three stages, intensity forecasting, early warning and interpolation
+models are corresponding employed to assess the risk. Considering the high cost in numerical methods and
+the oversimplification in statistical methods, deep-learning-based approaches aim to provide accurate and
+near-real-time ground motion prediction. Current approaches are limited by specialized architectures,
+overlooking the interconnection among these three tasks.
+What’s more, the inadequate modeling of
+absolute and relative spatial dependencies mischaracterizes epistemic uncertainty into aleatory variability.
+Here we introduce QuakeFormer, a unified deep learning architecture that combines these three tasks in
+one framework. We design a multi-station-based Transformer architecture and a flexible masking strategy
+for training QuakeFormer. This data-driven approach enables the model to learn spatial ground motion
+dependencies directly from real seismic recordings, incorporating location embeddings that include both
+absolute and relative spatial coordinates. The results indicate that our model outperforms state-of-the-
+art ground motion prediction models across all three tasks in our research areas.
+We also find that
+pretraining a uniform forecasting and interpolation model enhances the performance on early warning
+task. QuakeFormer offers a flexible approach to directly learning and modeling ground motion, providing
+valuable insights and applications for both earthquake science and engineering.
+∗zhuwq@berkeley.edu
+†luxz@tsinghua.edu.cn
+1
+arXiv:2412.00815v1  [physics.geo-ph]  1 Dec 2024
+
+--- Sayfa 2 ---
+1
+Introduction
+Ground motion is a fundamental aspect that bridges the fields of earthquake science and engineering. Ground
+Motion Prediction (GMP) models, which provide ground motion’s intensity measures (IMs) for specific
+locations, play a vital role in various applications. Before an earthquake occurs, ground motion forecasting
+models (Douglas, 2003), including ground motion prediction equations(GMPEs) (Abrahamson et al., 2014),
+are essential for estimating its potential impact, allowing for seismic hazard analysis (Baker, 2013). During
+an impending earthquake, Earthquake Early Warning (EEW) systems trigger alerts based on fast P-wave
+observations, thereby reduce potential risks and improve damage assessment (Cremen & Galasso, 2020). And
+after earthquake disasters, interpolation approaches, such as ShakeMap (Wald et al., 2022), are employed
+to assess ground shaking at target sites using available observations, which helps emergency rescue and
+disaster recovery. The framework of existing EEW systems could be further categorized into source-based
+and propagation-based. The former firstly estimates source properties, then derives ground shaking from
+forecasting models (usually GMPEs) (Chung et al., 2019; Kohler et al., 2020; B¨ose et al., 2012, 2018); The
+latter uses interpolation models to predict shaking from the first image of the seismic wavefield (Kodera et
+al., 2018).
+While physical-driven simulation models can deliver highly accurate GMP under specific scenarios (Graves
+et al., 2011), their complexity often requires significant computational resources, which may not align with
+the urgent demands of rapid decision-making. As an alternative, empirical formulas can quickly estimate
+location (Nakamura & Saita, 2007; Melgar et al., 2012), magnitude (Kuyuk & Allen, 2013; Tsang et al.,
+2007) and shaking (Abrahamson et al., 2014), making them widely utilized in early warning systems and
+seismic hazard analyses.
+However, the use of low-dimensional empirical formulas presents challenges in
+addressing both temporally and spatially varying features, as well as unprecedented seismic observations.
+For example, in 2023, over 700 k seismic records from 20 k seismic events were collected from the Northern
+and Southern California Earthquake Data Center Catalog(NCEDC, 2014; Center, 2013). This vast dataset
+has prompted the adoption of deep learning techniques, which can automatically extract high-dimensional
+spatial and temporal features from large volumes of data (Reichstein et al., 2019). Many recent studies have
+investigated deep learning approaches for ground motion forecasting (Monterrubio-Velasco et al., 2024; Joshi
+et al., 2024), interpolation (Otake et al., 2020; Jozinovi´c et al., 2020) as well as EEW (M¨unchmeyer et al.,
+2021; Fayaz & Galasso, 2023).
+Despite noteworthy advancements, existing methodologies continue to encounter two primary challenges.
+First, the existing methods primarily focus on specialized GMP tasks, which not only limit their universality,
+but also overlook the interconnection between these three tasks. Ground motion forecasting model, such
+2
+
+--- Sayfa 3 ---
+as GMPEs, are used to provide the initial and final intensity predictions for ShakeMap and traditional
+source-based EEW systems (Wald et al., 2022; Chung et al., 2019; Kohler et al., 2020; B¨ose et al., 2012,
+2018).
+These multi-stage methods may suffer from cumulative error propagation, ultimately leading to
+inaccurate estimations. Existing deep learning based EEW methods (M¨unchmeyer et al., 2021; Datta et al.,
+2022) enable to output end-to-end prediction of IMs. But due to the real-time dataset for training, they
+do not explicitly consider the forecasting models, which provide valuable source/path/site effects. Second,
+significant uncertainty in data-driven approaches arises from improper modeling of relative and absolute
+spatial dependency. To date, no existing deep learning method have addressed these two critical aspects.
+Some existing studies oversimplify relative spatial dependencies using Gaussian and stationary assumption,
+or compute spatial correlations solely based on the distance between sites (Lu et al., 2021; Wald et al.,
+2022; Mori et al., 2022; Fayaz et al., n.d.; Zhang et al., 2022), struggling to account for the complex spatial
+variations in real-world scenarios (Goda & Hong, 2008). Additionally, many methods overlook the impact
+of absolute regional variance. For example, traditional ergodic GMPEs , assumed to be applicable to any
+location within the broad tectonic category, enables to provide station global average of ground motion. But
+the increasing ground motion records indicate that a large aleatory variability exists between an observation
+and the global average. Significant systematic effects associated with site and source locations (Sahakian et
+al., 2018) are incorrectly characterized into randomness, leading to overestimating IMs at low probabilities of
+exceedance in the seismic hazard analysis. In contrast, non-ergodic models, in which these location-specific
+effects are modeled explicitly, could help reduce the aleatory variability. To incorporate absolute location,
+many efforts have been made to regionalize areas by subdividing broad regions into a grids (Landwehr
+et al., 2016; Abrahamson et al., 2019), or by training models using location coordinates, such as latitude
+and longitude (Monterrubio-Velasco et al., 2024). However, the grid-based approach presents challenges in
+effectively capturing multi-scale spatial distributions, while training with low-dimensional coordinates has
+shown poor performance in addressing high-frequency spatial variations (Mildenhall et al., 2020).
+In this work, we propose a uniform GMP architecture based on masked Transformer, QuakeFormer,
+that outperforms specialized architectures across ground motion forecasting, interpolation and early warning
+tasks. The key components in QuakeFormer is a masked pre-training strategy (Devlin et al., 2018; He et al.,
+2022) that randomly masks some of input tokens (unit of information) during training, and the objective is
+to predict the original intensity distribution based on its task-specific observations. We jointly pre-train a
+uniform ground motion model for forecasting and interpolation tasks using the entire dataset in California,
+after which we fine-tune it to the EEW task. For spatial dependencies, we employ location embeddings for
+both absolute and relative spatial coordinates. First, coordinates are mapped into high dimension space
+before putting into the neural network, thereby providing a learning-friendly representation for downstream
+3
+
+--- Sayfa 4 ---
+models (Mildenhall et al., 2020; Mai et al., 2021). Second, we explicitly incorporate relative position into
+self-attention layers in the Transformer using Rotary Position Embedding (Su et al., 2024), which offers
+valuable supervision for dependency modeling while maintaining low computational cost.
+We conduct comprehensive evaluation that test on unseen events as well as unseen sites to demonstrates
+QuakeFormer’s applicability for the future event and for new regional estimation respectively. Four state-
+of-art specialized GMP methods are compared with QuakeFormer: empirical GMPE for forecasting, MVN
+for interpolation, EPS (including ElarmS) for source-based EEW and PLUM for propagation-based EEW.
+The results indicate that QuakeFormer achieves the best overall performance. Additionally, we compare two
+training strategies for the EEW task: training QuakeFormer for a single EEW model (EEW-single) and
+finetuning the uniform model for EEW purpose (EEW-finetune). The results demonstrate that pre-training
+a ground motion model significantly enhances performance for the EEW task.
+2
+Methods
+2.1
+Ground Motion Prediction Tasks
+In this research, QuakeFormer is designed to predict the distribution of peak ground motion acceleration
+PGAij for event i and station j. In the context of EEW, source parameters will also be estimated. The
+input and output for the three ground motion tasks can be found in Table 1.
+The three ground motion tasks differ based on the available observations used to interpret the scenario-
+based source mechanics. We denote Ei as the event descriptions, Oc
+i as complete site observations, including
+PGA and waveforms in the duration time, Or
+i as real-time site observations, Sj as site descriptions and ti as
+the P-wave arrival time for site i. For the ground motion forecasting, ln PGAij = f(Ei, Sj). In our research,
+Ei consists of a simple description of earthquake event, such as location, depth and M, corresponding to
+point source estimation. For the interpolation, ln PGAij = f(Ei, Oc
+i , Sj). The inclusion of wave observations
+allows the model to capture a more comprehensive understanding of the fault characteristics. Given the
+availability of complete waveforms after an earthquake, the time window in Oc
+i is defined as [ti −st, ti + T],
+where st is the analysis time before P-wave arrival , T is a fixed duration time. And for the EEW task,
+ln PGAij = f(Ei, Or
+i , Sj). The waveforms in Or
+i are aligned by t0, the time of P-wave arrival at the first
+triggered station. The time window for EEW is defined as [t0 −st, t0 + t], where t is the time following
+the P-wave arrival, it also referred to as observation time. As earthquake evolves, the observation time t
+increases. Furthermore, EEW systems could be generally classified into on-site EEW and regional EEW.
+The former consists a limited seismic stations at or near the target sites, and predicts ground shaking within
+4
+
+--- Sayfa 5 ---
+Table 1: Model input and output
+Input
+Output
+Task
+Event Description
+Station Coordinate
+Waveform
+IMs
+Event Description
+IMs
+Forecasting
+✓
+✓
+✓
+Interpolation
+or
+✓
+complete
+✓
+✓
+Early Warning
+✓
+partial
+✓
+✓
+the system array. The latter consists of a network of seismic sensors and predicts ground shaking in this
+region, including locations without seismic stations.
+2.2
+Dataset
+In this paper, we utilize waveform data from Northern and Southern California Earthquake Data Center
+(NCEDC and SCEDC) (NCEDC, 2014; Center, 2013). After performing baseline correction, all waveforms
+are filtered by a 0.5 Hz high-pass Butterworth filter. The horizontal PGA, measured in units of gal, is
+calculated as the geometric mean of the horizontal components over the specified duration. We select dataset
+using the following criteria: 1) Earthquakes with M < 1 are excluded; 2) Recordings of low-quality, such as
+signal noise ratio (SNR) of less tan 1 in any direction, as well as those affected by abnormal interference or
+exhibiting multiple jumps, are removed; 3) Recordings with exclusively low intensity, specifically those with
+PGA < 10−6, are excluded; 4) Only surface seismograms are retained; 5) Earthquake with fewer than 5
+recordings are excluded. After selection, our dataset contains over 4 million 3-component records belonging
+to 200,000 events in California from 2000 to 2024 (Fig.1).
+2.3
+Deep Learning Model
+We propose QuakeFormer, a straightforward encoder-only approach that reconstructs the shaking distri-
+bution based on task-specific observations.
+In this section, we introduce the base model, its important
+components (Section 2.3.2), as well as its pre-train strategy (Section 2.3.3). Figure 2 illustrates the model
+architecture.
+2.3.1
+Base model
+The input tokens in QuakeFormer represent a set of Points of Interest P = {pi}, consisting of one event point
+and a sequence of site points. Each site point ps
+i = (xi, vi, oi) is associated with a location xi in 2-D space,
+attributes vi (including VS30, type of seismic instrument and elevation), and observations oi ( including
+intensity PGA and waveforms). For simplicity, we incorporate the site elevation and epicenter depth into
+5
+
+--- Sayfa 6 ---
+(a)
+(b)
+Figure 1: (a) Maps of stations and earthquakes in the dataset. Light gray dots represent all seismicity we
+used, and yellow stars show the earthquake greater than M5.5. Green circles shows the seismic stations in
+the dataset, and the green triangles are stations belong to SR set. (b)Observed horizontal ln PGA in unit
+gal versus hypocentral distance Rp in this dataset. The histograms above and on the left side are of Rp and
+ln PGA, respectively.
+the attributes. Event point pe = (xi, vi) is invisible only for early warning task. The main architecture
+consists three parts: feature extraction, observation masking and prediction.
+In feature extraction, we encode location xi, attribute vi, intensity and waveform separately into latent
+embeddings of size d. Specifically, we use a multi-scale location encoder Enc(·) for locations (see Section
+2.3.2), use Conventional Neural Network (CNN) for 3-component waveforms, and apply Fully Connected
+Network (FCN) for attributes and intensity. For real-time applications in EEW, we randomly mask wave-
+forms sequences in time before encoding them into wave embedding (Figure 2 (a), Section 2.3.3). More
+details about feature extraction could be seen in Appendix B.1.
+Following this, a masking strategy is applied to combine these three tasks in one architecture (see Section
+2.3.3).
+In training, we randomly mask a varying fraction of latent intensity embeddings and waveform
+embeddings for each site, and replace them with special mask tokens, [IM] and [WAVE], to make them
+invisible. After masking, all embeddings for each point are summed up as input tokens, facilitating the
+fusion of modalities in the latent space. Similar to the [CLASS] token used in BERT (Devlin et al., 2018),
+we replace the input event token in EEW task with a special learnable embedding [EVENT]. Different site
+and event observations correspond to different tasks (Figure 2 (b)).
+6
+
+--- Sayfa 7 ---
+Figure 2: QuakeFormer Framework: (a) is the architecture of our model.
+The base model employs a
+multi-scale sinusoidal position encoder and a sequence encoders to obtain absolute position embeddings,
+site attribute embeddings, intensity embeddings and waveform embeddings. Mask strategy is then applied
+to randomly mask a portion of the intensity embeddings and waveform embeddings with ratio rs, rw,
+respectively. A sequence of Transfomer blocks with RoPE is utilized to predict the masked intensities and
+event token (in EEW). (b) is the schematic view of the station mask MS, wave-station mask MW S and wave-
+time mask MW T for the three tasks. The solid-filled circles represent observed intensity values, while the
+circles filled with diagonal lines represent unobserved intensities at target sites (masked by MS). The blue
+solid lines represent observed seismic waveforms, whereas locations denoted by dashed gray lines indicate
+unobserved waveforms(masked by MW S or partial-time waveforms(masked by MW T . (c) shows the token
+masks in the architecture, corresponding to the three tasks. (d) presents the different self-attention masks
+that control the access to the updated tokens for each input tokens. Purple solid lines indicate tokens that
+are permitted to aggregate their representations with those of other tokens . Gray dashed lines represent
+tokens that can only accept the representation from other tokens, thereby establishing controlled interactions
+within the model.
+Then following the previous Transformer architecture(Vaswani, 2017), we apply several Transformer
+encode layers, including self-attention blocks and MLP blocks, to extract features for the input tokens.
+Rotary Position Embedding approach is applied in self-attention calculations to explicitly incorporate relative
+position dependency (see Section 2.3.2). Masked intensity embeddings and event description are predicted by
+the Transformer encoder and a FCN output layer. To accommodate variable lengths of site token sequences
+for different events, we employ zero-padding to standardize these inputs to the same length. In the attention
+matrix, we set the values corresponding to the padding sections to zero to ensure accurate inference results.
+The loss is computed exclusively on the masked tokens [IM] and [EVENT] (for EEW).
+2.3.2
+Location Embedding
+Despite neural networks are universal function approximators, operating the 2-D locations directly results
+in poor performance in representing high-frequency variability in geometry (Mildenhall et al., 2020). The
+7
+
+--- Sayfa 8 ---
+probability of observations is characterized by a highly non-linear distribution. Projecting locations into a
+high-dimensional space before neural network could be interpreted as a feature decomposition process that
+makes learning friendly (Mai et al., 2021). Besides, the physical process underlying ground motion involve
+a spatial distribution with very different scaling patterns. The finer spatial resolution leads to data sparsity
+and higher computation costs, while the sparser spatial resolution may yield poorer estimates. Therefore,
+we define an multi-scale location encoder Enc(x) = NN(PE(x)) : R2 →Rd(2 ≪d). Here, NN(·) is a
+learnable shallow neural network, and PE(·) is a deterministic function that transforms location x into
+higher dimensional space R4N. N is the number of scale levels. Inspired by NeRF (Mildenhall et al., 2020),
+we use a sinusoidal multi-scale PE(·):
+PE(x) = (cos 2L1x, sin 2L1x, . . . , cos 2LN x, sin 2LN x)
+(1)
+, where Li represents the i-th level frequency function. We apply this function to each of the coordinate
+values in x separately, and then concatenate the result in dimension.
+Elements in PE(·) with different
+frequencies could handle non-uniform spatial distribution patterns.
+For instance, low-frequent elements
+could capture features on a large geographic scale, such as the first-order propagation effects, whereas high-
+frequent element could focus on features on a smaller scale, such as regional differences among epicenters and
+sites. This process enables us to obtain the location embedding hL = NN(PE(x)), which is then added to
+each input site token, resembling the absolute position encoding in classical Transformer. In our experiment,
+we set N = d/4, where d is the dimension of the model. NN(·) is a 1-layer FCN.
+Previous research has demonstrated that PE(·) exhibits a distance preservation property (Mai et al.,
+2021). This property implies that for any pair of locations (xm, xn), the similarity between them decreases
+monotonically as the distance |xm −xn| increases. Furthermore, within the attention mechanism in Trans-
+former model, the inner product of the query qm and key kn facilitates knowledge transfer between tokens
+located at xm and xn. However, as noted by Yan et al. (2019), the attention mechanism can lead to a
+reduction in distance-awareness. Relative positional patterns, particularly distance, are critical for modeling
+the first order propagation effects. To address this challenges, we introduce Rotary Position Embedding
+(RoPE) as proposed by Su et al. (2024), which explicitly incorporates relative position dependencies into
+the self-attention mechanism using a rotation matrix derived from absolute positions.
+In our approach,
+we rotate the query qm and key kn by angles proportional to their respective locations, and obtain the
+updated query q∗
+m = Rd
+Θ,mqm and the updated key k∗
+n = Rd
+Θ,nkn, where Θ are a set of pre-defined pa-
+rameters indicating the rates of rotation, and Rd
+Θ,i is the rotary matrix for token located at xi. Additional
+details on RoPE can be found in the Appendix B.2. Similar to the work by Vaswani (2017), we define
+8
+
+--- Sayfa 9 ---
+Θ =
+n
+θi = b−4(i−1)/d
+s
+, i ∈[1, 2, . . . , d/4]
+
+. To maintain the distance preservation property, we strive for the
+inner product to decay as the relative position increases, a principle referred to as the long-term decay
+property in Transformer models. Experimental results indicate that this long-term decay property is closely
+related to the selection of bs. Unlike the discrete position indices typically employed in Transformer mod-
+els, geographic locations are continuous, suggesting that the choice of bs may need to be adapted from the
+conventional values used in standard Transformers. For a comprehensive comparison of different positional
+encoding methods and pre-defined parameters, please refer to Section 4.1.
+2.3.3
+Masking Strategy
+In this research, we have established two spatial masks and one temporal mask to mask the stations (MS),
+the waveforms of the stations (MW S), and the evolution of the waveforms over time (MW T ).
+Different
+spatiotemporal masks correspond to three different seismic GMP tasks (Figure2).
+Station Mask (MS )
+is applied to the intensity embeddings.
+When a site is masked by the station
+mask MS, it indicates that the intensity observation at this site is not available. During the training of the
+forecasting-interpolation model, intensity embeddings for each event are masked by a variable station mask
+rate rs ∈[0, 1]. When rs = 1, all intensity tokens for that event are masked, aligning with the forecasting
+task, while rs < 1 corresponds to the interpolation task. rs is sampled from a truncated arccos distribution
+with density function p(r) = 2
+π(1 −r2)−1
+2 (Chang et al., 2023). The expectation for this distribution is 0.64,
+reflecting a strong bias towards higher masking rates. It helps the model to learn the difficult forecasting
+task. The prediction loss is computed solely on the masked stations. It is important to note that all intensity
+embeddings must be masked in the EEW task, as complete waveform information for incoming earthquakes
+is not available. During the inference phase, the intensity embeddings of the target sites are also set to
+masked.
+Wave-Station Mask (MW S)
+is applied to the waveform embeddings when the waveforms are not avail-
+able. A wave masking rate rw is sampled from a uniform distribution. For the interpolation task, waveforms
+serve as reference information to enhance GMP performance. For simplicity, only site tokens with unmasked
+intensity embeddings are allowed to have unmasked waveform embeddings, since the intensity could be di-
+rectly derived from the whole waveform. In contrast, point-based EEW relies on the waveforms from stations
+closest to the epicenter, in order to infer the source properties. Therefore, during training, the wave embed-
+dings from the K nearest stations to the epicenter should remain unmasked in EEW. Waveform embeddings
+from all other site token are masked according to rate rw.
+9
+
+--- Sayfa 10 ---
+Wave-Time Mask (MW T )
+is applied to waveforms prior to encoding them into hW for real-time purpose
+in EEW. During the training procedure, we uniformly select a time t (the duration following P-wave arrival)
+that ranges from 0 s to maximum 17 s for each event. All waveforms data beyond this selected t are set
+to be zero, effectively masking out the later portions of the waveforms . In inference procedure, the EEW
+system activates upon detection of the first station triggered by the P-wave and processes real-time data up
+until the observed time t.
+Attention Mask
+is utilized to regulate which tokens can attend to one another in the self-attention
+mechanism. Input site tokens are categorized into two classes: observed and unobserved. For the forecasting-
+interpolation model, this classification is based on the station mask MS, where intensity embeddings that
+are not masked by MS are considered as observed tokens; while for EEW models, this classification relies
+on the wave-station mask MW S. Assumes that there are 2 observed tokens (hS,1, hS,2) and 2 unobserved
+tokens (hS,3, hS,4). The model’s output should remain invariant to the presence of unobserved tokens, that
+is, the output of (hS,1, hS,2, hS,3) and (hS,1, hS,2, hS,4) should be identical. Within each Transformer
+layer, multiple self-attention heads are employed to aggregate the output vectors in the previous layer. For
+the unobserved tokens, theirs embedding vectors should be excluded from the self-attention calculations,
+ensuring that they do not influence the representations of other tokens (see Figure 2 (d)). This mechanism
+allows the model to focus exclusively on the available data, enhancing its predictive accuracy.
+2.4
+Training and Prediction
+A basic interpolation model is pre-trained using the complete waveform data. During the pre-training stage,
+the model is supervised to predict the masked intensities. By adjusting the station mask ratio rs, this model
+could be utilized for both ground motion interpolation task (when rs <1) and forecasting tasks (when rs =1).
+We refer this model as GMP-uniform.
+For EEW task, we implement two training strategies: 1) Directly train the EEW model using the
+QuakeFormer architecture, which we refer to as EEW-single; 2) Fine-tune the GMP-uniform to develop a
+model for EEW purpose, referred as EEW-finetune. Both models are trained on the real-time waveform
+dataset using Wave-Time Mask MW T .
+In the experiment, we employ a 5-layer Transformer with a hidden size of 384, and 8 attention heads,
+resulting in approximately 2M parameters, which is relatively modest in size. The maximum length of input
+tokens is set to 50. Adam with β1 =0.9, β2 =0.999 is used for optimization. The initial learning rate is 2e-4,
+and is decreased every 5 epochs by γ =0.6. We use a batch size of 32, and train the model for 60 epochs.
+And for fintuning, the initial learning rate is reduced to 5e-5.
+10
+
+--- Sayfa 11 ---
+To evaluate the overall performance of our model and estimate its errors, we split our dataset both event-
+wise and station-wise. First, we separate train events(TM), validate events and test events(TR) based on
+the time. Specifically, events occurring 2023 are designated as the test events, while historical events before
+2023 are split to train events and validation events in an 85:15 ratio. Records associated with a particular
+event are assigned to the same subset. Then, we randomly separate reference points into train locations
+(SM), validate locations and test locations(SR) based on the space distribution, following an 80:10:10 ratio.
+Records belonging to TM +SM are used for model training, while validate events and validate stations are for
+model selection. We assume that sites in SM represent seismic stations capable of observing seismic records;
+consequently, the intensity and waveform embeddings for sites in validation/test set will be all masked by MS
+and MW S, respectively. Note that, not all stations in SM will have observations for a given event. During
+training, implicit station characteristics are modeled using the historical recordings. Model performance
+assessments are conducted on both TR + SM and TR + SR sets. We primarily utilize TR + SM to evaluate
+on-site performance for future events, which is critical for the ground motion forecasting task and on-site
+EEW applications. Moreover, accurate shaking estimates at sites lacking historical recordings are essential
+in real-world scenarios, particularly for tasks such as interpolation for emergency rescue and regional EEW
+applications. Therefore, we focus on assessing model performance for spatial distribution predictions on
+TR + SR.
+3
+Experiment
+We demonstrate that QuakeFormer is an effective uniform architecture for GMP tasks (forecasting, inter-
+polation and early warning task) through comparison with the traditional approaches in these three tasks.
+The model successfully tackles multiple GMP tasks without modifying the architecture and the training
+procedure, while also outperforming specialized architectures. We choose the coefficient of determination
+(R2) as the comparing metric, which represents the proportion of variance explained by the model. We set
+L1=-2, LN=5 and bs=5000 in the experiment.
+Baseline
+For the forecasting comparison, we select ASK-14(Abrahamson et al., 2014), which is a widely
+used GMPE for probability seismic hazard analyses. For interpolation, we compare our results with the
+Conditional Multivariate normal distribution approach (MVN) (Worden et al., 2018), which serves as the core
+algorithm in ShakeMap. In MVN approach, ground motion forecasting models provide the initial estimates
+of ground motion, then the estimations at target locations are conditioned upon the recorded ground motions
+at observed locations. To evaluate the effects of interpolation exclusively, we utilize QuakeFormer as the
+11
+
+--- Sayfa 12 ---
+forecasting model in our experiments. We compare QuakeFormer with two widely used earthquake early
+warning algorithms: the Estimated Point Source (EPS) and the Propagation of Local Undamped Motion
+(PLUM), based on point-source estimation and wave propagation, relatively. EPS, such as ElarmS and
+ShakeAlert systems, first generates a point-source estimate, which includes maginitude and location, then
+the spatial ground shaking is calculated using attenuation relations in forecasting models. We use catalog
+hypocenters and magnitude reports provided by ShakeAlert as source parameters. GMPE (ASK14) and the
+interpolation approach (MVN) are subsequently applied to obtain the regional PGA distribution In PLUM
+method(Kodera et al., 2018), the predicted seismic intensity at a target site is taken to be the maximum of
+the observed real-time intensities in a circular region of radius r. Details about these baseline models could
+be seen in the Appendix.
+3.1
+Ground motion forecasting and interpolation
+Figure 3(a) demonstrates that QuakeFormer outperforms MVN and ASK14 in terms of prediction perfor-
+mance. Moreover, QuakeFormer provides consistent prediction results with across varying numbers of input
+stations. As the station mask ratio rs decreases, the prediction task shifts from forecasting to interpolation.
+We observe a significant improvement in performance when the masking ratio shifts from 1 to 0.8, indicat-
+ing that even a limited number of observations can aid in capturing the propagation patterns of a specific
+earthquake, thereby reducing the uncertainty associated with predictions. What’s more, comparing with
+rw =0 and rw=1, the additional utilization of waveform data also contribute to improve the accuracy of the
+model, since the recorded waveform contain frequency-based site characteristics. Notably, the R2 scores for
+seen stations (SM) surpass that for unseen stations (SR), indicating QuakeFormer’s potential for excellent
+performance in regions with historical data.
+Figure 3(b) and (c) shows the total residual (δij = ln pred −ln true) distributions for QuakeFormer
+(rs=1) and ASK14, respectively. σ is the standard derivation of the total residual. In QuakeFormer, the
+mean and standard derivation of residuals shows minor magnitude-dependent trends. This demonstrates
+that the magnitude scaling of ground motions in the whole California is well captured by QuakeFormer.
+Figure 4 shows an earthquake happened in 11 May 11 2023 with M 5.35 (id: nc73827571), located
+15 km southeast of Rio Dell. We employ QuakeFormer, ASK14 and MVN approaches to predict the PGA
+distribution. Both QuakeFormer and MVN approaches show a reduction in prediction error as the number of
+observed stations increases, with rs varying from 1 to 0. We notice significantly difference in the propagation
+effects among these three approaches, particularly in the northeast region. Figure 4 (b) demonstrates that
+QuakeFormer revises the attenuation relation to be weaker, leading to decreased prediction residuals in
+12
+
+--- Sayfa 13 ---
+this area. Nevertheless, MVN approach makes only minor adjustment to the spatial trend. This limited
+responsiveness may stem from the lack of revisions to variances and covariances that account for the spatial
+averaging of ground motion (Worden et al., 2018). The prediction from ASK14 appears overly smoothed due
+to the absence of source and site characteristics. Also this simplified version of ASK14 tends to underestimate
+PGA distribution near the source while overestimates it at distance greater than 100 km, which aligns with
+the PGA regression curve in the ShakeMap. More examples are in the Appendix.
+Figure 3: GMP forecasting and interpolation model comparing: (a) The R2 scores for QuakeFormer, ASK14
+(forecasting) and MVN approach (interpolation) across different station mask ratio rs and wave mask ratio
+rw on TR. (b) if the total residual distributions for QuakeFormer (rs=1) and (c) is for ASK14. For each
+column, the upper are results on TR+SM set, while the lower are for TR+SR set. Every point refers to
+a recording. The green solid line represents the mean, and dashed lines represent the standard derivation
+around the mean.
+3.2
+Earthquake early warning
+To evaluate the performance of the EEW task, we conduct tests on 88 relatively large events in 2023
+(M >3.5). We first compare the source parameters (epicenters and magnitudes), as shown in Figure S3.
+QuakeFormer demonstrates a more robust estimation of magnitude within 4 seconds after the P-wave arrival,
+exhibiting a median error of 0.16 magnitude units (standard deviation: 0.2 magnitude units), see Figure
+5, in comparison to ElarmS-3 reports a median magnitude error of 0.3 (Chung et al., 2019).
+However,
+QuakeFormer shows a slight performance decline compared to ElarmS-3 in earthquake location prediction,
+yielding a median distance error of 6.81 (standard deviation: 8.81), whereas ElarmS-3 achieves 2.78 km
+(in-network).
+13
+
+--- Sayfa 14 ---
+38
+39
+40
+41
+42
+43
+Quakeformer
+Station Mask Ratio rs = 1
+Observed SM
+Target SM
+Target SR
+Quakeformaer
+Station Mask Ratio rs = 0.5
+Observed SM
+Target SM
+Target SR
+Quakeformer
+Station Mask Ratio rs = 0
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+38
+39
+40
+41
+42
+43
+ASK14
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+MVN
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+MNV
+Observed SM
+Target SM
+Target SR
+2
+1
+0
+1
+2
+ln residual (gal)
+4
+3
+2
+1
+0
+1
+2
+3
+4
+ln PGA (gal)
+(a)
+Station ID
+1.0
+0.8
+0.6
+0.4
+0.2
+0.0
+0.2
+ln residual (gal)
+Increasing
+observed
+stations
+Quakeformer rs=0.5
+MVN rs=0.5
+Quakeformer rs=1.0
+(b)
+Figure 4: Example result (id: nc73827571) for ground motion forecasting and interpolation, compared with
+QuakeFormer, MVN, and ASK14: (a) displays the predicted ln PGA distributions and the corresponding
+residuals δ. Solid dots indicate target sites, color-coded based on the residuals δ; while hollow dots represent
+observed stations. In the top left corner is the map showing the predicted PGA. Moving from left (rs =1,
+forecasting) to right (rs =0), the number of observed stations (belong to SM) increases from 0 to all. The
+wave mask ratio rw is 100% for all examples presented here. (b) compares the PGA residuals in the northeast
+region as rs varies from 1 to 0.5. Each column corresponds to a target site in (a) (when rs =0.5). In the
+lower right corner, the yellow star denotes the epicenter; circles and triangles represent target sites from SM
+and SR, respectively. All results are presented in natural log units (gal).
+14
+
+--- Sayfa 15 ---
+Figure 5: Magnitude evolution by P-wave arrival time (M > 3.5, 2023)
+. We use EEW-finetune with wave masking ratio rw =0.
+Despite QuakeFormer’s ability to output source parameters comparable to other EEW systems, its pri-
+mary advantage in the EEW domain lies in its capability to deliver an end-to-end intensity estimation,
+thereby avoiding accumulated errors from the sequential application of source estimation and ground motion
+forecasting algorithms (always GMPEs). Figure 6 illustrates the evolutionary estimation results for a real
+earthquake (id: nc73827571). At 6 s after origin time (OT), both the QuakeFormer EEW-finetune and
+EEW-single models output a rough yet rapid estimation about magnitude, location and PGA distribution.
+Despite QuakeFormer underestimates the shaking intensity, it’s still the quickest approaches that accurately
+detect the extent of the shaking among the three. At 8 s after OT, ShakeAlert reports its first alert based on
+EPS with magnitude 5.3, which is close to the catalog magnitude 5.39. However, due to the complex source
+characteristics and the oversimplified nature of GMPEs, the EPS approach significantly underestimates the
+shaking near the source. By 12.6 s after OT, ShakeAlert reports a peak estimation with magnitude 5.5. At
+this point, 5 stations closest to the source received the S-wave, allowing the interpolation approach (MVN in
+this analysis) to revise the PGA distribution near the source using the observed real-time intensities. PLUM
+produces accurate shaking estimates near the source; but there is a trade-off between the warning-time and
+the estimation accuracy(Kodera et al., 2018), depending on the selected radius r. QuakeFormer exhibits su-
+perior performance, particularly in capturing large-scale propagation effects and fine-grained shaking details
+. TEAM proposed by M¨unchmeyer et al. (2021) is similar with our EEW-single model, as it estimates the
+shaking directly from the raw waveforms using Transformer architecture. They declares that complex event
+characteristics, such as stress drop, radiation pattern or directivity, can be implicitly modeled using spatially
+distributed waveforms, enabling the model to provide a convincing PGA distribution over large regions.
+We also notice that EEW-finetune achieves the smallest prediction error near the source.
+Figure 7
+compares EEW-single and EEW-finuetune on the large events. The result demonstrates that EEW-finuetune
+outperforms EEW-single in both source parameter estimation and shaking prediction. Note that GMP-
+15
+
+--- Sayfa 16 ---
+38
+39
+40
+41
+42
+43
+QuakeFormer
+Station Mask Ratio rs = 1
+Observed SM
+Target SM
+Target SR
+QuakeFormer
+Station Mask Ratio rs = 0.5
+Observed SM
+Target SM
+Target SR
+QuakeFormer
+Station Mask Ratio rs = 0
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+38
+39
+40
+41
+42
+43
+ASK14
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+MVN
+Observed SM
+Target SM
+Target SR
+127
+126
+125
+124
+123
+122
+121
+MVN
+Observed SM
+Target SM
+Target SR
+2
+1
+0
+1
+2
+ln residual (gal)
+4
+3
+2
+1
+0
+1
+2
+3
+4
+ln PGA (gal)
+Figure 6: Example result (id: nc73827571, 5.39 M) for earthquake early warning, compared with Quake-
+Former (EEW-finetune, EEW-single), EPS and PLUM. The time of P-wave arrival at the nearest station is
+5.39 s. At 6 s after the origin time, P-wave arrived at station NC.KMPB, BK.RBOW and NC.KCR.
+Table 2: Magnitude evolution for earthquake nv73827571
+model
+6 s after OT
+8 s atfer OT
+12.6 s atrer OT
+QuakeFormer (finetune)
+4.30
+5.57
+5.51
+QuakeFormer (single)
+3.65
+4.55
+4.45
+EPS
+(only 3 stations triggered)
+5.3
+5.5
+uniform is trained on the entire historical earthquake dataset, that includes all available stations in space
+and complete waveforms over time. Complex spectrum characteristics of site responses are extracted and
+implicitly memorized in the neural network. Consequently, when finetuned on the GMP-uniform, EEW-
+finetune inherits the learned frequency-dependent site effects, enhancing its predictive capabilities in the
+EEW task.
+4
+Discussion
+4.1
+Comparison of location embedding methods
+We conduct an ablation experiment on the location embedding methods:
+• M1: use both absolute location embedding (hL = NN(PE(x))) and relative location embedding
+16
+
+--- Sayfa 17 ---
+1
+5
+10
+15
+P-wave arrival time (s)
+0.70
+0.75
+0.80
+0.85
+0.90
+0.95
+R2-squared
+SM
+finetune rw=0
+finetune rw=1
+single rw=0
+single rw=1
+1
+5
+10
+15
+P-wave arrival time (s)
+0.60
+0.65
+0.70
+0.75
+0.80
+0.85
+0.90
+SR
+1
+5
+10
+15
+P-wave arrival time (s)
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+Magnitude
+Figure 7: Temporal performance comparison between EEW-finetune and EEW-single (M, 2023). Curves
+show the R2 scores for PGA estimates on SM (seen) sites, SR (unseen) sites, and M after the first station
+triggered by the P-wave arrival.
+(RoPE, bs=5000). PE(·) is based on Eq. 1, and L1=-2, LN=5.
+• M2: only use absolute location embedding, which is same with M1.
+• M3: only use relative location embedding (RoPE), all location embedding vectors (for events and sites)
+are replaced by a fixed random vector.
+• M4: use absolute location embedding (hL = NN(x)) and relative location embedding. The network
+NN directly operate on the pair of latitude and longitude.
+• M5: use absolute location embedding (hL = PE(x)) and relative location embedding.
+Not apply
+networks on the result of PE(·).
+Figure 8 (a) shows R2 scores for different position embedding methods, and M1 achieving optimal perfor-
+mance both on SM (seen locations) and SR (unseen locations). Deep network tends to learn lower frequency
+functions Rahaman et al. (2019). Comparing with M4, the result demonstrates that mapping low-dimensional
+coordinates into high-dimensional space helps downstream network to better fit the ground motion data with
+high frequency variation, which is consistent with the work by Mildenhall et al. (2020). However, we also find
+a decrease in prediction performance on SR in M1, M2 and M5. In scenario with low station density, model
+with the sensitivity to high-frequency signals may easily capture spatial high-frequency patterns as well as
+high-frequency noise, leading to overfitting at locations that were not included in the training dataset.
+What’s more, M1 outperforms M2 since the relative spatial dependencies in M1 are explicitly incorporated
+into the Transformer using RoPE. But if we only encode the relative spatial relationships, like M3, the model
+transforms into an ergodic GMP model. Consequently, the predictive accuracy diminishes notably when
+the station masking ratio rs changing from 0.8 to 1.0 (forecasting), primarily due to the absence of regional
+17
+
+--- Sayfa 18 ---
+distinctions. This observation suggests that location-based event effects and site/path effects play substantial
+roles in the total residual (see Appendix where we separate the total residual in M3 into event/site/path
+terms). Comparing M1 with M5, we find applying a shallow neural network after PE(·) is essential for our
+task, as it enhances the model’s representative capacity.
+0.2
+0.4
+0.6
+0.8
+1.0
+0.82
+0.84
+0.86
+0.88
+0.90
+0.92
+0.94
+R-squared
+SM
+(a)
+M1*
+M2
+M3
+M4
+M5
+0.2
+0.4
+0.6
+0.8
+1.0
+0.915
+0.920
+0.925
+0.930
+0.935
+0.940
+SM
+(b)
+L1=-2,LN=7
+L1=-2,LN=5*
+L1=-2,LN=4
+L1=-1,LN=5
+L1=-3,LN=5
+0.2
+0.4
+0.6
+0.8
+1.0
+0.915
+0.920
+0.925
+0.930
+0.935
+SM
+(c)
+bs=500
+bs=2000
+bs=5000*
+bs=10000
+bs=20000
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Mask Ratio rs
+0.78
+0.80
+0.82
+0.84
+0.86
+R-squared
+SR
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Mask Ratio rs
+0.81
+0.82
+0.83
+0.84
+0.85
+0.86
+SR
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Mask Ratio rs
+0.830
+0.835
+0.840
+0.845
+0.850
+0.855
+SR
+Figure 8: Comparison of different (a) location embedding methods, (b) spatial resolutions in the absolute
+location embedding (L1,LN), and (c) bs in relative location embedding. The first line are the R2 scores for
+PGA predictions from locations with historical recordings in 2023 (TR+SM), and the second line are for
+locations without historical recordings (TR+SR). Wave ratio rw =1.
+We also compare three important pre-defined parameters in the absolute location embedding (L1, LN)
+and relative location embedding (bs).
+Figure 10a visualizes the location embedding values as they vary by latitudes across different spatial
+resolutions in Eq. 1. In Eq. 1, L1, LN reflect the maximum and minimum wavelengths used to decompose
+the coordinates, respectively. For a spatial reference point pi at location xi, the embedding values obtained
+by the j-th level sinusoidal function in Eq. 1 are sin 2Ljxi, cos 2Ljxi ∈[0, 1]. As the value of Lj increases, the
+wavelength of sinusoidal function decreases, leading to greater spatial resolution. Furthermore, due to the
+periodicity of sinusoidal functions, using multi-scale sinusoidal PE(·) effectively divides space into ”grids”
+of multi-scale wavelengths, the embedding value represents the relative position to the j-th level grid lines.
+When L1 is excessively large, the relative position of pi within the entire region becomes indistinguishable.
+Therefore, as depicted in Figure 10a when L1 =-1, points in different locations yield identical encoding results.
+It is problematic especially for the locations without historical recordings (see Figure 8 (c) when L1 =-1).
+18
+
+--- Sayfa 19 ---
+-124
+-122
+-120
+38
+40
+42
+(a)
+M1
+-124
+-122
+-120
+M2
+-124
+-122
+-120
+M3
+-124
+-122
+-120
+M4
+-124
+-122
+-120
+M5
+4
+2
+0
+2
+4
+ln PGA (gal)
+-124
+-122
+-120
+38
+40
+42
+(b)
+L1=-2,LN=5
+-124
+-122
+-120
+L1=-2,LN=7
+-124
+-122
+-120
+L1=-2,LN=4
+-124
+-122
+-120
+L1=-1,LN=5
+-124
+-122
+-120
+L1=-3,LN=5
+4
+2
+0
+2
+4
+ln PGA (gal)
+Figure 9: Comparison of the predicted PGA distributions using different (a) location embedding methods,
+(b) spatial resolutions in the absolute location embedding (L1,LN). The event id is nc73886731. Station
+mask ratio rs =1. The scatter points refer to the recorded PGA. Values are given in ln unit.
+To better preserve the location distinction across the entire region, we can apply the Nyquist theorem to
+determine L1. Specifically, the minimum wavelength should be twice the region’s scale, expressed as
+L1 < log2(π/R)
+(2)
+R represents the scale of the entire region. For California, where R is approximately 10 degree, we set
+L1 = −2 for this research.
+Moreover, when comparing LN =5 and LN =7 in Figure 8, we observe that increasing LN leads to
+slightly higher prediction accuracy for SM, but will cause a drastic decrease on SR performance. The reason
+is, if LN is overly large, the maximum spatial resolution becomes excessively fine, causing even location
+embeddings from nearby positions to exhibit minimal similarity. This high-frequency spatial variance aids
+stations with historical records in capturing location-specific features more effectively, but it may also lead
+to an overemphasis on the spatial noise.
+Figure 8 (c) shows the comparison of different base parameters bs in RoPE. To illustrate the correlation
+between bs and the distance preservation property, we conduct a simple experiment. Supposing the query
+qm and key kn from location xn and xm are both all-one vectors. Specifically, we set the coordinate of xn
+to (32N,120W), while varying the coordinates of xm from (32N,120W) to (35N,120W). Figure 10b depicts
+the inner product (similarity) as the relative distance changes.
+It can be observed that when the base
+parameter bs is too small, RoPE fails to exhibit long-distance attenuation, leading to oscillations in the
+19
+
+--- Sayfa 20 ---
+attention computation when ROPE is introduced. However, as the value of bs is too large, the degree of
+remote attenuation gradually diminishes. Consequently, the predictive performance of QuakeFormer also
+declines. We also found that the parameters of Rope bs have a relatively smaller impact on the model’s
+performance, compared to L1 and LN.
+In addition to the statistic metrics, we also compared the estimated PGA distributions across different
+position embedding approaches and resolutions (Figure 9). We observe a checkerboard-like pattern indicative
+of severe spatial overfitting in the predictions, particularly pronounced when LN is large. The distributions
+estimated by M3 and M4 approaches appears smoother than others, as these two approaches do not utilize
+absolute location embedding PE(·). This observation underscores that while PE(·) could enhance prediction
+performance, it may also lead to spatial overfitting, especially if the training sites lack sufficient density,
+resulting in unnatural PGA distribution on a large scale.
+Comparing M1 and M2, we also notice that
+the relative location embedding RoPE is helpful to diminish the overfitting pattern. In regions with limited
+historical recordings, the relative position embedding that models propagation effects should take precedence
+in the prediction process. Importantly, we did not identify temporal overfitting in our analysis, which suggests
+that predictions of future ground motion are reliable.
+Therefore, the choice of position embedding methods and parameters should be tailored to the specific
+real-world applications. If the focus is primarily on on-site predictions, especially for critical fundamental
+infrastructures such as nuclear stations, or if the studying region has high-density station array, employ-
+ing QuakeFormer with high-resolution PE(·) may be the most suitable choice to capture the site-specific
+characteristics. Whereas, if the prediction are intended for regional decision-making, or the station array is
+sparse, we recommend carefully select the maximum location embedding resolution LN, or even considering
+not using PE(·).
+4.2
+Insights into the nonergodic residual components
+In order to understand how close we are to completely eliminating repeatable effects in the total variability,
+we decompose the total residuals δij = ln pred −ln true into event and site residuals.
+The total residuals δij for event i and station j could be explained as the combination of between
+event residuals and with-event residuals. The first term δEi is also referred as event term, representing the
+residual caused by the remaining difference in the specific source excitation. The last term δWij represents
+the residual caused by the specific path/site effect, and could be further decomposed into site term δSj,
+remaining aleatory single-station residual δWSij. To simplify the analysis and avoid the complexities arising
+from the interplay between between-event residuals and site effects, we compute δEi based on the residuals
+20
+
+--- Sayfa 21 ---
+-3
+-2
+-1
+0
+1
+2
+3
+4
+5
+6
+Li
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+Latitude
+6.13
+6.57
+7
+32.0
+32.1
+(a)
+0°
+0.5°
+1°
+1.5°
+2°
+2.5°
+3°
+3.5°
+4°
+Relative Distance
+Inner Product
+bs=500
+bs=2000
+bs=5000
+bs=10000
+bs=20000
+(b)
+Figure 10: (a) The partial location embedding vectors generated by Eq. 1, sin (2Li · lat). Each row is a
+vector at specific latitude. The longitude for these embedding vectors are fixed to 120W. ; (b) Comparing
+the inner products of updated q∗
+m and k∗
+n across different rotary base parameter bs as the relative distance
+of location xm and xn increases.
+Table 3: Comparison of standard derivation estimated in this study and previous studies in California
+Component
+This Study PGA
+TR+SM
+This Study PGA
+TR+SR
+Baltay et al. (2017)
+PGA
+Villani & Abrahamson (2015)
+CS 3.0 s
+Villani & Abrahamson (2015)
+CS 3.0 s
+σ
+0.57
+0.75
+0.97
+0.707
+0.71
+τ
+0.34
+\
+0.45
+0.46
+0.39
+ϕ
+0.48
+0.61
+0.86
+0.53
+0.59
+τL
+0.17
+\
+0.35
+0.42
+0.25
+ϕS
+0.26
+0.45
+0.75
+0.37
+0.48
+only from site SM. The standard derivations δEi, δL, δWij and δSj are τ, τL, ϕ and ϕS, respectively.
+Notably, location-based event term δL and site term δSj are epistemic components that are repeatable and
+could be modeled. More details about the residual decomposition process could be seen in Appendix. Table
+3 compares the fully nonergodic components identified in other studies in California, revealing significantly
+smaller values for τL and ϕS in our study. This result demonstrates that QuakeFormer is good at modeling
+regional differences.
+4.2.1
+Location-based Event residual
+For moderate-magnitude earthquakes, the event term of high-frequency ground motion, including PGA, is
+correlated to the level of stress drop (Hanks, 1979). Meanwhile, regional differences have been identified in
+both large and small scales. Baltay et al. (2017) separated the between event residual δEi into a location-
+based event term δL, and the remaining random component δE0
+i . The result shows that δL calculated by
+earthquake clusters is related to the regional average stress drop, and the estimated stress drop information
+could be incorporated into GMPE so as to reduce the location-based event residual.
+21
+
+--- Sayfa 22 ---
+Although QuakeFormer does not explicitly incorporate prior information about the stress drop into the
+model, it has the potential to memorizing all the historical information into its neural network and update
+its interpretation about the source based on the observed records. To demonstrate it, we visually identify 24
+earthquake clusters in California (Figure S2 and Table S1), that have high-density earthquakes with similar
+locations and depths. All events in each cluster lie within an area of 2.5 km3. The histogram of δL for
+the 24 clusters could be seen in Figure S8. In the ground motion forecasting task, the median absolute δL
+is 0.07, and the std. dev. (δL)= τL = 0.17 (in ln units). And for locations with enough historical events
+(more than 150), the variability of δL from these locations is quite small, the std. dev. (δL)= τL =0.07 (in
+ln units). We also find a special cluster in North California, namely Cluster 12. At this location, a total
+of 79 earthquakes occurred in 2023, but no earthquakes had occurred before 2023. Figure S7 shows that
+QuakeFormer underestimates the event effect of Cluster 12 in the ground motion forecasting task, exhibiting
+δL =-0.43. Although no historical earthquakes available in this cluster, QuakeFormer is capable to update
+the source characteristic based on the observed records. If we input intensity records from 50% of seismic
+stations in this area (rs =0.5), δL could be reduced to -0.22 (see Figure S7).
+4.2.2
+Site terms and VS30
+Finally, we discuss the site terms and their correlation with VS30, the frequently utilized site effect.
+In Figure 11 (a) and Table S3, we compare the site term δS between QuakeFormer and the previous
+study on GMPE approaches (Sahakian et al., 2018), utilizing data from 38 stations in the Caltech (CI)
+network in South California. For the same station, site terms in QuakeFormer are significant smaller, even
+at locations without historical recordings (SR). In QuakeFormer, site specific features are implicitly learned
+from the big-volume historical records in our dataset, leading to a substantially reduced site term for SM
+sites. For sites in SR, the improved performance can be attributed to QuakeFormer’s enhanced ability to
+capture location dependencies. This capability allows the model to better interpolate and estimate ground
+motion characteristics even for regions without extensive data. Figure 11 (b) further contrasts the sites
+terms between SM and SR sites within the dataset, revealing smaller site terms for SM sites.
+Figure S9 presents the prediction and interpolation results under different station masking rates. From
+this, we observe that the inclusion of the site parameter VS30 has almost no impact on the prediction of
+station locations in the training dataset SM, but it can enhance the prediction in the testing dataset SR.
+However, even with the incorporation of VS30 in the model, the stations in the testing dataset cannot achieve
+the same level of performance as those in the training dataset. There could be two possible reasons for this:
+1) The map of VS30 are based on proxy techniques, which may result in ill-described VS30; 2) Although
+VS30 is correlated with the deeper velocity structure that reflects the site amplification, it’s not the only
+22
+
+--- Sayfa 23 ---
+key factor. The absolute position coordinates we used imply richer site conditions such as topography, soil
+depths and parameters, etc.. From historical earthquake recordings, the stations in the training set could
+capture the high-dimensional site features at specific locations, leading to improvement in prediction.
+Figure 11: Site term statistic: (a) Kernel density plot for QuakeFormer (rs =1) and the previous GMPE
+study on Caltech (CI) network. (b) Histograms of site terms on SM and SR sites. (c) Map view of the site
+terms for stations in the dataset. For comparison, we only compute site terms on stations using high broad
+band hign-gain seismometers (HH). All results are in ln units.
+4.3
+Limitations
+In training sites (SM), QuakeFormer effectively captures the intrinsic geographic features, resulting in com-
+mendable performance. However, for sites without historical records (SR), we observe that the estimation
+error remains significant. This discrepancy may arise from the spatial variability of geographic features, which
+can change at a much higher frequency than the seismic stations. Additionally, existing low-dimensional ge-
+ographic information, such as VS30, does not fully encompass the site-specific characteristics. Consequently,
+the model faces challenges in accurately interpolating the distribution of geographic features based on the
+available station observations. To address this issue, incorporating additional information, such as geological
+survey data and three-dimensional velocity models, into the deep learning framework could enhance predic-
+tive accuracy. Furthermore, the comparison between SM and SR sites also indicates that, deploying stations
+(which can be mobile stations) in strategically important locations can significantly improve the accuracy of
+ground shaking predictions for those sites.
+23
+
+--- Sayfa 24 ---
+We find QuakeFormer may underestimate the shaking intensity near the epicenter. It may due to the
+imbalance of large-intensity records from near source stations or from large magnitude events. Utilizing
+synthetic data, such as CyberShake, could enhance model’s knowledge of these scenarios and is expected to
+improve its extrapolation capacity (Monterrubio-Velasco et al., 2024). improve its extrapolation capacity
+, incorporating intensity data from people’s feeling may also helps us to know the intensity distribution
+during big event (Atkinson & Wald, 2007). Moreover, QuakeFormer exhibits a larger epicenter estimation
+error compared to estimations from ElarmS-3.
+The poorer location estimation may stem from the low
+spatial resolution in the output layer. Decomposing the predicted location multi-scale manner (similar with
+the position embedding layer we used in the input embedding layer) may improve the epicenter estimation.
+5
+Conclusions
+We develop a deep learning based uniform architecture, QuakeFormer, which is capable to be applied to
+three important ground motion prediction tasks: forecasting, interpolation and early warning. Built upon
+a simple Transformer framework with absolute and relative position encoding method using the proposed
+masking strategy, QuakeFormer successfully combines these three tasks into one architecture for the first
+time, and obtains convincing predictions upon these three tasks. QuakeFormer could separately train these
+three task (single model), or could jointly train the forecasting and interpolation tasks by using the masking
+strategy for stations and waveforms (uniform model). Then this basic uniform model could be finetuned to
+early warning tasks. Also, we demonstrate that uniform model outperforms the single model, especially in
+the early warning task. Our analysis reveals that it’s the ability to integrate the absolute regional differences
+and the relative spatial dependency that makes QuakeFormer has outstanding performance. In future, we
+hope to incorporate recent studies on the velocity model, topology and more other geographic information
+into QuakeFormer, and finally obtain a fully nonergondic ground motion prediction model.
+6
+Data and resources
+Waveform data, metadata, or data products for this study were accessed through the Northern California
+Earthquake Data Center (NCEDC) and Sourth California Earthquake Data Center (SCEDC). The VS30
+(Thompson, 2022) and elevation dataset are both from U.S. Geological Survey (USGS). The implementation
+of QuakeFormer will be available after paper reception.
+24
+
+--- Sayfa 25 ---
+References
+Abrahamson, N. A., Kuehn, N. M., Walling, M., & Landwehr, N. (2019). Probabilistic seismic hazard
+analysis in california using nonergodic ground-motion models. Bulletin of the Seismological Society of
+America, 109(4), 1235–1249.
+Abrahamson, N. A., Silva, W. J., & Kamai, R. (2014, 08). Summary of the ASK14 Ground Motion Relation
+for Active Crustal Regions. Earthquake Spectra, 30(3), 1025-1055. Retrieved from https://doi.org/
+10.1193/070913EQS198M doi: 10.1193/070913EQS198M
+Atkinson, G. M., & Wald, D. J. (2007). “did you feel it?” intensity data: A surprisingly good measure of
+earthquake ground motion. Seismological Research Letters, 78(3), 362–368.
+Baker, J. W. (2013). An introduction to probabilistic seismic hazard analysis. White paper version, 2(1),
+79.
+Baltay, A. S., Hanks, T. C., & Abrahamson, N. A. (2017). Uncertainty, variability, and earthquake physics in
+ground-motion prediction equations. Bulletin of the Seismological Society of America, 107(4), 1754–1772.
+B¨ose, M., Heaton, T. H., & Hauksson, E. (2012). Real-time finite fault rupture detector (finder) for large
+earthquakes. Geophysical Journal International, 191(2), 803–812.
+B¨ose, M., Smith, D. E., Felizardo, C., Meier, M.-A., Heaton, T. H., & Clinton, J. F. (2018). Finder v.
+2: Improved real-time ground-motion predictions for m2–m9 with seismic finite-source characterization.
+Geophysical Journal International, 212(1), 725–742.
+Center, E. (2013). Southern california earthquake center. Caltech. Dataset.
+Chang, H., Zhang, H., Barber, J., Maschinot, A., Lezama, J., Jiang, L., . . . others (2023). Muse: Text-to-
+image generation via masked generative transformers. arXiv preprint arXiv:2301.00704.
+Chung, A. I., Henson, I., & Allen, R. M. (2019). Optimizing earthquake early warning performance: Elarms-
+3. Seismological Research Letters, 90(2A), 727–743.
+Cremen, G., & Galasso, C. (2020). Earthquake early warning: Recent advances and perspectives. Earth-
+Science Reviews, 205, 103184.
+Datta, A., Wu, D. J., Zhu, W., Cai, M., & Ellsworth, W. L. (2022). Deepshake: Shaking intensity prediction
+using deep spatiotemporal rnns for earthquake early warning. Seismological Society of America, 93(3),
+1636–1649.
+25
+
+--- Sayfa 26 ---
+Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K.
+(2018).
+Bert: Pre-training of deep bidirectional
+transformers for language understanding. arXiv preprint arXiv:1810.04805.
+Douglas, J. (2003). Earthquake ground motion estimation using strong-motion records: a review of equations
+for the estimation of peak ground acceleration and response spectral ordinates. Earth-Science Reviews,
+61(1-2), 43–104.
+Fayaz, J., Astroza, R., & Medalla, M. (n.d.). Rewfers: A regional early warning framework for estimating
+response spectra.
+Fayaz, J., & Galasso, C. (2023). A deep neural network framework for real-time on-site estimation of acceler-
+ation response spectra of seismic ground motions. Computer-Aided Civil and Infrastructure Engineering,
+38(1), 87–103.
+Goda, K., & Hong, H.-P. (2008). Spatial correlation of peak ground motions and response spectra. Bulletin
+of the Seismological Society of America, 98(1), 354–365.
+Graves, R., Jordan, T. H., Callaghan, S., Deelman, E., Field, E., Juve, G., . . . others (2011). Cybershake: A
+physics-based seismic hazard model for southern california. Pure and Applied Geophysics, 168, 367–381.
+Hanks, T. C. (1979). b values and ω- γ seismic source models: Implications for tectonic stress variations
+along active crustal fault zones and the estimation of high-frequency strong ground motion. Journal of
+Geophysical Research: Solid Earth, 84(B5), 2235–2242.
+He, K., Chen, X., Xie, S., Li, Y., Doll´ar, P., & Girshick, R. (2022). Masked autoencoders are scalable
+vision learners. In Proceedings of the ieee/cvf conference on computer vision and pattern recognition (pp.
+16000–16009).
+Joshi, A., Raman, B., Mohan, C. K., & Cenkeramaddi, L. R. (2024). Application of a new machine learning
+model to improve earthquake ground motion predictions. Natural Hazards, 120(1), 729–753.
+Jozinovi´c, D., Lomax, A., ˇStajduhar, I., & Michelini, A. (2020). Rapid prediction of earthquake ground
+shaking intensity using raw waveform data and a convolutional neural network.
+Geophysical Journal
+International, 222(2), 1379–1389.
+Kodera, Y., Yamada, Y., Hirano, K., Tamaribuchi, K., Adachi, S., Hayashimoto, N., . . . Hoshiba, M.
+(2018). The propagation of local undamped motion (plum) method: A simple and robust seismic wavefield
+estimation approach for earthquake early warning.
+Bulletin of the Seismological Society of America,
+108(2), 983–1003.
+26
+
+--- Sayfa 27 ---
+Kohler, M. D., Smith, D. E., Andrews, J., Chung, A. I., Hartog, R., Henson, I., . . . Guiwits, S. (2020).
+Earthquake early warning shakealert 2.0: Public rollout. Seismological Research Letters, 91(3), 1763–
+1775.
+Kuyuk, H. S., & Allen, R. M. (2013). A global approach to provide magnitude estimates for earthquake
+early warning alerts. Geophysical Research Letters, 40(24), 6329–6333.
+Landwehr, N., Kuehn, N. M., Scheffer, T., & Abrahamson, N. (2016). A nonergodic ground-motion model
+for california with spatially varying coefficients. Bulletin of the Seismological Society of America, 106(6),
+2574–2583.
+Lu, X., Cheng, Q., Tian, Y., & Huang, Y. (2021). Regional ground-motion simulation using recorded ground
+motions. Bulletin of the Seismological Society of America, 111(2), 825–838.
+Mai, G., Janowicz, K., Hu, Y., Gao, S., Yan, B., Zhu, R., . . . Lao, N. (2021). A review of location encoding
+for geoai: methods and applications. International Journal of Geographical Information Science, 36, 639
+- 673. Retrieved from https://api.semanticscholar.org/CorpusID:243847917
+Melgar, D., Bock, Y., & Crowell, B. W. (2012). Real-time centroid moment tensor determination for large
+earthquakes from local and regional displacement records. Geophysical Journal International, 188(2),
+703–718.
+Mildenhall, B., Srinivasan, P. P., Tancik, M., Barron, J. T., Ramamoorthi, R., & Ng, R. (2020). ”nerf:
+Representing scenes as neural radiance fields for view synthesis”. Computer Vision – ECCV 2020, 405–421.
+doi: 10.1007/978-3-030-58452-8 24
+Monterrubio-Velasco, M., Callaghan, S., Modesto, D., Carrasco, J. C., Badia, R. M., Pallares, P., . . . de la
+Puente, J.
+(2024).
+A machine learning estimator trained on synthetic data for real-time earthquake
+ground-shaking predictions in southern california. Communications Earth & Environment, 5(1), 258.
+Mori, F., Mendicelli, A., Falcone, G., Acunzo, G., Spacagna, R. L., Naso, G., & Moscatelli, M. (2022).
+Ground motion prediction maps using seismic-microzonation data and machine learning. Natural Hazards
+and Earth System Sciences, 22(3), 947–966.
+M¨unchmeyer, J., Bindi, D., Leser, U., & Tilmann, F. (2021). The transformer earthquake alerting model: A
+new versatile approach to earthquake early warning. Geophysical Journal International, 225(1), 646–656.
+Nakamura, Y., & Saita, J. (2007). Uredas, the earthquake warning system: Today and tomorrow. Earthquake
+early warning systems, 249–281.
+27
+
+--- Sayfa 28 ---
+NCEDC. (2014). Northern california earthquake data center. uc berkeley seismological laboratory. Dataset.
+doi:10.7932/NCEDC.
+Otake, R., Kurima, J., Goto, H., & Sawada, S. (2020). Deep learning model for spatial interpolation of
+real-time seismic intensity. Seismological Society of America, 91(6), 3433–3443.
+Rahaman, N., Baratin, A., Arpit, D., Draxler, F., Lin, M., Hamprecht, F., . . . Courville, A. (2019). On the
+spectral bias of neural networks. In International conference on machine learning (pp. 5301–5310).
+Reichstein, M., Camps-Valls, G., Stevens, B., Jung, M., Denzler, J., Carvalhais, N., & Prabhat, F. (2019).
+Deep learning and process understanding for data-driven earth system science. Nature, 566(7743), 195–
+204.
+Sahakian, V., Baltay, A., Hanks, T., Buehler, J., Vernon, F., Kilb, D., & Abrahamson, N. (2018). Decom-
+posing leftovers: Event, path, and site residuals for a small-magnitude anza region gmpe. Bulletin of the
+Seismological Society of America, 108(5A), 2478–2492.
+Su, J., Ahmed, M., Lu, Y., Pan, S., Bo, W., & Liu, Y. (2024). Roformer: Enhanced transformer with rotary
+position embedding. Neurocomputing, 568, 127063.
+Thompson, E. M. (2022). An updated vs30 map for california with geologic and topographic constraints.
+USGS Digital Object Identifier Catalog. doi: 10.5066/F7JQ108S
+Tsang, L. L., Allen, R. M., & Wurman, G. (2007). Magnitude scaling relations from p-waves in southern
+california. Geophysical Research Letters, 34(19).
+Vaswani, A. (2017). Attention is all you need. Advances in Neural Information Processing Systems.
+Villani, M., & Abrahamson, N. A. (2015). Repeatable site and path effects on the ground-motion sigma
+based on empirical data from southern california and simulated waveforms from the cybershake platform.
+Bulletin of the Seismological Society of America, 105(5), 2681–2695.
+Wald, D. J., Worden, C. B., Thompson, E. M., & Hearne, M. (2022). Shakemap operations, policies, and
+procedures. Earthquake Spectra, 38(1), 756–777.
+Worden, C. B., Thompson, E. M., Baker, J. W., Bradley, B. A., Luco, N., & Wald, D. J. (2018, 02). Spatial
+and Spectral Interpolation of Ground-Motion Intensity Measure Observations. Bulletin of the Seismological
+Society of America, 108(2), 866-875. Retrieved from https://doi.org/10.1785/0120170201
+doi: 10
+.1785/0120170201
+28
+
+--- Sayfa 29 ---
+Table S1: Number of earthquake events in clusters before 2023 and in 2023
+ID
+2023
+before
+ID
+2023
+before
+ID
+2023
+before
+ID
+2023
+before
+ID
+2023
+before
+1
+20
+134
+6
+26
+35
+11
+12
+15
+16
+159
+320
+21
+11
+0
+2
+19
+22
+7
+16
+134
+12
+79
+0
+17
+27
+56
+22
+6
+118
+3
+9
+11
+8
+8
+17
+13
+15
+59
+18
+12
+1
+23
+11
+23
+4
+41
+113
+9
+7
+2
+14
+13
+45
+19
+10
+71
+24
+15
+8
+5
+42
+170
+10
+7
+2
+15
+91
+1004
+20
+17
+179
+Yan, H., Deng, B., Li, X., & Qiu, X.
+(2019).
+Tener: adapting transformer encoder for named entity
+recognition. arXiv preprint arXiv:1911.04474.
+Zhang, X., Reichard-Flynn, W., Zhang, M., Hirn, M., & Lin, Y. (2022). Spatiotemporal graph convolutional
+networks for earthquake source characterization. Journal of Geophysical Research: Solid Earth, 127(11),
+e2022JB024401.
+A
+Datasets
+Waveforms are aligned and stored in hdf5 format. The standard format of our dataset could be seen in
+Seismic Event Data (one single file) - AI4EPS . The P-phase pick we used is from this dataset. This dataset
+puts the first P pick of all stations at 30 s and cut a window size of 120 s. In our model, we set st, the analysis
+time before P- wave arrival as 3 s. The intensity label is calculated on the whole duration time T, which is
+calculated by the following criteria: 1) If the trace file contains an S phase, T = (tS −tP ) ∗3, where tS and
+tP are the time S-phase and P-phase arrived at this station. 2) If the P phase of the next event precedes
+the arrival of S phase, the T = (tP ′ −tP ), where tP ′ is the P phase arrival time of the next event. 3) If
+the trace file does not contain the S phase or the P phase of the next event, similar with M¨unchmeyer et al.
+(2021), we use a simplified T = tP −Dist/8 ∗f + Dist/2.8 ∗f + 10f, where Dist is epicenter distance and f
+is the sampling rate. The second term is the approximate P travel time from the source, and the third term
+approximates the Rayleigh wave speed. Note that, different waveforms recorded by different seismometers
+at the same location may exist. Therefore, when dividing the stations into training (SM), validation, and
+training sets (SR), we partition them based on spatial coordinates. Records with different names but located
+at the same place are assigned to the same station set. During training, we set the maximum length of input
+site tokens to 50 according to Figure S1.
+29
+
+--- Sayfa 30 ---
+Figure S1: (b) average station records versus M; (b) Histograms of the earthquake records per station; (c)
+Distribution maps of the earthquake records per station.
+B
+Model
+B.1
+Feature encoder
+• Locations: for sites and epicenter locations, we first apply the multi-scale sinusoidal function PE(·)
+described in Eq. 1 to map latitude and longitude to high-dimension space. In PE(·), we set the number
+of scale levels N =24, with a output dimension of 96, equal to our model’s dimension D. Then we
+apply a 1-layer FCN to obtain the final location embedding.
+• Waveforms: We firstly normalized all components of the wave trace by its peak value observed so far.
+We project the peak value to dimension D with FCN. Convolutional neural network (CNN) is applied
+to the normalized waveforms to extract frequency features. We add the embedding of peak value and
+normalized waveforms to obtain the final waveform embeddings.
+• Attributes: in this experiment, we only include VS30, type of seismogram, and site elevation into the
+site attributes. Every attribute value are separately projected to dimension D using FCN. Then the
+embeddings are added into the final attribute embedding vectors. More correlated site attributes are
+allowed to be incorporated into this model.
+30
+
+--- Sayfa 31 ---
+Figure S2: Earthquake cluster: Light gray dots show all seismicity in out study; light green dots shows the
+earthquakes in 2023; darker green circles show the earthquake clusters in 2023 we identified for analysis.
+• Intensity: the intensity is the PGA during the whole duration times. We also project it int intensity
+embedding with dimension D using FCN. We use activation function Relu for all layers.
+B.2
+Rotary Position Embedding (RoPE)
+The function formulating the inner product of query qm = fq(hm, xm) and key kn = fk(hn, xn) is de-
+noted as g. In order to incorporate relative position information, the token embeddings hm and hn, and
+their relative position xm −xn are taken as input variables. In other words, ⟨fq(hm, xm), fk(hn, xn)⟩=
+g (hm, hn, xm −xn).
+Su et al. (2024) derived a simple formulation, RoPE, which enables preserve rela-
+tion position dependency. Here we make some adjustment on the RoPE form so that it can be applied to
+continuous 2D coordinates.
+• Step 1: Predefine the rotation frequency Θ =
+n
+θi = b−4(i−1)/d
+s
+, i ∈[1, 2, . . . , d/4]
+
+.
+• Step 2: Calculate the rotation angles as the multiplication of the rotation frequency Θ and the token
+31
+
+--- Sayfa 32 ---
+0.6
+0.4
+0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+Magnitude Error
+0
+2
+4
+6
+8
+10
+12
+Count
+Median: 0.16
+      Std: 0.19
+0
+5
+10
+15
+20
+25
+30
+35
+40
+Epicenter Error (km)
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Count
+Median: 6.81
+      Std: 8.81
+Figure S3: Histogram for magnitude and epicenter location error for 95 large earthquakes in 2023 (M >3.5),
+4-s after P-wave arrival at the first triggered station.
+coordinates x = [x1, x2] ∈R2, then prepare Rd
+Θ,m,
+Rd
+Θ,m =
+
+
+
+Rd/2,1
+Θ,m
+0
+0
+Rd/2,2
+Θ,m
+
+
+
+(S1)
+Rd/2,i
+Θ,m =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cos xi
+mθ1
+−sin xi
+mθ1
+0
+0
+· · ·
+0
+0
+sin xi
+mθ1
+cos xi
+mθ1
+0
+0
+· · ·
+0
+0
+0
+0
+cos xi
+mθ2
+−sin xi
+mθ2
+· · ·
+0
+0
+0
+0
+sin xi
+mθ2
+cos xi
+mθ2
+· · ·
+0
+0
+...
+...
+...
+...
+...
+...
+...
+0
+0
+0
+0
+· · ·
+cos xi
+mθd/4
+−sin xi
+mθd/4
+0
+0
+0
+0
+· · ·
+sin xi
+mθd/4
+cos xi
+mθd/4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(S2)
+• Step 3: Update q and k in self-attention mechanism:
+f{q,k} (hm, xm) = Rd
+Θ,mW {q,k}hm
+(S3)
+, where W {q,k} is a weight matrix to transfer token embeddings into queries and keys.
+32
+
+--- Sayfa 33 ---
+37
+38
+39
+40
+41
+42
+43
+Quakeformer
+Station Mask Ratio rs = 1
+Observed SM
+Target SM
+Target SR
+Quakeformaer
+Station Mask Ratio rs = 0.5
+Observed SM
+Target SM
+Target SR
+Quakeformer
+Station Mask Ratio rs = 0
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+37
+38
+39
+40
+41
+42
+43
+ASK14
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+MVN
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+MNV
+Observed SM
+Target SM
+Target SR
+2
+1
+0
+1
+2
+ln residual (gal)
+4
+3
+2
+1
+0
+1
+2
+3
+4
+ln PGA (gal)
+Figure S4: Forecasting-interpolation example result: nc73886731, M: 5.48
+37
+38
+39
+40
+41
+42
+43
+Quakeformer
+Station Mask Ratio rs = 1
+Observed SM
+Target SM
+Target SR
+Quakeformaer
+Station Mask Ratio rs = 0.5
+Observed SM
+Target SM
+Target SR
+Quakeformer
+Station Mask Ratio rs = 0
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+37
+38
+39
+40
+41
+42
+43
+ASK14
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+MVN
+Observed SM
+Target SM
+Target SR
+126
+124
+122
+120
+MNV
+Observed SM
+Target SM
+Target SR
+2
+1
+0
+1
+2
+ln residual (gal)
+4
+3
+2
+1
+0
+1
+2
+3
+ln PGA (gal)
+Figure S5: Forecasting-interpolation example result: nc73887046, M: 5.2
+33
+
+--- Sayfa 34 ---
+33.0
+33.5
+34.0
+34.5
+35.0
+35.5
+36.0
+Quakeformer
+Station Mask Ratio rs = 1
+Observed SM
+Target SM
+Target SR
+Quakeformaer
+Station Mask Ratio rs = 0.5
+Observed SM
+Target SM
+Target SR
+Quakeformer
+Station Mask Ratio rs = 0
+Observed SM
+Target SM
+Target SR
+122
+121
+120
+119
+118
+33.0
+33.5
+34.0
+34.5
+35.0
+35.5
+36.0
+ASK14
+Observed SM
+Target SM
+Target SR
+122
+121
+120
+119
+118
+MVN
+Observed SM
+Target SM
+Target SR
+122
+121
+120
+119
+118
+MNV
+Observed SM
+Target SM
+Target SR
+2
+1
+0
+1
+2
+ln residual (gal)
+4
+3
+2
+1
+0
+1
+2
+ln PGA (gal)
+Figure S6: Forecasting-interpolation example result: ci40582824, M: 3.29
+C
+Baseline methods
+C.1
+Forecasting: ASK-14
+We use a simplified version of ASK14 in our experiment, similar with Sahakian et al. (2018),
+ln PGA = a1 + a2Mag + a3(8.5 −M)2 + a4 ln R + a5 ln VS30
+Vref
+(S4)
+, where R =
+q
+R2rup + c2. Since the majority of our dataset is small-magnitude events, Rrup is equivalent
+to the hypocentral distance here, in the unit of kilometer. c is the finite-fault dimension factor, taken to
+be a constant 4.5(Abrahamson et al., 2014). Vref = 760m/s. The coefficients a1 −a6 are determined by
+the least-squared(L2) inversion and single-mean models using the train events and train stations (TM +
+SM). Although this algorithm differs from the commonly used mixed effect(ME) model that constrains
+the between-/within-event residuals directly, the difference between them is within 0.02 natural log units in
+South California(Sahakian et al., 2018). Therefore, the single model is still valid and more suited to test the
+extrapolation ability in TR +SR. We apply the empirical equation to three regions, that is North California,
+South California, and the whole California. Table S2 list the model coefficients and R-squared for the three
+region.
+34
+
+--- Sayfa 35 ---
+Table S2: ASK14 Model Coefficients and Regression R-squared
+Region
+a1
+a2
+a3
+a4
+a5
+R2
+TM+SM
+R2
+TM+SR
+R2
+TR+SM
+R2
+TR+SR
+North CA
+3.7772
+1.3672
+-0.0627
+-2.1926
+0.1899
+0.7600
+0.8090
+0.7808
+0.7607
+South CA
+1.0959
+1.3290
+-0.0371
+-1.5507
+0.0268
+0.7170
+0.6812
+0.6702
+0.6579
+CA
+2.6011
+1.1556
+-0.0495
+-1.7799
+0.0227
+0.7100
+0.7348
+0.7055
+0.6734
+C.2
+Interpolation:
+MVN (Conditional Multivariate normal distribution Ap-
+proach)
+In this study, we only discuss the distribution of PGA. MVN approach requires a ground motion forecasting
+model, a cross-correlation model, and the assumption that the residuals have an MVN distribution. We
+set random variables Y1 and Y2 as the prediction at unobserved locations and observed locations. First,
+ground motion forecasting models are used to provide the initial estimation. We use QuakeFormer as the
+forecasting model. The mean estimate provided by the forecasting for unobserved and observed locations
+are µY1 and µY2. The residual are treated as a linear mixed effects model: Yi = µYi + Ei + Wi. Then,
+the predicted PGA values at unobserved locations are conditioned upon the available nearby observations,
+resulting in the decrease of uncertainty (Worden et al., 2018). The distribution of Y1, given by Y2 = y2 (in
+which y2 is the observation treated as exact):
+µY1|y2 = µY1 + ΣY1Y2Σ−1
+Y2Y2(y2 −µY2)
+(S5)
+, where ΣYi,Yj is the element of the covariance matrix, and given by:
+ΣYi,Yj = ρYi,YjϕYiϕYj + τYiτYj
+(S6)
+, where ρYi,Yj is the correlation, ϕ and τ are the within-event standard derivation and between- event
+derivation (details could be seen in Appendix D. Because in this study, we didn’t estimate uncertainty by
+QuakeFormer, we assume ϕ= and τ=. As same with Worden et al. (2018), we employ the cross-correlation
+function defined by assuming the the spatial correlation is due to the distance between sites i and j,
+ρYiYj = exp(−h/10)
+(S7)
+,in which h is the distance between the two sites, in units of kilometers.
+35
+
+--- Sayfa 36 ---
+C.3
+Early Warning: Estimate Point Source (EPS)
+In ElarmS, the magnitude is estimated from the amplitude and frequency contents of the P-wave arrivals
+using empirical scaling relations. In this study, we adopt the scaling relationship between the displacement
+amplitude of vertical component PGD and magnitude M proposed by Kuyuk & Allen (2013).
+M = c1 log(PGD) + c2 log(E) + c3
+(S8)
+, where E is the epicenter distance in kilometers and PGD is in centimeters. We use the maximum value
+within 4 s of the P-wave, and stop the time window up to the S-wave arrival in our analysis. Similar with
+Kuyuk & Allen (2013), we filter the displacement waveforms by a 3 Hz Butterworth filter .We calibrate
+the scaling coefficients using a linear best fit to the California data sets and exclude records that 1) have
+epicenter distances greater than 100 km, 2) PGA¡1e-5. The calibration result is, c1=0.8663, c2=1.4257,
+c3=4.2853, with the R2 0.73. Since our data set is dominated by small events, the scaling relationship is not
+as significant as this in the larger event, which could also be found in (Kuyuk & Allen, 2013). In order to
+provide a single estimate for the event, magnitude estimates for all triggered station at each point in time
+are weighted based on the P-wave windows recorded so far. Note that, we use the catalog hypocenters in
+the analysis, although estimating the location of the epicenter is typically the first step in the ElarmS, which
+leads to inflated performance.
+C.4
+Early warning: The Propagation of Local Undamped Motion (PLUM)
+The PLUM method predicts the ground motion intensity at a target location based on the intensity observed
+at seismic stations around the target location in radius r. The PGA estimation at time t and site k is
+PGApred
+t,k
+= maxi∈CR
+
+PGAobs
+t,i
+	
+. Due to the sparser station coverage in California, we used r = 15 km. The
+original version of PLUM also takes site amplification factors into consideration, but we didn’t apply site
+effects in our analysis, since the previous findings shows that the site amplification terms have minor impact
+on the performance.
+D
+Residual decomposition
+We use the same notation as Baltay et al. (2017). Generally, the total residual δij is calculated by ln IMij =
+GMM + δij, with the total variability std.dev.(δij) = σ. This residual consists of a source-related term
+δEi expressing the difference between the specific source excitation and the average excitation in GMM,
+and a path/site term δWij expressing the difference between the specific path/site effects and the average
+36
+
+--- Sayfa 37 ---
+path/site effect in GMM. δij = δEi + δWij, these two residuals are also referred to between-event residual
+and within-event residual. The between-event residual could be separated using the mean of all δij belongs
+to event i, in which the number of station recordings from event i is Ni, std.dev.(δEi) = τ:
+δEi = 1
+Ni
+Ni
+X
+j=1
+δij
+(S9)
+Note that, because the residual δ at site SR is a complex combination of event effects as well as the model
+behavior of spatial prediction, we calculate the between event residual only use records belongs to SM. And
+for the test case when rs is not 1, a portion of seismic stations in SM will be randomly chosen as observation
+stations, and δEi is calculated using the residuals on the remaining SM sites. For each event in TR, we
+randomly generate the Station Mask with rs 10 times, and calculate δEi in this specific masking situation.
+The final δEi for these event is the mean of these tested δEi.
+PGA is dependent on earthquake stress drop and studies have identified regions in southern California
+with different stress drops. We hope to see if QuakeFormer could capture the region difference of epicenters,
+therefore, we separate a systematic, location-based event term δLl from δEi grouped by the earthquake
+clusters in Figure S2. δLl is defined as the average event term δEi in a particular region l:
+δLl = 1
+Nl
+Nl
+X
+i∈I
+δEi
+(S10)
+Then, the total between-event residual δEi = δLl + δE0
+i , in which δE0
+i is the remaining random compo-
+nent. std.dev.(δLl) = τL represents the uncertainty relates to souce locations; std.dev.
+ δE0
+i
+
+= τ0 represents
+the aleatory effect.
+The within-event residual δWij is calculated as δWij = δij −δEi, and could be further parsed into
+site term δSj, path term δPlj and a remaining aleatory component δW 0
+ij, δWij = δSj + δPlj + δW 0
+ij. For
+simplicity, the sum of the last two term is also referred as single-station residual, δWSij = δPlj + δW 0
+ij. The
+site term is the average of δWij at station j, in which mj is the number of event recorded at station j:
+δSj = 1
+mj
+mj
+X
+i=1
+(δij −δEi) .
+(S11)
+37
+
+--- Sayfa 38 ---
+1
+2
+3
+4
+5
+Magnitude
+1.00
+0.75
+0.50
+0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+ln residual
+Quakeformer rs=1
+12; L=-0.42
+1
+2
+3
+4
+5
+Magnitude
+1.00
+0.75
+0.50
+0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+ln residual
+Quakeformer rs=0.5
+12; L=-0.22
+Figure S7: Between event residuals on Cluster 12 for ground motion forecasting and interpolation tasks. a)
+is the residual distribution and histogram for QuakeFormer forecasting; b) is for QuakeFormer interpolation
+with station mask ratio rs = 0.5. The wave ratio for QuakeFormer is 0.
+0.4
+0.2
+0.0
+0.2
+0.4
+L
+0
+1
+2
+3
+4
+5
+6
+Count
+Li = for the
+ 24 clusters
+L = 0.17
+0
+2
+ E
+0
+2
+4
+6
+Cluster 1
+L=0.46
+0 = 0.87
+0.250.00 0.25
+ E
+0
+2
+4
+Cluster 2
+L=-0.02
+0 = 0.21
+0.5
+0.0
+0.5
+ E
+0
+1
+2
+3
+Cluster 3
+L=0.25
+0 = 0.36
+0
+1
+ E
+0
+2
+4
+6
+8
+Cluster 4
+L=0.20
+0 = 0.41
+0.5
+0.0
+0.5
+ E
+0.0
+2.5
+5.0
+7.5
+10.0
+Cluster 5
+L=-0.04
+0 = 0.23
+0.5
+0.0
+0.5
+ E
+0
+2
+4
+Cluster 6
+L=-0.01
+0 = 0.29
+0.5
+0.0
+0.5
+ E
+0
+1
+2
+3
+Cluster 7
+L=-0.06
+0 = 0.35
+0.00
+0.25
+ E
+0.0
+0.5
+1.0
+1.5
+2.0
+Cluster 8
+L=0.05
+0 = 0.18
+0.3
+0.2
+0.1
+ E
+0.0
+0.5
+1.0
+1.5
+2.0
+Cluster 9
+L=-0.15
+0 = 0.11
+0.0
+0.5
+ E
+0.0
+0.5
+1.0
+1.5
+2.0
+Cluster 10
+L=0.31
+0 = 0.30
+0.250.00 0.25
+ E
+0
+1
+2
+3
+Count
+Cluster 11
+L=0.07
+0 = 0.24
+0.5
+0.0
+ E
+0
+5
+10
+15
+Cluster 12
+L=-0.43
+0 = 0.20
+0.5
+0.0
+ E
+0
+1
+2
+3
+Cluster 13
+L=-0.06
+0 = 0.24
+0.0
+0.5
+ E
+0
+2
+4
+Cluster 14
+L=0.00
+0 = 0.31
+0.0
+0.5
+ E
+0
+10
+20
+Cluster 15
+L=0.08
+0 = 0.21
+0
+2
+ E
+0
+20
+40
+60
+Cluster 16
+L=-0.07
+0 = 0.36
+0.0
+0.5
+ E
+0
+2
+4
+6
+Cluster 17
+L=0.04
+0 = 0.22
+0.0
+0.5
+ E
+0
+1
+2
+3
+4
+Count
+Cluster 18
+L=0.13
+0 = 0.31
+0.250.00 0.25
+ E
+0
+1
+2
+3
+Cluster 19
+L=0.00
+0 = 0.25
+0.5
+0.0
+0.5
+ E
+0
+2
+4
+6
+Cluster 20
+L=0.09
+0 = 0.29
+0.4
+0.2
+ E
+0
+1
+2
+3
+Cluster 21
+L=-0.24
+0 = 0.13
+0.0
+0.2
+ E
+0
+1
+2
+3
+Cluster 22
+L=0.14
+0 = 0.13
+0.25 0.00
+0.25
+ E
+0
+1
+2
+3
+Cluster 23
+L=0.00
+0 = 0.21
+0.25 0.00 0.25
+ E
+0
+1
+2
+3
+4
+Cluster 24
+L=0.04
+0 = 0.20
+Figure S8: Histogram of δL value for the 24 cluster.
+38
+
+--- Sayfa 39 ---
+0.2
+0.4
+0.6
+0.8
+1.0
+Mask Ratio rs
+0.920
+0.925
+0.930
+0.935
+R2-squared
+SM
+with VS30
+without VS30
+0.2
+0.4
+0.6
+0.8
+1.0
+Mask Ratio rs
+0.835
+0.840
+0.845
+0.850
+0.855
+R2-squared
+SR
+with VS30
+without VS30
+Figure S9: R2 across different station masking ratio for QuakeFormer with (a) or without (b) VS30.
+Table S3: Site term comparison with Sahakian et al. (2018) (GMPE method). All station codes are from
+Caltech (CI) network, using high broad band high-gain seismometers (HH). All site terms are in ln units.
+Site
+QuakeFormer
+GMPE
+Site
+QuakeFormer
+GMPE
+Site
+QuakeFormer
+GMPE
+BAR
+-0.16
+0.05
+LLS
+-0.02
+0.24
+SDR
+0.03
+0.23
+BBR
+0.04
+-0.45
+MGE‘
+-0.04
+0.32
+SLB
+0.19
+-0.78
+BBS
+-0.12
+-0.48
+MLS
+0.07
+0.31
+SLR
+-0.09
+0.39
+BOM
+-0.01
+-0.14
+MSC
+0.01
+-0.22
+SNO
+0.24
+-1.3
+CRY
+0.12
+-0.52
+MSJ
+-0.07
+0.14
+STG
+0.03
+-0.46
+CTC
+-0.05
+-0.2
+NSS2
+-0.12
+-0.33
+SVD
+0.01
+-0.13
+DNR
+-0.09
+-0.07
+OLP
+0.03
+0.32
+SWS
+0.02
+-0.78
+DPP
+0.025
+0.38
+PER
+-0.00
+-0.18
+TOR
+-0.01
+-0.66
+EML
+0.01
+1.15
+PLS
+-0.07
+-1.24
+WWC
+0.00
+-0.64
+ERR
+0.23
+0.55
+RSS
+-0.05
+0.66
+BOR†
+-0.22
+0.5
+FHO
+-0.02
+-0.37
+RVR
+-0.08
+0.67
+DGR†
+-0.15
+0.39
+GOR
+0.06
+-0.09
+SBPX
+-0.01
+-0.51
+JEM
+0.04
+0.51
+SDD
+0.06
+-1.31
+† Sites belongs to SR
+39

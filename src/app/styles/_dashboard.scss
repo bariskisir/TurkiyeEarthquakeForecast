@@ -1,0 +1,45 @@
+/* Defines the responsive dashboard grid, forecast and health cards, methodology summary, and selectable recent-earthquake list. */
+.workspace { max-width: 1420px; margin: auto; padding: 0 5vw 46px; }
+.workspace-layout { margin-bottom: 24px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr); align-items: stretch; gap: 24px; }
+.map-card, .summary-card, .recent-card { overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.map-card { min-width: 0; display: flex; flex-direction: column; }
+aside { min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.summary-card { padding: 15px 17px; box-shadow: none; }
+.summary-card > p { margin-top: 7px; margin-bottom: 7px; font-size: 11px; line-height: 1.4; }
+.health-row { padding: 6px 0; display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--soft-line); font-size: 11px; }
+.health-row span { color: var(--muted); }
+.health-row strong { text-align: right; text-transform: capitalize; }
+.health-note { margin-bottom: 0; color: var(--muted); }
+.methodology { flex: 1; border-left: 3px solid var(--amber); }
+.methodology p { margin: 4px 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.methodology strong { color: var(--ink); font-size: 12px; }
+.methodology-button { padding: 10px 28px; display: inline-block; color: var(--card); background: var(--green); border: 0; border-radius: 10px; font-size: 14px; font-weight: 600; transition: opacity .15s; }
+.methodology-button:hover { opacity: .85; }
+.recent-card { padding: 16px 18px 18px; }
+.recent-heading { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.recent-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
+.recent-title-row { margin-bottom: 7px; display: flex; align-items: center; gap: 10px; }
+.recent-title-row .eyebrow { margin: 0; }
+.recent-map-toggle { height: 24px; padding: 2px 6px; display: flex; align-items: center; gap: 5px; color: var(--muted); background: var(--segment); border: 1px solid var(--line); border-radius: 7px; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.recent-map-toggle:hover, .recent-map-toggle.active { color: var(--green); border-color: var(--green); }
+.recent-map-toggle i { width: 28px; height: 16px; position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 99px; }
+.recent-map-toggle i::after { content: ""; width: 10px; height: 10px; position: absolute; top: 2px; left: 2px; background: var(--muted); border-radius: 50%; transition: transform .2s ease, background .2s ease; }
+.recent-map-toggle.active i::after { background: var(--green); transform: translateX(12px); }
+.recent-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.recent-thresholds, .recent-counts { padding: 3px; display: flex; background: var(--segment); border-radius: 9px; }
+.recent-thresholds button, .recent-counts button { min-width: 40px; padding: 7px 8px; color: var(--muted); background: transparent; border: 0; border-radius: 7px; font-size: 10px; font-weight: 800; }
+.recent-thresholds button.active, .recent-counts button.active { color: #fff; background: var(--green); }
+.recent-empty { margin: 20px 0; color: var(--muted); text-align: center; }
+.recent-grid { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; }
+.recent-grid li { position: relative; min-width: 0; padding: 10px 11px; background: var(--segment); border: 1px solid var(--soft-line); border-radius: 9px; }
+.recent-grid li.is-selected { background: color-mix(in srgb, var(--green) 7%, var(--segment)); border-color: var(--green); }
+.recent-grid li > div { padding-right: 34px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.recent-grid li strong { color: var(--green); font-size: 15px; }
+.recent-grid time { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.recent-grid li > span { margin: 6px 0 4px; display: block; overflow: hidden; color: var(--ink); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.recent-grid small { color: var(--muted); font-size: 9px; }
+.recent-toggle { width: 30px; height: 18px; position: absolute; top: 7px; right: 7px; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 99px; transition: border-color .2s ease, background .2s ease; }
+.recent-toggle::after { content: ""; width: 12px; height: 12px; position: absolute; top: 2px; left: 2px; background: var(--muted); border-radius: 50%; transition: transform .2s ease, background .2s ease; }
+.recent-toggle:hover { border-color: var(--green); }
+.recent-toggle.active { background: color-mix(in srgb, var(--green) 16%, var(--card)); border-color: var(--green); }
+.recent-toggle.active::after { background: var(--green); transform: translateX(12px); }

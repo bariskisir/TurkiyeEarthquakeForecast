@@ -1,0 +1,1520 @@
+
+--- Sayfa 1 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+1
+An Attention-based Framework with Multistation
+Information for Earthquake Early Warnings
+Yu-Ming Huang, Kuan-Yu Chen, Member, IEEE, Wen-Wei Lin, and Da-Yi Chen
+Abstract—Earthquake early warning systems play crucial roles
+in reducing the risk of seismic disasters. Previously, the dominant
+modeling system was the single-station models. Such models
+digest signal data received at a given station and predict earth-
+quake parameters, such as the p-phase arrival time, intensity, and
+magnitude at that location. Various methods have demonstrated
+adequate performance. However, most of these methods present
+the challenges of the difficulty of speeding up the alarm time,
+providing early warning for distant areas, and considering global
+information to enhance performance. Recently, deep learning has
+significantly impacted many fields, including seismology. Thus,
+this paper proposes a deep learning-based framework, called
+SENSE, for the intensity prediction task of earthquake early
+warning systems. To explicitly consider global information from
+a regional or national perspective, the input to SENSE comprises
+statistics from a set of stations in a given region or country. The
+SENSE model is designed to learn the relationships among the
+set of input stations and the locality-specific characteristics of
+each station. Thus, SENSE is not only expected to provide more
+reliable forecasts by considering multistation data but also has
+the ability to provide early warnings to distant areas that have not
+yet received signals. This study conducted extensive experiments
+on datasets from Taiwan and Japan. The results revealed that
+SENSE can deliver competitive or even better performances
+compared with other state-of-the-art methods.
+Index Terms—Earthquake early warning, deep learning, mul-
+tistation
+I. INTRODUCTION
+E
+Arthquake early warning systems are designed to issue
+early warnings within seconds after the onset of an earth-
+quake to reduce the risk of earthquake disasters [1], [2], [3],
+[4], [5], [6]. These systems identify the seismic information
+of an earthquake based on signals received from stations and
+the differences in the propagation speeds of these statistics.
+When a seismic event occurs, stations sequentially detect
+seismic signals based on their distance from the epicenter.
+The information is transmitted to the earthquake early warning
+system to estimate the parameters of the earthquake, including
+information on the epicenter, intensity, and magnitude. Once
+the warning is confirmed, the system rapidly issues warnings
+to the areas expected to be affected through channels, such as
+text messages and television broadcasts.
+Deep learning has recently demonstrated outstanding po-
+tential in various fields. Thus, deep learning-based methods,
+Yu-Ming
+Huang,
+Kuan-Yu
+Chen,
+and
+Wen-Wei
+Lin
+are
+with
+the
+Department
+of
+Computer
+Science
+and
+Information
+Engineering,
+Na-
+tional Taiwan University of Science and Technology, Taipei 106, Tai-
+wan (e-mail: sora@nlp.csie.ntust.edu.tw; kychen@mail.ntust.edu.tw; wen-
+wei@nlp.csie.ntust.edu.tw).
+Da-Yi Chen is with the Seismological Center, Central Weather Adminis-
+tration, Taipei 100, Taiwan (e-mail: dayi@cwb.gov.tw).
+Manuscript received March XX, 2024; revised XXX XX, 2024.
+whose model structures are neural networks, have been pro-
+posed in the seismology context, including earthquake early
+warning [7], intensity prediction [8], and p-phase picking
+[9]. Most of these methods are trained using large amounts
+of seismic data and attributes, enabling them to understand
+the relationship between the received data and events [10],
+[11], [12], [13]. Most of the approaches belong to single-
+station modeling, which digests signal data received at a
+given station and predicts if an earthquake will occur at that
+location. Although the performances of these methods are
+acceptable and they rapidly deliver responses, they present
+certain inherent limitations. First, single-station models only
+consider data from a single seismic station as input while
+ignoring the rich information from other stations. Second,
+single-station models typically only alert local regions, lacking
+the ability to signal distant areas [14], [15].
+Owing to these challenges, multistation modeling, which
+considers information from multiple stations, has emerged as
+a suitable alternative [16], [17]. By leveraging information
+from numerous seismic stations, multistation modeling can
+deliver more comprehensive and accurate predictions of seis-
+mic events to enhance earthquake early warning performance.
+Previous studies have attempted to employ convolutional neu-
+ral networks [8], [18], graph convolutional neural networks
+[19], or Transformer models [16] to process information from
+multiple stations. These methods highlight the importance
+and effectiveness of multistation information for earthquake
+alarming.
+Thus, we attempted to create a deep learning-based mod-
+eling system with multistation information for earthquake
+early warning. The motivation is twofold. First, we intended
+to investigate the feasibility, effectiveness, and efficiency of
+the currently used self-attention mechanism to model the
+relationships among a set of stations [20]. Second, recent
+methods only take the waveform, position, or a combination of
+both as station input. However, certain physical or geological
+information regarding each station can be used to further
+enhance the performance. Consequently, this study developed
+a framework called SENSE, which leverages the self-attention
+mechanism to consider multistation data and employs locality-
+specific embeddings to enable the model to learn and encode
+the specific characteristics of each station. Thus, SENSE is
+expected to produce more accurate predictions. We evaluated
+SENSE using the Japan and Taiwan earthquake datasets [21].
+The present experiments showed that SENSE can achieve com-
+petitive or even better results than state-of-the-art baselines.
+arXiv:2412.18099v1  [cs.LG]  24 Dec 2024
+
+--- Sayfa 2 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+2
+II. RELATED WORK
+A. Transformer and Conformer Models
+The Transformer model has recently become a cutting-edge
+deep learning architecture in various fields [20], such as natural
+language [22], speech [23], and vision processing [24]. Al-
+though the Transformer model was originally intended to han-
+dle time-series data and sequence generation problems, its abil-
+ity to tackle common tasks was subsequently investigated and
+verified. The Transformer model exhibits an encoder–decoder
+architecture. The encoder dissects the input sequence while the
+decoder generates output sequences, rendering it an integral
+part of sequence-to-sequence tasks. Noteworthily, the encoder
+and decoder can be used individually or combined. Neverthe-
+less, the key components of the encoder and decoder are the
+attention mechanism, positional encoding, feedforward neural
+network, layer normalization, and residual connection. Fig.
+1(a) shows the model architecture. Among the components, the
+fundamental innovation is the self-attention mechanism, which
+was leveraged in sequential modeling to process sequential
+data without relying on recurrence-based neural networks (i.e.,
+vanilla recurrent neural networks [25] and long short-term
+memory models [26]) or convolutional layers [27]. Dissim-
+ilar to the recurrence-based and convolutional models that
+sequentially process sequences, the self-attention mechanism
+enables the model to dynamically weigh the importance of
+each unit in a sequence relative to other units, capturing
+dependencies and relationships in a parallelized manner. The
+design allows the model to grasp long-range dependencies
+effectively. In addition to theoretical improvements, such a
+network architecture can easily handle large-scale datasets and
+speed up training because of its parallelizable design [20].
+Based on the fundamentals of the Transformer model, the
+Conformer model features pivotal modifications to enhance
+the efficiency and effectiveness of the Transformer encoder
+architecture [28]. The major components of a Conformer
+include the self-attention mechanism, convolution module,
+feedforward neural network, layer normalization, and resid-
+ual connection. These components synergistically enable the
+model to discern intricate patterns, abstract representations,
+and hierarchical structures in a time-series data sequence.
+Fig. 1(b) shows the model architecture. The main innovation
+is in the convolution module, which incorporates depthwise
+separable convolutions alongside the self-attention mechanism.
+The specialized design simultaneously performs convolutions
+across the time (sequence length) and depth (embedding
+dimensions) axes. Consequently, Conformers can capture long-
+term dependency, similar to the Transformers, and discern fine-
+grained local patterns.
+Beyond their roots in natural language processing, the
+Transformer and Conformer models are versatile across do-
+mains, such as speech recognition, audio processing, and
+sequential data analysis [29], [30], [31]. Their ability to
+capture dependencies across varying scales while maintaining
+computational efficiency renders them exceptional in diverse
+machine learning applications. Various studies have shown
+that they are promising frameworks for a wide range of
+real-world applications that rely on comprehensive sequence
+understanding and analysis.
+B. Deep Learning for Seismic Research
+Deep learning has recently become a cornerstone of seismo-
+logical research. Through deep learning, many tasks have been
+improved, including earthquake intensity prediction [15], [32],
+earthquake epicenter estimation [33], [34], phase picking [35],
+and earthquake early warning [16], [36]. Among popular neu-
+ral networks, convolutional neural networks (CNNs) have been
+widely used in seismic data preprocessing, feature extraction
+and as building blocks for models [37], [13]. Thibaut et al. [38]
+stacked multiple layers of CNNs for earthquake detection and
+source area estimation; they accurately predicted earthquake
+amplitudes. Hong et al. [36] proposed two CNN-based models
+for estimating the surface response of earthquakes. Chiang et
+al. [13] developed a CNN-based model to predict whether
+the peak ground acceleration (PGA) of a specific seismic
+monitoring station exceeded a predefined threshold or not.
+In addition to CNNs, recurrent neural networks (RNNs) are
+suitable building blocks for mitigating seismic tasks since the
+signal data from seismometers are time series. Chin et al.
+[39] employed multilayers of long short-term memory models
+(LSTMs) to identify the occurrence of an earthquake event
+and the durations of P- and S-waves. Berhich et al. [40] also
+used LSTM to create an earthquake prediction model. Cofr´e
+et al. [14] developed an LSTM-based method to address the
+problem of earthquake magnitude estimation for earthquake
+early warning. Berhich et al. [41] examined the abilities of the
+LSTM and gated recurrent unit (GRU) to predict earthquake
+magnitude. To further combine the advantages of CNN and
+LSTM, Kail et al. [42] proposed a recurrent CNN-based
+method to predict the location of earthquakes.
+Recently, neural networks based on attention mechanisms,
+particularly self-attention techniques, have become a main-
+stream architecture. The most famous representative is the
+Transformer [20], which holds significant advantages over
+CNNs and RNNs in dealing with time-series data. Compared
+with RNNs, Transformers are parallelizable and can model
+long-term dependencies between data. Thus, they are more
+computationally efficient than RNNs. CNNs, although power-
+ful for spatial data such as images, are not inherently designed
+for sequential data. Thus, they cannot effectively capture long-
+range context dependencies embedded in sequences. Owing
+to these advantages, studies have applied Transformers to
+seismic research. Mousavi et al. [35] proposed a very deep
+network architecture based on CNNs and Transformers for
+simultaneous earthquake detection and phase picking. Chin et
+al. [43] presented a Transformer-based hypocenter estimator
+for earthquake localization. M¨unchmeyer et al. [16], [44], [45],
+[46] used a series of Transformers to create an earthquake
+early warning system. Saad et al. [47] employed the model
+architecture used in vision computing, which is also based on
+Transformers, to perform real-time earthquake detection and
+magnitude estimation. Although the Conformer is an extension
+that injects CNN components into the Transformer to obtain
+the best of both worlds, there is still a dearth of studies using
+the architecture in the context of seismological research.
+
+--- Sayfa 3 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+3
+(a)
+(b)
+(c)
+Fig. 1: Model architectures of (a) Transformers, (b) Conformers, and (c) the proposed SENSE.
+III. THE PROPOSED METHODOLOGY
+With the rapid development of deep learning and the use
+of neural networks to enhance the performance of various
+seismic tasks, many interesting methods have been proposed.
+However, numerous existing methods only concentrate on a
+given seismic station or location. Therefore, these single-
+station methods are employed to process the data received
+from a station and deliver corresponding predictions regarding
+the location. To enhance the performance of an earthquake
+early warning system by leveraging information from multiple
+stations and advanced deep learning models, we present an
+attention-based framework called SENSE.
+A. Model Architecture
+SENSE is designed with an encoder–decoder architecture,
+as depicted in Fig. 1(c). The inputs comprise statistics from
+a set of stations in a given region or country. The output
+comprises intensity predictions for locations corresponding
+to the input stations. The encoder consists of a convolution
+module, a positional encoding module, and an early locality-
+specific encoding module. The decoder is based on a feature
+blending module, followed by a late local-specific encoding
+module and prediction module. Depending on the modeling
+strategy, even if only one station receives earthquake statistics
+because of the initial onset of an earthquake, SENSE is
+expected to signal early warnings to all locations related to
+the input stations.
+The waveform w ∈R3×T (i.e., three-axis acceleration of
+time T) and geographical information g ∈R3 (i.e., longitude,
+latitude, and instrument height) are basic features of each
+station. For a given set of N stations, {w1, ..., wN} and
+{g1, ..., gN} are input statistics to the model. The convolu-
+tion module is initially employed to scan the waveform and
+encapsulate the information into feature vectors:
+[W1, ..., WN] = ConvolutionModule([w1, ..., wN]), (1)
+where ConvolutionModule(·) is implemented with layers
+of CNNs; each resulting vector Wn is in the dmodel dimension
+(i.e., Wn ∈Rdmodel), and dmodel is a predefined model
+configuration. The geographical information is processed by
+the positional encoding module to calculate the corresponding
+vector for each station:
+[G1, ..., GN] = PositionalEncoding([g1, ..., gN]), (2)
+where the calculation function PositionalEncoding(·) is
+implemented using pairs of sinusoidal functions (i.e., sine and
+cosine) as usual [20], and Gn is also in the dmodel dimension.
+Afterward, the two sets of features are summed together with
+learnable weighting factors for each station individually:
+[H0
+1, . . . , H0
+N] = ADD([α1, ..., αN] · [W1, ..., WN],
+[(1 −α1), ..., (1 −αN)] · [G1, ..., GN]), (3)
+where the range of each weighting factor αn is 0-1. The
+weighting factors are used to automatically adjust the bal-
+ance between the waveform and geographical information.
+
+--- Sayfa 4 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+4
+Afterward, early locality-specific embeddings [le
+1, . . . , le
+N] ∈
+Rdmodel×N are combined with [H0
+1, . . . , H0
+N] to compensate
+for the special characteristics and biases of each station:
+[H1
+1, . . . , H1
+N] = ADD([H0
+1, . . . , H0
+N], [le
+1, . . . , le
+N]).
+(4)
+The set of early locality-specific embeddings are model pa-
+rameters that are learned as the model is trained.
+So far, the encoder is used to process the two modality
+statistics and compress them into feature representations with
+auxiliary learnable station-specific hidden characteristics (i.e.,
+early locality-specific embeddings). Next, these representa-
+tions are fed into the decoder. The feature blending module
+is first used to process the set of features. To investigate the
+relationships between stations and simultaneously consider all
+the stations, the feature blending module is constructed by
+staking multiple layers of self-attention-based models, such as
+Transformers or Conformers:
+[H2
+1, . . . , H2
+N] = FeatureBlending([H1
+1, . . . , H1
+N]), (5)
+where each H2
+n is a dmodel dimensional vector. Next, a set
+of late locality-specific embeddings [ll
+1, . . . , ll
+N] ∈Rdmodel×N
+is applied to inject the station-specific factors again into the
+representations:
+[H3
+1, . . . , H3
+N] = ADD([H2
+1, . . . , H2
+N], [ll
+1, . . . , ll
+N]).
+(6)
+Finally, the prediction module is introduced to deliver predic-
+tions for locations corresponding to the input stations:
+[D1, . . . , DN] = PredictionModule([H3
+1, . . . , H3
+N]).
+(7)
+Two kinds of prediction functions are introduced in Section
+III-B.
+B. Learning Objectives
+As an earthquake early warning system, SENSE is designed
+to predict intensity levels for target locations. This paper pro-
+poses a simple discrete classification method and a continuous
+counterpart with a mixture density network [48].
+For the former, the prediction module in SENSE is created
+by a simple feedforward neural network (FFNN) followed by
+a sigmoid activation function:
+[Ddis
+1 , . . . , Ddis
+N ] = PredictionModule([H3
+1, . . . , H3
+N])
+= Sigmoid(FFNN([H3
+1, . . . , H3
+N])),
+(8)
+where Ddis
+n
+is a C dimensional vector (i.e., Ddis
+n
+∈RC), and
+C denotes the number of predefined intensity levels. Thus,
+the result is the probability of each intensity level, and we
+selected the highest as the final output. The objective of the
+training is to minimize the classification errors calculated by
+cross-entropy loss:
+Ldis = −
+N
+X
+n=1
+X
+y≤yn
+logP(y|Ddis
+n ),
+(9)
+where yn denotes the ground truth label for the nth station.
+In other words, yn is the category of the largest PGA actually
+observed on the nth station. A reasonable scenario is that if the
+intensity level of the nth station is yn, the low-intensity classes
+(i.e., y ≤yn) should also be triggered. Thus, the learning
+objective is to onset all classes that are smaller than the ground
+truth yn while offsetting other classes.
+For the continuous counterpart, we employed a mixture
+density network to approximate the complex functionality of
+the PGA behavior. A Gaussian mixture model returned by the
+mixture density network was used to calculate the probability
+of each PGA value for a target location. According to the
+probability, we can decide whether or not to issue an alarm.
+In sum, the prediction module is a mixture density network
+implemented by an FFNN in this study, and the output is
+Gaussian mixture statistics:
+[Dcont
+1
+, . . . , Dcont
+N
+] = PredictionModule([H3
+1, . . . , H3
+N])
+= FFNN([H3
+1, . . . , H3
+N]).
+(10)
+If the number of Gaussians is set to K, Dcont
+n
+is a 3K-
+dimensional vector, which comprises K mixture weights
+[a1, . . . , aK], K mean values [µ1, . . . , µK], and K standard
+deviations [σ1, . . . , σK]. To maintain the property of the mix-
+ture weights (i.e., PK
+k=1 ak = 1), a softmax activation function
+is applied to [a1, . . . , aK]. A rectified linear unit activation
+function (ReLU) is applied to [σ1, . . . , σK]. The training loss
+is calculated by minimizing the negative log-likelihood:
+Lcont = −
+N
+X
+n=1
+logp(yn|Dcont
+n
+)
+= −
+N
+X
+n=1
+log
+ K
+X
+k=1
+akN(yn|µk, σk)
+!
+,
+(11)
+N(yn|µk, σk) =
+1
+σk
+√
+2π exp−1
+2 (
+yn−µk
+σk
+)2
+,
+(12)
+where yn denotes the maximum PGA observed at the nth
+station. During inference, for a given location, we can calculate
+the occurring probability for each PGA uP GA by integrating
+from infinite back to uP GA:
+P(uP GA|Dcont
+n
+) =
+K
+X
+k=1
+ak
+Z ∞
+uP GA
+N(y|µk, σk)dy
+
+.
+(13)
+An earthquake alarm would be issued if the probability of a
+predefined PGA exceeds a threshold. Fig. 2 illustrates a simple
+example.
+C. Summary
+The proposed SENSE model exhibits an encoder–decoder
+structure. The encoder is mainly used to process the infor-
+mation collected from seismic stations. For that reason, a
+convolution module is employed to process the waveform, and
+a positional encoding module is used to transform physical
+location information into digital representations. An early
+locality-specific encoding module is designed to model the
+detailed characteristics of each station. Based on the metic-
+ulous design, the input information can be encapsulated as
+
+--- Sayfa 5 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+5
+Fig. 2: A simple example of using a Gaussian mixture model
+to approximate the probability density at a given location.
+The blue dashed lines represent three Gaussians with different
+means and standard deviations. The green curve denotes the
+result of mixing the three Gaussians. The green area below
+the green curve is the probability of the earthquake exceeding
+8.1%g occurring at the location.
+a set of high-level abstractive feature vectors. After the en-
+coder, a decoder, comprising a feature blending module, late
+locality-specific encoding module, and prediction module, is
+introduced. The feature blending module is a vital component
+of SENSE. It can model the relationships among stations,
+remove impurities, and keep important information in feature
+vectors. After the process, a late locality-specific encoding
+module is further applied to compensate for the unique biases
+of each station again and generate the resulting representations.
+Thereafter, the prediction module translates the representations
+into intensity predictions.
+Seismological information can be categorized into two
+broad types: waveform and geographical information. Wave-
+form information includes seismic wave data, including am-
+plitude, frequency, wave velocity, and waveform shape. Op-
+positely, geographical information refers to various surface
+features of the earth, such as topography, geomorphology,
+and geological structures [1]. SENSE employs the convolution
+module at the beginning of the encoder to digest the waveform
+information, and the positional encoding module is employed
+to encode the raw geographic data. In addition, SENSE
+introduces early and late locality-specific encodings to enable
+the model to automatically learn the hidden characteristics
+of each station to compensate for the input. By combining
+the waveform, geographical, and hidden information, SENSE
+establishes a connection between the physical characteristics
+of the earth and seismic wave data. Consequently, SENSE
+is expected to lead to a more comprehensive understanding
+of seismic phenomena and improve earthquake prediction
+accuracy [49], [50], [51].
+IV. EXPERIMENTS
+A. DataSets
+This study used two national-level datasets from highly
+seismically active regions with dense seismic networks: the
+Japan and Taiwan datasets. Both datasets were divided into
+training, validation, and test sets to perform model training,
+hyperparameter tuning, and fair evaluation. We employed an
+event-based splitting approach by assigning the records of
+a specific event to the same subset. The Japan dataset was
+TABLE I: Configuration of convolution module used in the
+SENSE model
+Layer
+Number of Filters
+Kernel Size
+Stride
+1D Convolution
+8
+5
+5
+2D Convolution
+32
+16×3
+1×3
+Flatten to 1D
+1D Convolution
+64
+16
+5,1
+Maximum Pooling
+2
+2
+1D Convolution
+128
+16
+1
+Maximum Pooling
+2
+2
+1D Convolution
+32
+8
+1
+Maximum Pooling
+2
+2
+1D Convolution
+32
+8
+1
+1D Convolution
+16
+4
+1
+Flatten to 0D
+TABLE II: Definition of true positive, false positive, true
+negative, and false negative
+Indicator
+Definition
+True Positive
+The model predicts an alarm that is earlier
+than the annotated time.
+False Positive
+The model predicts an alarm, but there is
+no need for an alarm.
+True Negative
+The model predicts no alarm, and there is
+no need for an alarm.
+False Negative
+The model does not issue an alert, but it
+should be alarmed, or the model predicts
+an alarm, but it is later than the annotated
+time.
+sourced from Okada and Kasahara [21], and the Taiwan
+Central Weather Administration provided the Taiwan dataset.
+To evaluate the model performance, five PGA values were se-
+lected for shaking from light to strong. To align with previous
+studies, [1%g, 2%g, 5%g, 10%g, 20%g] and [0.81%g, 2.5%g,
+8.1%g, 14%g, 25%g] were selected and used for the Japan
+and Taiwan datasets, respectively [13], [45].
+1) Japan Dataset: The Japan dataset comprises 13,512
+events compiled from the NIED Kiban Kyoshin network (KiK-
+net) catalog between 1997 and 2018 [52], as shown in Fig. 3.
+The data includes records of triggered strong motion, with
+each trace containing 15 seconds of pre-trigger data for a
+total length of 120 seconds. Each station had two three-
+component strong-motion sensors (one at the surface and one
+underground). The dataset was split into training, validation,
+and test sets at a 60:10:30 ratio. The training set ended in
+March 2012, the test set began in August 2013, and the
+intervening events were used as the validation set. The total
+number of stations was 707.
+2) Taiwan Dataset: The Taiwan dataset comprises 9,311
+earthquake events recorded by the dense seismic network in
+Taiwan from 2012 to 2021, as shown in Fig. 4. Each event
+includes seismic waveforms recorded by three-component
+strong-motion sensors. We partitioned the dataset into training,
+validation, and test sets in chronological order at a ratio
+of 60:25:15. The training, validation, and test sets included
+2012–2017, 2018–2019, and 2020–2021 events, respectively.
+There were 250 stations in the dataset.
+
+--- Sayfa 6 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+6
+(a)
+(b)
+Fig. 3: Japan dataset. (a) Location distribution of stations. (b) Distribution of earthquake event magnitudes.
+(a)
+(b)
+Fig. 4: Taiwan Dataset. (a) Location distribution of stations. (b) Distribution of earthquake event magnitudes.
+TABLE III: Experimental results of the proposed SENSE model on the Japan Dataset
+Discrete Classification
+Continuous Estimation
+Transformer
+Conformer
+Transformer
+Conformer
+PGA[g]
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+1%
+0.860
+0.611
+0.715
+0.300
+0.198
+0.239
+0.647
+0.779
+0.707
+0.765
+0.469
+0.581
+2%
+0.833
+0.617
+0.709
+0.411
+0.196
+0.265
+0.591
+0.737
+0.656
+0.716
+0.385
+0.501
+5%
+0.818
+0.611
+0.699
+0.294
+0.354
+0.321
+0.529
+0.667
+0.590
+0.627
+0.250
+0.385
+10%
+0.700
+0.626
+0.661
+0.238
+0.603
+0.341
+0.447
+0.648
+0.549
+0.510
+0.158
+0.241
+20%
+0.428
+0.800
+0.557
+0.651
+0.410
+0.503
+0.495
+0.470
+0.482
+0.450
+0.090
+0.150
+TABLE IV: Experimental results of the proposed SENSE model on the Taiwan Dataset
+Discrete Classification
+Continuous Estimation
+Transformer
+Conformer
+Transformer
+Conformer
+PGA[g]
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+0.81%
+0.627
+0.273
+0.380
+0.503
+0.286
+0.365
+0.718
+0.669
+0.692
+0.576
+0.694
+0.629
+2.5%
+0.494
+0.377
+0.428
+0.441
+0.439
+0.440
+0.636
+0.623
+0.630
+0.518
+0.494
+0.506
+8.1%
+0.459
+0.537
+0.495
+0.298
+0.747
+0.426
+0.523
+0.484
+0.503
+0.316
+0.453
+0.372
+14%
+0.449
+0.500
+0.473
+0.463
+0.568
+0.510
+0.426
+0.523
+0.469
+0.153
+0.250
+0.190
+25%
+0.194
+0.875
+0.318
+0.333
+0.375
+0.353
+0.300
+0.375
+0.333
+0.400
+0.250
+0.308
+
+--- Sayfa 7 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+7
+B. Implementation Details
+1) Training Configurations: The training process was stabi-
+lized to obtain better model parameters through three training
+procedures. In the first round, the parameters were updated,
+except for the early locality-specific encoding, and the learn-
+able weighting factors {α1, . . . , αN} were set to 0.5. In
+the second round, the early locality-specific encoding was
+trained, except for the learnable weighting factors. Finally,
+the model parameters were simultaneously updated. For the
+Japan dataset, the training epochs were 100, 40, and 40. For
+the Taiwan dataset, the training epochs were 50, 20, and 20 for
+the three steps. Table I lists the detailed configuration of the
+convolution module. The feature blending module comprises
+six layers of either the Transformer encoder or Conformer. For
+the Transformer encoder and Conformer, the hidden dimension
+of the FFNN was 1000, and the head number was set to
+10. Considering that five PGA values were selected to report
+the experimental results, the number of classes C for the
+discrete classification objective was set to 5. The FFNN(·)
+in the prediction module for the discrete case comprised five
+hidden layers in the sizes of 500, 150, 100, 50, and 30 (cf.
+(8)). In the continuous case, FFNN(·) was implemented by six
+hidden layers in the sizes of 500, 150, 100, 50, 30, and 10 (cf.
+(10)).
+It is important to highlight that the training procedure
+is carefully crafted based on empirical insights to optimize
+both model stability and performance. During the first phase,
+the model focuses on learning general seismic patterns and
+capturing broad relationships among input features. Concur-
+rently, late locality-specific embeddings, which encapsulate
+station-specific biases and corrections, are updated to align
+core feature representations with the unique characteristics of
+each station. This phase establishes a foundational mapping
+between general seismic features and localized adjustments,
+creating a stable baseline and preparing the model for more
+fine-grained, station-specific tuning. The second phase intro-
+duces early locality-specific embeddings, allowing the model
+to incorporate nuanced, location-specific information. By iso-
+lating the training of these embeddings, the model can encode
+unique features of each seismic station without disrupting
+the broader relationships learned in the initial phase. This
+modular approach enables the seamless integration of specific
+and general information, mitigating the risks of overfitting or
+instability. In the final phase, all parameters, including core
+features and both early and late locality-specific embeddings,
+are updated simultaneously. This comprehensive fine-tuning
+process harmonizes general seismic insights with station-
+specific characteristics, ensuring a balanced and accurate pre-
+dictive capability. By progressively building complexity and
+refining accuracy across these phases, the model is designed
+to achieve robustness and high performance as an earthquake
+early warning system. While alternative training configurations
+might further enhance results, a comprehensive search for
+optimal settings was constrained by computational resources.
+2) Evaluation Metrics: To evaluate the performance of the
+proposed SENSE model, we defined the true positives (TP),
+false positives (FP), false negatives (FN), and true negatives
+(TN) as described in Table II. Based on these statistics, we
+computed the precision, recall, and F1 scores:
+Precision =
+TP
+TP + FP ,
+(14)
+Recall =
+TP
+TP + FN ,
+(15)
+F1 −score = 2 × Precision × Recall
+Precision + Recall
+.
+(16)
+C. Main Results
+In the first set of experiments, we evaluated the proposed
+SENSE model using the Japan and Taiwan datasets. Tables III
+and IV present the results for different datasets and model
+configurations. Several observations were drawn from the
+results. Pairing the discrete objective with the Transformer
+model for the Japan dataset resulted in better F1 scores
+in all five PGA levels. In most cases, the precision scores
+exceeded 0.8, and the recall rates exceeded 0.6. However,
+the experimental results were poor when the discrete training
+objective was combined with the Conformer model. For the
+continuous objective, the behavior of the Transformer and
+Conformer models differed considerably. The Transformer and
+Conformer models obtained better recall and precision scores,
+respectively. The recall scores of the Conformer model were
+unsatisfactory in the discrete and continuous cases. Summar-
+ily, the Transformer model achieved better results with the
+Japan dataset regardless of whether the discrete or continuous
+training targets.
+Next, we analyzed the results of the Taiwan dataset. For the
+discrete training objective, the F1 scores of the Transformer
+and Conformer models were close for each PGA level while
+the precision and recall scores were mixed. In the continuous
+case, the Transformer was generally better than the Conformer
+in terms of precision, recall, and F1 scores. In a nutshell, the
+first set of experiments showed that pairing the continuous
+training objective and Transformer model may be a better and
+more stable choice for SENSE because the setting can lead to
+acceptable results for both datasets.
+D. Compared to Other Advanced Deep Learning-based Meth-
+ods
+In the second set of experiments, we compared SENSE
+with two advanced deep learning-based baselines: the intel-
+ligent strong-motion prediction (ISMP) model [13] and the
+Transformer earthquake alerting model (TEAM) [16]. The
+ISMP model is designed to predict early ground motion
+after an earthquake. The model uses a CNN to extract key
+features from the initial P-waves and predicts if the PGA of
+subsequent waves will exceed 80 Gal. The TEAM considers
+information from multiple seismic stations, as opposed to tra-
+ditional single-station models. The TEAM can issue warnings
+for an arbitrary number of locations by inputting waveform
+information and coordinates from multiple stations, thereby
+flexibly adapting to various earthquake monitoring networks
+and warning objectives. TEAM is a Transformer-based model,
+and the training objective is similar to the continuous case
+
+--- Sayfa 8 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+8
+TABLE V: Experimental results of the ISMP, TEAM, and SENSE model on the Taiwan dataseet
+ISMP
+TEAM
+SENSE
+PGA[g]
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+Precision
+Recall
+F1
+0.81%
+-
+-
+-
+0.211
+0.554
+0.306
+0.718
+0.669
+0.692
+2.5%
+0.303
+0.860
+0.448
+0.188
+0.425
+0.261
+0.636
+0.623
+0.630
+8.1%
+0.135
+0.874
+0.233
+0.111
+0.326
+0.165
+0.523
+0.484
+0.503
+14%
+-
+-
+-
+0.046
+0.205
+0.075
+0.426
+0.523
+0.469
+25%
+-
+-
+-
+0.004
+0.125
+0.008
+0.300
+0.375
+0.333
+TABLE VI: Comparison between ISMP, TEAM, and SENSE models
+ISMP
+TEAM
+SENSE
+Model Parameters(M)
+0.6
+13
+13
+Execution Time(s)
+0.032
+0.083
+0.093
+Leading Time(s)
+PGA[g]
+Mean
+Median
+Max
+Mean
+Median
+Max
+Mean
+Median
+Max
+0.81%
+-
+-
+-
+5.21
+2.91
+43.81
+4.30
+2.48
+26.11
+2.5%
+6.63
+5.61
+13.24
+3.49
+2.24
+33.92
+2.85
+1.76
+13.84
+8.1%
+5.98
+5.67
+8.32
+2.62
+1.67
+9.67
+1.59
+1.08
+8.64
+14%
+-
+-
+-
+2.53
+2.27
+6.17
+0.86
+0.70
+2.63
+25%
+-
+-
+-
+4.11
+4.11
+4.11
+1.07
+0.77
+2.11
+TABLE VII: Ablation studies on the SENSE model evaluated using F1 scores
+Japan
+Taiwan
+1%
+2%
+5%
+10%
+20%
+0.81%
+2.5%
+8.1%
+14%
+25%
+(A)
+SENSE
+0.707
+0.656
+0.590
+0.549
+0.482
+0.692
+0.630
+0.503
+0.469
+0.333
+(B)
+-Weighting Factor
+-Early Locality-specific Encoding
+0.656
+0.599
+0.549
+0.442
+0.144
+0.673
+0.614
+0.486
+0.293
+0.133
+(C)
+-Weighting Factor
+-Late Locality-specific Encoding
+0.674
+0.608
+0.534
+0.472
+0.355
+0.677
+0.584
+0.469
+0.366
+0.364
+(D)
+-Early Locality-specific Encoding
+-Late Locality-specific Encoding
+0.695
+0.635
+0.589
+0.535
+0.445
+0.692
+0.624
+0.529
+0.422
+0.286
+(E)
+-Weighting Factor
+-Early Locality-specific Encoding
+-Late Locality-specific Encoding
+0.664
+0.588
+0.506
+0.388
+0.240
+0.666
+0.628
+0.520
+0.364
+0.200
+for SENSE. Thus, we compared the TEAM with the SENSE
+with similar settings, i.e., the continuous training objective
+and Transformer model. The Taiwan dataset was used as an
+example, and Table V presents the results.
+The experiments yielded valuable findings. ISMP is a
+single-station method; therefore, it cannot make predictions for
+stations that do not receive waveform signals. Thus, the results
+were only computed based on stations with earthquake records.
+Contrarily, both TEAM and SENSE considered all the stations.
+In a way, the comparison is unfair and more critical for TEAM
+and SENSE. However, Table V shows that SENSE achieved
+the best results in all the cases. Second, the performance gap
+between TEAM and SENSE was wide; thus, the second set
+of experiments confirmed that SENSE was a better modeling
+strategy than TEAM in the use of multistation data. Third,
+SENSE significantly outperformed the TEAM and exceeded
+ISMP as expected because multistation information is more
+informative than single-station data. Although SENSE and
+TEAM are multistation models, different model architectures
+may yield different results. A possible flaw of TEAM is its
+decoder design. Although TEAM constitutes a flexible method
+that can predict the intensity of a target location only by
+providing the coordinates of the target location, the input
+in the decoder (i.e., coordinates) considerably differed from
+the encoded seismic information in the Transformer layer
+in the encoder. Thus, cross-attention between heterogeneous
+information may not yield satisfactory and stable results.
+In addition to the performance evaluation, we examined
+the model properties and leading time. Table VI lists the
+experimental results. Regarding the model parameters, ISMP
+was a relatively smaller model than TEAM and SENSE, and
+TEAM and SENSE had similar sizes. Regarding execution
+time, all the models were executed on a GeForce GTX TITAN
+graphics card for testing. ISMP is the fastest because it is a
+single-station method. TEAM and SENSE were approximately
+three times slower than ISMP, and the difference between
+TEAM and SENSE was tolerable. It was complicated to
+determine the best and worst models in terms of the leading
+
+--- Sayfa 9 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+9
+time. However, we analyzed the results of the leading time
+against their performance listed in Table V. By doing so, we
+observed that although ISMP may have obtained better leading
+times in the mean and median cases, its performances were
+the worst. In comparison, the proposed SENSE model may
+be a better choice because although its leading time was a
+little slower than that of TEAM, its prediction results were
+significantly better than those of TEAM.
+E. Ablation Study
+Next, we examined the efficiency of the components in the
+SENSE model. Table VII presents the experimental results
+obtained using the Japan and Taiwan datasets. (A) denotes
+the SENSE model with the Transformer model, and (B), (C),
+(D), and (E) are models without certain components. SENSE
+achieved the best results in most of the cases, indicating
+that none of the components was dispensable. Second, when
+comparing (D) and (E), we concluded that the weighting
+factors, which are used to balance the information between the
+waveform and geographical statistics (cf. (3)), are important
+because the performance gaps are to be reckoned with. Third,
+when comparing (C) and (E), the results showed that early
+locality-specific encoding provided consistent improvements
+for the Japan dataset in all the cases and achieved better results
+for the Taiwan dataset in certain cases. Comparisons between
+(B) and (E) showed that late locality-specific encoding was
+more useful in the Japan dataset than in the Taiwan dataset.
+Considering (B), (C), and (E), we can conclude that early
+locality-specific encoding appeared to favor large PGA cases,
+whereas late locality-specific encoding influenced small PGA
+cases.
+V. CONCLUSION
+This paper proposes an earthquake early warning system
+called SENSE. SENSE comprises an encoder and a de-
+coder. The encoder distills and refines statistics from stations.
+The meticulous design is the convolution module and early
+locality-specific encoding components. The former employs a
+stack of CNN layers to manipulate local information embed-
+ded in the raw waveform. The latter is a set of automatically
+learned parameters for each station to store station-dependent
+characteristics. The special designs of the decoder include
+the feature blending module, late locality-specific encoding,
+and prediction module. The feature blending module is built
+using either the Transformer or Conformer models, both
+based on the self-attention mechanism. The late locality-
+specific encoding is a set of parameters for each station to
+represent station-dependent biases. For the prediction module,
+we present discrete and continuous learning objectives. Based
+on a series of experiments, we confirmed the effectiveness of
+SENSE for improving earthquake early warning systems. The
+study findings contribute to the reduction in losses caused by
+earthquakes, enhancement of public safety awareness, and the
+effective implementation of earthquake disaster management.
+Future studies will focus on further optimizing the model
+architecture, enhancing the prediction performance, and re-
+ducing the training cost.
+ACKNOWLEDGMENT
+This work was supported by the National Science and
+Technology Council of Taiwan under Grants NSTC 112-
+2636-E-011-002 and NSTC 112-2628-E-011-008-MY3 and
+by the Central Weather Administration of Taiwan. We thank
+the National Center for High-performance Computing of the
+National Applied Research Laboratories (NARLabs) in Taiwan
+for providing computational and storage resources.
+
+--- Sayfa 10 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+10
+REFERENCES
+[1] C. Stidham, M. Antolik, D. Dreger, S. Larsen, and B. Romanowicz.
+Three-dimensional structure influences on the strong-motion wavefield
+of the 1989 loma prieta earthquake. Bulletin of the Seismological Society
+of America, 89(5):1184–1202, 1999.
+[2] Paolo Gasparini, Gaetano Manfredi, Jochen Zschau, et al. Earthquake
+early warning systems. Springer, 2007.
+[3] Nai-Chi Hsiao, Yih-Min Wu, Tzay-Chyn Shin, Li Zhao, and Ta-Liang
+Teng.
+Development of earthquake early warning system in taiwan.
+Geophysical research letters, 36(5), 2009.
+[4] Richard M. Allen, Paolo Gasparini, Osamu Kamigaichi, and Maren
+Bose. The status of earthquake early warning around the world: An
+introductory overview. Seismological Research Letters, 80(5):682–693,
+2009.
+[5] Richard M. Allen and Diego Melgar.
+Earthquake early warning:
+Advances, scientific challenges, and societal needs. Annual Review of
+Earth and Planetary Sciences, 47:361–388, 2019.
+[6] Yih-Min Wu, Himanshu Mittal, Da-Yi Chen, Ting-Yu Hsu, and Pei-
+Yang Lin. Earthquake early warning systems in taiwan: Current status.
+Journal of the Geological Society of India, 97:1525–1532, 2021.
+[7] Gemma Cremen and Carmine Galasso.
+Earthquake early warning:
+Recent advances and perspectives. Earth-Science Reviews, 205:103184,
+2020.
+[8] Dario Jozinovi´c, Anthony Lomax, Ivan ˇStajduhar, and Alberto Michelini.
+Rapid prediction of earthquake ground shaking intensity using raw
+waveform data and a convolutional neural network. Geophysical Journal
+International, 222(2):1379–1389, 2020.
+[9] Wu-Yu Liao, En-Jui Lee, Da-Yi Chen, Po Chen, Dawei Mu, and Yih-
+Min Wu. Red-pan: Real-time earthquake detection and phase-picking
+with multitask attention network. IEEE Transactions on Geoscience and
+Remote Sensing, 60:1–11, 2022.
+[10] Carlo Cauzzi, Yannik Behr, Thomas Le Guenan, John Douglas, Samuel
+Auclair, Jochen Woessner, John Clinton, and Stefan Wiemer. Earthquake
+early warning and operational earthquake forecasting as real-time hazard
+information to mitigate seismic risk at nuclear facilities.
+Bulletin of
+Earthquake Engineering, 14:2495–2512, 2016.
+[11] Qingkai Kong, Daniel T Trugman, Zachary E Ross, Michael J Bianco,
+Brendan J Meade, and Peter Gerstoft. Machine learning in seismology:
+Turning data into insights. Seismological Research Letters, 90(1):3–14,
+2019.
+[12] Yazhou Xie, Majid Ebad Sichani, Jamie E Padgett, and Reginald
+DesRoches. The promise of implementing machine learning in earth-
+quake engineering: A state-of-the-art review.
+Earthquake Spectra,
+36(4):1769–1801, 2020.
+[13] You-Jing Chiang, Tai-Lin Chin, and Da-Yi Chen. Neural network-based
+strong motion prediction for on-site earthquake early warning. Sensors,
+22(3):704, 2022.
+[14] Aar´on Cofr´e, Marcelo Mar´ın, Oscar V´asquez Pino, Nicol´as Galleguillos,
+Sebasti´an Riquelme, Sergio Barrientos, and N´estor Becerra Yoma. End-
+to-end lstm-based earthquake magnitude estimation with a single station.
+IEEE Geoscience and Remote Sensing Letters, 19:1–5, 2022.
+[15] Jindong Song, Jingbao Zhu, Yuan Wang, and Shanyou Li. On-site alert-
+level earthquake early warning using machine-learning-based prediction
+equations. Geophysical Journal International, 231(2):786–800, 2022.
+[16] Jannes M¨unchmeyer, Dino Bindi, Ulf Leser, and Frederik Tilmann.
+The transformer earthquake alerting model: A new versatile approach
+to earthquake early warning.
+Geophysical Journal International,
+225(1):646–656, 2021.
+[17] Jae-Kwang Ahn, Euna Park, Byeonghak Kim, Eui-Hong Hwang, and
+Seongwon Hong. Stable operation process of earthquake early warning
+system based on machine learning: trial test and management perspec-
+tive. Frontiers in Earth Science, 11:1157742, 2023.
+[18] Dario Jozinovi´c, Anthony Lomax, Ivan ˇStajduhar, and Alberto Miche-
+lini. Transfer learning: Improving neural network based prediction of
+earthquake ground shaking for an area with insufficient training data.
+Geophysical Journal International, 229(1):704–718, 2022.
+[19] Gwantae Kim, Bonhwa Ku, Jae-Kwang Ahn, and Hanseok Ko. Graph
+convolution networks for seismic events classification using raw wave-
+form data from multiple stations. IEEE Geoscience and Remote Sensing
+Letters, 19:1–5, 2021.
+[20] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion
+Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention
+is all you need. Advances in neural information processing systems, 30,
+2017.
+[21] Yoshimitsu Okada, Keiji Kasahara, Sadaki Hori, Kazushige Obara, Shoji
+Sekiguchi, Hiroyuki Fujiwara, and Akira Yamamoto. Recent progress
+of seismic observation networks in japan—hi-net, f-net, k-net and kik-
+net—. Earth, Planets and Space, 56:xv–xxviii, 2004.
+[22] Chia-Chih Kuo and Kuan-Yu Chen. Toward zero-shot and zero-resource
+multilingual question answering. IEEE Access, 10:99754–99761, 2022.
+[23] Fu-Hao Yu, Kuan-Yu Chen, and Ke-Han Lu.
+Non-autoregressive
+asr modeling using pre-trained language models for chinese speech
+recognition. IEEE/ACM Transactions on Audio, Speech, and Language
+Processing, 30:1474–1482, 2022.
+[24] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weis-
+senborn,
+Xiaohua
+Zhai,
+Thomas
+Unterthiner,
+Mostafa
+Dehghani,
+Matthias Minderer, Georg Heigold, Sylvain Gelly, et al. An image is
+worth 16x16 words: Transformers for image recognition at scale. arXiv
+preprint arXiv:2010.11929, 2020.
+[25] Yann LeCun, Yoshua Bengio, and Geoffrey Hinton.
+Deep learning.
+nature, 521(7553):436–444, 2015.
+[26] Sepp Hochreiter and J¨urgen Schmidhuber. Long short-term memory.
+Neural computation, 9(8):1735–1780, 1997.
+[27] Jiuxiang Gu, Zhenhua Wang, Jason Kuen, Lianyang Ma, Amir
+Shahroudy, Bing Shuai, Ting Liu, Xingxing Wang, Gang Wang, Jianfei
+Cai, et al. Recent advances in convolutional neural networks. Pattern
+recognition, 77:354–377, 2018.
+[28] Ruben Tous, Leonardo Alvarado, Beatriz Otero, Leonel Cruz, and Otilio
+Rojas. Deep neural networks for earthquake detection and source region
+estimation in north-central venezuela.
+Bulletin of the Seismological
+Society of America, 110(5):2519–2529, 2020.
+[29] Pengcheng Guo, Florian Boyer, Xuankai Chang, Tomoki Hayashi,
+Yosuke Higuchi, Hirofumi Inaguma, Naoyuki Kamo, Chenda Li, Daniel
+Garcia-Romero, Jiatong Shi, et al.
+Recent developments on espnet
+toolkit boosted by conformer. In ICASSP 2021-2021 IEEE International
+Conference on Acoustics, Speech and Signal Processing (ICASSP), pages
+5874–5878. IEEE, 2021.
+[30] Pingchuan Ma, Stavros Petridis, and Maja Pantic. End-to-end audio-
+visual speech recognition with conformers. In ICASSP 2021-2021 IEEE
+International Conference on Acoustics, Speech and Signal Processing
+(ICASSP), pages 7613–7617. IEEE, 2021.
+[31] Han Fang, Pengfei Xiong, Luhui Xu, and Yu Chen. Clip2video: Master-
+ing video-text retrieval via image clip. arXiv preprint arXiv:2106.11097,
+2021.
+[32] Anthony Lomax, Alberto Michelini, and Dario Jozinovi´c. An investiga-
+tion of rapid earthquake characterization using single-station waveforms
+and a convolutional neural network.
+Seismological Research Letters,
+90(2A):517–529, 2019.
+[33] Marius Kriegerowski, Gesa M. Petersen, Hannes Vasyura-Bathke, and
+Matthias Ohrnberger. A deep convolutional neural network for local-
+ization of clustered earthquakes based on multistation full waveforms.
+Seismological Research Letters, 90(2A):510–516, 2019.
+[34] S. Mostafa Mousavi and Gregory C. Beroza. Bayesian-deep-learning
+estimation of earthquake location from single-station observations. arXiv
+preprint arXiv:1912.01144, 2019.
+[35] S. Mostafa Mousavi, William L. Ellsworth, Weiqiang Zhu, Lindsay Y.
+Chuang, and Gregory C. Beroza. Earthquake transformer—an attentive
+deep-learning model for simultaneous earthquake detection and phase
+picking. Nature communications, 11(1):3952, 2020.
+[36] Seokgyeong Hong, Huyen-Tram Nguyen, Jongwon Jung, and Jaehun
+Ahn. Seismic ground response estimation based on convolutional neural
+networks (cnn). Applied Sciences, 11(22):10760, 2021.
+[37] Keiron O’Shea and Ryan Nash. An introduction to convolutional neural
+networks. arXiv preprint arXiv:1511.08458, 2015.
+[38] Thibaut Perol, Micha¨el Gharbi, and Marine Denolle.
+Convolutional
+neural network for earthquake detection and location. Science Advances,
+4(2):e1700578, 2018.
+[39] Tai-Lin Chin, Kuan-Yu Chen, Da-Yi Chen, and De-En Lin. Intelligent
+real-time earthquake detection by recurrent neural networks.
+IEEE
+Transactions on Geoscience and Remote Sensing, 58(8):5440–5449,
+2020.
+[40] Asmae Berhich, Fatima-Zahra Belouadha, and Mohammed Issam Kab-
+baj. Lstm-based models for earthquake prediction. In Proceedings of
+the 3rd International Conference on Networking, Information Systems
+& Security, NISS ’20, New York, NY, USA, 2020. Association for
+Computing Machinery.
+[41] Asmae Berhich, Fatima-Zahra Belouadha, and Mohammed Issam Kab-
+baj. A location-dependent earthquake prediction using recurrent neural
+network algorithms.
+Soil Dynamics and Earthquake Engineering,
+161:107389, 2022.
+
+--- Sayfa 11 ---
+JOURNAL OF LATEX CLASS FILES, VOL. 13, NO. 9, SEPTEMBER 2024
+11
+[42] Roman Kail, Evgeny Burnaev, and Alexey Zaytsev. Recurrent convo-
+lutional neural networks help to predict location of earthquakes. IEEE
+Geoscience and Remote Sensing Letters, 19:1–5, 2022.
+[43] Tai-Lin Chin, Kuan-Yu Chen, Da-Yi Chen, and Te-Hsiu Wang.
+An
+attention-based hypocenter estimator for earthquake localization. IEEE
+Transactions on Geoscience and Remote Sensing, 60:1–10, 2021.
+[44] J. M¨unchmeyer, D. Bindi, U. Leser, and F. J. Tilmann. The Transformer
+Earthquake Alerting Model: Improving Earthquake Early Warning with
+Deep Learning. In AGU Fall Meeting Abstracts, volume 2020, pages
+S057–05, December 2020.
+[45] Jannes M¨unchmeyer, Dino Bindi, Ulf Leser, and Frederik Tilmann. End-
+to-end PGA estimation for earthquake early warning using transformer
+networks.
+In EGU General Assembly Conference Abstracts, EGU
+General Assembly Conference Abstracts, page 5107, May 2020.
+[46] Jannes M¨unchmeyer, Dino Bindi, Ulf Leser, and Frederik Tilmann.
+Earthquake magnitude and location estimation from real time seismic
+waveforms with a transformer network. Geophysical Journal Interna-
+tional, 226(2):1086–1104, 04 2021.
+[47] Omar M Saad, Yunfeng Chen, Alexandros Savvaidis, Sergey Fomel,
+and Yangkang Chen.
+Real-time earthquake detection and magnitude
+estimation using vision transformer. Journal of Geophysical Research:
+Solid Earth, 127(5):e2021JB023657, 2022.
+[48] Christopher M. Bishop. Pattern Recognition and Machine Learning (In-
+formation Science and Statistics). Springer-Verlag, Berlin, Heidelberg,
+2006.
+[49] JF Semblat and A Pecker. Waves and vibrations in soils: earthquakes,
+traffic, shocks, construction works (i. press, ed.), 2009.
+[50] Stefan Bloemheuvel, Jurgen van den Hoogen, Dario Jozinovi´c, Alberto
+Michelini, and Martin Atzmueller. Multivariate time series regression
+with graph neural networks. arXiv preprint arXiv:2201.00818, 2022.
+[51] Martijn PA van den Ende and J-P Ampuero.
+Automated seismic
+source characterization using deep graph neural networks. Geophysical
+Research Letters, 47(17):e2020GL088690, 2020.
+[52] Mahdi Bahrampouri, Adrian Rodriguez-Marek, Shrey Shahi, and
+Haitham Dawood. An updated database for ground motion parameters
+for kik-net records. Earthquake Spectra, 37(1):505–522, 2021.
+[53] Douglas D Given, Elizabeth S Cochran, Thomas Heaton, Egill Hauks-
+son, Richard Allen, Peggy Hellweg, John Vidale, and Paul Bodin.
+Technical implementation plan for the ShakeAlert production system:
+An earthquake early warning system for the west coast of the United
+States. US Department of the Interior, US Geological Survey Reston,
+VA, 2014.
+[54] Muhammad Atif Bilal, Yanju Ji, Yongzhi Wang, Muhammad Pervez
+Akhter, and Muhammad Yaqub. Early earthquake detection using batch
+normalization graph convolutional neural network (bngcnn).
+Applied
+Sciences, 12(15):7548, 2022.
+[55] Andrew B Lockman and Richard M Allen. Single-station earthquake
+characterization for early warning. Bulletin of the Seismological Society
+of America, 95(6):2029–2039, 2005.
+[56] Hiroo Kanamori and Don L Anderson.
+Theoretical basis of some
+empirical relations in seismology. Bulletin of the seismological society
+of America, 65(5):1073–1095, 1975.
+[57] Da-Yi Chen, Nai-Chi Hsiao, and Yih-Min Wu. The earthworm based
+earthquake alarm reporting system in taiwan. Bulletin of the Seismolog-
+ical Society of America, 105(2A):568–579, 2015.
+[58] Karianne J Bergen, Paul A Johnson, Maarten V de Hoop, and Gregory C
+Beroza.
+Machine learning for data-driven discovery in solid earth
+geoscience. Science, 363(6433):eaau0323, 2019.
+[59] Ran N Nof, Angela I Chung, Horst Rademacher, Lori Dengler, and
+Richard M Allen. Mems accelerometer mini-array (mama): A low-cost
+implementation for earthquake early warning enhancement. Earthquake
+Spectra, 35(1):21–38, 2019.
+[60] Zhouhan Lin, Minwei Feng, Cicero Nogueira dos Santos, Mo Yu, Bing
+Xiang, Bowen Zhou, and Yoshua Bengio. A structured self-attentive
+sentence embedding. arXiv preprint arXiv:1703.03130, 2017.
+[61] Anmol Gulati, James Qin, Chung-Cheng Chiu, Niki Parmar, Yu Zhang,
+Jiahui Yu, Wei Han, Shibo Wang, Zhengdong Zhang, Yonghui Wu, et al.
+Conformer: Convolution-augmented transformer for speech recognition.
+arXiv preprint arXiv:2005.08100, 2020.
+[62] S. Mostafa Mousavi and Gregory C. Beroza.
+A machine-learning
+approach for earthquake magnitude estimation. Geophysical Research
+Letters, 47(1):e2019GL085976, 2020.
+[63] Chyi-Tyi Lee and Bi-Ru Tsai. Mapping vs30 in taiwan. TAO: Terrestrial,
+Atmospheric and Oceanic Sciences, 19(6):6, 2008.

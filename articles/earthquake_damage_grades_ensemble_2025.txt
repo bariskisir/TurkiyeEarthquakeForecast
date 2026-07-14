@@ -1,0 +1,1378 @@
+
+--- Sayfa 1 ---
+EPBench: A Benchmark for Short-term Earthquake
+Prediction with Neural Networks
+Zhiyu Xu
+Jinan University
+xuzhiyu@stu2022.jnu.edu.cn
+Qingliang Chen∗
+Jinan University
+tpchen@jnu.edu.cn
+Abstract
+Since the beginning of this century, the significant advancements in artificial intelli-
+gence and neural networks have offered the potential to bring new transformations
+to short-term earthquake prediction research. However, currently, there is no widely
+used benchmark for this task. To address this, we have built a new benchmark
+(EPBench), which is, to our knowledge, the first global regional-scale short-term
+earthquake prediction benchmark. Our benchmark comprises 924,472 earthquake
+records and 2959 multimodal earthquake records collected from seismic networks
+around the world. Each record includes basic information such as time, longitude
+and latitude, magnitude, while each multimodal record includes waveform and
+moment tensor information additionally, covering a time span from 1970 to 2021.
+To evaluate performance of models on this task, we have established a series of data
+partitions and evaluation methods tailored to the short-term earthquake prediction
+task. We also provide a variety of tools to assist future researchers in partitioning
+the data according to their geographical understanding. Our benchmark includes a
+variety of neural network models widely used for time series forecasting, as well as
+a statistical-based model currently employed by seismological bureaus in several
+countries. We hope this benchmark will serve as a guide to attract more researchers
+to explore new methods for addressing this task, which holds great significance for
+human existence. Code is available at https://github.com/CoderZY-X/EPBench
+1
+Introduction
+Earthquakes, along with the tsunamis and volcanic activities they trigger, claim tens of thousands of
+lives each year and result in massive economic losses. Developing viable and reliable earthquake
+prediction methods has long been a goal of humanity. The study of earthquakes dates back at least
+two millennia, with early research documented in ancient Greece and ancient China [13; 6].
+In seismology, earthquake prediction can be divided into three categories: long-term, medium-
+term, and short-term prediction. Short-term earthquake prediction typically spans a few months or
+even weeks, while medium-term and long-term predictions cover much longer timeframes, usually
+predicting possible earthquakes that may occur over several years. As human’s understanding of
+plate tectonics and plate movements has deepened, humanity has gained a better understanding of the
+causes of earthquakes and the regions prone to seismic activity, known as seismic belts.
+Despite significant progress in long-term and medium-term earthquake prediction, humanity still
+lacks effective methods for short-term earthquake prediction, which is critically important. The
+only successful short-term earthquake prediction to date occurred in 1975 in Haicheng, China [18].
+∗corresponding author
+Preprint. Under review.
+arXiv:2505.15588v4  [physics.geo-ph]  22 Jul 2025
+
+--- Sayfa 2 ---
+This earthquake struck a densely populated area, but fortunately, due to the successful prediction
+and subsequent evacuation, casualties were minimized, saving tens of thousands of lives. This
+achievement quickly caused a huge sensation in the global earthquake research community. However,
+despite numerous attempts, this method has not been successfully replicated, and to this day, there
+is still no effective and reliable method for humans to predict earthquakes that may occur within a
+month.
+Since the beginning of the 21st century, significant advancements in artificial intelligence and neural
+networks have revolutionized various scientific domains [1; 8]. Concurrently, researchers have
+increasingly explored the application of these techniques to transform earthquake research [2; 17].
+However, to our knowledge, there is still no widely recognized dataset or benchmark in the short-term
+prediction field, substantially impeding progress in this task.
+To bridge this gap, we present the first global regional-scale short-term earthquake prediction bench-
+mark containing 924,472 earthquake records and 2959 multimodal earthquake records collected from
+seismic networks around the world. Each record contains fundamental attributes including timestamp,
+geographic coordinates (longitude and latitude), and magnitude, while each multimodal record addi-
+tionally incorporates waveform and moment tensor information, covering a global geographic span
+and a time span from 1970 to 2021. The multimodal records have been systematically organized by
+the USGS since March 1996, and we have obtained nearly all available multimodal data containing
+waveform and moment tensor information. For comprehensive evaluation, We select various foun-
+dational models commonly used in time series analysis, including CNN, RNN, Transformer-based,
+and diffusion-based models. While emphasizing neural network approaches, we also include a
+statistical-based model which is currently employed by seismological bureaus in several countries,
+known as the epidemic-type aftershock sequence model(ETAS). We also draw inspiration from the
+MSE metric commonly applied to various machine learning tasks, incorporating spatio-temporal
+characteristics and consider the false alarms (False Negative) and the omissive reports (False Positive),
+which are crucial for evaluating earthquake prediction models. These led us to establish a set of
+intuitive and effective metrics tailored for the earthquake prediction task for assessing performance of
+models and build our benchmark.
+Additionally, we conducted preliminary regional and temporal partitioning based on our understand-
+ing and preprocessed the moment tensor information, detailed in Section 3 and Section 5. Experiments
+validated the effectiveness of these processes, revealing the potential for combining physical un-
+derstanding and various physical characteristics to enhance model performance. Notably, we also
+provide tools to help researchers partition regions based on their own physical and geographical
+understanding. Please refer to our code.
+In summary, our contributions can be summarized as follows:
+• We collected 924,472 earthquake records and 2959 multimodal earthquake records from
+worldwide seismic networks, providing the potential to predict earthquakes using vari-
+ous physical characteristics. Additionally, we analyzed the dataset (please refer to the
+appendixes) and offered explanations of different physical quantities to help researchers
+quickly understand the task and dataset.
+• We select various foundational models commonly used in time series analysis along with a
+statistical-based model, and propose a set of intuitive and effective metrics tailored for the
+earthquake prediction task to comprehensively construct our benchmark.
+• We conducted preliminary regional and temporal partitioning based on our understanding
+and proposed methods to preprocessed the moment tensor information, with experiments
+validated the effectiveness of these processes. We also provided tools to help researchers
+partition regions based on their own physical and geographical understanding.
+2
+Related Works
+Earthquake Prediction Benchmark Chen et al. [2] introduced an earthquake dataset to evaluate
+their proposed spatio-temporal point process model using neural ODEs, which includes earthquake
+records in Japan from 1990 to 2020 with magnitudes above 2.5, splitting the data into month-long
+segments with a 7-day offset. Stockman et al. [17] proposed an earthquake prediction benchmark
+(EarthQuakeNPP) that includes earthquakes in California from 1971 to 2021, with models that solely
+2
+
+--- Sayfa 3 ---
+consist of neural point process models. However, both their datasets and benchmarks have the
+following limitations: They have a small spatial span, and the amount of data is limited; They do not
+focus on short-term prediction; They do not use elaborate metrics for the earthquake prediction task
+instead simply replicate metrics for point process modeling; They focus exclusively on neural point
+process models, significantly overlooking other types of neural networks.
+Neural Networks for Earthquake Research Mousavi et al. [12] introduced a CNN-RNN earthquake
+detector for seismic signal identification. Wang et al. [19] designed a two-dimensional LSTM network
+to learn the spatio-temporal relationships among earthquakes at different locations. Wu et al. [22]
+proposed a novel cascaded region-based convolutional neural network to capture earthquake events,
+and Ross et al. [15] developed PhaseLink, a framework based on recent advances in deep learning
+for grid-free earthquake phase association. These studies highlight the growing adoption of neural
+networks in seismology, underscoring the potential of artificial intelligence to advance earthquake
+research.
+Time Series Analysis Models
+Transformer-based models have revolutionized various fields
+beyond their initial NLP applications, primarily due to their attention mechanism, which effectively
+captures global, long-range dependencies in data. These models are well-suited for handling both
+spatial and temporal dependencies, as demonstrated in applications like ST-LLM [10] for traffic
+prediction and STEP [16], which combines spatial information with temporal modeling capabil-
+ities. Multi-Layer Perceptrons (MLPs) are valued for their lightweight design, making them
+computationally efficient and cost-effective. Examples like TSMixer [5] and TTMs [4] demonstrate
+superior memory usage and processing speed while maintaining competitive performance. Con-
+volutional Neural Networks (CNNs) excel in modeling spatial and temporal data, particularly
+in self-supervised learning for general time series. Architectures such as ResNet [3] and dilated
+convolution layers have been foundational in this domain, utilizing predominantly 1D convolutional
+operations. TimesNet [21] innovatively converts 1D time series data into 2D tensors, enhancing the
+identification of multi-periodicity and complex temporal variations through a parameter-efficient
+inception block. Recurrent Neural Networks (RNNs) are recognized for their effectiveness in
+handling sequential temporal data, with recent developments challenging Transformer-based models.
+The RWKV-TS [7] model exemplifies this trend, offering resource-efficient modeling capable of
+managing longer sequences. Lastly, Diffusion models, while prominently applied in computer vision,
+have recently begun to be explored in time series analysis. These models learn complex data distribu-
+tions by gradually adding and reversing noise, which allows them to tackle prediction, imputation,
+and anomaly detection effectively, capturing both spatial and temporal dynamics in applications like
+traffic forecasting [14; 20]. Our benchmark includes these various models, making it comprehensive
+and multi-strategy, thus providing a foundation for further research on these fundamental models.
+3
+Background and Problem Setup
+3.1
+Causes of Earthquake
+Earthquakes are primarily caused by the movement of tectonic plates within the Earth’s crust. As
+these plates interact—colliding, sliding past each other, or pulling apart—stress accumulates at fault
+lines where the plates meet. This stress gradually increases until it exceeds the strength of the rocks,
+causing a sudden release of energy. When the crust breaks, it generates seismic waves that propagate
+through the Earth, leading to ground vibrations. See Fig. 1.
+The focus (hypocenter) is the subsurface origin point where an earthquake originates. The epicenter
+is the point on the Earth’s surface that is directly above the focus. Focal depth refers to the distance
+from the epicenter to the focus, which plays a crucial role in determining the intensity and effects of
+the earthquake. Generally, earthquakes with shallow focal depths (less than 70 km) tend to cause
+more damage at the surface, while those that occur at greater depths (over 300 km) usually have less
+impact. More information about the causes of earthquakes can be found in the appendixes.
+3.2
+Problem Setup
+Given m historical earthquake event record vectors within a period of time, e1, e2, · · ·, em ∈RN,
+where N represents the number of types of information regarding the event records, the goal is to
+predict the set of earthquake vectors ˆE = {em+1, em+2, · · ·, em+k} for the next time period. The
+3
+
+--- Sayfa 4 ---
+Figure 1: An illustration of earthquake occurrence
+primary predicted set of earthquake vectors can then serve as input for subsequent predictions of
+future earthquakes.
+We have divided the earthquake records into regions based on the spatial distribution of earthquake
+occurrences and the tectonic plates of the Earth with the trends of their movements, shown in
+Fig. 2. Our main idea is to group together earthquakes that occur on the same boundary or are
+caused by similar movement trends, as this may help to better analyze the occurrence trends of
+earthquakes. Each region is trained, predicted, and evaluated separately, and the experimental results
+have demonstrated the effectiveness of our division. Moreover, we also provide tools in our code to
+assist future researchers in dividing regions based on better physical and seismological understanding,
+making the regional division more rational.
+4
+EPBench
+4.1
+Dataset
+We obtained data from the NSF Seismological Facility for the Advancement of Geoscience (SAGE)
+and the U.S. Geological Survey (USGS), which compile information from seismic networks of
+various countries. Our dataset covers global seismic events with magnitudes above 2.5 from 1970 to
+2020, including key information such as latitude, longitude, time, magnitude, and depth. Furthermore,
+with the exploration of earthquake focal mechanisms by geoscientists in the late 20th century, the
+moment tensor information of earthquakes with magnitudes of six and above has been analyzed and
+recorded regularly. Additionally, the enormous energy released by earthquakes of this magnitude
+results in reliable waveform data that is robust against noise, so we also included these in our dataset.
+In summary, our dataset consists of two categories of data: one category includes all recorded
+earthquakes with magnitudes above 2.5 from 1970 to 2020 containing key information such as
+latitude, longitude, time, magnitude and depth; the other category includes multimodal data with
+magnitudes above 6 from 1996 to 2021, which not only contains key information but also physical
+quantities such as waveform and moment tensors. Seismologists aim to better understand earthquakes
+by analyzing the focal mechanisms of high-magnitude earthquakes, and we also hope to improve
+earthquake prediction by leveraging this multimodal information and injecting physical knowledge
+into the models. Both categories of data are global in scope. Below is a brief explanation of the
+various types of information contained within the seismic data:
+• Longitude and Latitude: These two quantities specify the location of an earthquake, similar
+to θ and φ coordinates in a spherical coordinate system. They are recorded with a precision
+of four decimal places in our dataset.
+• Time: Indicates the occurrence time of the earthquake, accurate to milliseconds in our data.
+4
+
+--- Sayfa 5 ---
+Figure 2: An illustration of our regional division. The boxes of the same color represent the same
+region. We assign simple names to each region based on the abbreviations of the countries or
+geographic landmarks within them. The green region is named "EU-CHN", the red region is named
+"JPN-IDN", the orange region is named "AU South", the purple region is named "USA-CL", the
+yellow region is named "Atlantic", and the blue region is named "AfricaAsia".
+• Magnitude: An indicator of the energy released by an earthquake, the larger the magnitude,
+the more intense the earthquake will be. Our magnitude data are measured on the Richter
+scale.
+• Depth(Focal Depth): The distance from the epicenter to the focus.
+• Moment Tensor: A mathematical representation that describes the distribution of stress and
+forces involved in earthquakes, providing insights into the earthquakes’ focal mechanisms
+and the way they deform the surrounding materials.
+• Waveform: The graphical representation of seismic waves generated by an earthquake,
+which includes information such as amplitude, frequency, and timing.
+Fig.3 is an illustration of these multimodal information. More detailed explanation of these physical
+quantities can be found in the appendixes.
+4.2
+Dataset Splitting
+We divided our first category of data which covers a 50-year span, into two groups for training and
+evaluation. The first group uses all earthquake records from January 1, 1970, to January 1, 1995, for
+training, and then predicts earthquakes occurring in the next three months (from January 1995 to
+March 1995), evaluated using real earthquake records. The second group uses data from January 1,
+1995, to January 1, 2020, for training, and predicts earthquakes in the following three months (from
+January 2020 to March 2020).
+For our second category of multimodal data which covers a 25-year span, we use the entire dataset
+from March 1, 1996, to March 1, 2021 as the training data for a control experiment, then predict
+earthquakes occurring in a year (from March 2021 to March 2022). The evaluation is conducted using
+real earthquakes records of magnitude 6 or above. The first experiment only uses basic information
+(time, longitude, latitude, magnitude) for training, while the second experiment incorporates moment
+tensor information. We take the cosine encoding of all angular information from the moment tensors
+and sequentially place each moment tensor angular information into separate channels with batch
+normalization applied. The experimental results in Table 3 demonstrate the effectiveness of our
+preprocessing.
+In addition to the aforementioned two experiments, to validate the effectiveness of our global seismic
+region division, we selected three regions and further partitioned them into sub-regions, performing
+5
+
+--- Sayfa 6 ---
+Figure 3: Examples of predicted situations. Note that, although neither the yellow nor the blue model
+accurately predicted the real earthquakes, the performance of the yellow model should be considered
+to be better than that of the blue model.
+testing exclusively on data in these sub-regions while using training data from the regions specified
+in the first line of each experiment in Table 1. As demonstrated, our approach effectively aggregates
+seismic events originating based on the tectonic plate and trend, thereby providing models with more
+comprehensive information.
+4.3
+Metrics
+For earthquakes, especially high-magnitude earthquakes, which are discrete events that significantly
+impact humans, both the accuracy of prediction and the false alarm rate are very important. Improving
+the accuracy of prediction can help humanity anticipate earthquakes and respond, while reducing the
+false alarm rate can prevent a significant waste of resources. Both aspects have substantial benefits.
+At the same time, many existing common metrics for evaluation are not well-suited for earthquake
+forecasting: we cannot simply categorize predictions that do not completely match as incorrect, as
+shown in Figure 3.
+Therefore, we referenced True Positive(TP) and False Negative(FN) and proposed metrics (Matching
+Rate and False Alarm Rate) for measuring prediction accuracy and false alarm rate. Additionally,
+we referenced the Mean Squared Error (MSE) to develop metrics for assessing temporal and spatial
+discrepancies. Our core idea is to introduce spatio-temporal windows and aggregate real events and
+predicted events by calculating their spatio-temporal discrepancies, thus enabling a more reasonable
+evaluation of model performance.
+First, for measuring the temporal discrepancies, we take the absolute value of the discrepancies
+between the occurrence times of two earthquake events.
+For measuring the spatial discrepancy, we use the Haversine formula to calculate the distance
+between the locations of two earthquake events. The Haversine formula is widely used in geographic
+measurements and navigation, and it computes the distance between two points on the surface of a
+sphere based on their latitude and longitude, as follows:
+d = 2R arcsin
+ s
+sin2
+∆lat
+2
+
++ cos(lat1) · cos(lat2) · sin2
+∆lon
+2
+!
+(1)
+Where ∆lat = lat1 −lat2 represents the latitude discrepancy, ∆lon = lon1 −lon2 represents
+longitude discrepancy and R represents the radius length of the Earth, usually around 6371 kilometers.
+The proof of Haversine formula can be found in the appendixes.
+6
+
+--- Sayfa 7 ---
+We define a spatio-temporal window for each real earthquake event with a magnitude above 4.5,
+which includes a time window (Tw) of 2 days and a distance window (DW ) of 150 km. If any
+predicted event falls within a time discrepancy of no more than 2 days and a spatial discrepancy of no
+more than 150 km from the real event, we consider it a proper match. The ratio of properly matched
+real events to the total number of real events is named the Matching Rate(MR), which is analogous
+to True Positive(TP). Conversely, for each predicted event with a magnitude above 4.5, if no real
+earthquake with a magnitude above 4.5 occurs within this spatio-temporal window, we consider it a
+false alarm. The ratio of false alarm predictions to the total number of predictions is called the False
+Alarm Rate(FAR), which is analogous to False Negative(FN).
+MR =
+Nreal
+P
+i=1
+I (∃j s.t. |treal,i −tpred,j| ≤Tw ∩d(xreal,i, xpred,j) ≤Dw )
+Nreal
+(2)
+FAR =
+Npred
+P
+j=1
+I (∀i, |tpred,j −treal,i| > Tw ∪d(xpred,j, xreal,i) > Dw )
+Npred
+(3)
+Where I() is the indicator function that equals 1 if the condition is satisfied and 0 otherwise. Time(t)
+is measured in days, d() represents the Haversine formula for calculating the distance between
+two locations, measured in kilometers. Nreal denotes the total number of real earthquake events
+with magnitudes above 4.5 and Npred denotes the total number of predicted earthquake events with
+magnitudes above 4.5.
+After calculating the Matching Rate (MR) and False Alarm Rate (FAR), we further evaluate the
+spatio-temporal discrepancy between predicted and real events by introducing the Spatio-temporal
+Mean Squared Error (ST-MSE). We use the size of the spatio-temporal window we set as a criterion
+for measurement, weighting temporal and spatial discrepancies. Additionally, we normalize the range
+of the ST-MSE to [0, 1]. Specifically, The calculation formula for ST-MSE is as follows:
+ST-MSE = 1
+2
+ tpred −treal
+Tw
+2
++
+d(xpred, xreal)
+Dw
+2!
+(4)
+Since we only calculate the ST-MSE of predicted events within the spatio-temporal window, the
+range of ST-MSE is [0, 1], the same as MSE. We select, for each real event, the predicted event
+with the minimum ST-MSE as its only match. If no predicted events fall within this spatio-temporal
+window, the real event is considered a prediction failure. After we calculate the MR and FAR, we use
+the average minimum ST-MSE of all matched real events as a metric to quantify the spatio-temporal
+discrepancy between predicted and real events. It’s important to note that, ST-MSE excludes real
+events with prediction failure, as we have already used MR as a prior metric to evaluate the model’s
+prediction success rate.
+As mentioned in Section 4.1, the magnitude is an indicator of the energy released by an earthquake.
+For each real event, we also include the magnitude discrepancy of its matched predicted event.
+∆mag = | magreal −magpred |
+(5)
+5
+Baselines on EPBench
+We constructed the main baselines by combining a famous statistical seismology method and various
+time series foundational neural network models. Specifically, we adopted: (1) the epidemic-type
+aftershock sequence model (ETAS), which is based on statistics and widely used by various national
+seismological bureaus; (2) various neural network models for time series analysis including CNN,
+RNN, Transformer-based, and diffusion-based models.
+The ETAS model we use is implemented in the etas python package by Mizrahi et al. [11]. Its form is
+as follows:
+λ(t, x | Ht; θ) = µ +
+X
+i:ti<t
+g(t −ti, ∥x −xi∥2
+2, mi),
+(6)
+g(t, r2, m) =
+e−t/τ · k · ea(m−Mc)
+(t + c)1+ω · (r2 + d · eγ(m−Mc))1+ρ
+(7)
+7
+
+--- Sayfa 8 ---
+Where Ht denotes the history of the events preceding time t, θ is a set of parameters that can be
+iteratively optimized. r2 is the squared distance between events, and k, a, c, ω, τ, d, γ, ρ are learnable
+parameters along with the constant background rate µ.
+Based on previous research where various neural network models were developed for earthquake
+prediction and time series analysis [19; 20; 3], We designed four different neural network models,
+including EP-CNN, EP-RNN, EP-Transformer, and EP-Diff. The specific structure of them and the
+implementation details can be found in the appendixes.
+The experimental results are shown in Table 2. As can be seen from the table, although the ETAS
+model achieves an MR of over 90% in the vast majority of cases, its FAR is also as high as 90%. In
+other words, the ETAS employs a strategy of predicting an extremely large number of earthquakes to
+cover potential seismic events. However, the excessively high 90% FAR severely limits the practical
+application of the ETAS model, as the enormous number of false alarms makes it unfeasible in terms
+of reliability. In contrast, although the neural network models do not achieve high MR, their FAR are
+significantly lower than that of ETAS. Based on the current results, if we aim to develop an effective
+and reliable earthquake prediction model, we need to either substantially reduce the FAR of ETAS or
+improve the MR of the neural network models—while maintaining FAR at a low level.
+Table 1: Quantitative results of region division. Note that the second column group represents
+subregions of the regions indicated in the first column group, and in the "Global" column group,
+we use global data for training. The training data for the three groups are different, but all tests are
+conducted only on the smallest regions indicated in the second column group.
+EU-CHN(1995∼2020)
+CHN(1995∼2020)
+Global(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+EP-LSTM
+5.68%
+0.23
+0.49
+91.85%
+3.62 %
+0.31
+0.41
+93.15%
+0%
+-
+-
+100%
+EP-Transformer
+9.52 %
+0.45
+0.37
+96.52%
+5.66%
+0.19
+0.22
+94.18%
+3.66%
+0.35
+0.81
+98.12%
+EP-Diff
+12.65%
+0.42
+0.73
+89.44%
+9.02%
+0.27
+0.63
+90.03%
+6.92%
+0.58
+0.45
+96.55%
+JPN-IDN(1995∼2020)
+IDN(1995∼2020)
+Global(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+EP-LSTM
+7.42%
+0.31
+0.46
+93.43%
+4.98%
+0.42
+0.30
+92.28%
+4.34%
+0.49
+0.61
+96.37%
+EP-Transformer
+12.43%
+0.52
+0.38
+90.28%
+9.77%
+0.56
+0.57
+93.44%
+7.55%
+0.67
+0.48
+95.82%
+EP-Diff
+16.91%
+0.44
+0.47
+87.45%
+12.88%
+0.71
+0.41
+91.31%
+9.61%
+0.54
+0.49
+92.26%
+USA-CL(1995∼2020)
+USA(1995 ∼2020)
+Global(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+EP-LSTM
+8.90%
+0.25
+0.91
+92.21%
+7.69%
+0.35
+0.47
+97.25%
+8.01%
+0.68
+0.74
+92.64%
+EP-Transformer
+18.62%
+0.54
+0.64
+82.66%
+13.73%
+0.51
+0.76
+91.32%
+15.79%
+0.56
+0.25
+88.57%
+EP-Diff
+22.58%
+0.38
+0.83
+75.76%
+16.53%
+0.23
+1.04
+88.30%
+17.11%
+0.49
+0.84
+80.09%
+6
+Limitations
+Overall, EPBench and the short-term earthquake prediction task still have the following limitations:
+1. Other physical information related to earthquakes, such as geoelectric variations, geomagnetic
+variations, and crustal stress situations, could be incorporated into the dataset in the future. 2. We
+have not yet utilized waveform data, and the multimodal data has not yet been combined with the
+non-multimodal data. 3. Furthermore, We need more specialized neural network architectures to
+better leverage earthquake-related information and, consequently, improve the models’ performance.
+7
+Conclusion
+We introduce EPBench, which, to our knowledge, is the first global regional-scale short-term earth-
+quake prediction benchmark. We contributed (1) datasets with 924,472 earthquake records and 2959
+multimodal earthquake records, (2) a set of intuitive and effective metrics tailored for the earthquake
+prediction task,(3)preliminary regional partitioning and moment tensor information preprocessing
+with experiments demonstrating their effectiveness. We believe this benchmark will serve as a
+guide to attract more researchers to explore new methods for addressing this task, which holds great
+significance for human existence.
+8
+
+--- Sayfa 9 ---
+Table 2: Evaluating performance of our baseline models on EPBench data.
+EU-CHN(1975∼1995)
+EU-CHN(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+95.12%
+0.10
+1.57
+97.12%
+93.31%
+0.11
+1.28
+98.45%
+EP-CNN
+1.63%
+0.25
+0.25
+99.70%
+4.91%
+0.71
+0.57
+98.96%
+EP-LSTM
+6.05%
+0.36
+0.81
+98.54%
+8.48%
+0.54
+0.59
+97.31%
+EP-Transformer
+9.76%
+0.56
+0.34
+97.43%
+12.05%
+0.52
+0.98
+93.77%
+EP-Diff
+12.20%
+0.38
+1.39
+96.83%
+13.84%
+0.45
+0.77
+89.44%
+JPN-IDN(1975∼1995)
+JPN-IDN(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+97.42%
+0.12
+0.51
+97.89%
+97.85%
+0.10
+0.64
+98.34%
+EP-CNN
+2.09%
+0.59
+0.44
+78.46%
+8.99%
+0.53
+0.72
+95.77%
+EP-LSTM
+4.83%
+0.74
+0.69
+93.67%
+9.91%
+0.43
+0.86
+92.53%
+EP-Transformer
+8.21%
+0.55
+0.97
+96.65%
+12.50%
+0.56
+0.67
+94.26%
+EP-Diff
+9.98%
+0.45
+0.56
+95.98%
+15.70%
+0.41
+0.63
+91.69%
+AU South(1975∼1995)
+AU South(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+76.32%
+0.17
+1.19
+99.52%
+74.78%
+0.17
+1.08
+99.61%
+EP-CNN
+0%
+-
+-
+100%
+0%
+-
+-
+100%
+EP-LSTM
+0%
+-
+-
+97.91%
+4.23%
+0.72
+0.36
+93.86%
+EP-Transformer
+2.63%
+0.51
+0.46
+96.42%
+5.63%
+0.75
+0.23
+92.05%
+EP-Diff
+7.89%
+0.42
+0.43
+94.75%
+11.27%
+0.62
+0.14
+92.03%
+USA-CL(1975∼1995)
+USA-CL(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+98.12%
+0.10
+0.49
+99.73%
+98.68%
+0.09
+0.58
+99.81%
+EP-CNN
+2.22%
+0.87
+0.64
+81.25%
+7.89%
+0.79
+0.92
+88.59%
+EP-LSTM
+4.13%
+0.94
+0.66
+96.73%
+13.85%
+0.37
+0.47
+93.21%
+EP-Transformer
+5.71%
+0.45
+0.50
+97.78%
+16.59%
+0.34
+0.45
+91.38%
+EP-Diff
+8.25%
+0.44
+0.67
+96.09%
+24.32%
+0.29
+0.81
+87.27%
+Atlantic(1975∼1995)
+Atlantic(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+92.68%
+0.14
+1.69
+98.95%
+89.62%
+0.19
+1.45
+98.96%
+EP-CNN
+0%
+-
+-
+91.24%
+4.57%
+0.46
+0.39
+93.68%
+EP-LSTM
+2.44%
+0.73
+0.82
+93.24%
+10.66%
+0.78
+0.99
+92.36%
+EP-Transformer
+2.44%
+0.41
+0.79
+92.65%
+15.74%
+0.26
+1.07
+90.49%
+EP-Diff
+7.32%
+0.37
+0.54
+95.42%
+24.37%
+0.17
+1.42
+91.92%
+AfricaAsia(1975∼1995)
+AfricaAsia(1995∼2020)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+ETAS
+100%
+0.28
+0.86
+98.80%
+100%
+0.24
+0.91
+99.11%
+EP-CNN
+0%
+-
+-
+100%
+0%
+-
+-
+100%
+EP-LSTM
+0%
+-
+-
+91.85%
+0%
+-
+-
+100%
+EP-Transformer
+0%
+-
+-
+96.52%
+6.67%
+0.55
+0.74
+98.06%
+EP-Diff
+20%
+0.42
+0.73
+89.44%
+33.33%
+0.27
+0.63
+90.03%
+Table 3: Results of our control experiments regarding the moment tensor information. Note that
+‘-’ indicates training using only basic information, while ‘+’ indicates the inclusion of additional
+moment tensor information. The implementation details can be found in the appendixes.
+-
++
+JPN-IDN(1996∼2021)
+JPN-IDN(1996∼2021)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+EP-LSTM
+0%
+-
+-
+100%
+9.62%
+0.39
+1.18
+98.04%
+EP-Transformer
+0%
+-
+-
+100%
+13.46%
+0.34
+1.32
+97.53%
+EP-Diff
+3.85%
+0.57
+0.86
+98.22%
+25.00%
+0.28
+1.40
+96.95%
+USA-CL(1996∼2021))
+USA-CL(1996∼2021)
+MR
+ST-MSE
+∆mag
+FAR
+MR
+ST-MSE
+∆mag
+FAR
+EP-LSTM
+0%
+-
+-
+100%
+12.90%
+0.34
+1.29
+94.59%
+EP-Transformer
+4.84%
+0.39
+0.75
+97.47%
+17.74%
+0.27
+1.37
+98.26%
+EP-Diff
+4.84%
+0.45
+0.71
+96.74%
+24.19%
+0.22
+1.31
+98.61%
+References
+[1] Kaifeng Bi, Lingxi Xie, Hengheng Zhang, Xin Chen, Xiaotao Gu, and Qi Tian. Pangu-weather: A 3d
+high-resolution model for fast and accurate global weather forecast. arXiv preprint arXiv:2211.02556,
+2022.
+[2] Ricky TQ Chen, Brandon Amos, and Maximilian Nickel. Neural spatio-temporal point processes. arXiv
+preprint arXiv:2011.04583, 2020.
+[3] Jiaxiang Dong, Haixu Wu, Haoran Zhang, Li Zhang, Jianmin Wang, and Mingsheng Long. Simmtm:
+A simple pre-training framework for masked time-series modeling. Advances in Neural Information
+Processing Systems, 36:29996–30025, 2023.
+[4] V Ekambaram, A Jati, NH Nguyen, P Dayama, C Reddy, WM Gifford, and J Kalagnanam. Ttms: Fast
+multi-level tiny time mixers for improved zero-shot and few-shot forecasting of multivariate time series.
+arxiv 2024. arXiv preprint arXiv:2401.03955.
+[5] Vijay Ekambaram, Arindam Jati, Nam Nguyen, Phanwadee Sinthong, and Jayant Kalagnanam. Tsmixer:
+Lightweight mlp-mixer model for multivariate time series forecasting. In Proceedings of the 29th ACM
+SIGKDD conference on knowledge discovery and data mining, pages 459–469, 2023.
+[6] Rui Feng and Yuxia Wu. Research on history of chinese seismology. Earthquake Science, 23:243–257,
+2010.
+9
+
+--- Sayfa 10 ---
+[7] Haowen Hou and F Richard Yu. Rwkv-ts: Beyond traditional recurrent neural network for time series
+tasks. arXiv preprint arXiv:2401.09093, 2024.
+[8] John Jumper, Richard Evans, Alexander Pritzel, Tim Green, Michael Figurnov, Olaf Ronneberger, Kathryn
+Tunyasuvunakool, Russ Bates, Augustin Žídek, Anna Potapenko, et al. Highly accurate protein structure
+prediction with alphafold. nature, 596(7873):583–589, 2021.
+[9] Yuxuan Liang, Haomin Wen, Yuqi Nie, Yushan Jiang, Ming Jin, Dongjin Song, Shirui Pan, and Qingsong
+Wen. Foundation models for time series analysis: A tutorial and survey. In Proceedings of the 30th ACM
+SIGKDD conference on knowledge discovery and data mining, pages 6555–6565, 2024.
+[10] Chenxi Liu, Sun Yang, Qianxiong Xu, Zhishuai Li, Cheng Long, Ziyue Li, and Rui Zhao. Spatial-temporal
+large language model for traffic prediction. In 2024 25th IEEE International Conference on Mobile Data
+Management (MDM), pages 31–40. IEEE, 2024.
+[11] Leila Mizrahi, Shyam Nandan, and Stefan Wiemer. Embracing data incompleteness for better earthquake
+forecasting. Journal of Geophysical Research: Solid Earth, 126(12):e2021JB022379, 2021.
+[12] S Mostafa Mousavi, Weiqiang Zhu, Yixiao Sheng, and Gregory C Beroza. Cred: A deep residual network
+of convolutional and recurrent units for earthquake signal detection. Scientific reports, 9(1):10267, 2019.
+[13] George Pararas-Carayannis. The earthquake and tsunami of july 21, 365 ad in the eastern mediterranean
+sea-review of impact on the ancient world-assessment of recurrence and future impact. Science of Tsunami
+Hazards, 30(4), 2011.
+[14] William Peebles and Saining Xie. Scalable diffusion models with transformers. In Proceedings of the
+IEEE/CVF international conference on computer vision, pages 4195–4205, 2023.
+[15] Zachary E Ross, Yisong Yue, Men-Andrin Meier, Egill Hauksson, and Thomas H Heaton. Phaselink:
+A deep learning approach to seismic phase association. Journal of Geophysical Research: Solid Earth,
+124(1):856–869, 2019.
+[16] Zezhi Shao, Zhao Zhang, Fei Wang, and Yongjun Xu. Pre-training enhanced spatial-temporal graph neural
+network for multivariate time series forecasting. In Proceedings of the 28th ACM SIGKDD conference on
+knowledge discovery and data mining, pages 1567–1577, 2022.
+[17] Samuel Stockman, Daniel Lawson, and Maximilian Werner. Earthquakenpp: Benchmark datasets for
+earthquake forecasting with neural point processes. arXiv preprint arXiv:2410.08226, 2024.
+[18] Kelin Wang, Qi-Fu Chen, Shihong Sun, and Andong Wang. Predicting the 1975 haicheng earthquake.
+Bulletin of the seismological society of America, 96(3):757–795, 2006.
+[19] Qianlong Wang, Yifan Guo, Lixing Yu, and Pan Li. Earthquake prediction based on spatio-temporal data
+mining: an lstm network approach. IEEE Transactions on Emerging Topics in Computing, 8(1):148–158,
+2017.
+[20] Haomin Wen, Youfang Lin, Yutong Xia, Huaiyu Wan, Qingsong Wen, Roger Zimmermann, and Yuxuan
+Liang. Diffstg: Probabilistic spatio-temporal graph forecasting with denoising diffusion models. In
+Proceedings of the 31st ACM International Conference on Advances in Geographic Information Systems,
+pages 1–12, 2023.
+[21] Haixu Wu, Tengge Hu, Yong Liu, Hang Zhou, Jianmin Wang, and Mingsheng Long. Timesnet: Temporal
+2d-variation modeling for general time series analysis. arXiv preprint arXiv:2210.02186, 2022.
+[22] Yue Wu, Youzuo Lin, Zheng Zhou, David Chas Bolton, Ji Liu, and Paul Johnson. Deepdetect: A cascaded
+region-based densely connected network for seismic event detection. IEEE Transactions on Geoscience
+and Remote Sensing, 57(1):62–75, 2018.
+10
+
+--- Sayfa 11 ---
+A
+Causes of Earthquakes
+Knowledge from "https://www.drishtiias.com/to-the-points/paper1/earthquake-4".
+An earthquake in simple words is the shaking of the earth. It is a natural event. It is caused due to
+release of energy, which generates waves that travel in all directions. The vibrations called seismic
+waves are generated from earthquakes that travel through the Earth and are recorded on instruments
+called seismographs. The location below the earth’s surface where the earthquake starts is called the
+hypocenter, and the location directly above it on the surface of the earth is called the epicenter.
+Types of Earthquake and Causes
+Fault Zones: The release of energy occurs along a fault. A fault is a sharp break in the crustal rocks.
+Rocks along a fault tend to move in opposite directions. As the overlying rock strata press them, the
+friction locks them together. However, their tendency to move apart at some point of time overcomes
+the friction. As a result, the blocks get deformed and eventually, they slide past one another abruptly.
+This causes earthquake in the form of release of energy, and the energy waves travel in all directions.
+1.Tectonic Earthquakes:
+The most common ones are the tectonic earthquakes. Although the Earth looks like a pretty solid
+place from the surface, it’s actually extremely active just below the surface. The Earth is made of
+four basic layers (generally three): a solid crust, a hot, nearly solid mantle, a liquid outer core and a
+solid inner core.
+11
+
+--- Sayfa 12 ---
+Tectonic plates (Lithospheric plates) are constantly shifting as they drift around on the viscous, or
+slowly flowing, mantle layer below. Tectonic plates (Lithospheric plates) are constantly shifting as
+they drift around on the viscous, or slowly flowing, mantle layer below.
+This non-stop movement causes stress on Earth’s crust. When the stresses get too large, it leads
+to cracks called faults. When tectonic plates move, it also causes movements at the faults. Thus,
+the slipping of land along the faultline along convergent, divergent and transform boundaries cause
+earthquakes. The point where the energy is released is called the focus of an earthquake, alternatively,
+it is called the hypocentre. The energy waves travelling in different directions reach the surface. The
+point on the surface, nearest to the focus, is called epicentre. It is the first one to experience the waves.
+It is a point directly above the focus.
+2.Volcanic Earthquake
+A special class of tectonic earthquake is sometimes recognised as volcanic earthquake. However,
+these are confined to areas of active volcanoes. Earthquakes produced by stress changes in solid rock
+due to the injection or withdrawal of magma (molten rock) are called volcano earthquakes. These
+earthquakes can cause land to subside and can produce large ground cracks. These earthquakes
+can occur as rock is moving to fill in spaces where magma is no longer present. Volcano-tectonic
+earthquakes don’t indicate that the volcano will be erupting but can occur at any time.
+3.Human Induced Earthquakes
+In the areas of intense mining activity, sometimes the roofs of underground mines collapse causing
+minor tremors. These are called collapse earthquakes. Ground shaking may also occur due to the
+explosion of chemical or nuclear devices. Such tremors are called explosion earthquakes. The
+earthquakes that occur in the areas of large reservoirs are referred to as reservoir induced earthquakes.
+B
+Moment Tensor
+B.1
+Nodal Planes
+Definition During an earthquake, the radiation pattern generated by fault slip contains two mutually
+perpendicular planes (NP1 and NP2), known as nodal planes. One corresponds to the actual fault
+plane, while the other is the auxiliary plane.
+Angular Parameters
+• Strike: The angle between the nodal plane and geographic north (0°–360°).
+• Dip: The inclination of the nodal plane relative to the horizontal plane (0°–90°).
+12
+
+--- Sayfa 13 ---
+Figure 4: An example of recorded moment tensor information.
+• Rake: The angle between the projection of the fault slip direction onto the nodal plane and
+the strike direction (-180°–180°).
+Significance The parameters of NP1 and NP2 fully describe the fault geometry and slip direction, but
+the actual fault plane cannot be distinguished from the moment tensor alone.
+B.2
+Axes
+Definition Three orthogonal principal axes derived from the eigenvalue decomposition of the moment
+tensor, corresponding to principal stress directions:
+• T-axis (Tension Axis): Direction of the largest positive eigenvalue, representing the maxi-
+mum extensional (tensional) direction.
+• P-axis (Pressure Axis): Direction of the largest negative eigenvalue, representing the maxi-
+mum compressional direction.
+• N-axis (Neutral Axis): Direction of the intermediate eigenvalue, typically near zero (strictly
+zero in a double-couple model).
+Angular Parameters
+13
+
+--- Sayfa 14 ---
+• Azimuth: Angle between the horizontal projection of the axis and geographic north.
+• Plunge: Angle between the axis and the horizontal plane (positive downward).
+Value The "values" associated with the T, N, and P axes are the eigenvalues of the moment tensor,
+with units of moment (N·m). They reflect the strength of the force couples in each direction, where
+the sign indicates the force type (positive for extension, negative for compression).
+B.3
+Summary
+NP1 and NP2: Describe potential fault planes using strike, dip, and slip angles.
+T, N, P Axes: Principal axes derived from moment tensor decomposition; directions are defined by
+eigenvectors, and eigenvalues represent moment magnitude and force type (extension/compression).
+Angles: Describe nodal plane geometry (strike, dip, slip) or principal axis orientation (azimuth,
+plunge).
+This framework provides the mathematical and geometric basis for analyzing focal mechanisms (e.g.,
+fault type, stress field orientation).
+C
+Proof of Haversine Formula
+Figure 5: Spherical Coordinate System
+1. Spherical to Cartesian Coordinates Conversion
+Assume Earth is a perfect sphere with radius R.
+Convert two points P1(ϕ1, λ1) and P2(ϕ2, λ2) to 3D Cartesian coordinates:
+
+
+
+x = R cos ϕ cos λ,
+y = R cos ϕ sin λ,
+z = R sin ϕ,
+where:
+• ϕ: Latitude (positive for north, negative for south),
+• λ: Longitude (positive for east, negative for west).
+2.Central Angle θ Between Two Points
+The central angle θ subtended by the two points at the sphere’s center is derived using the dot product:
+cos θ = P1 · P2
+R2
+.
+Expanding the dot product:
+P1 · P2 = R2[cos ϕ1 cos ϕ2 cos(∆λ) + sin ϕ1 sin ϕ2],
+14
+
+--- Sayfa 15 ---
+where ∆λ = λ2 −λ1. Thus:
+cos θ = cos ϕ1 cos ϕ2 cos(∆λ) + sin ϕ1 sin ϕ2.
+3.Derivation of the Haversine Formula
+To avoid numerical instability for small angles, use the half-angle identity and define the Haversine
+function:
+hav(θ) = sin2
+θ
+2
+
+.
+From the identity cos θ = 1 −2 sin2   θ
+2
+
+, we get:
+sin2
+θ
+2
+
+= 1 −cos θ
+2
+.
+Substitute cos θ from Step 2:
+hav(θ) = 1 −[cos ϕ1 cos ϕ2 cos(∆λ) + sin ϕ1 sin ϕ2]
+2
+.
+Split the numerator:
+1 −cos ϕ1 cos ϕ2 cos(∆λ) −sin ϕ1 sin ϕ2.
+Using the identity sin ϕ1 sin ϕ2 = 1
+2[cos(ϕ1 −ϕ2) −cos(ϕ1 + ϕ2)], we can rearrange to obtain:
+hav(θ) = hav(∆ϕ) + cos ϕ1 cos ϕ2hav(∆λ),
+where ∆ϕ = ϕ2 −ϕ1, and hav(∆ϕ) = sin2 
+∆ϕ
+2
+
+.
+4.Final Distance Formula
+The central angle θ is:
+θ = 2 arcsin
+p
+hav(θ)
+
+.
+Substitute the Haversine expression:
+θ = 2 arcsin
+ s
+sin2
+∆ϕ
+2
+
++ cos ϕ1 cos ϕ2 sin2
+∆λ
+2
+!
+.
+The great-circle distance d becomes:
+d = R · θ = 2R arcsin
+ √a
+
+,
+where
+a = sin2
+∆ϕ
+2
+
++ cos ϕ1 cos ϕ2 sin2
+∆λ
+2
+
+.
+15
+
+--- Sayfa 16 ---
+D
+Dataset Analysis
+Oour dataset consists of two categories of data: one category includes all recorded earthquakes with
+magnitudes above 2.5 from 1970 to 2020 containing key information such as latitude, longitude, time,
+magnitude and depth; the other category includes multimodal data with magnitudes above 6 from
+1996 to 2021, which not only contains key information but also physical quantities such as waveform
+and moment tensors. Our data is organized in CSV file format, with each column representing a type
+of information, such as time, latitude, and longitude. Each waveform-type data has a separate CSV
+file, corresponding to the ID number of the seismic event.
+D.1
+Temporal Distribution Analysis
+Figure 6: The annual frequency of earthquakes with magnitudes ≥2.5 from 1975 to 1994.
+Figure 7: The annual frequency of earthquakes with magnitudes ≥2.5 from 1995 to 2019.
+16
+
+--- Sayfa 17 ---
+D.2
+Spatial Distribution Analysis
+Figure 8: The spatial distribution of earthquakes with magnitudes ≥2.5 from 1970 to 1995
+Figure 9: The spatial distribution of earthquakes with magnitudes ≥5 from 1970 to 1995
+17
+
+--- Sayfa 18 ---
+Figure 10: The spatial distribution of earthquakes with magnitudes ≥7 from 1970 to 1995
+Figure 11: The spatial distribution of earthquakes with magnitudes ≥2.5 from 1995 to 2020
+18
+
+--- Sayfa 19 ---
+Figure 12: The spatial distribution of earthquakes with magnitudes ≥5 from 1995 to 2020
+Figure 13: The spatial distribution of earthquakes with magnitudes ≥7 from 1995 to 2020
+19
+
+--- Sayfa 20 ---
+D.3
+Magnitude Distribution Analysis
+Figure 14: The magnitude distribution of earthquakes from 1970 to 1995
+Figure 15: The magnitude distribution of earthquakes from 1995 to 2020
+20
+
+--- Sayfa 21 ---
+D.4
+Depth Distribution Analysis
+Figure 16: The depth distribution of earthquakes from 1970 to 1995
+Figure 17: The depth distribution of earthquakes from 1995 to 2020
+21
+
+--- Sayfa 22 ---
+D.5
+Magnitude-Depth Pair Distribution
+Figure 18: The magnitude-depth pair distribution of earthquakes.
+E
+Model Architecture
+E.1
+EP-CNN
+The proposed EP-CNN employs a hierarchical 1D convolutional architecture designed for temporal
+feature extraction and regression tasks. The model consists of two principal components: a pyramidal
+feature extractor and a regressor module.
+1. Pyramidal Feature Extractor
+Five consecutive convolution blocks form a contracting pyramidal structure:
+• Block 1: 512 filters (kernel=7, dilation=5) with padding=15
+• Block 2: 256 filters (kernel=5, dilation=4) with padding=8
+• Block 3: 128 filters (kernel=5, dilation=3) with padding=6
+• Block 4: 128 filters (kernel=3, dilation=2) with padding=2
+• Block 5: 128 filters (kernel=3) with padding=2
+Each convolutional layer incorporates batch normalization and ReLU activation followed by pooling
+operations. Dropout regularization after each pooling operation mitigates overfitting.
+2. Regression Module
+The regression head comprises two fully-connected layers (128 hidden units) with ReLU non-linearity,
+mapping the compressed temporal representation to target output.
+E.2
+EP-LSTM
+The proposed EP-LSTM model implements a deep stacked LSTM architecture with progressive
+feature compression for sequential data modeling. The model employs four cascaded LSTM layers
+with pyramidal dimensionality reduction:
+22
+
+--- Sayfa 23 ---
+• Layer 1: 256 hidden units →BatchNorm + Dropout(0.1)
+• Layer 2: 128 hidden units →BatchNorm + Dropout(0.1)
+• Layer 3: 64 hidden units →BatchNorm + Dropout(0.1)
+• Layer 4: 64 hidden units →BatchNorm + Dropout(0.1)
+Each LSTM layer preserves the original sequence length through full sequence output while pro-
+gressively compressing feature dimensions. The conserved resolution enables fine-grained temporal
+pattern preservation before final aggregation.
+Following the LSTM layers, a linear layer first maps concatenated features from all time steps to a
+64-dimensional latent space, subsequently activated by ReLU. A final linear projection layer then
+transforms these compressed representations to the target output.
+E.3
+EP-Transformer
+The proposed EP-Transformer first employs a feature transformation module,which consists of three
+fully connected layers with GELU activation functions, progressively projecting the input dimension
+to 256 dimensions.
+Next, the model applies learnable positional encoding to incorporate positional information for each
+element in the sequence, enhancing the model’s awareness of sequential order. The model then
+includes six Transformer encoder layers , each utilizing multi-head self-attention (8 heads) and a
+512-dimensional feedforward network, enabling the model to capture complex dependencies within
+the sequence through layer-wise encoding.
+After encoding, the model compresses the sequence dimension to 1 using adaptive average pooling
+. Finally, a classification head composed of fully connected layers, GELU activation, and dropout
+produces an output.
+E.4
+EP-Diff
+The proposed EP-Diff consists of three core components: (1) A condition encoder built with a 4-layer
+Transformer (4 attention heads, 256-dim FFN) that processes conditional inputs; (2) A sinusoidal
+time embedding module that encodes diffusion timesteps via learned embeddings followed by a SiLU-
+activated projection; and (3) A noise prediction network implemented as an MLP with LayerNorm
+and SiLU activations (256→128→input_dim) that combines the condition vector, noisy input, and
+time embedding.
+The diffusion process follows standard DDPM methodology with linear scheduling (β=1e-4→0.02
+over T=1000 steps). During generation, it progressively denoises random initialization through:
+1.Condition-aware noise prediction via the trained model, 2.Analytical reverse diffusion step using
+α/β schedules, 3.Additive noise injection for non-terminal steps.
+The model utilizes a hybrid approach combining Transformer-based condition processing with
+efficient MLP-based diffusion, suitable for tasks requiring conditional sequence generation with
+controllable denoising dynamics.
+F
+Implementation details
+F.1
+Benchmark
+We train and test the models separately for each region. Specifically, we use the training data from a
+particular region to predict potential earthquakes occurring within the three months following the
+end of the training period and compare these predictions with the real earthuquake records from that
+region. We calculate the time difference between each training data entry and the previous one as an
+additional attribute(delta_time). To enhance the model’s predictive capability for high-magnitude
+earthquakes, the weight for data with magnitudes ≥5 is set to 10 times that of ordinary data.
+Our neural network models all take four-dimensional inputs, corresponding to the following attributes
+in order: magnitude, latitude, longitude, and delta_time. The output is also a four-dimensional
+tensor with channels matching the input. All models are configured with 196 time steps and trained
+23
+
+--- Sayfa 24 ---
+for 400 epochs on an RTX 3090 GPU. The batch sizes are set to 32 for EP-CNN, EP-LSTM, and
+EP-Transformer, while EP-Diff uses a batch size of 64. These models are trained under a weighted
+MSE loss, where the weights for longitude and latitude are increased by a factor of 3 to strengthen
+the model’s spatial prediction capability.
+F.2
+Moment Tensor Experiment
+We conducted comparative experiments on the moment tensor information using three models: EP-
+LSTM, EP-Transformer, and EP-Diff. Specifically, for training and prediction, the input and output
+tensors of these three models were converted to 16 dimensions. These 16 dimensions represent the
+following information: ’magnitude’, ’latitude’, ’longitude’, ’delta_time’, ’np1_strike’, ’np1_dip’,
+’np1_rake’, ’np2_strike’, ’np2_dip’, ’np2_rake’, ’t_plunge’, ’t_azimuth’, ’n_plunge’, ’n_azimuth’,
+’p_plunge’, ’p_azimuth’. We used earthquake data with magnitudes ≥6 from the regions "JPN-IDN"
+and "USA-CL" between March 1, 1996, and March 1, 2021, for training, discarding incomplete
+data. The prediction period is one year into the future (up to March 2022), and the predictions are
+compared with the real earthquakes with magnitudes ≥6 that occurred during this period. Due to
+limited training data, the performance of the models was affected, and the distance window for this
+experiment was set to 2000 km. The other settings remained unchanged.
+24

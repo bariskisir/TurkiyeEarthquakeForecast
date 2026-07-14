@@ -1,0 +1,1957 @@
+
+--- Sayfa 1 ---
+manuscript accepted for publication in JGR: Solid Earth
+Embracing Data Incompleteness for Better Earthquake
+Forecasting
+L. Mizrahi1∗, S. Nandan1, and S. Wiemer1
+1Swiss Seismological Service, ETH Zurich
+Key Points:
+• Two methods are proposed to invert ETAS parameters when catalog complete-
+ness varies with time.
+• Using pseudo-prospective experiments we compare the forecasting skill of our pro-
+posed models to a strong ETAS null model.
+• Including small events in simulations yields increasingly superior forecasts for de-
+creasing target magnitudes when using STAI correction.
+∗Sonneggstrasse 5, 8092 Zurich, Switzerland
+Corresponding author: Leila Mizrahi, leila.mizrahi@sed.ethz.ch
+–1–
+arXiv:2105.00888v3  [physics.geo-ph]  1 Dec 2021
+
+--- Sayfa 2 ---
+manuscript accepted for publication in JGR: Solid Earth
+Abstract
+We propose two methods to calibrate the parameters of the epidemic-type aftershock se-
+quence (ETAS) model based on expectation maximization (EM) while accounting for
+temporal variation of catalog completeness. The ﬁrst method allows for model calibra-
+tion on long-term earthquake catalogs with temporal variation of the completeness mag-
+nitude, mc. This calibration technique is beneﬁcial for long-term probabilistic seismic
+hazard assessment (PSHA), which is often based on a mixture of instrumental and his-
+torical catalogs. The second method generalizes the concept of mc, considering rate- and
+magnitude-dependent detection probability, and allows for self-consistent estimation of
+ETAS parameters and high-frequency detection incompleteness. With this approach, we
+aim to address the potential biases in parameter calibration due to short-term aftershock
+incompleteness, embracing incompleteness instead of avoiding it. Using synthetic tests,
+we show that both methods can accurately invert the parameters of simulated catalogs.
+We then use them to estimate ETAS parameters for California using the earthquake cat-
+alog since 1932. To explore how model calibration, inclusion of small events, and account-
+ing for short-term incompleteness aﬀect earthquakes’ predictability, we systematically
+compare variants of ETAS models based on the second approach in pseudo-prospective
+forecasting experiments for California. Our proposed model signiﬁcantly outperforms the
+ETAS null model, with decreasing information gain for increasing target magnitude thresh-
+old. We ﬁnd that the ability to include small earthquakes for simulation of future sce-
+narios is the primary driver of the improvement and that accounting for incompleteness
+is necessary. Our results have signiﬁcant implications for our understanding of earthquake
+interaction mechanisms and the future of seismicity forecasting.
+Plain Language Summary
+Our capability to detect earthquakes varies with time, on one hand because more
+and better instruments are being deployed over time, leading to long-term changes of de-
+tection capability. On the other hand, earthquakes are more diﬃcult to be detected when
+seismic activity is high, which manifests in short-term changes of detection capability.
+Incomplete detection can lead to biases in epidemic-type aftershock sequence (ETAS)
+models used for earthquake forecasting. We propose two methods that allow us to cal-
+ibrate these models while accounting for long-term (ﬁrst method) and short-term (sec-
+ond method) changes in detection capability, which allows us to use a larger and more
+representative fraction of the available data. We test both methods on synthetic data
+and then apply them to the Californian earthquake catalog. Using the second method,
+we test how small earthquakes can help us improve ETAS forecasts. We ﬁnd that the
+ability to include small earthquakes in simulations yields superior ETAS forecasts, and
+that it is necessary to correct for short-term incompleteness to achieve this superiority.
+The positive eﬀect on forecasting is strongest when forecasting relatively small events,
+and decreases when forecasting larger events. These results have important implications
+for our understanding of earthquake interactions and for the future of earthquake fore-
+casting.
+Keywords
+data incompleteness, model inversion, ETAS, earthquake forecasting
+1 Introduction
+One of the key challenges in the ﬁeld of statistical seismology, or seismology in gen-
+eral, is the development of accurate earthquake forecasting models, with epidemic-type
+aftershock sequence (ETAS) models (see Ogata, 1998; Veen and Schoenberg, 2008; Nan-
+dan et al., 2017) currently being widely used for this purpose. ETAS models account for
+–2–
+
+--- Sayfa 3 ---
+manuscript accepted for publication in JGR: Solid Earth
+the spatio-temporal clustering of earthquakes, and they have been shown in retrospec-
+tive, pseudo-prospective, and prospective forecasting experiments to be among the best-
+performing earthquake forecasting models available today (Nandan et al., 2019c; Taroni
+et al., 2018, Woessner et al., 2011; Cattania et al., 2018; Mancini et al., 2019; Mancini
+et al., 2020). Furthermore, they are used for operational earthquake forecasts by the USGS
+(Field et al., 2017), in Italy (Marzocchi et al., 2014), and New Zealand (D. Rhoades et
+al., 2016).
+A fundamental requirement for reliable parameter estimation of the ETAS model
+is the completeness of the training catalog above the magnitude of completeness, mc. As
+we can impossibly know with certainty what we did not observe, mc itself needs to be
+estimated, and numerous approaches to this problem have been proposed (Wiemer and
+Wyss, 2000; Cao and Gao, 2002; Woessner and Wiemer, 2005; Amorese, 2007; Rydelek
+and Sacks, 1989; see Mignan and Woessner (2012) for an overview). mc is known to vary
+in space and time, due to gradual improvement of the seismic network, software upgrades,
+and so on. Several methods have been proposed to estimate its spatial and temporal vari-
+ation (Wiemer and Wyss, 2000; Mignan et al., 2011;Woessner and Wiemer, 2005; Am-
+ato and Mele, 2008; Nanjo et al., 2010; Hutton et al., 2010; Mignan and Chouliaras, 2014;
+Schorlemmer and Woessner, 2008; Hainzl, 2016b). In particular, Hainzl (2016b) addresses
+an additional important cause of variation in time of mc, short-term aftershock incom-
+pleteness (STAI). Because earthquakes strongly cluster in time, seismic networks can only
+capture a subset of events during periods of high activity (Kagan, 2004).
+As mentioned earlier, a reliable estimation of ETAS parameter depends on a re-
+liable estimate of mc. Although the biasing eﬀects on ETAS parameter estimates caused
+by data incompleteness are known and discussed (Hainzl, 2016b; Seif et al., 2017; Zhuang
+et al., 2017), nearly all applications of the ETAS model assume for simplicity a global
+magnitude of completeness for the entirety of the training period. This assumption is
+problematic in several ways.
+First, in order to be complete for the entire training period, the modeller is often
+forced to use very conservative estimates of mc, as a result completely ignoring abun-
+dant and high-quality data from more complete periods. Furthermore, mc is often as-
+sumed to be equal to the minimum magnitude of earthquakes that can trigger aftershocks,
+m0, and this conservative assumption can introduce a bias to ETAS parameter estimates.
+This idea that earthquakes below mc are relevant for our understanding of earthquakes’
+clustering behavior was thoroughly discussed by Sornette and Werner (2005a), who pointed
+out the important distinction between m0 and mc, also providing constraints for m0. Al-
+though small earthquakes trigger fewer aftershocks than large ones do, Marsan (2005),
+as well as Helmstetter et al. (2005), found that small earthquakes, being more numer-
+ous, are as important as large ones for earthquake triggering. Thus, it is natural to as-
+sume that a larger diﬀerence between mc and m0 will lead to a larger bias in the esti-
+mated parameters.
+Alternatively, one may estimate ETAS parameters from catalogs with restricted
+space-time volume which can have low overall mc values. Parameters estimated in this
+way can however be dominated by one or two sequences and may not represent long-term
+behavior, thus making the use of ETAS models non-ideal for long-term probabilistic seis-
+mic hazard assessment (PSHA). Instead, the modellers rely on smoothed seismicity ap-
+proaches based on declustered catalogs (see e.g. Gerstenberger et al., 2020; Petersen et
+al., 2018; Wiemer et al., 2009), which is a problematic approach due to the biasing ef-
+fects of declustering on the size distribution of mainshocks, and thus on the estimated
+seismic hazard (Mizrahi et al., 2021). In this regard, Marzocchi and Taroni (2014) dis-
+cussed the need for spatial declustering so as not to distort future seismic hazard, and
+Llenos and Michael (2020) proposed an approach to calculate regionally optimized back-
+ground earthquake rates from ETAS to be used for the U.S. Geological Survey National
+–3–
+
+--- Sayfa 4 ---
+manuscript accepted for publication in JGR: Solid Earth
+Seismic Hazard Model (NSHM), stressing the need for methods to address catalog het-
+erogeneities such as time-dependent incompleteness.
+Additionally, with the assumption of a constant overall mc, the crucial requirement
+of completeness of the training catalog is not fulﬁlled during large aftershock sequences,
+which can bias the estimated parameters. Several studies have highlighted the impor-
+tance of considering short-term variation of mc in the context of ETAS models. These
+include Hainzl (2016b) and Hainzl (2016a), who modeled STAI based on the short-term
+rate of earthquakes, bringing into relation true and apparent triggering laws; Stallone
+and Falcone (2020), who proposed a method to stochastically replenish catalogs suﬀer-
+ing from STAI, to be used for better operational earthquake forecasting and hazard as-
+sessment, albeit without addressing the eﬀectiveness of the method in this regard; Zhuang
+et al. (2017), who showed that estimating ETAS parameters using a replenished cata-
+log is more stable with respect to cutoﬀmagnitude; Omi et al. (2014), who proposed a
+method to estimate parameters of the ETAS model from incompletely observed after-
+shock sequences, by statistically modelling detection deﬁciency.
+In this article, we thoroughly address the use of small earthquakes for seismic haz-
+ard forecasting. For this, we develop two complementary methods with which long-term
+(ﬁrst method) and short-term (second method) temporal variations of mc can be accounted
+for when calibrating ETAS models and when issuing ETAS-based forecasts. The ﬁrst method
+extends the expectation maximization scheme for ETAS parameter inversion (Veen and
+Schoenberg, 2008) for application to training catalogs with time-varying completeness
+magnitude mc(t). This simultaneously allows the inclusion of historical data in the pa-
+rameter inversion, as well as the inclusion of small magnitude events, which make up a
+large fraction of data and can enable the ability to more clearly illuminate faults. ETAS
+models can hence be trained on a more representative and informative set of data, which
+in some areas facilitates a more appropriate approach to PSHA. With the second method
+proposed in this article, we want to utilize the knowledge about clustering derived us-
+ing the ETAS model to quantitatively estimate the level of completeness of a catalog at
+any given time, and then use this knowledge to minimize the incompleteness-induced bias
+in the ETAS model. We approach this issue by generalizing the notion of mc, moving
+from a binary completeness space (complete versus incomplete) to a continuous-valued
+completeness space by means of a magnitude-dependent detection probability −embrac-
+ing incompleteness instead of avoiding it, as has been proposed previously by Ogata and
+Katsura (2006) and Omi et al. (2014). While the ﬁrst method described in this article
+allows mc(t) as an input to the ETAS parameter calibration, which makes it powerful
+in a long-term context, the second method addresses the additional challenge of estimat-
+ing short-term variations of completeness. To understand their abilities and limitations,
+we subject both methods to rigorous synthetic tests. Then, we apply them to Califor-
+nian earthquake data and interpret the results in light of the ﬁndings of the synthetic
+tests. Using the second approach, we systematically assess how the inclusion of small earth-
+quakes, which may be incompletely detected, aﬀects the performance of earthquake fore-
+casts. We conduct pseudo-prospective 30-day forecasting experiments for California, de-
+signed to answer several questions: Does our new model outperform the current state
+of the art? If so, what is the role of the newly estimated ETAS parameters in this im-
+provement? Similarly, what is the role of newly included small earthquakes in this im-
+provement, and the role of the estimated high-frequency detection incompleteness? How
+do the models perform for diﬀerent target magnitude thresholds?
+The remainder of the paper is structured as follows. Section 2 describes the earth-
+quake catalog that was used in this analysis. The modiﬁed ETAS parameter inversion
+methods are presented in Section 3.1 for time-varying mc, and in Section 3.2 for time-
+varying probabilistic detection incompleteness. Sections 3.3 and 3.4 describe the formu-
+lation of probabilistic detection incompleteness and the algorithm for joint estimation
+of ETAS parameters and detection probability. Section 4 presents synthetic tests for both
+–4–
+
+--- Sayfa 5 ---
+manuscript accepted for publication in JGR: Solid Earth
+methods, and Section 5 presents applications of both methods to the Californian data.
+Section 6 describes pseudo-prospective forecasting experiments used to assess the im-
+pact of the newly acquired information on the forecastability of earthquakes in Califor-
+nia. Finally, in Section 7, we present our conclusions.
+2 Data
+In this article, we use the ANSS Comprehensive Earthquake Catalog (ComCat) pro-
+vided by the U.S. Geological Survey. We adopt the preferred magnitudes as deﬁned in
+ComCat, and use as study region the collection area around the state of California as
+proposed in the RELM testing center (Schorlemmer and Gerstenberger, 2007). We con-
+sider events of magnitude M ≥0.0, with magnitudes rounded into bins of size ∆M =
+0.1. For the major part of the study, the time frame used is January 1, 1970 until De-
+cember 31, 2019. For the analysis of long-term variations in mc, we extend the time frame
+to start on January 1, 1932, when instrumentation was introduced to the Californian seis-
+mic network (Felzer, 2007).
+Whenever ETAS parameters are inverted, we use the ﬁrst ﬁfteen years of data to
+serve as auxiliary data. Thus, the start of the primary catalog is either January 1985,
+or January 1947. Earthquakes in the auxiliary catalog may act as triggering earthquakes
+in the ETAS model, but not as aftershocks.
+To estimate a constant magnitude of completeness of the catalog, we use the method
+described by Mizrahi et al. (2021) with an acceptance threshold value of p = 0.1, which
+yields mc = 3.1 for the time period between 1970 and 2019. This method is adapted
+from Clauset et al. (2009) and jointly estimates mc and the b-value of the Gutenberg-
+Richter law (Gutenberg and Richter, 1944) describing earthquake size distribution. It
+compares the Kolmogorov-Smirnov (KS) distance between the observed cumulative dis-
+tribution function (CDF) and the ﬁtted GR law to KS distances obtained for magnitude
+samples simulated from said GR law. A value of mc is accepted if at least a fraction of
+p = 0.1 of KS distances is larger than the observed one.
+3 Model
+3.1 ETAS parameter inversion for time-varying mc
+Consider an earthquake catalog
+C = {ei = (mi, ti, xi, yi), i ∈{1, . . . , n}}
+(1)
+consisting of events ei of magnitudes mi which occur at times ti and locations (xi, yi).
+Furthermore, consider a time-varying magnitude of completeness mc(t) deﬁned for all
+ti. We say that the catalog is complete if mi ≥mc(ti)∀i.
+The ETAS model describes earthquake rate as
+l(t, x, y) = µ +
+X
+i:ti<t
+g(mi, t −ti, x −xi, y −yi).
+(2)
+That is, the sum of background rate µ and the rate of all aftershocks of previous events
+ei. The aftershock triggering rate g(m, ∆t, ∆x, ∆y) describes the rate of aftershocks trig-
+gered by an event of magnitude m, at a time delay of ∆t and a spatial distance (∆x, ∆y)
+from the triggering event. We here use the deﬁnition
+–5–
+
+--- Sayfa 6 ---
+manuscript accepted for publication in JGR: Solid Earth
+g(m, ∆t, ∆x, ∆y) =
+k0 · ea(m−mref )
+(∆t+c)1+ω
+e
+−∆t
+τ
+·
+ (∆x2 + ∆y2) + d · eγ(m−mref )1+ρ ,
+(3)
+as in Nandan et al. (2017).
+To calibrate the ETAS model, the nine parameters to be optimized are the back-
+ground rate µ and the parameters k0, a, c, ω, τ, d, γ, ρ which parameterize the aftershock
+triggering rate g(m, t, x, y) given in Equation 3. Implicitly, the model assumes that all
+earthquakes with magnitude larger than or equal to mref can trigger aftershocks. We
+build on the expectation maximization (EM) algorithm to estimate the ETAS param-
+eters (Veen and Schoenberg, 2008). In this algorithm, the expected number of background
+events ˆn and the expected number of directly triggered aftershocks ˆli of each event ei
+are estimated in the expectation step (E step), along with the probabilities pij that event
+ej was triggered by event ei, and the probability pind
+j
+that event ej is independent. Fol-
+lowing the E step, the nine parameters are optimized to maximize the complete data log
+likelihood in the maximization step (M step). E and M step are repeated until conver-
+gence of the parameters. The usual formulation of the EM algorithm deﬁnes
+pij =
+gij
+µ + P
+k:tk<tj gkj
+,
+(4)
+pind
+j
+=
+µ
+µ + P
+k:tk<tj gkj
+,
+(5)
+with gkj = g(mk, tj −tk, xj −xk, yj −yk) being the aftershock triggering rate of ek at
+location and time of event ej. For a given target event ej, Equations (4-5) deﬁne pij to
+be proportional to the aftershock occurrence rate gij, and pind
+j
+to be proportional to the
+background rate µ. As an event must be either independent or triggered by a previous
+event, the normalization factor Λj := µ + P
+k:tk<tj gkj in the denominator of Equa-
+tions 4-5 stipulates that pind
+j
++ P
+k:tk<tj pkj = 1. This relies on the assumption that
+all potential triggering earthquakes of ej were observed, that is, all events prior to tj above
+the reference magnitude (minimum considered magnitude), mref were observed. To ful-
+ﬁll this requirement, most applications of the method deﬁne mref to be equal to the con-
+stant value of mc.
+For the case of time-varying mc(t), we deﬁne mref := mini{mc(ti)}, the minimum
+mc(ti) for times ti of events in the complete catalog. This implies that for the times when
+mc(t) > mref the requirement of complete recording of all potential triggers may be
+violated. Events whose magnitudes fall between mref and mc(t) are not part of the com-
+plete catalog and are considered to be unobserved (even though they may have been de-
+tected by the network). Hence, the normalization factor Λj (the denominator of Equa-
+tions 4-5) needs to be adapted to account for the possibility that ej was triggered by an
+unobserved event.
+Consider
+ξ(t) =
+R mc(t)
+mref fGR(m) · G(m) dm
+R ∞
+mc(t) fGR(m) · G(m) dm ,
+(6)
+the ratio between the expected number of events triggered by an unobserved event and
+the expected number of events triggered by an observed event at time t. Here, fGR =
+β·e−β·(m−mref ) is the probability density function of magnitudes according to the GR
+law, and G(m) =
+R ∞
+0
+RR
+R g(m, t, x, y) dx dy dt is the total number of expected aftershocks
+larger than mref of an event of magnitude m. Note that in the calculation of G(m) we
+make the simplifying assumption that the considered region R extends inﬁnitely in all
+–6–
+
+--- Sayfa 7 ---
+manuscript accepted for publication in JGR: Solid Earth
+directions, allowing a facilitated, asymptotically unbiased estimation of ETAS param-
+eters (Schoenberg, 2013). Analogously,
+ζ(t) =
+R mc(t)
+mref fGR(m) dm
+R ∞
+mc(t) fGR(m) dm
+(7)
+is the ratio between the expected fraction of unobserved events and the expected frac-
+tion of observed events at time t. If β > a −ργ, both ξ(t) and ζ(t) are well-deﬁned
+and we have that
+ξ(t) = e−(a−β−ργ)·∆m(t) −1,
+(8)
+ζ(t) = eβ·∆m(t) −1,
+(9)
+where ∆m(t) = mc(t)−mref. Consider the productivity exponent α := a−ρ·γ, which
+describes the exponential relationship between aftershock productivity and magnitude
+of an event. The condition that β is larger than the productivity exponent α is gener-
+ally fulﬁlled in naturally observed catalogs (Helmstetter, 2003). If this were not the case,
+earthquake triggering would be dominated by large events and one would need to intro-
+duce a maximum possible magnitude for both denominators to be ﬁnite (see available
+equations in Sornette and Werner (2005b); Sornette and Werner (2005a)). The normal-
+ization factor Λj consists of the sum of background rate and aftershock rates of all events
+which happened prior to ej. In the case of time-varying mc, besides the possibilities of
+being a background event or being triggered by an observed event, the event ej can also
+be triggered by an unobserved event. We thus generalize Λj by adding to the rate of af-
+tershocks gkj of each observed triggering event ek the expected rate of aftershocks of un-
+observed triggering events at that time, gkj ·ξ(tk). This yields Λj = µ+P
+k:tk<tj gkj ·
+(1 + ξ(tk)) and thus the generalized deﬁnition of pij and pind
+j
+is given by
+pij =
+gij
+µ + P
+k:tk<tj gkj · (1 + ξ(tk)),
+(10)
+pind
+j
+=
+µ
+µ + P
+k:tk<tj gkj · (1 + ξ(tk)).
+(11)
+Note that the probability puj that event ej was triggered by an unobserved event
+is given such that pind
+j
++ puj + P
+k:tk<tj pkj = 1. In the above equations, the special
+case of mc(t) ≡mref is accounted for when ξ(t) ≡0. In this special case, ˆn and ˆli are
+obtained by summing independence probabilities (ˆn = P
+j pind
+j
+) and triggering prob-
+abilities (ˆli = P
+j pij), respectively. In the generalized case however, ˆn and ˆli are the
+estimated number of background events and aftershocks of event ei above mref, which
+includes unobserved events. Similarly to inﬂating the triggering power, we hence inﬂate
+the observed event numbers to account for unobserved events. Whenever an event is ob-
+served at time tj, we expect that ζ(tj) events occurred under similar circumstances (with
+same independence and triggering probabilities), but were not observed. This yields
+ˆn =
+X
+j
+pind
+j
+· (1 + ζ(tj)),
+(12)
+ˆli =
+X
+j
+pij · (1 + ζ(tj)).
+(13)
+–7–
+
+--- Sayfa 8 ---
+manuscript accepted for publication in JGR: Solid Earth
+With these adapted deﬁnitions of pij, pind
+j
+, ˆn and ˆli (Equations 10 - 13), ETAS param-
+eters can be inverted using the procedure described by Veen and Schoenberg (2008).
+3.2 ETAS parameter inversion for time-varying probabilistic detection
+To overcome the binary view of completeness which forces us to disregard earth-
+quakes which were detected but happen to fall between mref and mc(t), we can take the
+generalization of the EM algorithm for ETAS parameter inversion one step further by
+introducing a time and magnitude-dependent probability of detection,
+f : R≥mref × R −→[0, 1]
+(m, t) 7→p.
+To be able to account for such a probabilistic concept of catalog completeness in the ETAS
+inversion algorithm, one needs to generalize ξ(t) and ζ(t) (Equations 6 and 7). In con-
+trast to before, the magnitude of an event does not determine whether or not the event
+has been detected. We therefore adapt the bounds of integration in numerator and de-
+nominator such that all events above magnitude mref are considered. To obtain the ex-
+pected number of earthquakes triggered by observed and unobserved events, the inte-
+grands are multiplied by the probability of the triggering events to be observed, f(m, t),
+or unobserved, (1−f(m, t)), respectively. The generalized formulations of ξ(t) and ζ(t)
+then read
+ξ(t) =
+R ∞
+mref (1 −f(m, t)) · fGR(m) · G(m) dm
+R ∞
+mref f(m, t) · fGR(m) · G(m) dm
+,
+(14)
+and
+ζ(t) =
+R ∞
+mref (1 −f(m, t)) · fGR(m) dm
+R ∞
+mref f(m, t) · fGR(m) dm
+.
+(15)
+For compatible choices of f(m, t), fGR(m), G(m), we ﬁnd that ξ(t) and ζ(t) are well-
+deﬁned. Consider for instance the special case of binary detection, where f(m, t) is de-
+ﬁned via the Heaviside step function H as fbin(m, t) = H(m −mc(t)), which is equal
+to 1 if m ≥mc(t) and 0 otherwise. This is the case discussed in the previous section,
+for which we have well-deﬁnedness if β > a −ργ.
+The reference magnitude mref is a model constant. Smaller values of mref allow
+the modeller to use a larger fraction of the observed catalog, which can be especially use-
+ful in regions with less seismic activity.
+Note that both generalizations of the ETAS inversion algorithm (for time-varying
+completeness or for time-varying probabilistic detection) can without further modiﬁca-
+tion be applied when mc or detection probability vary with space. The formulation is
+based on the assumption that the behavior of observed events is locally representative
+(in space and/or time) of the behavior of unobserved events.
+3.3 Rate-dependent probabilistic detection incompleteness
+In this section we present our approach to deﬁne f(m, t), where the temporal com-
+ponent is purely driven by the current rate of events. Note that this means we only cap-
+ture changes in detection due to changes in short-term circumstances, and neglect long-
+term changes due to network updates. We make the following simplifying assumptions.
+–8–
+
+--- Sayfa 9 ---
+manuscript accepted for publication in JGR: Solid Earth
+• Any earthquake will obstruct the entire seismic network from detecting smaller
+earthquakes for a duration of tR (recovery time of the network).
+• Magnitudes of events that are simultaneously blocking the network are distributed
+according to the time-invariant Gutenberg-Richter law which also describes the
+magnitude distribution of the full catalog (Gutenberg and Richter, 1944).
+De Arcangelis et al. (2018) found that short-term aftershock incompleteness can be well
+explained in terms of overlapping seismic records, while instrumental coverage of an area
+plays a subsidiary role. Nevertheless, assuming tR to be independent of the magnitude
+of the event, and independent of the spatial distance between the event and the locations
+of interest, is certainly a major simpliﬁcation which could be reﬁned in subsequent stud-
+ies.
+Conveniently, the ETAS model provides a simple way of calculating the current rate
+of events in the region R as
+λ(t) =
+ZZ
+R
+l(t, x, y) dx dy =
+ZZ
+R
+µ +
+X
+i:ti<t
+g(mi, t −ti, x −xi, y −yi) dx dy.
+(16)
+For the remainder of this paper, we will refer to the current rate of events in the region,
+λ(t), simply as the current rate of events. The probability f(m, t) of an earthquake to
+be detected is then given by the probability of it being the largest of all the earthquakes
+that are currently blocking the network. Consider
+f(m, t) =
+
+1 −e−β·(m−mref )tR·λ(t)
+.
+(17)
+Here, tR·λ(t) is an approximation of the expected number of events blocking the net-
+work at time t, and the term 1−e−β·(m−mref ) is the probability of any given earthquake’s
+magnitude falling between mref and m, where β = b·ln 10 is the exponent in the GR
+law with basis e. Thus, f(m, t) is the probability that in the set of tR·λ(t) events cur-
+rently blocking the network, all of them have a magnitude of less than m, which is the
+condition for an event of magnitude m to be detected. Because the time-dependence of
+f(m, t) is solely controlled by the time-dependence of λ, we here use the terms f(m, t)
+and f(m, λ) interchangeably.
+Plugging this deﬁnition of f(m, t) into Equations 14 and 15, and setting κ := −a−ργ
+β
+,
+we obtain
+ξ(t) =
+1
+(κ + 1) · B(κ + 1, tR · λ(t) + 1) −1,
+(18)
+ζ(t) = tR · λ(t),
+(19)
+so long as β > a −ργ, where B is the Beta function. A positive background rate µ >
+0 ensures λ(t) > 0
+∀t. Expressions analogous to (18) and (19) hold when alternative
+exponents are chosen instead of tR · λ in the deﬁnition of f(m, λ) (Equation 17).
+The network recovery time tR and the current event rate λ(t) at the times ti of all
+earthquakes ei need to be estimated from the data.
+–9–
+
+--- Sayfa 10 ---
+manuscript accepted for publication in JGR: Solid Earth
+3.4 Estimating probabilistic epidemic-type aftershock incompleteness
+(PETAI)
+3.4.1
+Estimation of (tR, β) when λi are known
+The function f(m, t) brings with it two parameters, tR and β, which need to be
+estimated in addition to the ETAS parameters. We here describe how tR and β can be
+jointly estimated using a maximum likelihood approach for the case when current event
+rates λi = λ(ti) are known. In reality, the λi have to be estimated themselves. This is
+described in Section 3.4.2.
+In the case when the true ETAS parameters, as well as the current event rates λ(ti)
+for all events ei in the primary catalog {e1, . . . , en}, are known, the GR-law exponent
+β and the network recovery time tR can be estimated by optimizing the log-likelihood
+LL of observing the catalog at hand.
+LL =
+n
+X
+i=1
+(ln (νi + 1) −ln N)
++
+n
+X
+i=1
+
+νi · ln (1 −e−β·(mi−mref ))
+
+(20)
++
+n
+X
+i=1
+(ln β −β · (mi −mref)) ,
+where N = Pn
+i=1(νi+1), and νi = tR·λ(ti) is an approximation of the expected num-
+ber of events blocking the network at time ti. The expression for LL given above is valid
+in general for alternative exponents νi in the deﬁnition of detection probability (Equa-
+tion 17). LL is derived from the likelihood Li of an event to have magnitude mi and to
+be observed during a current event rate of λi = λ(ti), and the current event rate be-
+ing λi,
+Li = femp(λi) · fGR(mi) · fdet(mi, λi),
+(21)
+where fGR(m) is the probability density function of magnitudes given by the GR law,
+fdet(m, λ) is the detection probability as deﬁned in Equation 17, and
+femp(λ) =
+(
+tR·λ+1
+P
+i(tR·λi+1),
+if λ ∈{λ1, . . . , λn}
+0,
+otherwise
+(22)
+is the empirical density function of event rates. femp(λ) is deﬁned such that
+n
+X
+i=1
+femp(λi) = 1
+(23)
+and
+femp(λi) ∝
+1
+R ∞
+mref fGR(m) · fdet(m, λi) dm = λi · tR + 1,
+∀i = 1, . . . , n.
+(24)
+Without the latter condition (Equation 24), we would wrongly assume that the values
+λ(ti) were uniformly drawn from the true distribution of event rates. However, in our
+sample of λi, large values of λ are underrepresented, because during times t when λ(t)
+is high, events are less likely to be detected, and those times and their corresponding rates
+are thus less likely to be part of our sample. Deﬁning femp(λi) to be inversely propor-
+tional to the fraction of events that are observed when the current rate is λi corrects for
+this under-representation. This yields
+–10–
+
+--- Sayfa 11 ---
+manuscript accepted for publication in JGR: Solid Earth
+Li =
+νi + 1
+P
+j(νj + 1) · β · e−β·(mi−mref ) ·
+
+1 −e−β·(mi−mref )νi
+,
+(25)
+which explains the term for LL (Equation 20). Figure S1 shows the log likelihood of a
+synthetic test catalog for diﬀerent values of tR and β when λi are known. The result-
+ing estimators match the data-generating parameters.
+3.4.2
+Estimation of λi when ETAS parameters and (tR, β) are known
+On one hand, the λi depend on the ETAS parameters (see Equation 16). On the
+other hand, the sum of aftershocks of previous earthquakes in the deﬁnition of λ(t) (Equa-
+tion 16) does not account for aftershocks of events that were not detected. As in the ETAS
+parameter inversion, to account for aftershocks of undetected events in the calculation
+of λ(t), we inﬂate the triggering power of each event ei by a factor of 1+ξ(ti) and de-
+ﬁne
+λ(t) =
+ZZ
+R
+µ dx dy +
+X
+i:ti<t
+(1 + ξ(ti)) ·
+ZZ
+R
+g(mi, t −ti, x −xi, y −yi) dx dy.
+(26)
+3.4.3
+Estimation of λi and (tR, β) when ETAS parameters are known
+ξ(t) however requires knowledge of (tR, β) (see Equation 18). This implies that even
+when ETAS parameters are ﬁxed, an additional, lower-level circular dependency dictates
+the relationship between (λi)i=1,...,n and (tR, β).
+To fully estimate the high-frequency probabilistic detection incompleteness, given
+ﬁxed ETAS parameters, we recursively re-estimate (λi)i=1,...,n (see Section 3.4.2) and
+(tR, β) (see Section 3.4.1), until (tR, β) meets a convergence criterion, starting with an
+informed or random initial guess for (tR, β).
+3.5 PETAI inversion algorithm
+The overarching joint inversion of ETAS parameters (E) and high-frequency de-
+tection incompleteness (I = (λi, tR, β)) starts with estimating ETAS parameters in the
+usual way, i.e. using the algorithm described in Section 3.1, with a time-independent com-
+pleteness magnitude mc(= mref) above which all events are detected. It then recursively
+re-estimates I (see Section 3.4.3) and E (see Section 3.2) until convergence of the ETAS
+parameters. A simpliﬁed illustration of the inversion algorithm is shown in Figure 1. Start-
+ing with the initial ETAS parameters obtained assuming constant mc, event rates can
+be calculated at each point in time. Given these event rates, the detection probability
+function is calibrated, which then provides insight into the temporal evolution of cat-
+alog (in-)completeness. ETAS parameters can then be re-estimated, now also using data
+below mc, by accounting for the estimated incompleteness. With this new set of ETAS
+parameters, event rates can be re-calculated, upon which detection probability is re-calibrated,
+and so on, until all convergence criteria are satisﬁed. Figure 2 shows the detailed ﬂow
+diagram of the PETAI inversion algorithm.
+4 Synthetic tests
+4.1 Synthetic Test for ETAS model with long-term variation of mc (ST1)
+To test the ETAS parameter inversion for time-varying mc, we generate 400 com-
+plete synthetic catalogs using ETAS and then artiﬁcially impose a given mc(t) on the
+–11–
+
+--- Sayfa 12 ---
+manuscript accepted for publication in JGR: Solid Earth
+catalogs. Assuming mc(t) to be known, we use the method described in Section 3.1 to
+infer the parameters used in the simulation.
+We estimate mc(t) based on the Californian catalog described in Section 2 with a
+time horizon from 1932 to 2019. Fixing the b-value we had estimated for the main cat-
+alog (1970 - 2019, M ≥3.1, b = 1.01±0.006, see Mizrahi et al. (2021) for the method
+used), we estimate mc for successive 10 year periods starting in 1932. The last period
+then comprises only 8 years of data. Estimation of mc is analogous to the main cata-
+log, using the method of Mizrahi et al. (2021) with an acceptance threshold of p = 0.1,
+but keeping b = 1.01 ﬁxed.
+This yields
+mc(t) =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.3
+for t between 1932 and 1941,
+3.9
+for t between 1942 and 1951,
+4.3
+for t between 1952 and 1961,
+3.4
+for t between 1962 and 1971,
+3.1
+for t between 1972 and 1981,
+3.3
+for t between 1982 and 1991,
+2.4
+for t between 1992 and 2001,
+2.8
+for t between 2002 and 2011,
+3.6
+for t between 2012 and 2019.
+(27)
+The large increase in mc for the years 2012 to 2019 is due to the Ridgecrest events
+in 2019. Although the period aﬀected by aftershock incompleteness only makes up a small
+fraction of the 8 year period, our method with an acceptance threshold of p = 0.1 yields
+a conservative estimate of mc. To avoid such an eﬀect, one could use shorter than 10 year
+periods, or use diﬀerent methods to estimate time-varying mc.
+Note that our method to invert ETAS parameters for time-varying mc (Section 3.1)
+accepts mc(t) as an input and works independently of how this mc(t) was obtained. We
+here want to keep the focus on the parameter inversion and thus choose the described
+approach to estimate mc(t) due to its simplicity.
+To mimic a realistic scenario, we simulate the synthetic catalogs using parameters
+obtained after applying ETAS parameter inversion for time-varying mc on the Califor-
+nia data, with two manual corrections.
+The ﬁrst correction is done because it has been shown that certain assumptions in
+the ETAS model such as a spatially isotropic aftershock distribution or a temporally sta-
+tionary background rate, as well as data incompleteness can lead to biased estimations
+of the productivity exponent (Hainzl et al., 2008; Hainzl et al., 2013; Seif et al., 2017).
+This bias can lead to a lack of clustering when catalogs are simulated. We thus use an
+artiﬁcially increased productivity exponent α′ for our simulations as follows.
+Consider the branching ratio η, deﬁned as the expected number of direct aftershocks
+(larger than mref) of any earthquake larger than mref,
+η =
+Z ∞
+mref
+fGR(m) · G(m) dm.
+(28)
+It follows easily that
+η = β · k0 · π · d−ρ · τ −ω · ec/τ · Γ(−ω, c/τ)
+ρ · (β −(a −ργ))
+,
+(29)
+–12–
+
+--- Sayfa 13 ---
+manuscript accepted for publication in JGR: Solid Earth
+if β > a −ρ · γ, where Γ(s, x) =
+R ∞
+x ts−1e−t dt is the upper incomplete gamma func-
+tion.
+We ﬁx α′ = 2.0 (based on Helmstetter (2003); Z. Guo and Ogata (1997)) and from
+this derive new values for a and k0, keeping the branching ratio η constant. In partic-
+ular, we deﬁne
+a′ := α′ + ρ · γ,
+(30)
+k0
+′ := k0 · β −(a′ −ρ · γ)
+β −(a −ρ · γ) .
+(31)
+It can be easily shown that in this way, the branching ratio η remains the same as long
+as β −(a −ρ · γ) > 0.
+Secondly, we reduce the background rate µ. In this way, the size of the simulated
+catalogs is reduced such that inversion requires a reasonable amount of computational
+power, even for large regions and time horizons. The ﬁnal parameters used for the sim-
+ulation of the catalogs can be found in Figure 3 (black crosses).
+400 catalogs of events of magnitude M ≥2.4 = mref are simulated as described
+in Text S1 for the time period of January 1832 to December 2019 in a square of 40° lat
+× 40° long. Because of missing long-term aftershocks in the beginning of the simulated
+catalogs, we allocate a burn period of 100 years in the beginning of the simulated pe-
+riod and are left with catalogs from 1932 to 2019. The starting year of our synthetic cat-
+alogs coincides with the introduction of instrumentation in California (Felzer, 2007). This
+allows us to impose the mc(t) history observed in California on the synthetic catalogs
+by discarding all events ei for which mi < mc(ti).
+We apply the ETAS inversion for time-varying mc with the here-obtained mc(t)
+(see Equation 27) to the synthetic catalogs.
+4.2 Synthetic test for PETAI (ST2)
+To test the PETAI inversion algorithm, 500 synthetic catalogs are created as fol-
+lows. We use the parameters obtained after applying the PETAI inversion algorithm to
+the California data (1970 to 2019) with mref = 2.5. The value of mref is chosen to achieve
+a balance between the amount of data available for the inversion and the computational
+power required to process such an amount of data. For the reasons described in Section
+4.1, we reduce the background rate µ and modify the parameters to obtain a corrected
+productivity exponent as described in Equations 30 - 31. The ﬁnal parameters used for
+the simulation of the catalogs can be found in Figure 4(d) - (l).
+Using these parameters, we simulate as described in Text S1, 500 synthetic cata-
+logs that resemble the Californian catalog, for the period between 1850 and 2020 in a
+square of 40° lat × 40° long. As in the previous case, because of missing long-term af-
+tershocks in the beginning of the simulated catalogs, we discard the ﬁrst 100 years of data
+and are left with catalogs from 1950 to 2020. For each of these catalogs and given the
+ETAS parameters used for simulation, we calculate the current event rate at the time
+of each event in the catalogs (Equation 16). As the current event rate is to a large ex-
+tent driven by aftershock rates of earlier events, we expect overestimation of detection
+probabilities, as well as overestimation of independence probabilities, during the begin-
+ning of the time period (Wang et al., 2010; Schoenberg et al., 2010; Nandan et al., 2019a).
+For this reason, we allocate another 20 years of burn period, leaving us with catalogs start-
+ing in 1970.
+–13–
+
+--- Sayfa 14 ---
+manuscript accepted for publication in JGR: Solid Earth
+Each of the 500 catalogs are then artiﬁcially made incomplete as follows. Using the
+detection probability function given by Equation 17, and the b-value of 1.03 estimated
+from the Californian catalog using PETAI inversion, we calculate for each event its prob-
+ability of being detected. According to this probability we randomly decide for each event
+whether it has been detected or not. The subset of all events that were detected is then
+used as a test catalog. This is done assuming diﬀerent values for tR of 1.97 (as estimated
+from the Californian catalog), 5, 10, 30, 60, and 180 minutes, yielding six variations of
+the test catalog per originally simulated catalog, which makes a total of 3000 test cat-
+alogs. The value of tR greatly inﬂuences the fraction of undetected events in the result-
+ing catalog, and we chose to investigate diﬀerent values of tR to ensure there are suﬃ-
+ciently many test catalogs with a fraction of undetected events similar to the fraction
+of estimated undetected events inferred for California. This estimated number of unde-
+tected events is obtained by summing ζ(ti), the expected number of unobserved events
+per observed event, which is estimated as a component of the PETAI inversion, over all
+occurrence times ti of events in the primary catalog.
+4.3 Results for ST1
+Figure 3 shows the ETAS parameters used in the simulation of the synthetic cat-
+alogs, and the median, distribution, and 95% conﬁdence intervals of the parameters in-
+verted from the synthetic catalogs. The parameters estimated from the synthetic cat-
+alogs lie reasonably close to the data-generating parameters. In particular, a, c, ω, τ and
+γ are accurately inverted, while µ, k0, d and ρ tend to be overestimated. The reason for
+the overestimation of ρ stems from a computational simpliﬁcation made during inver-
+sion. In order to avoid extremely large triggering probability matrices, we only consider
+pairs of source and target events with a spatial distance of less than 50 source lengths,
+where one source length is deﬁned using the magnitude to length scaling relations de-
+ﬁned in Wells and Coppersmith (1994). This upper limit for distances between event pairs
+translates to an exaggeration of the estimated values of ρ. We conﬁrmed that as we grad-
+ually relax the cutoﬀcriterion, the estimated value of ρ moves closer to the true values
+used for generating the synthetic catalog. The regularizer of the spatial kernel, d, is pos-
+itively correlated with ρ, hence an overestimation of the latter translates to an overes-
+timation of the former. The overestimation of µ can also be explained, considering that
+distant aftershocks have a higher tendency to appear independent due to the artiﬁcially
+imposed cutoﬀcriterion.
+4.4 Results for ST2
+4.4.1
+Inverted number of undetected events
+Figure 4 (a) shows the series of events of one example synthetic test catalog over
+the primary time period in blue, with the undetected synthetic events marked in black.
+The number of undetected events is 1282, which makes up 6.25% of the original synthetic
+catalog. Figure 4 (b) shows cumulative number of undetected synthetic events over time
+in black, compared to the cumulative inferred number of undetected events in blue for
+the same example catalog. Overall, it is estimated as a result of applying the PETAI in-
+version that 1068.88 events were undetected in the example catalog. While this under-
+estimates the true number of 1282 undetected events, the major part of events can be
+reconstructed, with accurate timing.
+Figure 4 (c) shows inferred versus actual number of undetected events for 3000 test
+catalogs assuming diﬀerent detection eﬃciencies. The estimated fraction of undetected
+events is distributed around the actual fraction of undetected events, and the median
+estimated fraction matches well the median actual fraction, with a slight tendency to-
+wards underestimation.
+–14–
+
+--- Sayfa 15 ---
+manuscript accepted for publication in JGR: Solid Earth
+4.4.2
+Accuracy of inverted parameters
+Figure 4 (d) - (n) shows the ETAS parameters and (tR, β) that were used in the
+simulation of the synthetic catalogs, and the parameters inverted from these synthetic
+catalogs. In general, the inverted parameters correspond well to the parameters used in
+the simulation, although some of the estimates are slightly biased. The parameters c and
+ω, both describing the temporal decay of aftershock rate, show a trend of increasing bias
+with increasing tR, that is, with increasing incompleteness. For the other parameters,
+no clear dependency of the bias on tR is recognizable. The estimate of c matches the true
+value almost perfectly for tR = 1.97 minutes, but starts being overestimated for larger
+values of tR above 30 minutes. On the other hand, ω shows an increasing tendency of
+being underestimated with increasing values of tR. Earlier aftershocks have a larger ten-
+dency to be missing due to STAI, which leads to a seemingly slower decay of aftershock
+rate in time. As the PETAI algorithm has a tendency to underestimate STAI (Figure
+4 (c)), and this tendency increases with increasing tR, this translates into an increasing
+negative bias in the inferred values of ω.
+Qualitatively, the tendencies to over- or underestimate the remaining parameters
+are identical with the tendencies observed in ST1 (Section 4.3). It is therefore plausi-
+ble that these tendencies are consequences of a ﬁnite time horizon and ﬁnite spatial win-
+dow used in the simulation of the synthetics, rather than being artifacts of the PETAI
+inversion algorithm.
+Finally, we observe a tendency to underestimate tR, which means that detection
+probabilities tend to be overestimated. This is in line with our previous observation that
+the fraction of undetected events tends to be slightly underestimated, suggesting the PETAI
+inversion to be slightly conservative.
+5 Application to California
+We calculate ETAS parameters, β and tR (if applicable) using diﬀerent inversion
+algorithms to Californian data. Additionally, we provide the resulting values for produc-
+tivity exponent α = a −ργ and branching ratio η (see Equation 29).
+First, we apply usual inversion method as described in Section 3.1 with a constant
+completeness magnitude of mc ≡3.1 to the main catalog (1970 to 2019). Then, we in-
+vert the parameters by accounting for long-term time-variation of completeness (Equa-
+tion 27). In this case, the extended catalog from 1932 to 2019 can be used with a ref-
+erence magnitude of mref = 2.4. Finally, we apply PETAI inversion to the main cat-
+alog (1970 to 2019) with a reference magnitude of mref = 2.5. Note that the estima-
+tion of β is independent of the ETAS parameter estimates for the ﬁrst two applications,
+but not in the case of PETAI inversion (see Section 3.4).
+To allow a better comparison between parameters inverted using diﬀerent meth-
+ods when mref varies, we translate the parameters to a reference magnitude of mref =
+3.1 as follows. With the exception of µ, k0 and d, all parameters are mref-agnostic, and
+the three exceptions can easily be adjusted. Denote by ∆m the diﬀerence between new
+and original reference magnitude, ∆m = m′
+ref −mref. Then,
+d′ := d · e∆m·γ
+(32)
+ensures that
+d · eγ·(m−mref ) = d′ · eγ·(m−m′
+ref ).
+(33)
+Stipulating that the branching ratio η (Equation 29) remains unchanged, it follows that
+–15–
+
+--- Sayfa 16 ---
+manuscript accepted for publication in JGR: Solid Earth
+k′
+0 := k0 · e∆m·γ·ρ.
+(34)
+The adaptation of the background rate µ follows trivially from the GR law,
+µ′ = µ · e−β·∆m.
+(35)
+5.1 Interpretation of inverted parameters
+Table 1 shows the estimated values of ETAS parameters, β, and tR (if applicable)
+obtained using diﬀerent inversion algorithms to Californian data. Additionally, the re-
+sulting values for the productivity exponent α = a−ργ and branching ratio η (see Equa-
+tion 29) are provided. The ﬁrst, second, and fourth column show the parameters obtained
+from applying the method with mc ≡3.1, when using long-term-variations of mc, and
+when using PETAI, respectively. Columns three and ﬁve contain the parameters of columns
+two and four after having been transformed to a reference magnitude of mref = 3.1.
+Overall, the inverted parameters are roughly consistent among the three algorithms.
+Although there are slight diﬀerences between the estimated parameters, they can plau-
+sibly be attributed to diﬀerent input datasets, which vary for the three algorithms in ei-
+ther time-span or magnitude range. In the following, we present some speculative ex-
+planations of the observed diﬀerences.
+We ﬁnd that the estimate of τ obtained from the ETAS model calibrated on the
+extended catalog (1932 to 2019) with the long-term time variation of mc is smaller than
+in the other two cases, to an extent that the uncertainties obtained in the synthetic tests
+cannot explain this decrease. This decrease despite the use of a catalog spanning a longer
+duration compared to the other two cases, shows that τ may actually better reﬂect the
+long-term behavior of earthquake interaction, rather than being determined by the ﬁ-
+nite duration of the catalog. Note that if the temporal ﬁniteness of the catalog was the
+dominant factor in the determination of τ, one would expect an increase of τ with in-
+creasing time spanned by the catalog. Furthermore, the less pronounced decrease of τ
+in case of the PETAI inversion speaks against the possibility that the decrease is caused
+by inclusion of lower magnitude earthquakes revealing previously unseen earthquake in-
+teractions.
+A somewhat counter-intuitive observation is the increase of c for both new inver-
+sion techniques. For the case of long-term variation of mc, in particular, c shows a sig-
+niﬁcant increase considering the expected uncertainties. The parameter c has been in-
+terpreted to reﬂect aftershock incompleteness (Kagan, 2004; Lolli and Gasperini, 2006;
+Hainzl, 2016a) and would thus be expected to decrease when this eﬀect is accounted for
+by the model (Seif et al., 2017). The observed higher value of c even after accounting
+for STAI thus requires a diﬀerent interpretation of c. Narteau et al. (2009) found a de-
+pendency of c on faulting style, and brought the parameter in relation with diﬀerential
+stress and the intensity of stress re-distribution. Another possible interpretation provided
+by Lippiello et al. (2007) is based on the dynamical scaling hypothesis in which time dif-
+ferences relate to magnitude diﬀerences. Shcherbakov et al. (2004) proposed a general-
+ized Omori law which incorporates three empirical scaling laws (Gutenberg and Richter,
+1944, B˚ath, 1965, Utsu, 1961) with a dependence of c on the cutoﬀmagnitude which can
+qualitatively explain our observations: The value inverted for c is highest in the case of
+mref = 2.4, and lowest for mref = 3.1. Overall, one should be careful to not over-interpret
+this estimate of c. After all, c is overestimated for large values of tR in the PETAI syn-
+thetic test and hence an observed increase in c might be a consequence of complex in-
+terdependencies of all parameters involved.
+While the branching ratio η does not substantially vary with the diﬀerent inver-
+sion methods, we observe a slightly increased productivity exponent for the PETAI in-
+–16–
+
+--- Sayfa 17 ---
+manuscript accepted for publication in JGR: Solid Earth
+version. Although the increase lies within expected uncertainty, such an increase is ex-
+pected given the results of Seif et al. (2017), with the extent of the observed increase be-
+ing in line with their estimated extent of underestimation for the productivity exponent.
+The background rate µ shows a signiﬁcant increase when a longer time horizon is
+considered, and decreases signiﬁcantly when STAI is accounted for. As µ is clearly over-
+estimated in the synthetic test with long-term variation of mc, and only slightly over-
+estimated in the case of PETAI, we may suspect that the increased value for µ in the
+ﬁrst case is an artifact of the inversion method, while the decrease in background rate
+with PETAI could suggest that including smaller magnitude events in our model by ac-
+counting for incompleteness reveals previously hidden earthquake interactions, result-
+ing in a lower µ.
+The parameter γ, which describes the exponential relationship between earthquake
+magnitude and the distance to the event at which the aftershock rate starts to decrease
+faster, is signiﬁcantly increased in the case of long-term variation of mc. Slight overes-
+timation is expected based on the synthetic tests, but not to this extent.
+At the same time, ρ increases for both new inversion techniques. Again, overesti-
+mation of ρ is expected given the results of the synthetic tests and the observed values
+might thus be artifacts of the algorithms applied. As the problem of the ﬁnite spatial
+region applies in the same way to standard ETAS as well as the other two methods, this
+is unlikely to be the cause of the diﬀerence in parameter estimates.
+The value of β shows an increase from 2.33 to 2.37, which translates to a b-value
+increase from 1.01 to 1.03, when STAI is accounted for in the PETAI inversion. This is
+expected due to the underestimated number of small events caused by STAI.
+5.2 Incompleteness insights through PETAI
+In addition to a new set of estimated ETAS parameters, applying the PETAI in-
+version to the Californian catalog produces further interesting outputs. Similarly to the
+case of the synthetic catalog, Figure 5 (a) shows the estimated cumulative number of un-
+detected events over time. As expected, the increase is predominantly step-wise, caused
+by short, incomplete periods during aftershock sequences, and long, complete periods
+in-between. While the total expected number of undetected events is at 5041.74, the ex-
+trapolated number obtained from a GR law ﬁtted on M ≥3.1 events is only 88.91. This
+estimate of the number of unobserved events diﬀers from the PETAI estimate in that
+it assumes perfect detection above M3.1. Although the true number of undetected events
+can never be known, the synthetic test suggests that the PETAI result is reliable and
+even slightly conservative, and thus the GR law extrapolation would be a severe under-
+estimation of the true number of undetected events.
+The magnitude-dependent detection probability evolution is illustrated in Figure
+5 (b). In around 84% of event times ti, events of magnitude M ≥4 are expected to be
+detected with a probability of 99.9% or more. Similarly, in 82% of event times ti, M ≥
+3 events are expected to be detected with a probability of 99% or more. Spikes of incom-
+pleteness during large sequences lead to detection probabilities of less than 50% for smaller
+events, in the most extreme case for events of magnitude M ≤3.47.
+As expected, periods of elevated incompleteness coincide with the periods of rapid
+increase in undetected events shown in (a). The last step in (a), which corresponds to
+the 2019 Ridgecrest sequence, is extraordinarily large compared to all previous steps. This
+is most likely explained by the fact that the sequence was better recorded than compa-
+rable sequences in previous years. When the detection capability of the seismic network
+improves, the recovery time tR becomes shorter. Because we have assumed tR to be sta-
+tionary for simplicity, a larger number of recorded events will lead to a smaller estimated
+–17–
+
+--- Sayfa 18 ---
+manuscript accepted for publication in JGR: Solid Earth
+detection probability, which in turn leads to larger numbers of expected undetected events.
+In future versions of the model, to avoid such artifacts, it would be advisable to com-
+bine the possibility of including long-term changes in completeness (as in the model de-
+scribed in Section 3.1) with rate-dependent aftershock incompleteness by means of a non-
+stationary tR.
+Figure 5 (c) - (g) shows excerpts of Figure 5 (b) for the 1989 M6.9 Loma Prieta,
+the 1992 M6.1 Joshua Tree and 7.3 Landers, the 1994 M6.7 Northridge, the 1999 M7.1
+Hector Mine, and the 2019 M6.4 and 7.1 Ridgecrest events, in comparison to the mc(t)
+estimate given by the formulation of Helmstetter et al. (2006) which was provided for
+Southern California. While their deﬁnition is not probabilistic, we observe that their mc
+5 minutes after the mainshock lies between 90% and 99% detection according to PETAI.
+The shape of the recovery from incompleteness does not fully coincide for the two meth-
+ods, with generally slower recovery in the case of PETAI for the shown excerpts. Helm-
+stetter et al. (2006) use a simpler formulation, and do not provide arguments for their
+speciﬁc choice of parameterization of mc(t). On the other hand, the parametric descrip-
+tion of the magnitude of 50% detection by Ogata and Katsura (2006), presented for the
+example of the 2003 Miyagi-Ken-Oki earthquake, takes a shape similar to the one ob-
+tained through PETAI, although it is not quantitatively comparable to the case of Cal-
+ifornia.
+The range of observed states of detection eﬃciency during the 2019 Ridgecrest se-
+quence is visualized in Figure 5 (h). Prior to the large events, detection is almost per-
+fect for all magnitudes. After the M6.4 event, detection is weakened and recovers with
+time, until the M7.1 mainshock, when it is again weakened. Around 15 minutes after the
+earthquake, events of magnitude below 3.0 still have almost no chance to be detected,
+with M3.5 events having roughly a 50% chance to be detected. After three hours, de-
+tection has already clearly improved, although M2.5 events are still almost surely not
+detected. After six days, the detection probability function almost corresponds to the
+prefect detection state, which was in place prior to the main events.
+5.3 Comments on computational time
+There are two aspects to consider when discussing the computational time of the
+parameter inversion techniques presented here. On one hand, the increased complexity
+of the algorithms plays an important role. In particular, the PETAI inversion comprises
+multiple loops of ETAS and incompleteness estimation. Although convergence was usu-
+ally reached after 4 iterations, this still implies a minimum factor of 4 in terms of com-
+putation time which is only required for ETAS inversion, on top of which comes the time
+needed for the estimation of detection parameters and event rates. The second factor,
+which contributes even more to an increase of computation time, is the increased size
+of the catalog which is available to be used. For our application to Californian data, the
+number of events used in the PETAI inversion increases by a factor of 3.78 because the
+minimum considered magnitude is reduced from 3.1 to 2.5. The leads the number of pairs
+of potentially related events to increase from 7.3 million to 47.1 million. Note that these
+numbers are obtained after imposing the 50 source length cutoﬀcriterion described in
+4.3. While this increase in the number of potentially related event pairs causes a sub-
+stantial increase in run time, educated initial guesses for ETAS parameter inversions can
+substantially reduce run time without aﬀecting the results. Our Python 3.8 implemen-
+tation of the PETAI inversion, run with a single core (Intel Xeon E5-2697v2) of the Eu-
+ler high-performance computing (HPC) cluster at ETH Zurich, took 23 hours. Roughly
+20% of this time was spent on the optimization of event rates and detection parameters,
+and 80% on the optimization of ETAS parameters.
+In contrast to the PETAI inversion, the run time of the ETAS parameter inversion
+with time-varying mc is barely aﬀected by model complexity. During synthetic exper-
+–18–
+
+--- Sayfa 19 ---
+manuscript accepted for publication in JGR: Solid Earth
+iments, we found the run time to be comparable to the run time of the usual ETAS in-
+version when the number pairs of potentially related events was similar.
+6 Pseudo-prospective forecasting experiments
+To better understand if and how the PETAI model can improve earthquake fore-
+casts, we conduct pseudo-prospective forecasting experiments. Note that as these exper-
+iments are computationally expensive, we conduct them for the PETAI method only. As
+most aftershocks occur soon after their triggering event, accounting for STAI in ETAS
+simulations seems promising for forecasting. The parameter inversion for long-term vari-
+ations of mc is mainly intended as a tool to obtain ETAS parameters in regions where
+data is sparse and a model inversion would not be possible otherwise.
+6.1 Competing models
+We compare ﬁve models.
+1. The base ETAS model assumes perfect detection above a constant mc = 3.1 and
+is used as the null model.
+2. PETAI, the alternative model, has two modiﬁcations to the null model. First, it
+uses improved ETAS parameter estimates that were obtained in the PETAI in-
+version with a reference magnitude mref of 2.5. Second, magnitude M ≥2.5 earth-
+quakes are allowed to trigger and be triggered. For this, the events in the train-
+ing catalog, which act as triggering earthquakes in the simulation, have their trig-
+gering capability inﬂated by 1 + ξ(t), as estimated in the PETAI inversion.
+Two intermediate models are assessed to dissect the eﬀect of the two modiﬁcations.
+3. par only uses ETAS parameter estimates obtained from PETAI, but only M ≥
+3.1 events are allowed to trigger and be triggered, assuming perfect detection there
+(i.e. ξ(t) ≡0). In this case, the parameters obtained for the PETAI model have
+to be transformed to be compatible with a reference magnitude of mref = 3.1
+as described in Equations 32 - 35.
+4. Vice-versa, trig only allows M ≥2.5 events to trigger and be triggered, using the
+inverted ξ(t) for inﬂated triggering, but does not use the improved ETAS param-
+eter estimates. In this case, the parameters obtained for the null model have to
+be transformed to be compatible with a reference magnitude of mref = 2.5 as
+described in Equations 32 - 35.
+Lastly, we assess an additional benchmark model to test whether deliberately underes-
+timating mc is an appropriate alternative to the rather complex PETAI model.
+5. low mc assumes perfect detection above a constant mc = 2.5. This model uses
+neither the parameter estimates obtained from PETAI, nor the inverted ξ(t) for
+inﬂated triggering, but it allows M ≥2.5 events to trigger and be triggered and
+thus is based on the same data as the PETAI-based models.
+6.2 Experiment setup
+For a testing period length of 30 days, we deﬁne a family of training and testing
+periods such that the testing periods are consecutive and non-overlapping. Each train-
+ing period ends with the starting date of its corresponding testing period. The starting
+date of the ﬁrst testing period is January 1st, 2000. The end date of the last of the 244
+testing periods is January 16th, 2020.
+–19–
+
+--- Sayfa 20 ---
+manuscript accepted for publication in JGR: Solid Earth
+For each testing period, all competing models are trained based on the correspond-
+ing training data. Then, forecasts are issued with each model through simulation of 100,000
+possible continuations of the training catalog. Because the testing data is ignored when
+the models are calibrated, these forecasts are pseudo-prospective. This is done by sim-
+ulating Type I earthquakes (the cascade of aftershocks of earthquakes in the training cat-
+alog) and Type II earthquakes (simulated background earthquakes and their cascade of
+aftershocks) similarly to how it is described by Nandan et al. (2019b). The algorithm
+for simulation is described in detail in Text S1.
+The performance of each model is evaluated by calculating the log-likelihood of the
+testing data given the forecast. See Text S2 for details on the calculation of the log-likelihood
+using the full distribution approach as described by Nandan et al. (2019b) for a fair eval-
+uation of ETAS-based models. Two competing models can be compared by calculating
+the information gain (IG) of the alternative model Malt over the null model M0, which
+is simply the diﬀerence in log-likelihood of observing the testing data. The mean infor-
+mation gain (MIG) is calculated as the mean over all testing periods. This evaluation
+metric is similar to other metrics that have been used for model comparison, such as the
+total information gain or information gain per earthquake (IGPE) used in the CSEP T-
+test (Harte and Vere-Jones, 2005; D. A. Rhoades et al., 2011; Zechar et al., 2013; Strader
+et al., 2017, see Savran et al., 2020 for recent complementary CSEP testing metrics) or
+the residual-based log-likelihood ratio score (Clements et al., 2011; Bray et al., 2014; Gor-
+don et al., 2015; Gordon et al., 2021).
+As an additional benchmark, we calculate the total IGPE of the ETAS null model
+versus a spatially and temporally homogeneous Poisson process (STHPP) model. Note
+that the STHPP model is not considered a participant of the forecasting experiment and
+superiority is always discussed relative to the ETAS null model.
+For details on the STHPP model and on the conditions under which one model is
+considered superior over another, see Text S2 and Nandan et al. (2019b).
+6.3 Time evolution of the parameters of the competing models
+Figure 6 shows the parameter evolution with increasing training period obtained
+with standard ETAS (mc = 2.5 and mc = 3.1) and PETAI inversion. Two parame-
+ters, namely µ and τ, show a systematic decrease and increase, respectively, with grow-
+ing time horizon of the training catalog. When compared to the uncertainties in the syn-
+thetic tests, the extents of the changes of µ are larger than the 95% conﬁdence intervals,
+while the changes of τ lie within the expected uncertainties. A possible explanation for
+this observation is that an increased time horizon of the training catalog reveals more
+long-term earthquake interactions, leading to a higher value of τ, that is a later onset
+of the exponential taper in the temporal aftershock density, and simultaneously to a lower
+background rate µ, as more events can be interpreted as aftershocks of previous earth-
+quakes.
+Nearly all parameter estimates show a jump in 2010, caused by the 2010 El-Mayor
+Cucapah earthquake sequence, and a second jump in 2019, caused by the 2019 Ridge-
+crest sequence. There are several reasons why such jumps in parameter estimates could
+occur. In the case of the 2010 events, the main earthquake occurred outside of Califor-
+nia and thus network coverage can play a role, as well as the absence of a large fraction
+of aftershocks due to the boundaries of the considered region. Furthermore, triggering
+parameters can diﬀer between regions, sequences and can also depend on the magnitude
+of the mainshocks (Nandan et al., 2019a; Nandan et al., 2021a; Ouillon and Sornette,
+2005; Sornette and Ouillon, 2005; Nandan et al., 2021b). These dependencies can increase
+the representation of the active region and particular sequences in the catalog and lead
+to sudden changes in the overall parameters.
+–20–
+
+--- Sayfa 21 ---
+manuscript accepted for publication in JGR: Solid Earth
+6.4 Forecasting performance of the competing models
+Figure 7 shows the results of the pseudo-prospective forecasting experiments. For
+a target magnitude threshold of mt = 3.1, PETAI as well as trig only signiﬁcantly out-
+perform the ETAS null model with p-values of virtually 0 and a mean information gain
+of 0.97 and 0.94, respectively. Note that this improvement is over a very strong null model,
+which has a total information gain of 49’246 (i.e. a MIG of 202.66 or an IGPE of 5.62)
+over the STHPP model. PETAI has a slightly positive but not statistically signiﬁcant
+information gain compared to trig only. On the other hand, par only and low mc do not
+signiﬁcantly outperform the ETAS null model. This suggests that the main driver of the
+improvement of the forecast is the inclusion of small events between M2.5 and M3.1 in
+the simulations, rather than the newly obtained parameter estimates. It also indicates
+that accounting for incompleteness, which is possible due to the estimated ξ(ti) obtained
+in the PETAI inversion, is necessary for this improved forecast. The sole inclusion of events
+between M2.5 and M3.1 in the simulations assuming completeness above M2.5 is not
+suﬃcient to obtain signiﬁcant improvements. For all considered values of mt, PETAI and
+trig only rank higher than low mc in terms of MIG, which further supports the idea that
+accounting for STAI is relevant for improved ETAS-based earthquake forecasting.
+The temporal evolution of the cumulative information gain of the two superior mod-
+els shows a decrease during the 2010 El Mayor-Cucapah and the 2019 Ridgecrest sequences.
+Those sequences were most active in Southern California, where the seismic network is
+much denser than in the rest of the considered region (Hutton et al., 2010; Schorlemmer
+and Woessner, 2008). The assumption of spatially homogeneous detection incomplete-
+ness is thus inaccurate and may be the reason for over-inﬂation of the aftershock pro-
+ductivity during these sequences, explaining the decrease in information gain. One can
+therefore expect that accounting for spatial variation of STAI in subsequent models may
+lead to even better forecasts.
+With increasing values of mt to 3.5, 4.0, 4.5, and 5.0, the IGPE of the ETAS null
+model versus the STHPP model increases to 5.92, 5.92, 6.62, and 7.44, respectively. At
+the same time, the mean information gain values between the competing ETAS-based
+models generally decrease, and almost no model signiﬁcantly outperforms any other com-
+peting model. Occasionally, par only is outperformed by the ETAS null model or by trig only.
+These observations suggest that taking into account information about smaller earth-
+quakes mainly helps improving ETAS-based forecasts of smaller earthquakes. More pre-
+cisely, simulating aftershocks of small earthquakes is the key ingredient for improved fore-
+casting of similarly-sized events. Although within the framework of the standard ETAS
+model, small earthquakes can trigger large ones, and their relative abundance implies
+signiﬁcant contribution to the overall triggering (Marsan, 2005; Helmstetter et al., 2005;
+Sornette and Werner, 2005a), we ﬁnd that the beneﬁcial eﬀect vanishes when forecast-
+ing large events. Additional ways exist in which small earthquakes can contribute to im-
+proving forecasting models. Besides their potential to cumulatively contribute to after-
+shock triggering, the large number of earthquakes below mc can help to highlight the un-
+derlying fault structure, which, when accounted for, can signiﬁcantly improve forecast-
+ing performance (Gordon et al., 2021; Bach and Hainzl, 2012; Cattania et al., 2018; Y.
+Guo et al., 2015). In fact, small earthquakes have been shown to improve forecasts in
+the context of other models (Mancini et al., 2019; Mancini et al., 2020), and somewhat
+mixed overall results but a clear signal that small earthquakes do contribute to trigger-
+ing through the redistribution of static stresses have been reported (Meier et al., 2014;
+Segou et al., 2013; Nandan et al., 2016).
+Helmstetter et al. (2006) compared the probability gain of their time-dependent
+model versus their similar but time-independent model and found that probability gain
+decreases with an increasing target magnitude threshold. They speculated that this ob-
+servation may be due to a smaller sample size when the target magnitude threshold in-
+creases. Helmstetter and Werner (2014) found the same decrease in the context of a dif-
+–21–
+
+--- Sayfa 22 ---
+manuscript accepted for publication in JGR: Solid Earth
+ferent, non-parametric kernel space-time smoothing model. Although the study was based
+on a larger amount of data than Helmstetter et al. (2006), they likewise speculated that
+this decrease is due to a small sample size. In our case, the same eﬀect is observed at
+considerably large sample sizes of 3601, 1111, 307, and 85 events for mt = 3.5, 4.0, 4.5,
+and 5.0. Another possible explanation for this eﬀect is provided by the ﬁndings of mul-
+tiple previous studies using both non-parametric (Nichols and Schoenberg, 2014; Spas-
+siani and Sebastiani, 2016) and parametric (Nandan et al., 2019a; Nandan et al., 2021b)
+approaches, that earthquakes tend to preferentially trigger aftershocks of similar size.
+Their results can explain the improved forecast of small events when small events are
+used for simulation, as well as the vanishing of this improvement when the magnitude
+diﬀerence between newly included events and target events becomes large. This could
+furthermore serve as an alternative explanation of the results of Helmstetter et al. (2006)
+and Helmstetter and Werner (2014).
+Note that the IGPE of the ETAS null model against the STHPP model increases
+with increasing mt, while Helmstetter et al. (2006) observe a decrease in probability gain
+against a temporally homogeneous and spatially variable Poisson model. This suggests
+that spatial inhomogeneity becomes more important with increasing target magnitude,
+while temporal inhomogeneity based on small earthquakes becomes less important with
+increasing target magnitude. It is important to highlight that the 30-day testing peri-
+ods of the present study, in contrast to 1-day periods as in Helmstetter et al. (2006), pre-
+vent ETAS models from being updated after large events. This likely understates the
+extent of superiority that could be achieved by models which include M2.5 to M3.1 events,
+and thus the role of small earthquakes, in daily forecasts.
+7 Conclusion
+We propose a modiﬁed algorithm for the inversion of ETAS parameters when mc
+varies with time, and an algorithm for the joint inversion of ETAS parameters and prob-
+abilistic, epidemic-type aftershock incompleteness. We test both methods on synthetic
+catalogs, concluding that they can accurately invert the parameters used for simulation
+of the synthetics. The given formulations are rather general and can equally be applied
+to spatial or spatio-temporal variations of mc, as well as to any suitable deﬁnition of a
+detection probability function.
+Two potential use cases are the estimation of ETAS parameters based on the Cal-
+ifornian catalog since 1932 with long-term ﬂuctuations of mc between 4.3 and 2.4, and
+the estimation of ETAS parameters and short-term aftershock incompleteness based on
+the incomplete Californian catalog of events above M2.5. The latter is further used to
+test the forecasting power of small earthquakes. Results of numerous pseudo-prospective
+forecasting experiments suggest that
+• Information about small earthquakes signiﬁcantly and substantially improves fore-
+casts of similar-sized events.
+• Main driver of this improvement is the simulation of aftershocks of small events.
+• Accounting for incompleteness when simulating aftershocks of small events is nec-
+essary to achieve this improvement.
+• Information about small earthquakes does not signiﬁcantly aﬀect the performance
+of large event forecasts.
+A possible explanation for these results is provided by previous ﬁndings (Nichols and Schoen-
+berg, 2014; Spassiani and Sebastiani, 2016; Nandan et al., 2019a; Nandan et al., 2021b),
+that earthquakes preferentially trigger aftershocks of similar size.
+Our results have potentially signiﬁcant implications for the future of earthquake
+forecasting. Thanks to the here-presented algorithms, ETAS models may be calibrated
+–22–
+
+--- Sayfa 23 ---
+manuscript accepted for publication in JGR: Solid Earth
+for regions with low seismicity where the usual inversion algorithms would fail due to
+missing data. To facilitate the embracing of data incompleteness in such cases, our in-
+version codes will be made openly available after publication of the article through github.com/lmizrahi/etas
+and github.com/lmizrahi/petai.
+The newly gained insights from forecasting experiments guide us in the search of
+the next generation earthquake forecasting models. Besides other discussed topics such
+as anisotropy, temporally or spatially non-stationary background rate (Hainzl et al., 2008;
+Hainzl et al., 2013; Nandan et al., 2020), the importance of accounting for short-term
+incompleteness when simulating, as well as a magnitude-dependent distribution of af-
+tershock magnitudes are emphasized.
+Acknowledgments
+The data used for this analysis is available through the website
+https://earthquake.usgs.gov/earthquakes/search/ (U.S. Geological Survey, Earthquake
+Hazards Program, 2017). The authors wish to thank Sebastian Hainzl, Andrew Michael
+and Andrea Llenos for insightful discussions and helpful feedback on earlier versions of
+this article. We also want to thank the editor Rachel Abercrombie, the anonymous as-
+sociate editor, one anonymous reviewer, and Max Werner for their constructive feedback
+which greatly improved this article. This work has received funding from the Eidgen¨ossische
+Technische Hochschule (ETH) research grant for project number 2018-FE-213, “Enabling
+dynamic earthquake risk assessment (DynaRisk)” and from the European Union’s Hori-
+zon 2020 research and innovation program under Grant Agreement Number 821115, real-
+time earthquake risk reduction for a resilient Europe (RISE).
+References
+Amato, A., & Mele, F. (2008). Performance of the ingv national seismic network from
+1997 to 2007. Annals of Geophysics.
+Amorese, D. (2007). Applying a change-point detection method on frequency-magnitude
+distributions. Bulletin of the Seismological Society of America, 97(5), 1742–1749.
+Bach, C., & Hainzl, S. (2012). Improving empirical aftershock modeling based on addi-
+tional source information. Journal of Geophysical Research: Solid Earth, 117(B4).
+B˚ath, M. (1965). Lateral inhomogeneities of the upper mantle. Tectonophysics, 2(6), 483–
+514.
+Bray, A., Wong, K., Barr, C. D., & Schoenberg, F. P. (2014). Voronoi residual analysis
+of spatial point process models with applications to california earthquake fore-
+casts. The Annals of Applied Statistics, 8(4), 2247–2267.
+Cao, A., & Gao, S. S. (2002). Temporal variation of seismic b-values beneath northeast-
+ern japan island arc. Geophysical research letters, 29(9), 48–1.
+Cattania, C., Werner, M. J., Marzocchi, W., Hainzl, S., Rhoades, D., Gerstenberger, M.,
+Liukis, M., Savran, W., Christophersen, A., Helmstetter, A., et al. (2018). The
+forecasting skill of physics-based seismicity models during the 2010–2012 can-
+terbury, new zealand, earthquake sequence. Seismological Research Letters, 89(4),
+1238–1250.
+Clauset, A., Shalizi, C. R., & Newman, M. E. (2009). Power-law distributions in empir-
+ical data. SIAM review, 51(4), 661–703.
+Clements, R. A., Schoenberg, F. P., & Schorlemmer, D. (2011). Residual analysis meth-
+ods for space-time point processes with applications to earthquake forecast mod-
+els in california. The Annals of applied statistics, 2549–2571.
+De Arcangelis, L., Godano, C., & Lippiello, E. (2018). The overlap of aftershock coda
+waves and short-term postseismic forecasting. Journal of Geophysical Research:
+Solid Earth, 123(7), 5661–5674.
+Felzer, K. R. (2007). Appendix i: Calculating california seismicity rates. US Geol. Surv.
+Open-File Rept. 2007-1437I.
+–23–
+
+--- Sayfa 24 ---
+manuscript accepted for publication in JGR: Solid Earth
+Field, E. H., Jordan, T. H., Page, M. T., Milner, K. R., Shaw, B. E., Dawson, T. E., Bi-
+asi, G. P., Parsons, T., Hardebeck, J. L., Michael, A. J., et al. (2017). A syn-
+optic view of the third uniform california earthquake rupture forecast (ucerf3).
+Seismological Research Letters, 88(5), 1259–1267.
+Gerstenberger, M. C., Marzocchi, W., Allen, T., Pagani, M., Adams, J., Danciu, L., Field,
+E. H., Fujiwara, H., Luco, N., Ma, K.-F., et al. (2020). Probabilistic seismic haz-
+ard analysis at regional and national scales: State of the art and future challenges.
+Reviews of Geophysics, 58(2), e2019RG000653.
+Gordon, J. S., Clements, R. A., Schoenberg, F. P., & Schorlemmer, D. (2015). Voronoi
+residuals and other residual analyses applied to csep earthquake forecasts. Spa-
+tial Statistics, 14, 133–150.
+Gordon, J. S., Fox, E. W., & Schoenberg, F. P. (2021). A nonparametric hawkes model
+for forecasting california seismicity. Bulletin of the Seismological Society of Amer-
+ica, 111(4), 2216–2234.
+Guo, Y., Zhuang, J., & Zhou, S. (2015). An improved space-time etas model for invert-
+ing the rupture geometry from seismicity triggering. Journal of Geophysical Re-
+search: Solid Earth, 120(5), 3309–3323.
+Guo, Z., & Ogata, Y. (1997). Statistical relations between the parameters of aftershocks
+in time, space, and magnitude. Journal of Geophysical Research: Solid Earth,
+102(B2), 2857–2873.
+Gutenberg, B., & Richter, C. F. (1944). Frequency of earthquakes in california. Bulletin
+of the Seismological Society of America, 34(4), 185–188.
+Hainzl, S. (2016a). Apparent triggering function of aftershocks resulting from rate-dependent
+incompleteness of earthquake catalogs. Journal of Geophysical Research: Solid
+Earth, 121(9), 6499–6509.
+Hainzl, S. (2016b). Rate-dependent incompleteness of earthquake catalogs. Seismolog-
+ical Research Letters, 87(2A), 337–344.
+Hainzl, S., Christophersen, A., & Enescu, B. (2008). Impact of earthquake rupture ex-
+tensions on parameter estimations of point-process models. Bulletin of the Seis-
+mological Society of America, 98(4), 2066–2072.
+Hainzl, S., Zakharova, O., & Marsan, D. (2013). Impact of aseismic transients on the es-
+timation of aftershock productivity parameters. Bulletin of the Seismological So-
+ciety of America, 103(3), 1723–1732.
+Harte, D., & Vere-Jones, D. (2005). The entropy score and its uses in earthquake fore-
+casting. Pure and Applied Geophysics, 162(6), 1229–1253.
+Helmstetter, A. (2003). Is earthquake triggering driven by small earthquakes? Physical
+review letters, 91(5), 058501.
+Helmstetter, A., Kagan, Y. Y., & Jackson, D. D. (2006). Comparison of short-term and
+time-independent earthquake forecast models for southern california. Bulletin
+of the Seismological Society of America, 96(1), 90–106.
+Helmstetter, A., Kagan, Y. Y., & Jackson, D. D. (2005). Importance of small earthquakes
+for stress transfers and earthquake triggering. Journal of Geophysical Research:
+Solid Earth, 110(B5).
+Helmstetter, A., & Werner, M. J. (2014). Adaptive smoothing of seismicity in time, space,
+and magnitude for time-dependent earthquake forecasts for california. Bulletin
+of the Seismological Society of America, 104(2), 809–822.
+Hutton, K., Woessner, J., & Hauksson, E. (2010). Earthquake monitoring in southern
+california for seventy-seven years (1932–2008). Bulletin of the Seismological So-
+ciety of America, 100(2), 423–446.
+Kagan, Y. Y. (2004). Short-term properties of earthquake catalogs and models of earth-
+quake source. Bulletin of the Seismological Society of America, 94(4), 1207–1228.
+Lippiello, E., Bottiglieri, M., Godano, C., & de Arcangelis, L. (2007). Dynamical scal-
+ing and generalized omori law. Geophysical Research Letters, 34(23).
+–24–
+
+--- Sayfa 25 ---
+manuscript accepted for publication in JGR: Solid Earth
+Llenos, A. L., & Michael, A. J. (2020). Regionally optimized background earthquake rates
+from etas (robere) for probabilistic seismic hazard assessment. Bulletin of the
+Seismological Society of America, 110(3), 1172–1190.
+Lolli, B., & Gasperini, P. (2006). Comparing diﬀerent models of aftershock rate decay:
+The role of catalog incompleteness in the ﬁrst times after main shock. Tectono-
+physics, 423(1-4), 43–59.
+Mancini, S., Segou, M., Werner, M., & Cattania, C. (2019). Improving physics-based af-
+tershock forecasts during the 2016–2017 central italy earthquake cascade. Jour-
+nal of Geophysical Research: Solid Earth, 124(8), 8626–8643.
+Mancini, S., Segou, M., Werner, M. J., & Parsons, T. (2020). The predictive skills of elas-
+tic coulomb rate-and-state aftershock forecasts during the 2019 ridgecrest, cal-
+ifornia, earthquake sequence. Bulletin of the Seismological Society of America,
+110(4), 1736–1751.
+Marsan, D. (2005). The role of small earthquakes in redistributing crustal elastic stress.
+Geophysical Journal International, 163(1), 141–151.
+Marzocchi, W., & Taroni, M. (2014). Some thoughts on declustering in probabilistic seismic-
+hazard analysis. Bulletin of the Seismological Society of America, 104(4), 1838–
+1845.
+Marzocchi, W., Lombardi, A. M., & Casarotti, E. (2014). The establishment of an op-
+erational earthquake forecasting system in italy. Seismological Research Letters,
+85(5), 961–969.
+Meier, M.-A., Werner, M., Woessner, J., & Wiemer, S. (2014). A search for evidence of
+secondary static stress triggering during the 1992 mw7. 3 landers, california, earth-
+quake sequence. Journal of Geophysical Research: Solid Earth, 119(4), 3354–3370.
+Mignan, A., Werner, M., Wiemer, S., Chen, C.-C., & Wu, Y.-M. (2011). Bayesian esti-
+mation of the spatially varying completeness magnitude of earthquake catalogs.
+Bulletin of the Seismological Society of America, 101(3), 1371–1385.
+Mignan, A., & Chouliaras, G. (2014). Fifty years of seismic network performance in greece
+(1964–2013): Spatiotemporal evolution of the completeness magnitude. Seismo-
+logical Research Letters, 85(3), 657–667.
+Mignan, A., & Woessner, J. (2012). Estimating the magnitude of completeness for earth-
+quake catalogs. Community Online Resource for Statistical Seismicity Analy-
+sis, 1–45.
+Mizrahi, L., Nandan, S., & Wiemer, S. (2021). The Eﬀect of Declustering on the Size Dis-
+tribution of Mainshocks. Seismological Research Letters. https://doi.org/10.
+1785/0220200231
+Nandan, S., Kamer, Y., Ouillon, G., Hiemer, S., & Sornette, D. (2021a). Global mod-
+els for short-term earthquake forecasting and predictive skill assessment. The
+European Physical Journal Special Topics, 230(1), 425–449.
+Nandan, S., Ouillon, G., & Sornette, D. (2019a). Magnitude of earthquakes controls the
+size distribution of their triggered events. Journal of Geophysical Research: Solid
+Earth, 124(3), 2762–2780.
+Nandan, S., Ouillon, G., & Sornette, D. (2021b). Triggering of large earthquakes is driven
+by their twins. arXiv preprint arXiv:2104.04592.
+Nandan, S., Ouillon, G., Sornette, D., & Wiemer, S. (2019b). Forecasting the full dis-
+tribution of earthquake numbers is fair, robust, and better. Seismological Re-
+search Letters, 90(4), 1650–1659.
+Nandan, S., Ouillon, G., Sornette, D., & Wiemer, S. (2019c). Forecasting the rates of fu-
+ture aftershocks of all generations is essential to develop better earthquake fore-
+cast models. Journal of Geophysical Research: Solid Earth, 124(8), 8404–8425.
+Nandan, S., Ouillon, G., Wiemer, S., & Sornette, D. (2017). Objective estimation of spa-
+tially variable parameters of epidemic type aftershock sequence model: Appli-
+cation to california. Journal of Geophysical Research: Solid Earth, 122(7), 5118–
+5143.
+–25–
+
+--- Sayfa 26 ---
+manuscript accepted for publication in JGR: Solid Earth
+Nandan, S., Ouillon, G., Woessner, J., Sornette, D., & Wiemer, S. (2016). Systematic
+assessment of the static stress triggering hypothesis using interearthquake time
+statistics. Journal of Geophysical Research: Solid Earth, 121(3), 1890–1909.
+Nandan, S., Ram, S. K., Ouillon, G., & Sornette, D. (2020). Is the earth crust operat-
+ing at a critical point? arXiv preprint arXiv:2012.06013.
+Nanjo, K., Ishibe, T., Tsuruoka, H., Schorlemmer, D., Ishigaki, Y., & Hirata, N. (2010).
+Analysis of the completeness magnitude and seismic network coverage of japan.
+Bulletin of the Seismological Society of America, 100(6), 3261–3268.
+Narteau, C., Byrdina, S., Shebalin, P., & Schorlemmer, D. (2009). Common dependence
+on stress for the two fundamental laws of statistical seismology. Nature, 462(7273),
+642–645.
+Nichols, K., & Schoenberg, F. P. (2014). Assessing the dependency between the magni-
+tudes of earthquakes and the magnitudes of their aftershocks. Environmetrics,
+25(3), 143–151.
+Ogata, Y. (1998). Space-time point-process models for earthquake occurrences. Annals
+of the Institute of Statistical Mathematics, 50(2), 379–402.
+Ogata, Y., & Katsura, K. (2006). Immediate and updated forecasting of aftershock haz-
+ard. Geophysical research letters, 33(10).
+Omi, T., Ogata, Y., Hirata, Y., & Aihara, K. (2014). Estimating the etas model from
+an early aftershock sequence. Geophysical Research Letters, 41(3), 850–857.
+Ouillon, G., & Sornette, D. (2005). Magnitude-dependent omori law: Theory and em-
+pirical study. Journal of Geophysical Research: Solid Earth, 110(B4).
+Petersen, M. D., Mueller, C. S., Moschetti, M. P., Hoover, S. M., Rukstales, K. S., Mc-
+Namara, D. E., Williams, R. A., Shumway, A. M., Powers, P. M., Earle, P. S.,
+et al. (2018). 2018 one-year seismic hazard forecast for the central and eastern
+united states from induced and natural earthquakes. Seismological Research Let-
+ters, 89(3), 1049–1061.
+Rhoades, D., Liukis, M., Christophersen, A., & Gerstenberger, M. (2016). Retrospective
+tests of hybrid operational earthquake forecasting models for canterbury. Geo-
+physical Journal International, 204(1), 440–456.
+Rhoades, D. A., Schorlemmer, D., Gerstenberger, M. C., Christophersen, A., Zechar, J. D.,
+& Imoto, M. (2011). Eﬃcient testing of earthquake forecasting models. Acta Geo-
+physica, 59(4), 728–747.
+Rydelek, P. A., & Sacks, I. S. (1989). Testing the completeness of earthquake catalogues
+and the hypothesis of self-similarity. Nature, 337(6204), 251–253.
+Savran, W. H., Werner, M. J., Marzocchi, W., Rhoades, D. A., Jackson, D. D., Milner,
+K., Field, E., & Michael, A. (2020). Pseudoprospective evaluation of ucerf3-etas
+forecasts during the 2019 ridgecrest sequence. Bulletin of the Seismological So-
+ciety of America, 110(4), 1799–1817.
+Schoenberg, F. P. (2013). Facilitated estimation of etas. Bulletin of the Seismological So-
+ciety of America, 103(1), 601–605.
+Schoenberg, F. P., Chu, A., & Veen, A. (2010). On the relationship between lower mag-
+nitude thresholds and bias in epidemic-type aftershock sequence parameter es-
+timates. Journal of Geophysical Research: Solid Earth, 115(B4).
+Schorlemmer, D., & Gerstenberger, M. (2007). Relm testing center. Seismological Re-
+search Letters, 78(1), 30–36.
+Schorlemmer, D., & Woessner, J. (2008). Probability of detecting an earthquake. Bul-
+letin of the Seismological Society of America, 98(5), 2103–2117.
+Segou, M., Parsons, T., & Ellsworth, W. (2013). Comparative evaluation of physics-based
+and statistical forecasts in northern california. Journal of Geophysical Research:
+Solid Earth, 118(12), 6219–6240.
+Seif, S., Mignan, A., Zechar, J. D., Werner, M. J., & Wiemer, S. (2017). Estimating etas:
+The eﬀects of truncation, missing data, and model assumptions. Journal of Geo-
+physical Research: Solid Earth, 122(1), 449–469.
+–26–
+
+--- Sayfa 27 ---
+manuscript accepted for publication in JGR: Solid Earth
+Shcherbakov, R., Turcotte, D. L., & Rundle, J. B. (2004). A generalized omori’s law for
+earthquake aftershock decay. Geophysical research letters, 31(11).
+Sornette, D., & Ouillon, G. (2005). Multifractal scaling of thermally activated rupture
+processes. Physical review letters, 94(3), 038501.
+Sornette, D., & Werner, M. J. (2005a). Constraints on the size of the smallest trigger-
+ing earthquake from the epidemic-type aftershock sequence model, b˚ath’s law,
+and observed aftershock sequences. Journal of Geophysical Research: Solid Earth,
+110(B8).
+Sornette, D., & Werner, M. J. (2005b). Apparent clustering and apparent background
+earthquakes biased by undetected seismicity. Journal of Geophysical Research:
+Solid Earth, 110(B9).
+Spassiani, I., & Sebastiani, G. (2016). Exploring the relationship between the magnitudes
+of seismic events. Journal of Geophysical Research: Solid Earth, 121(2), 903–
+916.
+Stallone, A., & Falcone, G. (2020). Missing earthquake data reconstruction in the space-
+time-magnitude domain.
+Strader, A., Schneider, M., & Schorlemmer, D. (2017). Prospective and retrospective eval-
+uation of ﬁve-year earthquake forecast models for california. Geophysical Jour-
+nal International, 211(1), 239–251.
+Taroni, M., Marzocchi, W., Schorlemmer, D., Werner, M. J., Wiemer, S., Zechar, J. D.,
+Heiniger, L., & Euchner, F. (2018). Prospective csep evaluation of 1-day, 3-month,
+and 5-yr earthquake forecasts for italy. Seismological Research Letters, 89(4),
+1251–1261.
+U.S. Geological Survey, Earthquake Hazards Program. (2017). Advanced national seis-
+mic system (anss) comprehensive catalog of earthquake events and products: Var-
+ious. https://doi.org/10.5066/F7MS3QZH
+Utsu, T. (1961). A statistical study on the occurrence of aftershocks. Geophys. Mag., 30,
+521–605.
+Veen, A., & Schoenberg, F. P. (2008). Estimation of space–time branching process mod-
+els in seismology using an em–type algorithm. Journal of the American Statis-
+tical Association, 103(482), 614–624.
+Wang, Q., Jackson, D. D., & Zhuang, J. (2010). Missing links in earthquake clustering
+models. Geophysical Research Letters, 37(21).
+Wells, D. L., & Coppersmith, K. J. (1994). New empirical relationships among magni-
+tude, rupture length, rupture width, rupture area, and surface displacement. Bul-
+letin of the seismological Society of America, 84(4), 974–1002.
+Wiemer, S., Giardini, D., F¨ah, D., Deichmann, N., & Sellami, S. (2009). Probabilistic
+seismic hazard assessment of switzerland: Best estimates and uncertainties. Jour-
+nal of Seismology, 13(4), 449.
+Wiemer, S., & Wyss, M. (2000). Minimum magnitude of completeness in earthquake cat-
+alogs: Examples from alaska, the western united states, and japan. Bulletin of
+the Seismological Society of America, 90(4), 859–869.
+Woessner, J., Hainzl, S., Marzocchi, W., Werner, M., Lombardi, A., Catalli, F., Enescu,
+B., Cocco, M., Gerstenberger, M., & Wiemer, S. (2011). A retrospective com-
+parative forecast test on the 1992 landers sequence. Journal of Geophysical Re-
+search: Solid Earth, 116(B5).
+Woessner, J., & Wiemer, S. (2005). Assessing the quality of earthquake catalogues: Es-
+timating the magnitude of completeness and its uncertainty. Bulletin of the Seis-
+mological Society of America, 95(2), 684–698.
+Zechar, J. D., Schorlemmer, D., Werner, M. J., Gerstenberger, M. C., Rhoades, D. A.,
+& Jordan, T. H. (2013). Regional earthquake likelihood models i: First-order re-
+sults. Bulletin of the Seismological Society of America, 103(2A), 787–798.
+Zhuang, J., Ogata, Y., & Wang, T. (2017). Data completeness of the kumamoto earth-
+quake sequence in the jma catalog and its inﬂuence on the estimation of the etas
+parameters. Earth, Planets and Space, 69(1), 36.
+–27–
+
+--- Sayfa 28 ---
+manuscript accepted for publication in JGR: Solid Earth
+8 Tables
+Table 1: ETAS and PETAI parameters inferred for California. First column shows pa-
+rameters when constant mc of 3.1 is assumed. Second and third column show parameters
+when time-varying mc is accounted for, and fourth and ﬁfth column show parameters
+when PETAI inversion is applied. Note that the originally derived parameters are given
+in Columns 1, 2, and 4. Columns 3 and 5 show the parameters of Columns 2 and 4,
+transformed (as described in Equations 32 - 35) to a reference magnitude of 3.1 to allow
+comparison with Column 1. Productivity exponent α = a −ργ and branching ratio η are
+not directly inverted but inferred from the inverted parameters.
+parameter
+mc ≡const.
+mc(t)
+f(m, t)
+mref
+3.1
+2.4
+3.1
+2.5
+3.1
+log10(µ)
+-6.86
+-5.97
+-6.68
+-6.35
+-6.97
+log10(k0)
+-2.53
+-2.63
+-2.36
+-2.70
+-2.49
+a
+1.74
+1.86
+1.86
+1.92
+1.92
+log10(c)
+-2.97
+-2.52
+-2.52
+-2.85
+-2.85
+ω
+-0.05
+-0.02
+-0.02
+-0.06
+-0.06
+log10(τ)
+4.03
+3.57
+3.57
+3.92
+3.92
+log10(d)
+-0.51
+-0.86
+-0.45
+-0.76
+-0.45
+γ
+1.19
+1.35
+1.35
+1.22
+1.22
+ρ
+0.60
+0.67
+0.67
+0.67
+0.67
+log10(tR)
+n/a
+n/a
+n/a
+-2.86
+-2.86
+β
+2.33
+2.32
+2.32
+2.37
+2.37
+a −ργ
+1.03
+0.95
+0.95
+1.09
+1.09
+η
+0.94
+0.95
+0.95
+0.93
+0.93
+–28–
+
+--- Sayfa 29 ---
+manuscript accepted for publication in JGR: Solid Earth
+9 Figures
+ 
+detecon 
+probability
+magnitude
+me
+event rate
+μ
+α
+k0
+ETAS parameters
+Figure 1: Simpliﬁed schematic illustration of PETAI inversion.
+–29–
+
+--- Sayfa 30 ---
+manuscript accepted for publication in JGR: Solid Earth
+start
+deﬁne
+mc ≡const.
+estimate initial
+ETAS param-
+eters (E) (→
+Section 3.1)
+initial
+ETAS parameters
+(E)
+estimate ETAS
+parameters (E)
+with incom-
+plete detection
+(→Section 3.2)
+newly estimated
+ETAS parameters
+(E)
+E
+converged*?
+newly estimated
+ETAS parameters
+(E)
+and incompleteness
+(I = λi, tR, β)
+end
+yes
+start: estimate
+incompleteness
+(I = λi, tR, β)
+deﬁne
+λi = 0
+∀i
+estimate
+initial (tR, β)
+(→Section 3.4.1)
+initial
+(tR, β)
+estimate (tR, β)
+(→Section 3.4.1)
+newly estimated
+(tR, β)
+(tR, β)
+converged**?
+newly estimated
+incompleteness
+(I = λi, tR, β)
+end incompleteness
+estimation
+no
+yes
+start:
+estimate rates λi
+calculate ξ(ti)
+(→Equation 18)
+newly calculated
+ξ(ti)
+calculate λi
+(→Equation 26)
+newly calculated
+λi
+λi
+converged***?
+newly estimated
+λi
+end rates
+estimation
+yes
+no
+no
+Figure 2: Flow diagram of PETAI inversion. Caption on next page.
+–30–
+
+--- Sayfa 31 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 2: (Previous page.) Flow diagram of PETAI inversion. Main algorithm starts at
+top left and ends at bottom left. The middle column describes the estimation of incom-
+pleteness (I
+= λi, tR, β) when ETAS parameters (E) are given. Note that the estimation
+of (λi)i=1,...,n when ETAS parameters and (tR, β) are ﬁxed requires yet another loop to
+obtain self-consistency, as updating λi (step Λ) leads to changes in the inﬂation factor
+1 + ξ(ti), which forces one to update (λi)i=1,...,n. This sub-sub-algorithm is visualized in
+the right column of the ﬂow diagram. Process boxes are linked to corresponding methods
+and equations described in this article.
+*, **, ***: Convergence is reached when the estimated values of the kth iteration, ˆak, lie
+very close to the estimated values of the previous iteration, that is, if P
+a∈A |ˆak −ˆak−1| ≤
+θ. Here, A is the set of values that are tested for convergence, *A = E, **A = {tR, β},
+***A = {λi, i = 1, . . . , n}. For convergence threshold θ we use *θ = 10−3, **θ = 10−12,
+***θ = 1.
+Figure 3: ETAS parameters used and inferred in synthetic test 1 (ST1). Black crosses
+indicate parameters used in simulation of 400 catalogs, blue crosses indicate median in-
+verted parameters. Violins show the distribution of obtained parameters for 400 catalogs,
+with orange lines marking the 2.5% and 97.5% percentiles. Note that the y-axis gives the
+diﬀerence to parameters used for simulation, the actual values are written next to their
+marks.
+–31–
+
+--- Sayfa 32 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 4: Results of synthetic test 2 (ST2). Caption on next page.
+–32–
+
+--- Sayfa 33 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 4: (Previous page.) Results of synthetic test 2 (ST2). (a) Earthquake magnitudes
+over time for one example test catalog (blue). Events marked in black were simulated,
+but declared as undetected. (b) Cumulative number of unobserved events over time for
+the catalog shown in (a). Black line marks the truth, blue line is inferred from the test
+catalog using PETAI. (c) Estimated fraction of undetected events versus actually removed
+fraction of events, for 3000 test catalogs. Diﬀerent colors indicate diﬀerent assumed de-
+tection eﬃciencies. Stars mark the median actual and estimated fraction of undetected
+events per tR. Dashed line indicates where actual and estimated fraction coincide, dot-
+ted horizontal line indicates the estimated fraction for California. (d) - (n) ETAS and
+PETAI parameters inferred in synthetic test. Panel title indicates the parameter name
+and in square brackets the value used for simulation. Violins show the distribution of the
+parameter inferred from test catalogs per value of tR used, with the value of tR given on
+the x-axis in minutes. Crosses indicate median obtained value, blue lines indicate 95%
+conﬁdence interval, dashed line indicates the value used for simulation.
+–33–
+
+--- Sayfa 34 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 5: Aftershock Incompleteness in California. (a) Estimated cumulative number of
+undetected events over time. (b) Evolution of magnitude-dependent detection probability.
+Yellow indicates a detection probability of 50% or less. Black, dark blue, and light blue
+indicate detection probabilities of up to 90%, 99%, and 99.9%, respectively. White area
+represents detection probabilities higher than 99.9%. (c)-(g) Excerpts of (b) for selected
+large events. x-axes are logarithmic and show time since (ﬁrst) mainshock, and range
+from 5 minutes to 30 days after that mainshock. Red lines indicate mc(t) as described by
+Helmstetter et al. (2006), including the eﬀect of all M
+≥
+5 events. Colored circles in (g)
+represent selected times ti and corresponding magnitude of 99.9% detection. (h) Detection
+probability function f(m, λ
+=
+λ(ti)) snapshots for the times that are highlighted in (g),
+plus a time prior to both mainshocks (in red). Time deltas are given with respect to the
+M7.1 mainshock. λ(ti) are as estimated during PETAI inversion.
+–34–
+
+--- Sayfa 35 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 6: Evolution of ETAS and PETAI parameter estimates with increasing training
+catalog, when using standard inversion with mc = 3.1 (black lines) or mc = 2.5 (orange
+lines) and when using PETAI inversion (blue lines). The evolution for tR is only given for
+PETAI inversion because it does not exist in standard ETAS. Parameters are with respect
+to mref = 2.5, transformed using Equations 32 - 35 if necessary.
+–35–
+
+--- Sayfa 36 ---
+manuscript accepted for publication in JGR: Solid Earth
+Figure 7: From left to right: Cumulative information gain for the alternative models
+versus the ETAS null model, mean information gain matrix, and corresponding p-value
+matrix comparing all competing models. Matrix entries represent the test of superiority
+of Malt (y-axis) versus M0 (x-axis). From top to bottom: target magnitude thresholds mt
+of 3.1, 3.5, 4.0, 4.5, and 5.0. Indicated as text in the left panels is the cumulative informa-
+tion gain of the ETAS null model versus the STHPP model, and the number of events in
+all testing periods combined. Note the diﬀerent y-axes for the left panels. Also note that
+the color scheme for the middle panels is diﬀerent between threshold magnitudes mt and
+normalized with respect to the maximum absolute mean information gain for that mt.
+Color coding for the panels on the right is such that p-values of 0.05 and below are green,
+and transition from grey to white between 0.05 and 1.
+–36–
+
+--- Sayfa 37 ---
+Supporting Information for “Embracing Data Incompleteness
+for Better Earthquake Forecasting”
+L. Mizrahi1, S. Nandan1, and S. Wiemer1
+1Swiss Seismological Service, ETH Zurich
+Contents of this ﬁle
+• Text S1 Catalog simulation
+• Text S2 Forecast evaluation
+• Figure S1 Log likelihood of observing the test data for diﬀerent values of tR and b-value,
+when current rate is known
+1
+arXiv:2105.00888v3  [physics.geo-ph]  1 Dec 2021
+
+--- Sayfa 38 ---
+Text S1
+Catalog simulation
+The following algorithm is used to simulate the continuation of a training catalog.
+Note that the synthetic catalogs referred to in Sections 4.1 and 4.2 in the article are not continua-
+tions of a training catalog, hence generation 0 (deﬁned in the following) consists only of background
+events. The locations of these background events are uniformly distributed in the study region. Also
+in the case of synthetic catalog simulation, the “testing period”, which is referred to below, is the
+period for which one wishes to simulate a catalog. Where diﬀerent models are mentioned, the base
+model is used for synthetic catalog simulation.
+1. Background events are simulated for the testing period.
+• Number of background events is drawn from a Poisson distribution with mean as given
+by the ETAS background rate.
+• Occurrence times are drawn from a uniform distribution within the testing period.
+• Locations are drawn from the locations of events in the training catalog, weighted by
+their probability of being background events. The locations are then randomly displaced
+by a distance drawn from a normal distribution with mean 0 and standard deviation of
+0.1°.
+• Magnitudes are drawn from a GR law with exponent β as estimated in the PETAI
+inversion (for PETAI and trig only). For the base model and par only, we use the β
+estimate obtained when using the formula proposed by tinti1987conﬁdence for binned
+magnitude values, using magnitudes M ≥3.1 in the training catalog.
+2. The training catalog together with the simulated background events make up generation 0.
+igen := 0.
+3. Expected number of aftershocks is calculated for all events of generation 0. In the case of the
+PETAI and the trig only model, the average number of aftershocks triggered by any event ei
+in the training catalog is inﬂated by 1 + ξ(ti).
+4. Actual number of aftershocks of each event is randomly drawn from a Poisson distribution
+with mean as calculated in the previous step.
+5. Aftershocks of the current generation igen are simulated.
+• Aftershock time distance to its parent event is randomly generated according to the
+estimated ETAS time kernel.
+If aftershock time falls out of the testing period, this
+aftershock is discarded.
+• Aftershock spatial distance to its parent event is randomly generated according to the
+estimated isotropic ETAS spatial kernel. If aftershock location falls out of the considered
+polygon, this aftershock is discarded.
+• Aftershock magnitude is generated according to the GR law with exponent β (same as
+for the background events).
+6. The newly generated aftershocks now make up the next generation igen + 1.
+2
+
+--- Sayfa 39 ---
+7. We move on to the next generation. igen := igen + 1
+8. Expected number of aftershocks is calculated for all events of generation igen. Continue with
+step 4.
+The algorithm terminates when no aftershocks fall into the testing period anymore, which is ex-
+pected to happen in a ﬁnite amount of time if the branching ratio η < 1.
+Text S2
+Forecast evaluation
+The performance of each model is evaluated by calculating the log-likelihood of the testing data
+given the forecast. Speciﬁcally, we calculate the log-likelihood of Ni earthquakes to occur in each
+bin bi of a spatial grid of 0.1° latitude × 0.1° longitude. Here, Ni is the number of earthquakes that
+actually occurred during the testing period in spatial bin bi.
+The log-likelihood for bi is calculated based on the smoothed estimate of the probability of Ni
+earthquakes to occur in bi, where the probability estimate is based on the 100,000 simulations of the
+model in question. For smoothing we use Gaussian kernels with adaptive bandwidth as described by
+nandan2019forecastingfull, with a ﬁxed value of Ω= 3.0. To avoid arbitrary likelihood values
+due to extrapolation, we deﬁne a water-level likelihood for event counts larger than the maximum
+simulated event count in the respective bin. This waterlevel probability is deﬁned as a uniform
+value of 100, 001−1/nextr, where nextr is the number of event counts larger than the maximum
+observed and smaller than a generously high maximum possible event count. Symbolically, this
+suggests that all other possible event counts could have been simulated in the 100, 001st simulation.
+Inevitably, the probabilities for non-extrapolated event counts are proportionally reduced such that
+the probabilities of all possible event counts add up to 1.
+The total log-likelihood of the testing data is then given by the sum of log-likelihoods over all
+bins bi.
+Two competing models can be compared by calculating the information gain (IG) of the al-
+ternative model Malt over the null model M0, which is simply the diﬀerence in log-likelihood of
+observing the testing data. The mean information gain (MIG) is calculated as the mean over all
+testing periods. We accept the superiority of Malt over M0 when we reject the null hypothesis
+that Malt does not outperform M0. To decide whether to reject the null hypothesis, we perform a
+one-sided t-test on the set of IGs for all testing periods. This assumes that the IG values follow a
+normal distribution, and we test whether or not the MIG of Malt versus M0 is signiﬁcantly positive.
+We reject the null hypothesis when a p-value of less than 0.05 is observed.
+The spatially and temporally homogeneous Poisson process (STHPP) model forecasts the same
+number of events in all spatial bins. This number of events forecasted, Nfc, is given by
+Nfc = Ntrain · Ttest
+Ttrain · Nbins
+,
+(S1)
+where ntrain is the number of events observed in the training period, Ttrain is the length of the
+training period in days, Ttest = 30 is the testing period length, and Nbins is the total number of
+spatial bins. The log-likelihood for the STHPP model is calculated assuming a Poisson distribution
+of event numbers with mean Nfc in each spatial bin.
+3
+
+--- Sayfa 40 ---
+Figure S1: Log likelihood of observing the test data for diﬀerent values of tR and b-value, when
+current rate is known. Black cross indicates true values used in simulation, blue cross indicates
+maximum likelihood estimators obtained.
+4

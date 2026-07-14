@@ -1,0 +1,1089 @@
+
+--- Sayfa 1 ---
+1
+Design and Implementation of a 25-Year Pseudo-Prospective Earthquake
+Forecasting Experiment in China (AoyuX)
+Jiawei Li1†*, Qingyuan Zhang1,2,3,4†, and Didier Sornette1†
+1Institute of Risk Analysis, Prediction and Management (Risks-X), Academy for Advanced
+Interdisciplinary Studies, Southern University of Science and Technology (SUSTech), Shenzhen,
+China.
+2School of Systems Science, Beijing Normal University, Beijing, China.
+3International Academic Center of Complex Systems, Beijing Normal University, Zhuhai, China.
+4Department of Systems Science, Faculty of Arts and Sciences, Beijing Normal University,
+Zhuhai, China.
+*Corresponding author: Jiawei Li (lijw@cea-igp.ac.cn)
+†Jiawei Li, Qingyuan Zhang, and Didier Sornette contributed equally to this work
+Declaration of Competing Interests
+The authors acknowledge there are no conflicts of interest recorded.
+Abstract
+Forecast models in statistical seismology are commonly evaluated with log-likelihood scores of
+the full distribution P(n) of earthquake numbers, yet heavy tails and out-of-range observations
+(realized counts exceeding all simulations) can bias model ranking. We develop a tail-aware
+evaluation framework that estimates cell-wise P(n) using adaptive Gaussian kernel density
+
+--- Sayfa 2 ---
+2
+estimation and tests three strategies for handling out-of-range counts (power law extrapolation,
+fixed minimum probability, and exclusion). Using the AoyuX platform, we perform a ~25-year
+(2000–2023) month-by-month pseudo-prospective forecast experiment in the China Seismic
+Experimental Site (CSES), comparing Epidemic-Type Aftershock Sequence (ETAS) model with
+a homogeneous background (ETASμ) to a spatially heterogeneous variant (ETASμ(x,y)) across six
+spatial resolutions and five magnitude thresholds; each forecast window is supported by 100,000
+simulations. Empirical probability density functions (PDFs) of counts per cell are well described
+by power laws with exponents a ≈1.40 ± 0.21 across all settings. Using previous theoretical
+results, this provides a robust estimate of the productivity exponent, α = 0.57 ± 0.08 using a b-
+value equal to 0.8, providing a valuable quantification of this key parameter in aftershock
+modeling. Model ranking is sensitive to how the tail of the full distribution P(n) of earthquake
+counts is treated: power law extrapolation is both theoretically justified and empirically the most
+robust, while the apparent superiority of the fixed-probability approach in a few coarse low-
+magnitude cases can be attributed to noise. Cumulative information gain (CIG) shows that
+ETASμ(x,y) outperforms ETASμ in data-rich configurations (e.g., Mt = 3.0 to 3.5 and whole-region
+tests), whereas in data-poor settings stochastic fluctuations dominate. A coefficient-of-variation
+analysis of per-window log-likelihood differences distinguishes genuine upward trends in CIG
+from noise-dominated fluctuations. By aligning a fat-tail-aware scoring methodology with an
+open testing platform, our work advances fair and statistically grounded assessment of
+earthquake forecasting models for the CSES and beyond.
+Keywords Earthquake forecasting, pseudo-prospective experiment, Epidemic-Type Aftershock
+Sequence (ETAS) model, the China Seismic Experimental Site, power law
+
+--- Sayfa 3 ---
+3
+1 Introduction
+Advancing earthquake forecasting (probabilistic) and/or prediction (deterministic)
+benefits from a transparent and iterative research paradigm: build models that explain observed
+seismicity; test them prospectively or pseudo-prospectively against withheld or genuinely future
+data; use the resulting feedback to validate assumptions; and then retain, revise, or replace model
+components before repeating the cycle. Such a loop of construction, testing, correction, and
+refinement underpins cumulative progress in the field (Kagan & Jackson, 2000; Werner et al.,
+2011; Ogata, 2022). Crucial to this paradigm is rigorous, unbiased performance evaluation:
+determining, with statistical significance, whether a candidate model truly outperforms a
+designated benchmark (the null hypothesis, H0) rather than relying on ad hoc or subjective
+criteria. The international Collaboratory for the Study of Earthquake Predictability (CSEP) and
+RichterX global earthquake forecasting platform formalized this ethos with standardized tests,
+scoring rules, and community benchmarks, demonstrating both the value and the challenges of
+fair model comparison (Schorlemmer et al., 2007; 2010; Taroni et al., 2018; Kamer et al., 2021;
+Nandan et al., 2021a; Bayliss et al., 2022).
+In practice, a widely adopted evaluation framework is to run pseudo-prospective
+experiments over consecutive, non-overlapping time windows. Genuine prospective forecasting,
+evaluation on data not yet observed, should be stressed, with pseudo-prospective experiments
+serving as a preparatory or complementary step when fully prospective deployment is not yet
+feasible. For each time window and for each model–benchmark pair, one computes the full
+probability distribution P(n) of earthquake numbers n at the grid-cell level (given a chosen
+magnitude threshold Mt and spatial resolution) and then scores the model by the log-likelihood
+obtained as the logarithm of the products over all cells of the P(ni)’s, where ni are the observed
+
+--- Sayfa 4 ---
+4
+counts in each i-th grid (see Section 2.2 for more details). Forecasting and scoring the
+distribution, rather than only its mean rate, has been shown to be both fair and robust, and it
+aligns naturally with aftershock-cascade physics (Ogata et al., 2013; Nandan et al., 2019a;
+2019b). The approach is compatible with a range of models used operationally, including
+Epidemic-Type Aftershock Sequence (ETAS) model and its variants (Zhuang, 2011; Werner et
+al., 2011; Hainzl et al., 2024; Mizrahi et al., 2024; Han et al., 2025).
+Two methodological issues arise when estimating the full distribution P(n):
+(1) Randomness. Because P(n) is typically derived from a large but finite ensemble of
+simulated catalogs, sampling variability introduces artificial roughness into the
+distribution. To mitigate this effect, studies have traditionally adopted parametric count
+models, such as Poisson, negative-binomial or Beta-negative binomial approximations, or,
+more recently, non-parametric smoothers like adaptive kernel density estimators (Harte,
+2017; Kagan, 2010; 2017; Molchan & Varini, 2024; Nandan et al., 2019a; Taroni et al.,
+2023; Werner et al., 2011). The use of the Poisson distribution is particularly natural
+when a forecast specifies only the mean rate, since, under the maximum entropy principle,
+the Poisson distribution is the most parsimonious choice: it imposes the fewest
+assumptions beyond the mean number of events. However, once a forecast conveys
+information beyond the mean rate, restricting the distribution to Poisson is no longer
+theoretically justified. In this context, non-parametric approaches, especially adaptive
+kernel density estimators, have emerged as effective tools for stabilizing likelihood-based
+evaluations while minimizing model-induced bias (Nandan et al., 2019a; 2021a; 2021b).
+(2) Fat-tailed behavior. The frequency distribution of counts across cells is empirically
+fat-tailed, often close to a power law in its upper tail, reflecting clustered triggering and
+
+--- Sayfa 5 ---
+5
+cascade dynamics (Kagan, 2017; Nandan et al., 2019a; Nandan et al., 2021a; see also
+Figure 6 in the present study as an example). This power law property is in fact predicted
+by theory for ETAS models of earthquake triggering (Saichev et al., 2005; Saichev &
+Sornette, 2006; 2007). Yet most evaluation pipelines, especially those relying on non-
+parametric smoothing, do not explicitly constrain or extrapolate the tail (Nandan et al.,
+2019a; Nandan et al., 2021b; Mizrahi et al., 2024; Han et al., 2025). In cells impacted by
+aftershocks of great earthquakes, observed counts can exceed the maximum of the
+simulated ensemble, requiring an out-of-range tail treatment (e.g., extrapolation vs.
+truncation). How such tail handling affects comparative model ranking has not been
+systematically quantified.
+Increasing the number of simulated catalogs can, to some extent, mitigate the two issues
+mentioned above. However, simply enlarging the ensemble size is not a practical solution in real
+applications. Doing so would not only lead to a substantial waste of computational resources but
+also significantly prolong the running time, thereby raising the overall computational cost. More
+importantly, even an arbitrarily large number of simulated catalogs cannot fully guarantee a
+perfect resolution of the underlying problems, as the fundamental limitations are methodological
+rather than merely statistical.
+This study addresses that gap. We develop an evaluation framework that (i) estimates the
+cell-wise probability distribution P(n) of earthquake numbers n with adaptive smoothing while
+(ii) explicitly incorporating fat-tail behaviour and principled tail-extrapolation rules for out-of-
+range observations, and (iii) assesses sensitivity of model ranking to these choices. Our analysis
+complements recent advances in short-term forecasting across diverse regions and model classes,
+
+--- Sayfa 6 ---
+6
+including ETAS generalizations and alternative point-process formulations (Zhuang, 2011;
+Werner et al., 2011; Davis et al., 2024; Hainzl et al., 2024; Mizrahi et al., 2024; Han et al., 2025).
+To enable transparent and repeatable testing at scale, we introduce AoyuX, an online
+research platform dedicated to earthquake predictability studies in China. Developed by the
+Institute of Risk Analysis, Prediction and Management (Risks-X) at the Southern University of
+Science and Technology (SUSTech) with the China Earthquake Networks Center and other
+institutions as partner organizations, AoyuX integrates state-of-the-art statistical seismology,
+centered on ETAS-type models that jointly forecast time–space–magnitude probabilities, with an
+extensible architecture for benchmarking, visualization, and (future) model-comparison
+challenges. The initial operational focus is the China Seismic Experimental Site (CSES) in
+Sichuan-Yunnan region, one of the nation’s most instrumented and seismically active regions (Li
+et al., 2022; Wu et al., 2019; Wu & Li, 2021a; 2021b; Wu, 2022). Since June 2024, AoyuX has
+issued monthly, quarterly, semi-annual, and annual forward forecast bulletins for the CSES (see
+Data and Resources), thereby establishing a sustained prospective and pseudo-prospective testing
+environment. Looking ahead, AoyuX will fuse geophysical observations with AI-assisted and
+physics-based components to support mid-term, short-term, and imminent forecasting, and to
+facilitate communication between experts and the public.
+In the present study, we conducted a ~25-year month-by-month pseudo-prospective
+forecasting experiment for the China Seismic Experimental Site (CSES), using the ETAS model
+together with a spatially heterogeneous variant in which the background seismicity rate varies
+across space. We further evaluated the impact of innovative fat-tail treatments for out-of-range
+observations and investigated under which conditions the cumulative information gain (CIG)
+curves exhibit a clear long-term upward trend, or alternatively, when such a trend is obscured by
+
+--- Sayfa 7 ---
+7
+stochastic fluctuations. By integrating a fat-tail-aware scoring methodology with a dedicated
+open testing platform, our work advances both the methodological foundations and the research
+infrastructure required for fair and statistically rigorous assessment of earthquake forecasting
+models in China and beyond.
+2 Methods
+2.1 The Epidemic-Type Aftershock Sequence (ETAS) model for earthquake forecasting
+The Epidemic-Type Aftershock Sequence (ETAS) model is a widely used formulation of
+the self-exciting Hawkes point process, specifically adapted to characterize seismicity. Unlike
+Markovian processes, the ETAS model generally exhibits non-Markovian behavior when its
+temporal memory kernel deviates from an exponential form (Hawkes & Oakes, 1974; Kagan &
+Knopoff, 1981, 1987; Ogata, 1988, 1998; Kanazawa & Sornette, 2020; 2024). At any
+spatiotemporal location (x, y, t), the model defines the expected seismicity rate, or intensity
+function λ(x, y, t), which depends on the complete history of seismic events up to time t, denoted
+as Ht:
+(1)
+Here, the intensity λ consists of a background rate μ and contributions from all prior earthquakes.
+Each past event i, characterized by its magnitude mi and location (xi, yi, ti), influences future
+seismicity through a separable spatiotemporal triggering kernel, weighted by a fertility (or
+productivity) function F(mi), parameterized by constants K and α. The spatiotemporal triggering
+kernel is typically defined as the product of two components: a temporal kernel described by the
+
+--- Sayfa 8 ---
+8
+Omori-Utsu law T(t - ti), with parameters c, ω, and τ; and a spatial kernel represented by a
+Green’s function with parameters d, γ, and ρ, together describing the temporal and spatial
+dependencies of aftershock triggering. The normalization constants Tnorm and Snorm ensure that the
+temporal and spatial kernels are valid probability density functions (PDFs). This formulation
+reflects a commonly adopted choice for the spatiotemporal triggering kernel in ETAS models
+(Nandan et al., 2021b; 2022), although alternative kernel forms have also been proposed in the
+literature (Helmstetter & Sornette, 2002; Felzer et al., 2002, 2003; Zhuang et al., 2002, 2005).
+The ETAS model admits two conceptually distinct yet mathematically equivalent
+interpretations (Helmstetter & Sornette, 2002; Li et al., 2025a):
+(a) Branching interpretation (Hawkes & Oakes, 1974; Kagan, 1991; Sornette &
+Werner, 2005). Each observed earthquake can be probabilistically linked to a parent
+event, forming a cascade of primary and secondary aftershocks in a tree-like structure. In
+this framework, background events follow a Poisson process, while each event may
+trigger its own sequence of aftershocks. Every tree configuration is associated with a
+probability that quantifies the likelihood of a specific parent-offspring association, given
+the observed catalog. These probabilities are derived from the ETAS intensity function
+λ(x, y, t) (Zhuang et al., 2002).
+(b) Collective influence interpretation (Helmstetter & Sornette, 2002). Each non-
+background event arises from the cumulative triggering effect of all preceding
+earthquakes. In this view, the intensity function λ(x, y, t) represents the combined
+influence of historical seismicity at a given location and time, superimposed on the
+background rate.
+
+--- Sayfa 9 ---
+9
+The mathematical equivalence between these two interpretations was rigorously established by
+Hawkes & Oakes (1974). Sornette & Werner (2005) further offered an intuitive explanation for
+this equivalence, based on the combination of (i) the formulation of the ETAS seismicity rate
+expressed as a linear superposition of contributions from prior events and of (ii) the exponential
+form of the point process hazard rate. This dual perspective enables the ETAS model to function
+both as a generative engine of synthetic earthquake catalogs and as a predictive tool for time-
+dependent seismic hazard assessment.
+In the present study, we employ two variants of the ETAS model that share an identical
+triggering kernel, with the sole difference being the treatment of the background seismicity rate
+(Nandan et al., 2021b; 2022):
+(1) ETAS model with a constant background rate (ETASμ). This variant, defined by
+Equation (1), assumes a spatially homogeneous background rate μ. We adopt it as the
+benchmark model in the present study. Its estimation involves determining the following
+set of model parameters: {μ, K, α, c, ω, τ, d, γ, ρ}.
+(2) ETAS model with spatially variable background rate (ETASμ(x, y)). In this augmented
+variant, the background rate μ(x, y) is treated as a nonparametric function that captures
+spatial heterogeneity of the background events. Its estimation follows a weighted kernel
+approach, as introduced by Nandan et al. (2021b, 2022):
+(2)
+where the summation is over all earthquakes in the catalog, weighted by their probability
+IPi of being background events (Zhuang et al., 2002). The normalization by the catalog
+duration T ensures that μ(x, y) represents the seismicity rate per unit time, while the factor
+
+--- Sayfa 10 ---
+10
+QD2Q/π normalizes the kernel per unit area at location (x, y). The choice of a power law
+kernel is motivated by its demonstrated superiority over the commonly used Gaussian
+kernel in previous studies (e.g., Helmstetter et al., 2007; Nandan et al., 2021a). Its
+estimation involves determining the following set of parameters: {Q, D, K, α, c, ω, τ, d, γ,
+ρ}.
+The parameter calibration of both variants is carried out using the extended Expectation-
+Maximization (EM) algorithm (Veen & Schoenberg, 2008). We refer readers to Nandan et al.
+(2021b, 2022) for full methodological details.
+2.2 Pseudo-prospective forecasting experiments
+The pseudo-prospective forecasting experiment is conducted over the testing period from
+January 1, 2000, to December 31, 2023. Each forecast window spans one calendar month, and
+the windows are non-overlapping. Specifically, for a given forecast window (e.g., a particular
+month in a given year), the earthquake catalog prior to that month is used to calibrate the model
+parameters. Based on the calibrated parameters, 100,000 synthetic earthquake catalogs are
+simulated for the forecast window. These synthetic catalogs are used to estimate the occurrence
+probability of the future earthquakes. The process is then repeated for each subsequent month in
+the testing period. To assess the spatial performance of the models, the study region is
+discretized using a geodesic triangular tessellation on the Earth’s surface accounting for its
+spherical geometry, with six different spatial resolutions defined by equal-area triangles of
+approximately 195 km2, 779 km2, 3,117 km2, 12,470 km2, 49,883 km2, and the entire CSES
+region as a single unit (approximately 780,000 km2). In addition, five different magnitude
+thresholds Mt are considered: 3.0, 3.5, 4.0, 4.5, and 5.0.
+
+--- Sayfa 11 ---
+11
+For each forecast window, magnitude threshold, and spatial resolution (space-time-
+magnitude bin), we compute the distribution of the number of simulated earthquakes in each
+triangular cell. The probability distribution P(n), where n denotes the number of earthquakes, is
+then estimated using the kernel-based smoothing method described in the next section.
+Accordingly, the probability of observing ni earthquakes in the i-th triangle is given by P(ni).
+Given a particular spatial resolution and magnitude threshold, the log-likelihood score of a model
+for a specific forecast window is defined as:
+(3)
+where N is the number of spatial cells at the specified resolution. The information gain (IG) is
+defined as the difference in log-likelihood scores between ETASμ(x, y) and ETASμ. A higher IG
+indicates superior performance of the spatially heterogeneous ETASμ(x, y) model relative to the
+benchmark ETASμ model, and vice versa.
+2.3 Distribution of forecasted earthquake numbers
+To obtain a smooth distribution of forecasted earthquake numbers and minimize
+uncertainties arising from the finite number of simulations, we adopt an adaptive Gaussian kernel
+density estimation (KDE) method to represent the distribution of simulated earthquake numbers
+within each grid cell, given a specific forecast window, magnitude threshold Mt, and spatial
+resolution. The adaptive kernel density estimation method is a nonparametric approach that
+adjusts to varying data density by allowing the bandwidth to vary locally (Cranmer, 2001). Its
+key characteristic is that regions with higher data density are assigned narrower kernels, while
+sparser regions use wider kernels (Figure 1a), thereby improving estimation accuracy across the
+full distribution.
+
+--- Sayfa 12 ---
+12
+In the present study, the kernel density f(n) for the number of simulated earthquakes n is
+given by:
+(4)
+where Nsim is the number of synthetic catalogs (set to 100,000 in the present study), nj is the
+number of earthquakes in the j-th simulated catalog, K(.) is the standard Gaussian kernel with
+zero mean and unit variance, hj is the locally adaptive bandwidth for the j-th sample. To compute
+the pilot kernel density f0(n), each hj is initially set to a fixed bandwidth h0, which is selected to
+minimize the mean integrated squared error (MISE) following a rule-of-thumb bandwidth
+selection (Scott, 2015). The adaptive bandwidths hj are then adjusted according to:
+(5)
+where f0(nj) is the pilot density estimate at nj. This formulation ensures narrower bandwidths in
+regions where simulated earthquake counts are concentrated and broader bandwidths where data
+are sparse. In effect, each simulation contributes a Gaussian kernel in probability space, with its
+width adaptively scaled by the local data density—i.e., the number of synthetic catalogs yielding
+similar outcomes.
+
+--- Sayfa 13 ---
+13
+Figure 1. Illustration of the probability distribution for the number of forecasted earthquakes,
+shown for two scenarios: (a) where the observed value (red solid line) falls within the range of
+simulated values, and (b) where the observed value exceeds the maximum of the simulated
+distribution. The forecasted probability corresponding to the observed value ni in the i-th triangle
+is denoted as P(ni). In the present study, simulated data (black solid circles) are generated from
+Nsim sets of synthetic catalogs (Nsim = 100,000). The per-sample adaptive Gaussian kernels (gray
+shaded areas), each with its own bandwidth, are summed to construct the total adaptive Gaussian
+kernel density estimate (blue solid line), which is used to present the overall probability
+distribution. When ni (red solid line) exceeds the forecasted maximum (orange dashed line) in
+panel (b), we propose three alternative strategies for assigning P(ni): (1) fitting a power law
+function (green solid line) to the upper 30% of the simulated tail data (to the right of the green
+dashed line); (2) assigning a fixed probability value (black horizontal line), equal to 1/(Nsim)2; or
+(3) excluding P(ni) altogether in such cases.
+Alt-Text Two-panel schematic illustrating how the probability of the observed earthquake count
+is evaluated relative to the simulated forecast distribution. In panel (a), the observed number of
+earthquakes (vertical red line) lies within the range of values generated from 100,000 synthetic
+catalogs (black dots). The overall forecast probability density (blue curve) is constructed by
+
+--- Sayfa 14 ---
+14
+summing per-sample adaptive Gaussian kernels (gray shaded curves), each with its own
+bandwidth. The probability assigned to the observed count in the i-th spatial cell is denoted as
+P(ni). In panel (b), the observed count (red line) exceeds the maximum simulated value (orange
+dashed line). Three alternative approaches for assigning P(ni) in this case are illustrated: (1)
+extrapolating the upper 30% of the simulated tail with a fitted power law function (green curve,
+fitted to data right of the green dashed line); (2) assigning a fixed small probability equal to
+1/(Nsim)2 (black horizontal line); or (3) excluding the probability term when the observation falls
+beyond the simulated range.
+However, when the observed number of earthquakes within a grid cell—given a specific
+forecast window, magnitude threshold Mt, and spatial resolution—exceeds the maximum value
+obtained from the simulated catalogs, the adaptive kernel method may yield serious biased
+estimates of the probability P(n) (see, for example, Figures 1 and 6 in the present study and
+Figure 1 in Nandan et al. (2019a)). To address this issue, we propose three alternative strategies
+for assigning P(n) in such cases (Figure 1b):
+(1) Power law extrapolation. Fit a power law function to the upper 30% of the simulated
+tail data and use the extrapolated value as P(n);
+(2) Fixed minimum probability. Assign a fixed probability value equal to 1/(Nsim)2;
+(3) Exclusion. Exclude the corresponding P(n) value entirely from the likelihood
+computation.
+In the following sections, we evaluate the impact of these three strategies on model performance
+in forecasting experiments.
+
+--- Sayfa 15 ---
+15
+Figure 2. Spatiotemporal distribution of seismicity and completeness magnitude (Mc) in the
+China Seismic Experimental Site (CSES), located in the Sichuan-Yunnan region. (a) Spatial
+distribution of earthquakes from 1970 to 2023, completeness magnitude (Mc) since 2009, and
+active faults within the CSES. The background map of Mc is adapted from Li et al. (2023). Fault
+locations are taken from Deng et al. (2003). (b) Location of the CSES shown on a broader
+regional map. (c) Temporal evolution of Mc (right y-axis) and the magnitude-time (MT) plot of
+earthquakes with M ≥3 (left y-axis) since 2000. The estimation of Mc was performed using a
+half-year step and one-year window. Red dashed lines with decreasing color indicate
+completeness probabilities of 84.2% (Mc + σc), 97.8% (Mc + 2σc), and 99.9% (Mc + 3σc),
+respectively. Mc and σc are estimated by the method proposed by Wang et al. (2025) and Li et al.,
+(2025b). The earthquake magnitudes shown in the magnitude-time plot have been perturbed by a
+uniformly distributed random error within the range [-0.05, 0.05].
+
+--- Sayfa 16 ---
+16
+Alt-Text Three-panel figure showing the spatial and temporal characteristics of seismicity and
+completeness magnitude (Mc) in the China Seismic Experimental Site (CSES) in the Sichuan-
+Yunnan region. Panel (a) presents the spatial distribution of earthquakes from 1970 to 2023,
+overlaid on a background map of Mc since 2009 and mapped active faults. Panel (b) shows the
+geographic location of the CSES within a broader regional context. Panel (c) displays the
+temporal evolution of Mc (right vertical axis) together with a magnitude-time plot of earthquakes
+with M ≥3 since 2000 (left vertical axis). Mc is estimated using a one-year moving window with
+a half-year step. Red dashed curves with progressively lighter shading indicate completeness
+probability levels of 84.2% (Mc + σc), 97.8% (Mc + 2σc), and 99.9% (Mc + 3σc). Earthquake
+magnitudes in the magnitude-time plot are perturbed by a uniform random error within the range
+[−0.05, 0.05] to reduce visual overlap.
+3 Seismicity in China Seismic Experimental Site (CSES)
+Situated in a seismically active region (Li et al., 2020; 2021; 2022), the China Seismic
+Experimental Site (CSES) is designed to integrate dense, multidisciplinary observations to
+investigate the complex physical processes underlying earthquake generation (Wu et al., 2019;
+Wu & Li, 2021a; 2021b; Wu, 2022). By combining geological, geophysical, and geochemical
+data, the site enables a comprehensive investigation of seismic hazards. This integrative
+approach facilitates the development and validation of predictive models, thereby contributing
+significantly to earthquake forecasting efforts in China. The CSES region has long maintained a
+dense and high-quality seismic monitoring network, resulting in an extended record of reliable
+earthquake catalogs (Li et al., 2023; 2025c). As shown in Figure 2, the temporal–spatial
+distribution of completeness magnitude Mc indicates that the CSES catalog has been nearly
+complete for events with M ≥3 since 2000, with a brief exception following the 2008 Wenchuan
+MS 8.0 earthquake, when the completeness probability for M ≥3 dropped to approximately
+97.8% (Figure 2c). Based on this, we set the catalog cut-off magnitude at Mco = 3.0.
+
+--- Sayfa 17 ---
+17
+The earthquake catalogs used in the present study were provided by the China
+Earthquake Networks Center (CENC). The catalog of earthquakes with M ≥3.0 in the CSES
+region during 1970–2023 is available as Data Set S1 in Li et al. (2025a). The CSES catalog
+includes a mixture of magnitude types, primarily local magnitude (ML) and surface-wave
+magnitude (MS), which introduces potential complications due to magnitude-type heterogeneity.
+The magnitude bin size is set to 0.1. Temporally, the catalog is divided into two segments: (1) an
+auxiliary catalog from January 1, 1970, to December 31, 1984, used to avoid misclassifying early
+events in the primary catalog as background events in the ETAS model; and (2) the primary
+catalog, extending from January 1, 1985, to the day before the forecast window, used for
+calibrating the ETAS model parameters.
+4 Results
+In this section, we present two sets of results: (1) the calibrated parameters of the ETAS
+models, and (2) the outcomes of pseudo-prospective earthquake forecasting experiments based
+on the calibrated models.
+4.1 Calibrated parameters of the ETAS model
+To examine the temporal stability and evolution of ETAS model parameters, we calibrate
+both ETASμ(x, y) and the homogeneous counterpart ETASμ over a series of monthly forecast
+windows. For each calibration step, the primary catalog includes all events from January 1, 1985,
+up to the day preceding the forecast window. In addition, a 15-year auxiliary catalog covering
+the period from January 1, 1970, to December 31, 1984, is appended to provide historical context
+and reduce the likelihood of misclassifying earlier events as background earthquakes.
+Figure 3 shows the temporal evolution of the estimated parameters for both ETASμ(x, y)
+
+--- Sayfa 18 ---
+18
+and ETASμ. Overall, the two models yield noticeably different parameter estimates, with
+ETASμ(x, y) identifying significantly more background events than ETASμ, primarily as a result of
+allowing for a spatially heterogeneous background seismicity, which is otherwise likely to be
+misclassified as triggered seismicity in ETASμ. Furthermore, from 2000 to 2023, the differences
+between the two models in several key parameters remain relatively stable over time.
+Specifically, the fertility law parameters (log10K and α), the spatial kernel parameter (log10d), and
+the branching ratio h consistently exhibit similar difference amplitudes between ETASμ(x, y) and
+ETASμ. In contrast, the gap between the two models in terms of the cumulative number of
+background events and log10τ gradually widens over time. On the other hand, the differences in ρ,
+γ, log10c, and 1+ω tend to decrease with time and, in some cases, nearly vanish. Notably, abrupt
+changes in several parameter time series coincide with the occurrence of major earthquakes in
+the region. Examples include the 2008 Wenchuan MS 8.0 earthquake (May 12), the 2013 Lushan
+MS 7.0 earthquake (April 20), and the 2017 Jiuzhaigou MS 7.0 earthquake (August 8), among
+others.
+
+--- Sayfa 19 ---
+19
+Figure 3. Temporal evolution of the calibrated parameters in the ETAS model with spatially
+variable background seismicity (ETASμ(x, y)) and in the ETAS model with a constant background
+rate (ETASμ). For model calibration, the primary catalog spans from January 1, 1985, to the day
+before each monthly forecast window, and is preceded by a 15-year auxiliary catalog (from
+January 1, 1970, to December 31, 1984) to prevent misclassification of early events in the
+primary catalog as background events. Note that the parameters D and Q are specific to ETASμ(x,
+y) and are not included in ETASμ.
+Alt-Text Time series comparing the monthly calibrated parameter values of two ETAS model
+configurations: one with spatially variable background seismicity, ETASμ(x, y), and one with a
+spatially constant background rate, ETASμ. For each monthly forecast, parameters are estimated
+using a primary catalog from 1 January 1985 up to the day preceding the forecast window,
+supplemented by a 15-year auxiliary catalog (1 January 1970–31 December 1984) to reduce
+misclassification of early primary events as background events. The figure shows the temporal
+evolution of shared ETAS parameters in both models, while the spatial kernel parameters D and
+Q appear only for ETASμ(x, y) and are not defined for ETASμ.
+4.2 Cumulative information gain (CIG) of ETASμ(x, y) over ETASμ
+The calibrated parameters prepared for each forecast window were used to generate
+synthetic earthquake catalogs based on the first of the two conceptually distinct yet
+mathematically equivalent interpretations of the ETAS model, that is, the branching
+interpretation (see the second paragraph of Section 2.1). For each forecast window, 100,000
+synthetic catalogs were generated in this study. All simulated catalogs produced by the two
+ETAS models are openly available through Li et al. (2025d). Figure 4 presents the time series of
+cumulative information gain (CIG) of ETASμ(x, y) over ETASμ from 2000 to 2023. Results are
+shown for six spatial resolutions, five magnitude thresholds (Mt), and three strategies for
+assigning P(ni) when the observed value ni in the i-th triangle exceeds the maximum value
+obtained from the simulations. The green, black, and orange curves correspond to strategies (1),
+
+--- Sayfa 20 ---
+20
+(2), and (3) described in Section 2.3, respectively. We also provide, in the Data and Resources
+section, adaptive Gaussian kernel density fits for both models across the five magnitude
+thresholds for the full CSES region.
+For Mt = 3 and 3.5 (i.e., the first and second columns of Figure 4 across all spatial
+resolutions) and for the entire CSES region (i.e., the last row of Figure 4 across all Mt), the CIG
+curves of ETASμ(x, y) over ETASμ remain consistently above zero and exhibit an overall upward
+trend over time. This indicates that of ETASμ(x, y) outperforms the baseline ETASμ model in terms
+of forecasting skill under these settings. For other combinations of spatial resolution and Mt,
+however, the results are more ambiguous. The CIG curves often display substantial fluctuations
+(see discussion in the next section), and in many cases, the performance of ETASμ(x, y) does not
+significantly exceed that of ETASμ, reflecting the complex nature of seismicity in the study
+region. As with the parameter time series discussed in Section 4.1, many abrupt changes in CIG
+coincide with major earthquakes in the region, most notably the 2008 Wenchuan MS 8.0
+earthquake (May 12), which is discussed in detail in the next section.
+
+--- Sayfa 21 ---
+21
+Figure 4. Time series of cumulative information gain (CIG) of ETASμ(x,y) over ETASμ in pseudo-
+prospective forecasting experiments at the CSES from 2000 to 2023. Results are shown for six
+spatial resolutions, five magnitude thresholds (Mt), and three strategies for assigning P(ni) when
+the observed value ni in the i-th triangle exceeds the forecasted maximum. The green, black, and
+orange curves correspond to strategies (1), (2), and (3) described in Figure 1, respectively. The
+pseudo-prospective forecasting experiments use calendar months as time windows, resulting in a
+total of 288 time windows over the study period. The horizontal black dashed line indicates zero
+cumulative information gain.
+Alt-Text Multi-panel time series showing the cumulative information gain (CIG) of the ETAS
+model with spatially variable background seismicity, ETASμ(x, y), relative to the constant-
+background model, ETASμ, in pseudo-prospective monthly forecasts for the China Seismic
+Experimental Site from 2000 to 2023. Results are presented for six spatial grid resolutions and
+five magnitude thresholds (Mt). For cases in which the observed earthquake count in a spatial
+cell exceeds the simulated forecast maximum, three probability-assignment strategies are
+compared: green curves represent power law tail extrapolation, black curves represent a fixed
+
+--- Sayfa 22 ---
+22
+small probability assignment, and orange curves represent exclusion of the probability term.
+Forecasts are evaluated over 288 monthly time windows. The horizontal black dashed line marks
+zero cumulative information gain, separating periods of positive and negative relative
+performance.
+Figure 4 also shows that the choice of strategy for assigning P(ni) when the observed
+value ni exceeds the forecasted maximum can significantly influence the model evaluation results.
+For lower magnitude thresholds (e.g., Mt = 3 to 4), corresponding to the left-hand panels in
+Figure 4, the three strategies, power law extrapolation, fixed minimum probability, and exclusion,
+yield markedly different CIG curves. This highlights the sensitivity of model evaluation to how
+such rare cases are handled. In most instances, the power law extrapolation strategy results in the
+highest CIG values. However, there are exceptions, for example, under the combinations of
+spatial resolution 195, 3117, 12,470, and 49,883 km2 with Mt = 3, the fixed minimum probability
+strategy consistently produces higher CIG curves than the power law extrapolation approach.
+4.3 Bias from improper tail treatment
+However, the apparent advantage of the CIG curves obtained using the fixed minimum
+probability strategy for assigning P(ni) is in fact illusory. When both models (ETASμ(x,y) and
+ETASμ) assign P(ni) based on the same fixed minimum probability, i.e., when the observed
+earthquake count exceeds the maximum simulated count of both models, their log-likelihood
+scores become identical, resulting in an information gain (IG) of zero. In contrast, when the
+observed count exceeds the maximum simulated value of only one model but not the other, the
+former adopts the fixed minimum probability, while the latter still uses the adaptive Gaussian
+kernel density estimate to assign P(ni). This asymmetric treatment introduces a strong bias in
+model performance. Such cases frequently occur in the months following large earthquakes (e.g.,
+events with M > 7); examples are observed for Mt = 3.0 during June and November 2008 in the
+
+--- Sayfa 23 ---
+23
+full CSES region (see Data and Resources section).
+During these post-mainshock forecast windows, ETASμ(x,y) systematically generates more
+tail events in the probability distribution P(n) than ETASμ. This difference arises because the
+spatially varying ETASμ(x,y) incorporates a heterogeneous background rate μ(x, y), which
+accounts for spatial clustering and variability in triggering intensity. Statistically, this produces a
+mixture of local Poisson-branching processes with different means, naturally leading to a
+heavier-tailed distribution. Physically, high-μ regions act as persistent triggering hotspots,
+sustaining multiple generations of aftershocks and resulting in abnormally large event counts
+within certain cells. Consequently, ETASμ(x,y) exhibits a broader and more asymmetric P(ni),
+consistent with the enhanced spatial heterogeneity of real seismicity.
+In fact, the exclusion strategy for assigning P(ni) suffers from a similar problem, though
+its impact on CIG is less pronounced than that of the fixed minimum probability. Specifically,
+when both models assign probabilities under the exclusion rule (i.e., when the observed count
+exceeds the simulated maximum of both models), the IG of ETASμ(x,y) over ETASμ is zero. When
+the observed count exceeds the simulated range of only one model, the log-likelihood (LL) for
+that model cannot be computed, and thus the information gain (IG) for this forecast window
+becomes undefined. In practice, this window is omitted from the IG calculation, which explains
+why its impact on the overall CIG is less pronounced than that of the fixed minimum probability
+approach. In either case, whether using the fixed minimum probability or exclusion, the model
+performance is systematically biased following large earthquakes. Therefore, neither method
+should be recommended for evaluating IG in such contexts.
+
+--- Sayfa 24 ---
+24
+Figure 5. Probability distributions of earthquake counts forecasted by (dashed line) ETASμ and
+(solid line) ETASμ(x, y) for May 2008 across the entire CSES region, under different magnitude
+thresholds (Mt). The MS 8.0 Wenchuan earthquake on May 12 and its aftershocks (marked by the
+red vertical line) generate an out-of-range situation as shown in Panel (b) of Figure 1, which
+corresponds to a single time-window slice taken from the last row of Figure 5. All plotting
+elements are consistent with those in Figure 1, except that the ETASμ data points are shown as
+solid gray triangles for visual distinction. The Data and Resources section provides links to
+access the forecasted probability density functions of both models for all forecast windows and
+magnitude thresholds across the full CSES region.
+Alt-Text Probability density functions of forecasted earthquake counts for May 2008 across the
+full China Seismic Experimental Site (CSES), comparing the ETAS model with constant
+background rate, ETASμ (dashed curve), and the spatially variable background model, ETASμ(x, y)
+(solid curve), under multiple magnitude thresholds (Mt). Simulated forecast samples are
+displayed as symbols, with ETASμ(x, y) shown as black circles and ETASμ shown as solid gray
+triangles. The observed earthquake count, dominated by the 12 May 2008 MS 8.0 Wenchuan
+earthquake and its aftershocks, is indicated by a red vertical line and lies beyond the maximum
+simulated range, illustrating the out-of-range case described in panel (b) of Figure 1. Kernel-
+
+--- Sayfa 25 ---
+25
+based density estimates and plotting conventions follow those in Figure 1. Links to the full set of
+forecasted probability density functions for all time windows and magnitude thresholds are
+provided in the Data and Resources section.
+5 Discussion
+In this section, we present the results of pseudo-prospective experiments conducted for
+May 2008 across the entire CSES region to quantitatively examine the impact of out-of-range
+earthquake counts on the calculation of information gain. Following this, we further explain the
+underlying causes of noisy cumulative information gain, highlighting both methodological and
+data-related factors.
+5.1 An example of out-of-rang earthquake counts: The May 2008
+Within the spatiotemporal window of the present study, the largest event is the MS 8.0
+Wenchuan earthquake of May 12, 2008. This mainshock and its aftershocks produced an out-of-
+range situation, as illustrated in Panel (b) of Figure 1, under all magnitude thresholds (Mt)
+considered in the present analysis (see Figure 5). Figure 5 also presents the probability
+distributions of earthquake counts forecasted by ETASμ and ETASμ(x, y) for the same month (May
+2008) across the entire CSES region. The results clearly demonstrate that, once the observed
+counts fall outside the simulated ensemble, the extrapolation based on adaptive Gaussian kernel
+density estimation becomes severely biased and drastically underestimates the probability of the
+observed earthquake numbers. In contrast, power law distributions with fat-tailed behavior
+provide a more reliable extrapolation, yielding non-negligible probabilities for these extreme
+counts.
+From Figure 5, the information gain (IG) of ETASμ(x, y) relative to ETASμ can be
+computed using Equation (3). The corresponding IG values are approximately 2, -2, -1, -3, and 1
+
+--- Sayfa 26 ---
+26
+for Mt = 3, 3.5, 4, 4.5, and 5, respectively. These results suggest that, at the time of the
+Wenchuan mainshock itself, the two models did not exhibit a consistently large performance gap
+across thresholds. However, the bottom row of Figure 4 reveals a critical point: when
+extrapolation is performed using power law tails, the IG of ETASμ(x, y) relative to ETASμ
+continues to rise in the months following May 2008. This indicates that ETASμ(x, y) systematically
+outperforms ETASμ in forecasting the Wenchuan aftershocks, leading to the marked upward shift
+observed in the cumulative information gain (CIG) curve in Figure 4.
+5.2 Quantitative rationale for the variability of CIG
+Figure 4 shows that the CIG curves of ETASμ(x, y) relative to ETASμ lose their long-term
+upward trend and become increasingly erratic when the spatial resolution is coarsened and Mt is
+raised. Below we offer a quantitative rationale for this behaviour.
+Let n be the number of earthquakes observed in a single grid cell at the chosen resolution
+r (expressed as the mesh area) during the ith forecast window for which there are Nr grid cells.
+The number of grid cells scales as Nr 1/r. Let us assume that n follows a discrete probability
+law P(n) with mean n0 (> 0). Suppose models A and B also generate counts from P(n) but with
+means nA and nB, respectively, subject only to the accuracy condition |nA - n0| < |nB - n0|
+indicating that model A is better than model B. Define the per-cell log-likelihood difference
+during ith forecast window
+(6)
+Since |nA - n0| < |nB - n0|, the average log-likelihood difference Mean(ΔLL) is positive, indicating
+that model A is the better fit. The accuracy of this statistic is assessed with the coefficient of
+variation (CV) of the log-likelihood difference:
+
+--- Sayfa 27 ---
+27
+(7)
+where the mean and standard deviation are calculated over the set of Nr cells. The CV is a
+function of the resolution r via the dependence of the number of grid cells Nr 1/r. The coarser
+the resolution r is, the larger is n0 and the narrower is P(n), but the smaller is Nr. Thus coarsening
+the resolution r improves the statistics per cell but deteriorates the statistical accuracy obtained
+by averaging over all Nr cells. This competition between in-cell and ensemble-cell statistics
+explains the complicated dependences of the CIG curves on the resolution and magnitude
+threshold shown in Figure 4.
+Table 1 reports the CV computed solely from the orange CIG curves in Figure 4, i.e.,
+using the exclusion strategy (see more details in Section 2.3). Under this strategy only the
+probabilities obtained from the adaptive-Gaussian kernels are retained; any cells whose observed
+counts fall outside the simulated range are discarded. This ensures that all CV values are derived
+from a single, internally consistent method, without the complications introduced by fixing
+minimum probability or power law extrapolation. The results show a clear pattern: for a given
+spatial resolution, a larger Mt lowers the average count n0 (e.g., Figures 5 and 6); the mean of
+ΔLL therefore declines while its sampling variance grows, and the CV increases accordingly.
+Table 1. Coefficient of variation (CV) calculated based on the cumulative information gain
+(CIG) results for ETASμ(x, y) relative to ETASμ in the China Seismic Experimental Site
+(CSES) region, evaluated for each combination of spatial resolution and magnitude threshold
+Mt. The CV values are calculated from the Exclusion strategy only, that is, from the orange
+CIG curves shown in Figure 4.
+Spatial resolution
+Mt = 3
+Mt = 3.5
+Mt = 4
+Mt = 4.5
+Mt = 5
+
+--- Sayfa 28 ---
+28
+195 km2
+7.28
+15.73
+22.92
+16.02
+34.62
+779 km2
+3.87
+7.19
+28.18
+13.38
+48.38
+3,117 km2
+3.08
+4.64
+9.05
+27.25
+68.67
+12,470 km2
+2.62
+3.42
+13.03
+93.82
+54.27
+49,883 km2
+10.90
+4.72
+25.78
+21.50
+64.33
+5.3 Consistency of empirical scaling and ETAS-based theoretical predictions
+Figure 6 demonstrates that the empirical probability density functions (PDFs) of
+earthquake counts per grid cell are well approximated by the power law P(n) ~ n−(1+a) across all
+tested magnitude thresholds and spatial resolutions. For each combination of spatial resolution
+and magnitude threshold, the mean and standard deviation of the fitted exponent a were
+estimated from 200 bootstrap resamples. Figure 7 then plots the histogram of the 25 mean a
+values shown in Figure 6 together with their Gaussian fit. The overall mean (1.40) and median
+(1.39) of these 25 mean a values are close to each other, as are their standard deviation (0.21)
+and interquartile range (0.21). This supports the parsimonious hypothesis of a common exponent
+a = 1.40 ± 0.21.
+Using the technique of generating probability functions applied to the ETAS model,
+Saichev et al. (2005) derived the theoretical distribution of the total number of aftershocks,
+which follows the power law P(n) ~ n−(1+a) in the non-critical regime (i.e., when its branching
+ratio h is not close to 1 and for earthquake counts n > 1/(1 - h)g/(g-1)) where g = b/α, b is the
+Gutenberg-Richter (GR) slope and α is the fertility (or productivity) exponent describing how the
+mean number of aftershocks triggered by a mainshock scales with its magnitude. The power law
+exponent a is related to the model parameters through a = g = b/α. For smaller event counts n <
+
+--- Sayfa 29 ---
+29
+1/(1 - h)g/(g-1)), the exponent a is renormalized to a = 1/g. The empirical observation of a single
+power law with an exponent a > 1 therefore indicates that the system operates in a subcritical
+regime, i.e., the branching ratio h is substantially below 1. This finding corroborates previous
+studies suggesting that the Earth’s crust, on average, remains far from criticality (Nandan et al.,
+2021b; Li et al., 2025a). Saichev & Sornette (2006) further demonstrated that this same scaling
+law emerges as the asymptotic behavior of space-time windowed event-number distributions,
+implying that such power laws are a fundamental statistical property of branching-type
+seismicity models.
+
+--- Sayfa 30 ---
+30
+Figure 6. Frequency distribution function of earthquake count over the ensemble of grid cells,
+aggregated over all 288 forecast windows. Each point represents the number of grid cells (on the
+y-axis) that experienced a specific number of earthquakes (on the x-axis), for a given
+combination of spatial resolution and magnitude threshold. In other words, the curves show the
+empirical non-normalized probability density function of earthquake counts per cell. Consistent
+with Figure 1, the blue solid line represents the adaptive Gaussian kernel density estimate, while
+the green solid line shows the fitted power law function (∼n−(1+a)). For each combination of
+spatial resolution and magnitude threshold, the mean and standard deviation of the fitted
+exponent a were estimated from 200 bootstrap resamples.
+Alt-Text Frequency distributions of earthquake counts per grid cell, aggregated over 288
+monthly forecast windows for the China Seismic Experimental Site. Each point represents the
+number of spatial cells (vertical axis) that experienced a given earthquake count (horizontal axis),
+for a specific spatial resolution and magnitude threshold. The curves therefore depict the
+empirical, non-normalized probability density of earthquake counts across cells. The blue solid
+curve shows the adaptive Gaussian kernel density estimate of the distribution, and the green solid
+curve shows a fitted power law function proportional to n−(1+a). For each spatial resolution and
+magnitude threshold, the exponent a and its standard deviation were estimated using 200
+bootstrap resamples.
+Moreover, the observed scaling exponent a provides an indirect way to infer the ETAS
+fertility (or productivity) exponent α. Given the theoretical relation a = g := b/α, the empirical
+result a = 1.40 ± 0.21 and the Gutenberg-Richter slope value b = 0.80 (see Li et al., 2025a) yield
+an estimated fertility exponent of α = b/a = 0.57 ± 0.08. This inferred value of α falls well within
+the physically plausible range reported by previous ETAS-based studies and reinforces the
+interpretation that seismic triggering efficiency increases moderately with magnitude but remains
+sublinear. In contrast, the parameter estimates obtained directly from the ETAS-based models are
+systematically higher (Figure 3): α ≈0.7–1.0 for ETASμ(x, y) and α ≈0.6–0.9 for ETASμ(x, y).
+Although these two ranges partially overlap with the theoretical estimate, the ETAS-derived
+
+--- Sayfa 31 ---
+31
+values tend to be biased upward.
+Figure 7. Histogram of the 25 mean power law exponents a shown in Figure 6 and their
+Gaussian fit, with mean 1.40, median 1.39, standard deviation 0.21 and interquartile range 0.21.
+Alt-Text Histogram of the 25 mean power-law exponents a derived from the earthquake count
+distributions shown in Figure 6, with an overlaid Gaussian fit. The distribution of exponent
+values has a mean of 1.40, a median of 1.39, a standard deviation of 0.21, and an interquartile
+range of 0.21, indicating moderate dispersion around the central tendency.
+Several factors may explain this discrepancy. First, the theoretical derivation assumes an
+idealized, stationary branching process in the non-critical regime, while the ETAS fitting is
+affected by non-stationary background rates, spatial heterogeneity, and catalog incompleteness,
+all of which can inflate the apparent fertility. Second, the estimation of α in ETAS models is
+strongly coupled with that of other parameters, particularly the background rate μ and the
+spatiotemporal decay parameter (1+ρ and 1+ω), leading to potential trade-offs that shift the fitted
+values upward. Third, the boundary and finite-size effects inherent in the CSES region (Li et al.,
+
+--- Sayfa 32 ---
+32
+2025a), especially the presence of clustered aftershock sequences such as the 2008 Wenchuan
+earthquake, may enhance the observed triggering efficiency relative to the long-term theoretical
+expectation. Despite these differences, both approaches consistently yield α < b, indicating that
+small earthquakes collectively dominate the overall triggering process. This imbalance implies
+that, while larger events are individually more efficient triggers, their cumulative contribution is
+outweighed by the far more numerous small events. This is a manifestation of the so-called
+ultraviolet divergence problem in the ETAS framework. Because direct empirical estimation of
+the fertility exponent α is notoriously difficult, often hindered by limited temporal completeness
+and strong parameter correlations, our indirect inference offers a robust and independent
+constraint. It provides empirical support for theoretical expectations derived from branching
+process theory and anchors a key ETAS parameter on a statistically grounded foundation directly
+linked to the observed scaling behavior of earthquake count distributions.
+6 Conclusions
+Advancing short-term earthquake forecasting has always been a core objective of the
+emerging China Seismic Experimental Site (CSES), led by China Earthquake Administration
+(CEA). A critical step in that agenda is the rigorous testing of scientific hypotheses on
+earthquake predictability. To that end, we have developed AoyuX, a bespoke short-term
+predictability platform tailored to the CSES region, which is currently in its initial
+implementation stage. AoyuX embeds the ETAS model, one of the few frameworks that
+simultaneously delivers time, space, magnitude, and probability information and that synthesises
+the current state of seismological knowledge. By embedding two variants of the ETAS model,
+ETASμ with a homogeneous background rate and ETASμ(x, y) with a spatially variable rate, we
+carried out about 25 years of monthly pseudo-prospective experiments (2000-2023).
+
+--- Sayfa 33 ---
+33
+The calibration phase reveals systematic contrasts between the two variants. ETASμ(x, y)
+consistently assigns more events to the background than ETASμ, reflecting the added flexibility
+of a non-parametric background field. Several parameter time series exhibit abrupt shifts that
+coincide with major regional earthquakes, indicating that large events can instantaneously
+reshape the triggering environment as well as be associated with transient data issues such as
+earthquake incompleteness. Forecast assessments, expressed through cumulative information
+gain (CIG), show a clear hierarchy under data-rich conditions: for the full CSES domain and for
+Mt = 3.0 to 3.5, ETASμ(x, y) maintains a persistent positive CIG over ETASμ. However, at finer
+spatial grids or larger magnitude thresholds the average cell count declines, sampling variance
+grows, and the CIG curves become highly volatile. A coefficient-of-variation analysis confirms
+that, once data scarcity pushes CV above ~10, noise overwhelms deterministic skill and the
+apparent advantage of ETASμ(x, y) vanishes. Model ranking also depends sensitively on how “out-
+of-range” cell counts, observed counts exceeding all simulated values, are handled. Among the
+strategies tested, power law extrapolation consistently provides the most theoretically justified
+and empirically robust results, in line with both analytical predictions of branching-process
+theory and the clear scaling patterns shown in Figure 6 and earlier studies (Saichev et al., 2005;
+Saichev & Sornette, 2006; 2007). While in a few coarse-grained low-magnitude configurations,
+the fixed minimum probability rule produced slightly higher CIG values, these are best
+interpreted as artifacts of noise rather than genuine model superiority. Both the fixed-minimum
+probability and exclusion strategies introduce systematic biases in model evaluation following
+large earthquakes. Consequently, these approaches are not suitable for reliable assessment of
+information gain during periods of intense seismic activity. Taken together, the evidence strongly
+supports power law extrapolation as the most appropriate framework for handling extreme
+
+--- Sayfa 34 ---
+34
+counts, especially in cells affected by large, cluster-forming earthquakes, which generate the fat-
+tailed distributions expected from aftershock cascades. This highlights the necessity of treating
+such extreme outliers not as anomalies to be truncated but as integral signatures of the
+underlying triggering dynamics.
+As a bonus, our analysis yields a surprisingly precise and robust estimate of the fertility
+exponent, α = 0.57 ± 0.08, derived from well-behaved empirical distributions of earthquake
+counts and firmly supported by ETAS theory, thus providing one of the very few reliable
+quantifications of this key but elusive parameter.
+In sum, ETASμ(x, y) provides demonstrable skill over its homogeneous counterpart in
+regimes where observational counts are plentiful. Where data are sparse, however, sampling
+noise, parameter instability, and treatment of extreme clusters become dominant concerns. Future
+work should therefore focus on adaptive strategies for rare-event handling and on hybrid
+schemes that combine ETAS-style triggering with physics-based constraints, further enhancing
+the operational value of AoyuX for short-term earthquake forecasting in the CSES and analogous
+natural laboratories worldwide.
+Acknowledgments
+The authors would like to thank Yang Zang from the China Earthquake Networks Center for his
+assistance in accessing the Chinese earthquake catalog data, as well as Prof. Jiancang Zhuang,
+Prof. Zhongliang Wu and Prof. Changsheng Jiang for their valuable suggestions, and Xinyi
+Wang for assistance in computing catalog completeness using the GR-AEReLU method. This
+work is partially supported by the Guangdong Basic and Applied Basic Research Foundation
+
+--- Sayfa 35 ---
+35
+(Grant No. 2024A1515011568) and the Center for Computational Science and Engineering at
+Southern University of Science and Technology.
+Data and Resources
+The earthquake catalogs used in this study were obtained from the National Earthquake Science
+Data Center of China
+(https://data.earthquake.cn/datashare/report.shtml?PAGEID=earthquake_zhengshi), which is
+publicly accessible; however, user registration is required to access the catalog information. The
+catalog of earthquakes with magnitudes ≥3.0 in the CSES region during 1970–2023 is provided
+as Data Set S1 in Li et al. (2025a). The simulated earthquake catalogs generated by the two
+ETAS models can also be accessed through Li et al. (2025d). In addition, the forward monthly,
+quarterly, semi-annual, and annual AoyuX earthquake forecast reports for the CSES since June
+2024 are available at Li (2025). Links to the forecasted probability density functions of both
+models for all forecast windows and magnitude thresholds across the CSES region are available
+at Li (2025a; 2025b; 2025c; 2025d; 2025e).
+References
+Bayliss K, Naylor M, Kamranzad F, Main I. (2022). Pseudo-prospective testing of 5-year
+earthquake forecasts for California using inlabru. Nat Hazards Earth Syst Sci, 22(10): 3231–
+3246
+Cranmer K. (2001). Kernel estimation in high-energy physics. Comput Phys Commun, 136(3):
+198–207
+
+--- Sayfa 36 ---
+36
+Davis L, Baeumer B, Wang T. (2024). A fractional Hawkes process model for earthquake
+aftershock sequences. J R Stat Soc Ser C Appl Stat, 73(5): 1185–1202
+Deng Q, Zhang P, Ran Y, Yang X, Min W, Chu Q. (2003). Basic characteristics of active
+tectonics of China. Sci China Ser D Earth Sci, 46(4): 356–372
+Felzer K R, Abercrombie R E, Ekström G. (2003). Secondary aftershocks and their importance
+for aftershock forecasting. Bull Seismol Soc Am, 93(4): 1433–1448
+Felzer K R, Becker T W, Abercrombie R E, Ekström G, Rice J R. (2002). Triggering of the 1999
+MW 7.1 hector mine earthquake by aftershocks of the 1992 MW 7.3 landers earthquake. J
+Geophys Res, 107(B9): 2190
+Hainzl S, Kumazawa T, Ogata Y. (2024). Aftershock forecasts based on incomplete earthquake
+catalogues: ETASI model application to the 2023 SE Türkiye earthquake sequence.
+Geophys J Int, 236(3): 1609–1620
+Han M, Mizrahi L, Wiemer S. (2025). Towards a harmonized operational earthquake forecasting
+model for Europe. Nat Hazards Earth Syst Sci, 25(3): 991–1012
+Harte D S. (2017). Probability distribution of forecasts based on the ETAS model. Geophys J Int,
+210(1): 90–104
+Hawkes A G, Oakes D. (1974). A cluster process representation of a self-exciting process. J
+Appl Probab, 11(3): 493–503
+Helmstetter A, Kagan Y Y, Jackson D D. (2007). High-resolution time-independent grid-based
+forecast for M ≥5 earthquakes in California. Seismol Res Lett, 78(1): 78–86
+Helmstetter A, Sornette D. (2002). Subcritical and supercritical regimes in epidemic models of
+earthquake aftershocks. J Geophys Res, 107(B10): 2237
+
+--- Sayfa 37 ---
+37
+Kagan Y Y. (1991). Likelihood analysis of earthquake catalogues. Geophys J Int, 106(1): 135–
+148
+Kagan Y Y. (2010). Statistical distributions of earthquake numbers: Consequence of branching
+process. Geophys J Int, 180(3): 1313–1328
+Kagan Y Y. (2017). Earthquake number forecasts testing. Geophys J Int, 211(1): 335–345
+Kagan Y Y, Knopoff L. (1981). Stochastic synthesis of earthquake catalogs. J Geophys Res,
+86(B4): 2853–2862
+Kagan Y Y, Knopoff L. (1987). Statistical short-term earthquake prediction. Science, 236(4808):
+1563–1567
+Kagan Y Y, Jackson D D. (2000). Probabilistic forecasting of earthquakes. Geophys J Int, 143(2):
+438–453
+Kamer Y, Nandan S, Ouillon G, Hiemer S, Sornette D. (2021). Democratizing earthquake
+predictability research: introducing the RichterX platform. Eur Phys J Spec Top, 230(1):
+451–471
+Kanazawa K, Sornette D. (2020). Field master equation theory of the self-excited Hawkes
+process. Phys Rev Res, 2(3): 033442
+Kanazawa K, Sornette D. (2024). Standard form of master equations for general non-Markovian
+jump processes: The Laplace-space embedding framework and asymptotic solution. Phys
+Rev Res, 6(2): 023270
+Li J. (2025). lijiawei098/lijiawei098.github.io: AoyuX 1.0 (V1.0). Zenodo.
+https://doi.org/10.5281/zenodo.17481512
+
+--- Sayfa 38 ---
+38
+Li J. (2025a). Figure 5(a). Probability distributions of earthquake counts forecasted by ETASμ
+and ETASμ(x, y) for all forecast windows across the entire CSES region, under magnitude
+threshold Mt = 3.0. figshare. https://doi.org/10.6084/m9.figshare.30371602.v1
+Li J. (2025b). Figure 5(b). Probability distributions of earthquake counts forecasted by ETASμ
+and ETASμ(x, y) for all forecast windows across the entire CSES region, under magnitude
+threshold Mt = 3.5. figshare. https://doi.org/10.6084/m9.figshare.30372214.v2
+Li J. (2025c). Figure 5(c). Probability distributions of earthquake counts forecasted by ETASμ
+and ETASμ(x, y) for all forecast windows across the entire CSES region, under magnitude
+threshold Mt = 4.0. figshare. https://doi.org/10.6084/m9.figshare.30372271.v1
+Li J. (2025d). Figure 5(d). Probability distributions of earthquake counts forecasted by ETASμ
+and ETASμ(x, y) for all forecast windows across the entire CSES region, under magnitude
+threshold Mt = 4.5. figshare. https://doi.org/10.6084/m9.figshare.30372298.v1
+Li J. (2025e). Figure 5(e). Probability distributions of earthquake counts forecasted by ETASμ
+and ETASμ(x, y) for all forecast windows across the entire CSES region, under magnitude
+threshold Mt = 5.0. figshare. https://doi.org/10.6084/m9.figshare.30372319.v1
+Li J, Böse M, Wyss M, Wald D J, Hutchison A, Clinton J F, Wu Z, Jiang C, Zhou S. (2020).
+Estimating rupture dimensions of three major earthquakes in Sichuan, China, for early
+warning and rapid loss estimates. Bull Seismol Soc Am, 110(2): 920–936
+Li J, Böse M, Feng Y, Yang C. (2021). Real-time characterization of finite rupture and its
+implication for earthquake early warning: application of FinDer to existing and planned
+stations in Southwest China. Front Earth Sci, 9: 699560
+Li J, Wyss M, Wu Z, Zhou S. (2022). Estimated casualty risk for disaster preparation in five
+scenario great earthquakes, Sichuan-Yunnan region, China. In Li Y-G, Zhang Y, Wu Z
+
+--- Sayfa 39 ---
+39
+(eds), China Seismic Experimental Site: Theoretical Framework and Ongoing Practice.
+Springer, Singapore, 171–196
+Li J, Mignan A, Sornette D, Feng Y. (2023). Predicting the future performance of the planned
+seismic network in Chinese mainland. Seismol Res Lett, 94(6): 2698–2711
+Li J, Sornette D, Wu Z, Zhuang J, Jiang C. (2025a). Revisiting seismicity criticality: A new
+framework for bias correction of statistical seismology model calibrations. J Geophys Res,
+130(6): e2024JB029337
+Li J, Wang X, Sornette D. (2025b). Unifying the Gutenberg-Richter law with probabilistic
+catalog completeness. https://doi.org/10.48550/arXiv.2506.16849
+Li J, Sornette D, Feng Y. (2025c). Estimating earthquake early warning effectiveness via blind
+zone sizes: a case study of the new seismic network in Chinese mainland. Nat Hazards,
+121(6): 7783–7809
+Li J, Zhang Q, Sornette D. (2025d). Simulated monthly earthquake catalogs (2000–2023) for the
+China Seismic Experimental Site (CSES). Zenodo.
+https://doi.org/10.5281/zenodo.17480120
+Mizrahi L, Nandan S, Wiemer S. (2021). Embracing data incompleteness for better earthquake
+forecasting. J Geophys Res Solid Earth, 126(12): e2021JB022379
+Mizrahi L, Dallo I, van der Elst N J, Christophersen A, Spassiani I, Werner M J, et al. (2024).
+Developing, testing, and communicating earthquake forecasts: Current practices and future
+directions. Rev Geophys, 62(3): e2023RG000823
+Molchan G, Varini E. (2024). The strongest aftershock in seismic models of epidemic type.
+Geophys J Int, 236(3): 1440–1454
+
+--- Sayfa 40 ---
+40
+Nandan S, Ouillon G, Sornette D, Wiemer S. (2019a). Forecasting the full distribution of
+earthquake numbers is fair, robust, and better. Seismol Res Lett, 90(4): 1650–1659
+Nandan S, Ouillon G, Sornette D, Wiemer S. (2019b). Forecasting the rates of future aftershocks
+of all generations is essential to develop better earthquake forecast models. J Geophys Res
+Solid Earth, 124(8): 8404–8425
+Nandan S, Kamer Y, Ouillon G, Hiemer S, Sornette D. (2021a). Global models for short-term
+earthquake forecasting and predictive skill assessment. Eur Phys J Spec Top, 230(1): 425–
+449
+Nandan S, Ram S K, Ouillon G, Sornette D. (2021b). Is seismicity operating at a critical point?
+Phys Rev Lett, 126(12): 128501
+Nandan S, Ouillon G, Sornette D. (2022). Are large earthquakes preferentially triggered by other
+large events? J Geophys Res, 127(8): e2022JB024380
+Ogata Y. (1988). Statistical models for earthquake occurrences and residual analysis for point
+processes. J Am Stat Assoc, 83(401): 9–27
+Ogata Y. (1998). Space-time point-process models for earthquake occurrences. Ann Inst Stat
+Math, 50(2): 379–402
+Ogata Y, Katsura K, Falcone G, Nanjo K, Zhuang J. (2013). Comprehensive and topical
+evaluations of earthquake forecasts in terms of number, time, space, and magnitude. Bull
+Seismol Soc Am, 103(3): 1692–1708
+Ogata Y. (2022). Prediction and validation of short-to-long-term earthquake probabilities in
+inland Japan using the hierarchical space-time ETAS and space-time Poisson process
+models. Earth Planets Space, 74(1): 110
+
+--- Sayfa 41 ---
+41
+Saichev A, Helmstetter A, Sornette D. (2005). Power-law distributions of offspring and
+generation numbers in branching models of earthquake triggering. Pure Appl Geophys,
+162(6): 1113–1134
+Saichev A, Sornette D. (2006). Power law distribution of seismic rates: theory and data analysis.
+Eur Phys J B, 49(3): 377–401
+Saichev A, Sornette D. (2007). Power law distributions of seismic rates. Tectonophysics, 431(1-
+4): 7–13
+Schorlemmer D, Gerstenberger M C, Wiemer S, Jackson D D, Rhoades D A. (2007). Earthquake
+likelihood model testing. Seismol Res Lett, 78(1): 17–29
+Schorlemmer D, Zechar J D, Werner M J, Field E H, Jackson D D, Jordan T H, RELM Working
+Group. (2010). First results of the regional earthquake likelihood models experiment. Pure
+Appl Geophys, 167(8): 859–876
+Scott D W. (2015). Multivariate Density Estimation: Theory, Practice, and Visualization. 2nd ed.
+John Wiley & Sons, New York
+Sornette D, Werner M J. (2005). Apparent clustering and apparent background earthquakes
+biased by undetected seismicity. J Geophys Res, 110(B9): B09303
+Taroni M, Marzocchi W, Schorlemmer D, Werner M J, Wiemer S, Zechar J D, et al. (2018).
+Prospective CSEP evaluation of 1-day, 3-month, and 5-yr earthquake forecasts for Italy.
+Seismol Res Lett, 89(4): 1251–1261
+Taroni M, Spassiani I, Laskin N, Barani S. (2023). How many strong earthquakes will there be
+tomorrow? Front Appl Math Stat, 9: 1234567
+Veen A, Schoenberg F P. (2008). Estimation of space-time branching process models in
+seismology using an EM-type algorithm. J Am Stat Assoc, 103(482): 614–624
+
+--- Sayfa 42 ---
+42
+Wang X, Li J, Feng A, Sornette D. (2025). Estimating magnitude completeness in earthquake
+catalogs: A comparative study of catalog-based methods. J Geophys Res Solid Earth, 130(9):
+e2025JB031441
+Werner M J, Helmstetter A, Jackson D D, Kagan Y Y. (2011). High-resolution long-term and
+short-term earthquake forecasts for California. Bull Seismol Soc Am, 101(4): 1630–1648
+Wu Z. (2022). Chapter 1: Seismic experimental sites: Challenges and opportunities. In Li Y,
+Zhang Y, Wu Z (eds), China Seismic Experimental Site: Theoretical Framework and
+Ongoing Practice. Higher Education Press, 1–12
+Wu Z, Zhang Y, Li J. (2019). Coordinated distributed experiments (CDEs) applied to earthquake
+forecast test sites. In Li Y-G (ed), Earthquake and Disaster Risk: Decade Retrospective of
+the Wenchuan Earthquake. Springer, Singapore, 107–115
+Wu Z, Li L. (2021a). China seismic experimental site (CSES): A systems engineering
+perspective. Earthq Sci, 34(3): 192–198
+Wu Z, Li L. (2021b). China seismic experimental site (CSES): A system science perspective. J
+Geol Soc India, 97(12): 1551–1555
+Zhuang J. (2011). Next-day earthquake forecasts for the Japan region generated by the ETAS
+model. Earth Planets Space, 63(3): 207–216
+Zhuang J, Chang C P, Ogata Y, Chen Y I. (2005). A study on the background and clustering
+seismicity in the Taiwan region by using point process models. J Geophys Res, 110(B5):
+B05S18
+Zhuang J, Ogata Y, Vere-Jones D. (2002). Stochastic declustering of space-time earthquake
+occurrences. J Am Stat Assoc, 97(458): 369–380
+
+--- Sayfa 43 ---
+43
+Figure Legends
+Figure 1. Illustration of the probability distribution for the number of forecasted earthquakes,
+shown for two scenarios: (a) where the observed value (red solid line) falls within the range of
+simulated values, and (b) where the observed value exceeds the maximum of the simulated
+distribution. The forecasted probability corresponding to the observed value ni in the i-th triangle
+is denoted as P(ni). In the present study, simulated data (black solid circles) are generated from
+Nsim sets of synthetic catalogs (Nsim = 100,000). The per-sample adaptive Gaussian kernels (gray
+shaded areas), each with its own bandwidth, are summed to construct the total adaptive Gaussian
+kernel density estimate (blue solid line), which is used to present the overall probability
+distribution. When ni (red solid line) exceeds the forecasted maximum (orange dashed line) in
+panel (b), we propose three alternative strategies for assigning P(ni): (1) fitting a power law
+function (green solid line) to the upper 30% of the simulated tail data (to the right of the green
+dashed line); (2) assigning a fixed probability value (black horizontal line), equal to 1/(Nsim)2; or
+(3) excluding P(ni) altogether in such cases.
+Figure 2. Spatiotemporal distribution of seismicity and completeness magnitude (Mc) in the
+China Seismic Experimental Site (CSES), located in the Sichuan-Yunnan region. (a) Spatial
+distribution of earthquakes from 1970 to 2023, completeness magnitude (Mc) since 2009, and
+active faults within the CSES. The background map of Mc is adapted from Li et al. (2023). Fault
+locations are taken from Deng et al. (2003). (b) Location of the CSES shown on a broader
+regional map. (c) Temporal evolution of Mc (right y-axis) and the magnitude-time (MT) plot of
+earthquakes with M ≥3 (left y-axis) since 2000. The estimation of Mc was performed using a
+half-year step and one-year window. Red dashed lines with decreasing color indicate
+completeness probabilities of 84.2% (Mc + σc), 97.8% (Mc + 2σc), and 99.9% (Mc + 3σc),
+respectively. Mc and σc are estimated by the method proposed by Wang et al. (2025) and Li et al.,
+(2025b). The earthquake magnitudes shown in the magnitude-time plot have been perturbed by a
+uniformly distributed random error within the range [-0.05, 0.05].
+Figure 3. Temporal evolution of the calibrated parameters in the ETAS model with spatially
+variable background seismicity (ETASμ(x, y)) and in the ETAS model with a constant background
+rate (ETASμ). For model calibration, the primary catalog spans from January 1, 1985, to the day
+
+--- Sayfa 44 ---
+44
+before each monthly forecast window, and is preceded by a 15-year auxiliary catalog (from
+January 1, 1970, to December 31, 1984) to prevent misclassification of early events in the
+primary catalog as background events. Note that the parameters D and Q are specific to ETASμ(x,
+y) and are not included in ETASμ.
+Figure 4. Time series of cumulative information gain (CIG) of ETASμ(x,y) over ETASμ in pseudo-
+prospective forecasting experiments at the CSES from 2000 to 2023. Results are shown for six
+spatial resolutions, five magnitude thresholds (Mt), and three strategies for assigning P(ni) when
+the observed value ni in the i-th triangle exceeds the forecasted maximum. The green, black, and
+orange curves correspond to strategies (1), (2), and (3) described in Figure 1, respectively. The
+pseudo-prospective forecasting experiments use calendar months as time windows, resulting in a
+total of 288 time windows over the study period. The horizontal black dashed line indicates zero
+cumulative information gain.
+Figure 5. Probability distributions of earthquake counts forecasted by (dashed line) ETASμ and
+(solid line) ETASμ(x, y) for May 2008 across the entire CSES region, under different magnitude
+thresholds (Mt). The MS 8.0 Wenchuan earthquake on May 12 and its aftershocks (marked by the
+red vertical line) generate an out-of-range situation as shown in Panel (b) of Figure 1, which
+corresponds to a single time-window slice taken from the last row of Figure 5. All plotting
+elements are consistent with those in Figure 1, except that the ETASμ data points are shown as
+solid gray triangles for visual distinction. The Data and Resources section provides links to
+access the forecasted probability density functions of both models for all forecast windows and
+magnitude thresholds across the full CSES region.
+Figure 6. Frequency distribution function of earthquake count over the ensemble of grid cells,
+aggregated over all 288 forecast windows. Each point represents the number of grid cells (on the
+y-axis) that experienced a specific number of earthquakes (on the x-axis), for a given
+combination of spatial resolution and magnitude threshold. In other words, the curves show the
+empirical non-normalized probability density function of earthquake counts per cell. Consistent
+with Figure 1, the blue solid line represents the adaptive Gaussian kernel density estimate, while
+the green solid line shows the fitted power law function (∼n−(1+a)). For each combination of
+spatial resolution and magnitude threshold, the mean and standard deviation of the fitted
+
+--- Sayfa 45 ---
+45
+exponent a were estimated from 200 bootstrap resamples.
+Figure 7. Histogram of the 25 mean power law exponents a shown in Figure 6 and their
+Gaussian fit, with mean 1.40, median 1.39, standard deviation 0.21 and interquartile range 0.21.

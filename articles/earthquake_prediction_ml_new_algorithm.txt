@@ -1,0 +1,897 @@
+
+--- Sayfa 1 ---
+ 
+ 
+ © 2024 Nada Badr Jarah, Abbas Hanon Hassin Alasadi and Kadhim Mahdi Hashim. This open-access article is distributed 
+under a Creative Commons Attribution (CC-BY) 4.0 license. 
+Journal of Computer Science 
+ 
+ 
+Original Research Paper 
+A New Algorithm for Earthquake Prediction Using Machine 
+Learning Methods 
+ 
+1Nada Badr Jarah, 2Abbas Hanon Hassin Alasadi and 3Kadhim Mahdi Hashim 
+ 
+1Department of Computer Science, College of Computer Sciences and Maths, University of Kufa, Iraq  
+2Department of Computer Information Systems, College of Computer Sciences and Information Technology, 
+University of Basrah, Basrah, Iraq 
+3Department of Technology Engineering College of Information Technology, Imam Ja'afar Al-Sadiq University, Baghdad, Iraq  
+ 
+Article history 
+Received: 07-07-2023 
+Revised: 09-09-2023 
+Accepted: 19-10-2023 
+ 
+Corresponding Author:  
+Nada Badr Jarah 
+Department of Computer 
+Science, College of Computer 
+Sciences and Maths, University 
+of Kufa, Iraq 
+Email: nadabadrjarah@yahoo.com 
+Abstract: Seismic tremors are among the foremost perilous normal fiascos 
+individuals confront due to their event without earlier caution and their 
+effect on their lives and properties. In expansion, to consider future disaster 
+prevention measures for major earthquakes, it is necessary to predict 
+earthquakes using Neural Networks (NN). A machine learning technique 
+has developed a technology to predict earthquakes from ground controller 
+data by measuring ground vibration and transmitting data by a sensor 
+network. Devices to process this data and record it in a catalog of seismic 
+data from 1900-2019 for Iraq and neighboring regions, then divide this data 
+into 80% training data and 20% test data. It gave better results than other 
+prediction algorithms, where the NN model performs better Seismic 
+prediction than other machine learning methods. 
+ 
+Keywords: Earthquakes, Neural Networks, Machine Learning, Prediction, 
+Earthquakes Data 
+ 
+Introduction 
+Seismic tremor is a fundamental normal wonder 
+influencing organisms' life and their property. It is the 
+sudden release of energy transmitted by waves from the 
+ground. It destroys vast areas in a few minutes. It leads to 
+considerable losses of lives and property and predicting 
+earthquakes gives at least a little time to protect people 
+and reduce earthquake damage (Bilal et al., 2022). 
+This research is considered the first informational 
+study to predict earthquakes in Iraq, as the recording of 
+earthquake data readings after installing seismic 
+monitoring stations since 1914 in Iraqi territory. In 
+addition to data recorded by international devices since 
+1900, many earthquakes in Iraq and areas far from the 
+seismic fault line raised Geologists' fear of foreseeing an 
+increment in seismic tremors for the coming long time 
+(Jarah et al., 2023; Rouet‐Leduc et al., 2017). 
+This research applied a technique to predict earthquakes 
+using the data from several seismic monitoring stations. 
+Machine learning calculations were utilized to prepare and 
+analyze a design of information to anticipate the event of a 
+seismic tremor and powerful computational techniques 
+emerged from analyzing big data. 
+This study is the first in Iraq to use local data collected 
+in Iraqi catalogs. The following are studies conducted by 
+researchers in the field of earthquake prediction in 
+different parts of the world. 
+Sathwik et al. (2022) employed a set of machine 
+learning algorithms to predict future earthquakes such as 
+logistic regression, Support Vector Machine (SVM), 
+random forest classifier, and k-nearest neighbors. The 
+examined dataset consists of 14 features to protect the 
+assets of the residencies and the best efficiency reached 
+over this study was around 0.9. This result was very high 
+because of the number of training features in comparison 
+with the predicted details. 
+Bangar et al. (2020) mixed the random forest and 
+support vector machine algorithms to detect early signs of 
+the earthquake, the tested dataset was related to India with 
+the rest of the neighboring countries and all data were 
+from government sources such as the united states 
+geological 
+survey 
+and 
+the 
+India 
+meteorological 
+department. The accuracy of this study was enclosed to 
+0.74, 0.76, and 0.83 to provide the government with 
+important details about future earthquakes. 
+Mallouhy et al. (2020) utilize different eight machine 
+learning algorithms which are Random Forest (RF), Naive 
+Bayes (NB), Logistic Regression (LR), Multi-Layer 
+Perceptron (MLP), AdaBoost (AB), Support Vector 
+Machine (SVM) and Regression Trees (RT). The 
+examined dataset was public data related to world 
+
+--- Sayfa 2 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+151 
+earthquakes and consisted of 139 features. Unfortunately, 
+LR recorded the worst results over these algorithms which 
+identified 52 wrong results over 139. The best accurate 
+prediction values were archived by the SVM algorithm 
+around 0.7 to provide the authority parties with the 
+required information about future earthquakes.  
+Asencio-Cortés et al. (2018) combined several 
+regression 
+algorithms 
+with 
+ensemble 
+learning 
+algorithms to analyze the big data to identify the 
+earthquake magnitude in the coming seven days in 
+California only. This machine learning was used to 
+analyze 1 Gigabyte dataset gathered over the duration 
+between 1970-2017 by using R language and Amazon 
+cloud infrastructure and the highest accuracy recorded 
+over the examination rounds is 0.8. 
+Asim et al. (2018) used four machine learning 
+techniques to predict the magnitude of upcoming 
+earthquakes in Hindukush which are pattern recognition 
+neural network, recurrent neural network, random forest, 
+and linear programming boost ensemble classifier. The 
+dataset consists of 441 vectors, each vector related to one 
+month of the duration from 1977-2013. The prediction 
+results were around 0.58, 0.64, 0.62and 0,65, the best 
+accuracy meted by LPBoost ensemble technology. 
+We compared the proposed model with the results of 
+others above, where the proposed model obtained 0.83 as 
+a verification result while the others were separated at this 
+upper and lower value. Mallouhy et al. (2020) recorded 
+0.76 as a distinct result, while Asim et al. (2018) reported 
+0.64. One of the featured studies was published higher 
+than the proposed model, with the same other researchers 
+(2022) scoring 0.9, while Bangar et al. (2020) achieved 
+0.83, which is what was recorded in the study. Recently 
+(2022) Southwick's results were found to be better than 
+the proposed model for several reasons such as the 
+number of features for the training model is 14 incoming 
+vectors with the proposed model only having 3 directions 
+for the training model and this has more significant 
+implications for a distinct model. Bangar et al. (2020) 
+carried out the study and checked the model on an Indian 
+database and the number of training options was 6 vectors, 
+arriving at a result of 0.83. However, the model was tested 
+in 5 directions and the size of the current dataset consists 
+of 34.663 records which is less than the size of the dataset 
+used by Bangar et al. (2020). Another independent 
+research on top of the proposed model produced by 
+Asencio-Cortés et al. (2018) recorded strength even in the 
+next seven days in California, the main reason being 
+related to the large data set used in this research which 
+produced 600 million data records between 1970 and 
+1970. and 2019, showing comparable trend trends with 
+the 34.663 records in our sample. 
+ 
+ 
+Fig. 1: Locations of earthquake monitoring stations 
+ 
+Earthquakes Data 
+Earthquakes are recorded with a device installed in 
+an underground vault and at nine stations connected to a 
+wireless sensor network whose center is the receiver at 
+the Seismological Laboratory of the University of 
+Basrah (SLUB). Figure 1 shows the locations of seismic 
+stations. And the network address of these stations 
+according to their location on the Internet page at the 
+source (Fernandes et al., 2022). 
+The seismic recording device is called a broadband. As 
+it records all waves or any human activity that leads to 
+earthquakes that reach it, regardless of distance and 
+magnitude, since 2014, it has converted earthquakes into 
+electrical signals recorded and analyzed by the computer 
+(Liu et al., 2018). 
+Broadband operates on the principle of inertia, which 
+involves sensing motion relative to the movement of the 
+ground and is recorded by a digitizer. 
+One of the most significant challenges is that most of 
+the databases created by the geological centers need to 
+adjust the timings and other details so that we can use 
+them for the field of machine learning. 
+Machine Learning 
+There are multiple algorithms in machine learning, 
+each with its strengths and weaknesses, so when solving 
+a problem, first consider the necessary algorithm. 
+If it is still challenging to decide, the decision closest 
+to the problem-solving process can be selected from the 
+actual use example (Probst and Boulesteix, 2017). 
+The following are the three machine learning 
+algorithms that were closest to predicting earthquakes that 
+passed the earthquake data in this study. 
+
+--- Sayfa 3 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+152 
+Table 1: Application of LR, RFR, and NN algorithms 
+No. 
+Input features 
+Predicted features  
+LR 
+RFR 
+NN 
+  1 
+Timestamp, latitude, magnitude 
+Depth, longitude 
+0.182 
+0.401 
+0.675 
+  2 
+Timestamp, depth, longitude 
+Magnitude, latitude 
+0.249 
+0.658 
+0.839 
+  3 
+Timestamp, latitude, depth 
+Magnitude, longitude 
+0.199 
+0.585 
+0.685 
+  4 
+Timestamp, latitude, longitude 
+Magnitude, depth 
+0.250 
+0.398 
+0.489 
+  5 
+Depth, longitude, magnitude 
+Timestamp, latitude 
+0.218 
+0.666 
+0.654 
+  6 
+Latitude, depth, longitude 
+Magnitude, timestamp 
+0.122 
+0.441 
+0.702 
+  7 
+Latitude, depth, magnitude 
+Timestamp, longitude 
+0.252 
+0.577 
+0.758 
+  8 
+Timestamp, longitude, magnitude 
+Depth, latitude 
+0.116 
+0.477 
+0.634 
+  9 
+Longitude, latitude, magnitude 
+Depth, timestamp 
+0.180 
+0.301 
+0.768 
+10 
+Timestamp, depth, magnitude 
+Longitude, latitude 
+0.114 
+0.495 
+0.775 
+ 
+Table 2: The catalog of Earthquake in Iraq and surrounding regions (1900-2019) (Onur et al., 2017) 
+Eventide Year 
+Month 
+Day 
+Time 
+Lat 
+Lon 
+Depth (km) 
+MAG 
+Timestamp 
+10001 
+1900 
+2 
+24 
+06:00.0 
+38.45 
+44.8700 
+0.0 
+5.4 
+-2204312256 
+10002 
+1900 
+4 
+17 
+17:00.0 
+38.00 
+46.0000 
+0.0 
+6.2 
+-2200442256 
+10004 
+1901 
+2 
+6 
+48:00.0 
+33.00 
+49.0000 
+0.0 
+7.4 
+-2174266656 
+10005 
+1901 
+5 
+20 
+38:36.0 
+38.38 
+42.2300 
+10.0 
+5.5 
+-2165401296 
+| 
+| 
+| 
+| 
+| 
+| 
+| 
+ 
+| 
+| 
+| 
+| 
+| 
+| 
+| 
+| 
+| 
+ 
+| 
+| 
+44659 
+2019 
+12 
+29 
+28:27.4 
+38.8709 
+43.5207 
+14.3 
+2.1 
+-1577582824 
+44660 
+2019 
+12 
+30 
+56:21.8 
+30.8205 
+50.0474 
+10.0 
+3.7 
+-1577682728 
+44662 
+2019 
+12 
+31 
+50:57.3 
+32.4992 
+46.9521 
+10.0 
+2.8 
+-1577750223 
+44663 
+2019 
+12 
+31 
+49:12.8 
+34.7548 
+45.5659 
+12.2 
+2.8 
+-1577743923 
+ 
+Linear Regression 
+A linear regression model was applied to the Iraqi data 
+set. The result shown in Table 1. shows that the linear 
+regression was not significant and could not meet any 
+useful prediction. A test showed the worst prediction, with 
+verification values ranging from 0.114-0.252. Thus, linear 
+regression cannot predict the earthquake based on the 
+current data and the parameters used. Although this model 
+was not achieved, the required prediction must use other 
+techniques to find the best prediction (Ranjan et al., 2019). 
+Random Forest Regressor 
+It is a mechanism that generates multiple decision tree 
+models and decides on the final prediction by the majority 
+vote of those models. Because each model trains using 
+sub-datasets generated by splitting the original training 
+dataset, each model exhibits slightly different prediction 
+performance. Therefore, the more it is generated, the more 
+Decision tree models, the generalization ability of the 
+random group as a whole increases, and the prediction 
+performance better (González et al., 2019). 
+Neural Network 
+NN may be a machine learning strategy or 
+calculation that attempts to reenact the working of 
+neurons within the human brain for learning. At first, the 
+results appear inaccurate and after a specific iteration of 
+the data, they adjust themselves so that the results 
+increase in accuracy. Moreover, each NN is organized 
+within the frame of layers of counterfeit cells: An inward 
+layer, an external layer, and layers between them, or 
+covered-up layers between the two layers of the input 
+and the outside layer (Alves, 2006). A NN that contains 
+more than one hidden layer is known as a profound 
+neural arrangement and learning is called profound 
+learning. Each layer has a boundless number of hubs. 
+The number of hubs within the input layer breaks even 
+with the number of input information highlights. 
+Covered-up layers comprise a boundless number of 
+hubs. The yield layer comprises as it were one hub for 
+understanding relapse issues and more than one hub for 
+evaluating pictures, translation, audio, or solving 
+classification issues (Tapia-Hernández et al., 2019). In 
+Table 1. Application of the above three algorithms with 
+different probabilities in input and output features. 
+Earthquake Prediction 
+Seismic tremors are a portion of earth's life and an 
+appalling portion of human history and they are sudden 
+unsettling influences within the earth's outside, as not a 
+year goes by without hearing handfuls of seismic tremors, 
+a few of them solid and destroying, wiping out whole 
+cities. Consequently, the issue of anticipating their event 
+appears exceptionally imperative. 
+Earthquake forecasting is the science of determining 
+the details of impending earthquakes in terms of the 
+location, magnitude, and time of the earthquake within a 
+given area (Mavrodiev et al., 2018). 
+Researchers face challenges in predicting earthquakes 
+and dealing with natural phenomena. According to the 
+study of (Li et al., 2022), there's no valid forecast within 
+the brief term since the reason for the short-term 
+
+--- Sayfa 4 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+153 
+expectation is to empower emergency measures to 
+diminish activity and pulverization, which leads to untrue 
+desires and dissatisfaction within the occasion of a critical 
+seismic tremor, resulting in additional losses and legal 
+penalties (Kiani et al., 2019). 
+Measurable 
+speculation 
+testing 
+strategies 
+and 
+performing machine learning approaches, to be specific 
+polynomial calculated relapse and bolster Vector Machine 
+(SVM) for seismic tremor information, may be utilized in 
+classification and relapse investigation to decide the 
+likelihood of a seismic tremor (Onur et al., 2017). 
+Proposed Algorithm 
+The first step of the proposed algorithm reads the 
+earthquake data file in Iraq and the surrounding area from 
+1900-2019, As in Table 2.  
+Furthermore, the second step is data preprocessing, 
+which represents the six main features in earthquake data: 
+Earthquake date (year, month, and day), time, longitude, 
+latitude, depth, and earthquake strength.  
+The date and time data in this mechanism are not 
+considered digital data. They cannot be addressed in a 
+completed program owing to the complexity of the 
+format, the reading process, and the training process with 
+the existence of (:) In time. So, it is changed to digital data 
+only, i.e., to Unix time, which is in seconds, where it can 
+be easily used as an input to the network we have created. 
+By merging the date and time data, converting its 
+FORMAT, storing it in a variable called time stamp, and 
+adding it to the database, they all were negative because 
+they represent the past time. 
+Thus, the data will be dealt with after processing to be: 
+Time stamp, longitude, latitude, depth, and earthquake 
+strength. Part of it can be illustrated in Table 3. 
+The locations of earthquakes in the study area are 
+indicated on the map, as shown in Fig. 2 (Wathiq et al., 2020). 
+A fundamental problem appeared, which is the missing 
+data. Each implementation gives a significant error rate and 
+the model cannot be trained. Therefore, a mechanism was 
+adopted to delete all the missing data whose value is null to 
+filter the earthquakes in Iraq. We used them in the training 
+process and 123 rows were deleted. 
+The third step signifies the application of the 
+algorithm; when the database is ready to form step two, 
+data has been read and arranged to determine the fields 
+that will be worked upon in the data Table 3. It has 
+become limited to only five variables. 
+The third step signifies the application of the 
+algorithm; when the database is ready to form step two, 
+data has been read and arranged to determine the fields 
+that will be worked upon in the data Table 3. It has 
+become limited to only five variables. 
+The data is divided into determining the input X and 
+featured three as input (latitude, longitude, and time 
+stamp). Output Y has the features that predict them as 
+output (Magnitude and Depth), where the best-fit 
+parameters of the show are utilized to calculate the result 
+utilizing preparing and test information. 
+Finally, the experimental practical step applies the 
+machine learning methods. The data of 44540 earthquakes 
+is divided into a training set of 80% and a testing set of 
+20%. Thus, it is 33405 for training and 11135 for testing. 
+Three types of algorithms are learned as follows.  
+In the beginning, two types of linear regression are 
+used: The first method of ML, which starts with Linear 
+Regression to start predicting the data in the first 
+experiment of the model and according to the instruction reg, 
+fit and it contains the Train and y-train and the expectation is 
+test. It means that the random forest regress or model or 
+machine learning method is not successful. 
+Secondly, using the second ML method, which is 
+random forest regress, and applying the training process, 
+testing on test and Y_testand when implementing. The 
+credibility of 0.6 is fitted, meaning that the model fails. 
+Furthermore, the expected values are not correct. 
+Finally, the third method, NN, includes model building 
+and model execution, i.e., building the model first, and 
+after preparing it, implementing it. The model is in two 
+types: The main one always used is called sequential and 
+the dense is the starting point of the model, so the model 
+type is sequential and adding the first layer, which is 
+dense and needs activation and loss function and Input 
+shape = 3, so it has three entries for this model. 
+Thus, building an NN model, according to the above 
+method, has several features, namely: Loss function, 
+optimizer, activation, and metrics that represent four 
+variables that must be implemented to build this model 
+here we have a process based on this data, the model 
+should give the best options because there are several 
+options, that is, Building the model requires several 
+factors, namely: 
+ 
+a) 
+The batch size can be either 10, 20, 50, or 100 
+b) 
+Activation may be one of the following options: 
+'Relu', 'tanh', 'sigmoid', 'hard sigmoid', 'linear ', and 
+'exponential' 
+c) 
+Optimizer, in which the result is checked for each 
+cell. If it is weak, it returns to the input, adjusts 
+the weights, and repeats the process of checking 
+the output. It has several types: ('Stochastic 
+Gradient Descent (SGD)', 'RMSprop', 'Adagrad', 
+'Adadelta', ' Adam', 'Adamax', 'And Nadam') and 
+each has several options 
+
+--- Sayfa 5 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+154 
+Thus, an experiment will be made to choose the best 
+in the model by trying all the options and then it will print 
+the best options that this model can achieve based on this 
+database, which is as follows.  
+Activation is relu, the optimizer is SGD, and the loss 
+function is squared_hinge it takes accuracy in metrics.  
+A suitable NN has been built for the training data set 
+using Unsupervised learning, using 16 nodes after testing 
+with four. Then eight, the results were not satisfactory and in 
+the case of 16, the results were acceptable. Figure 3 shows 
+the components of the NN used to predict earthquakes. 
+The NN consists of the following layers: 3-layer Input, 
+16-layer hidden, 16-layer hidden, and 2-layer output. 
+ 
+ 
+ 
+Fig. 2: Locations of earthquakes in the study area on the map 
+ 
+ 
+Fig. 3: NN in earthquake prediction 
+ 
+ 
+ 
+Fig. 4: Machine learning algorithms 
+ 
+It is executed 20 times for training on the data and we 
+can increase it so that it does not go beyond overfitting. 
+The accuracy value was equal to 0.5 and when the epochs 
+were increased and became, for example, 40 times. We 
+started the training process again. The accuracy started to 
+equal 0.5. We continued Increasingly, it reached an 
+accuracy: Of 0.839 and the execution of the program 
+stopped and we got a loss function value equal to 0. 003 
+in Fig. 4. Performance of the proposed models. 
+ 
+Table 3: Part of the essential data for earthquakes in Iraq from 1900-2019 
+Latitude 
+Longitude 
+DEPTH (km) 
+Magnitude 
+Timestamp 
+38.4500 
+44.8700 
+0.0 
+5.4 
+-2204312256 
+38.0000 
+46.0000 
+0.0 
+6.2 
+-2200442256 
+33.0000 
+49.0000 
+0.0 
+7.4 
+-2174266656 
+38.3800 
+42.2300 
+10.0 
+5.5 
+-2165401296 
+| 
+| 
+ 
+| 
+| 
+| 
+| 
+ 
+| 
+| 
+38.8709 
+43.5207 
+14.3 
+2.1 
+-1577582824 
+30.8205 
+50.0474 
+10.0 
+3.7 
+-1577682728 
+32.4992 
+46.9521 
+10.0 
+2.8 
+-1577750223 
+34.7548 
+45.5659 
+12.2 
+2.8 
+-1577743923 
+
+--- Sayfa 6 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+155 
+Materials and Methods 
+To evaluate the performance of the proposed model 
+with regard to forecasting efficiency, the materials 
+consisted of running the proposed scheme on a data set 
+of 119 years with a size of (34663×14). Our 
+experiments were conducted on an Intel i7-1065G7 
+processor at 2.5 GHz; with windows 11 64-bit, 16GB 
+RAM (HP laptop). Furthermore, we used Python 
+Colabe to conduct our experiments. 
+As for the research methods, it can be represented in 
+Fig. 5 to illustrate the building of the model: 
+ 
+ 
+ 
+Fig. 5: Earthquake prediction model building 
+ 
+Results and Discussion 
+The results of applying the three machine learning 
+algorithms, namely LR, RFR, and NN, to earthquake data 
+in Iraq and the surrounding areas are as shown in Table 1. 
+The five features of earthquakes used in this study were 
+switched, and Fig. 4 shows the accuracy in using the three 
+algorithms to predict earthquakes. 
+Conclusion 
+In recent years, Iraq has witnessed continuous 
+activity of earthquakes in the governorates of Iraq. This 
+study is considered a major challenge and its data are 
+limited, as we need a larger number of inputs to obtain 
+an accurate prediction of the outputs. In this study, we 
+find that the number of inputs is 3 and the number of 
+outputs is 2. The highest number of inputs was 
+achieved. The accuracy result of the machine learning 
+models, which is the neural network, reached about 
+0.839 using the seismic data catalog in Iraq and the 
+surrounding areas for 119 years (1900-2019). The 
+inputs are Timestamp, Depth, and Longitude to predict 
+Magnitude and Latitude. The proposed model was 
+compared with models proposed by others, we found 
+that the proposed model achieves appropriate accuracy 
+depending on the number of training features available 
+as well as the size of the data set.  
+Acknowledgment 
+Thank you to the publisher for their support in the 
+publication of this research article. We are grateful for the 
+resources and platform provided by the publisher, which 
+have enabled us to share our findings with a wider 
+audience. We appreciate the efforts of the editorial team 
+in reviewing and editing our work, and we are thankful for 
+the opportunity to contribute to the field of research 
+through this publication. 
+Funding Information 
+The authors have not received any financial support or 
+funding to report. 
+Author’s Contributions 
+Nada Badr Jarah: Collect data and written the research. 
+Abbas Hanon Hassin Alasadi: The idea of research, 
+designed and analysis of data. 
+Kadhim Mahdi Hashim: Written the program and 
+analyzing the results. 
+Ethics 
+This article is original and contains unpublished 
+material. The corresponding author confirms that all of the 
+other authors have read and approved the manuscript and 
+no ethical issues involved. 
+References 
+Alves, E. I. (2006). Earthquake forecasting using neural 
+networks: Results and future work. Nonlinear 
+Dynamics, 44, 341-349. 
+ 
+https://doi.org/10.1007/s11071-006-2018-1 
+Asencio-Cortés, G., Morales-Esteban, A., Shang, X., & 
+Martínez-Álvarez, F. (2018). Earthquake prediction 
+in California using regression algorithms and cloud-
+based big data infrastructure. Computers and 
+Geosciences, 115, 198-210. 
+ 
+https://doi.org/10.1016/j.cageo.2017.10.011 
+Asim, K. M., Idris, A., Iqbal, T., & Martínez-Álvarez, F. 
+(2018). Earthquake prediction model using support 
+vector regress or hybrid neural networks. PloS 
+One, 13(7), e0199004. 
+ 
+https://doi.org/10.1371/journal.pone.0199004 
+Bangar, P., Gupta, D., Gaikwad, S., Marekar, B., & 
+Pati, J. (2020). Earthquake prediction using 
+machine learning algorithm. International Journal 
+of 
+Recent 
+Technology 
+and 
+Engineering 
+(IJRTE), 8(6), 4684-4688.  
+ 
+https://doi.org/10.35940/ijrte.E9110.018620 
+
+--- Sayfa 7 ---
+Nada Badr Jarah et al. / Journal of Computer Science 2024, 20 (2): 150.156 
+DOI: 10.3844/jcssp.2024.150.156 
+ 
+156 
+Bilal, M. A., Ji, Y., Wang, Y., Akhter, M. P., & Yaqub, 
+M. (2022). An early warning system for earthquake 
+prediction from seismic data using Batch Normalized 
+Graph Convolutional Neural Network with Attention 
+Mechanism (BNGCNNATT). Sensors, 22(17), 6482. 
+https://doi.org/10.3390/s22176482 
+Fernandes, M., Corchado, J. M., & Marreiros, G. (2022). 
+Machine learning techniques applied to mechanical 
+fault diagnosis and fault prognosis in the context of 
+real industrial manufacturing use-cases: A systematic 
+literature 
+review. Applied 
+Intelligence, 52(12), 
+14246-14280.  
+ 
+https://doi.org/10.1007/s10489-022-03344-3 
+González, J., Yu, W., & Telesca, L. (2019). Earthquake 
+magnitude 
+prediction 
+using 
+recurrent 
+neural 
+networks. Multidisciplinary 
+Digital 
+Publishing 
+Institute Proceedings, 24(1), 22. 
+ 
+https://doi.org/10.3390/IECG2019-06213 
+Jarah, N. B., Hashim, K. M., & Alasadi, A. H. (2023). 
+Earthquake prediction in Iraq using machine learning 
+techniques 
+Indonesian. 
+Journal 
+of 
+Electrical 
+Engineering and Computer Science, vol. 29, no. 1, 
+pp. 322-329. 
+https://doi.org/10.11591/ijeecs.v29.i1.pp322-329  
+Kiani, J., Camp, C., & Pezeshk, S. (2019). On the 
+application of machine learning techniques to derive 
+seismic fragility curves. Computers and Structures, 
+218, 108-122. 
+ 
+https://doi.org/10.1016/j.compstruc.2019.03.004 
+Li, L., Kang, Y., Petropoulos, F., & Li, F. (2022). Feature-
+based intermittent demand forecast combinations: 
+Accuracy and inventory implications. International 
+Journal of Production Research, 1-16. 
+ 
+https://doi.org/10.1016/j.ijforecast.2021.11.001 
+Liu, H., Liu, Z., Liu, S., Liu, Y., Bin, J., Shi, F., & Dong, 
+H. (2018). A nonlinear regression application via 
+machine learning techniques for geomagnetic data 
+reconstruction processing. IEEE Transactions on 
+Geoscience and Remote Sensing, 57(1), 128-140. 
+https://doi.org/10.1109/TGRS.2018.2852632 
+Mallouhy, R., Abou Jaoude, C., Guyeux, C., & Makhoul, 
+A. (2020). Major earthquake event prediction using 
+various machine learning algorithms. In 2019 
+International Conference on Information and 
+Communication 
+Technologies 
+for 
+Disaster 
+Management (ICT-DM) (pp. 1-7). IEEE. 
+ 
+https://doi.org/10.1109/ICTDM47966.2019.9032983  
+ 
+ 
+ 
+ 
+ 
+ 
+Mavrodiev, S. C., Pekevski, L., Botev, E., Pinar, A., 
+Kikuashvili, G., & Gilat, A. (2018). Study of the 
+Possibility of Predicting Earthquakes. International 
+Journal of Geosciences, 9(12), 688-706. 
+ 
+https://doi.org/10.4236/ijg.2018.912042  
+Onur, T., Gök, R., Abdulnaby, W., Mahdi, H., Numan, N. 
+M., Al‐Shukri, H., ... & Abd, N. A. (2017). A 
+comprehensive earthquake catalog for Iraq in terms 
+of moment magnitude. Seismological Research 
+Letters, 88(3), 798-811. 
+ 
+https://doi.org/10.1785/0220160078 
+Probst, P., & Boulesteix, A. L. (2017). To tune or not to tune 
+the number of trees in random forest. The Journal of 
+Machine Learning Research, 18(1), 6673-6690.  
+ 
+https://www.jmlr.org/papers/volume18/17-269/17-269.pdf 
+Ranjan, G. S. K., Verma, A. K., & Radhika, S. (2019). K-
+nearest neighbors and grid search cv based real time 
+fault monitoring system for industries. In 2019 IEEE 
+5th International Conference for Convergence in 
+Technology (I2CT) (pp. 1-5). IEEE. 
+ 
+https://doi.org/10.1109/I2CT45611.2019.9033691  
+Rouet‐Leduc, B., Hulbert, C., Lubbers, N., Barros, K., 
+Humphreys, C. J., & Johnson, P. A. (2017). 
+Machine 
+learning 
+predicts 
+laboratory 
+earthquakes. Geophysical 
+Research 
+Letters, 
+44(18), 9276-9282. 
+ 
+https://doi.org/10.1002/2017GL074677  
+Sathwik, G., Patil, V. S. S. Br, Vishesh, S. Yatish, J. 
+Soham S. (2022). Machine Learning Approach for 
+Predicting Earthquakes in a Geographic Location. 
+International Journal of Advanced Research in 
+Computer 
+and 
+Communication 
+Engineering 
+(IJARCCE), vol. 11, no. 11, pp. 110-115. 
+   
+https://doi.org/10.17148/IJARCCE.2022.111122 
+Tapia-Hernández, E., Reddy, E. A., & Oros-Avilés, L. 
+J. (2019). Earthquake predictions and scientific 
+forecast: Dangers and opportunities for a technical 
+and anthropological perspective. Earth Sciences 
+Research Journal, 23(4), 309-315. 
+ 
+https://doi.org/10.15446/esrj.v23n4.77206 
+Wathiq, A., Tuna, O., Rengin, G., Shakir, A. M., Hanan, 
+M., Al-Shukri, H., ... & Ali, R. (2020). Probabilistic 
+seismic hazard assessment for Iraq. Journal of 
+Seismology, 24(3), 595-611. 
+https://doi.org/10.1007/s10950-020-09919-2 

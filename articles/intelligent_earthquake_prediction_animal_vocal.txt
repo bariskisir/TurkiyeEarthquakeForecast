@@ -1,0 +1,1977 @@
+
+--- Sayfa 1 ---
+Intelligent earthquake prediction 
+using animal vocal behavior 
+analysis based on machine learning 
+and deep learning approaches
+Rakesh Salakapuri
+1, Surya Pavan Kumar Gudla
+2, Panduranga Vital Terlapu2, 
+Rambabu Pemula3, Kishore Raju Kalidindi4 & Koppala Venugopal2
+Earthquakes are natural calamities that are destructive and result in the loss of lives and economic 
+losses globally. It is vital to identify earthquakes at an early stage to reduce the damage caused to 
+the environment and infrastructure. But, traditional monitoring much lacks timely warnings. A study 
+has suggested an innovative framework that utilizes Machine Learning (ML) and Deep Learning (DL) 
+to identify animal behaviour to predict earthquakes. This research proposes a novel framework to 
+identify earthquake precursors using the field of bioacoustics, and ML and DL models. Animal’s audio 
+recordings of historical animal vocalizations were enhanced using data augmentation techniques to 
+increase the audio dataset. The library utilized Librosa for extracting temporal and spectral features 
+from the audio data. The ML algorithms used in the model were XGBoost, Random Forest, and 
+Multi-Layer Perceptron. The DL algorithms used were Recurrent Neural Networks, Long Short-Term 
+Memory, Bidirectional LSTM, and Gated Recurrent Units. The model was trained using a ratio of 
+80:20. Hyperparameter tuning and early stopping were used to improve the model’s performance. DL 
+methods have shown their potential to go beyond the conventional ML methods in handling temporal 
+dependencies of the sequential audio data. The Bi-LSTM model obtained a test accuracy of 98.87%, 
+and the AUC was found to be close to 1.00, which shows the effectiveness of the model in terms of 
+generalization and robustness to environmental noises. The scalability of the model was tested using 
+unseen datasets. The proposed approach permits a cost-effective early warning system. The approach 
+is more beneficial in areas where there is no advance infrastructure available for seismic activity 
+detection. Future work will be focused on the integration of IoT technology with edge computing 
+technology to improve the scalability of the system.
+Keywords  Animal behavioural patterns, Earthquake precursor detection, Data augmentation, Machine 
+learning, Deep learning
+Natural calamities like earthquakes, floods, and storms pose a major threat to the lives and properties of 
+people around the globe. These calamities have the potential to cause damage to properties, leaving people in 
+a vulnerable position. In some cases, these calamities may prove to be fatal. The unpredictable nature of these 
+calamities adds to the problems of mitigating and managing them. Earthquakes prove to be calamities of great 
+destruction due to their sudden nature, resulting in huge damage and loss of life every year1. The 2010 Haiti 
+earthquake resulted in over 230,000 fatalities2. In China, the 2008 earthquake caused the loss of 87,000 lives3. 
+In Nepal, the 2015 earthquake caused the loss of 9000 lives, with many injured and the destruction of more 
+than 600,000 structures. In Japan, the 2011 earthquake caused the loss of nearly 16,000 lives4. All these events 
+show the level of damage that can be caused by an earthquake. The Gujarat earthquake that took place in 2001 
+in India resulted in over 20,000 deaths5. This tragedy caused injuries and displaced a large number of people. 
+This accident also pointed out the importance of effective earthquake mitigation techniques. This includes the 
+importance of early warnings. The aim is to ensure that there are no deaths or losses.
+1Symbiosis Institute of Technology, Hyderabad Campus, Symbiosis International (Deemed University), Pune, India. 
+2Aditya Institute of Technology and Management, K-Kotturu, Tekkali, Srikakulam, Andhra Pradesh 532 201, India. 
+3Vidya Jyothi Institute of Technology, Hyderabad, Telangana, India. 4S R K R Engineering College, Bhimavaram, 
+West Godavari, Andhra Pradesh 534 202, India. email: srakesh@sithyd.siu.edu.in; pavan1980.mca@gmail.com
+OPEN
+Scientific Reports |        (2026) 16:18410 
+1
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports
+
+--- Sayfa 2 ---
+The Table 1 covers the many types of earthquakes, their causes, and how to prevent or mitigate their impacts. 
+It also emphasizes that animals vocalize or make odd sounds as potential early warning signs of earthquakes. 
+Modern technology, such as seismographs and satellite photography, improves our scientific ability to anticipate 
+earthquakes. Animal behaviour is proposed as an extra warning system that can be utilized in conjunction with 
+technological surveillance.
+Earthquake preparedness is a critical aspect of mitigating the effects of natural disasters on the population. 
+It is a major factor in the survival of the population and the preservation of property. The major aspects of 
+earthquake preparedness include: i. Securing heavy furniture ii. Retrofitting buildings iii. Stocking emergency 
+supplies, and iv. It helps in coping with panic by conducting safety drills. It helps in coping with panic by 
+conducting safety drills. The study focuses on ways for better understanding and predicting seismic events in 
+order to improve disaster management6. It focuses on approaches such as seismograph observation, geological 
+investigations for fault line mapping, and paleo-seismology for determining earthquake recurrence intervals7,8. 
+Environmental indicators, such as radon gas emissions and groundwater level oscillations, are evaluated, although 
+their reliability is called into question due to external factors9–13. Advances in AI for seismic prediction are 
+discussed14. Before an earthquake, animals exhibit a variety of behaviours, including avoiding familiar locations 
+and modifying food and sleeping routines. Different species have distinct reactions; for example: Dogs may howl 
+or bark, cows may bellow and exhibit indications of uneasiness, birds may scream, poultry clucks vigorously, 
+and Guinea pigs and pigs frequently appear uneasy and make unusual noises15,16. While these behaviours alone 
+cannot forecast earthquakes, they can improve early warning systems when combined with technology17–20. 
+Integrating animal behaviours with ML and DL algorithms improves earthquake prediction accuracy. Advanced 
+tools analyse noises and movements to detect broad patterns and abnormalities. Models are enhanced using 
+techniques such as data augmentation and GAN, particularly when datasets are restricted.
+The study utilizes several ML techniques, including XGBoost, RF, and MLP. It incorporates DL models 
+such as RNNs, Long Short-Term Memory LSTMs, and Bidirectional LSTMs. The research also focuses on the 
+possibility of using animal and bird cries to predict impending earthquakes. One of the greatest achievements is 
+the creation of a custom dataset for earthquake prediction using animal cries. The dataset is enlarged to enhance 
+its size and diversity, aiming to improve the models’ generalizability. The Librosa Python library is utilized for 
+extracting acoustic properties in an Excel sheet. The research supports early detection of earthquake warning 
+signs, particularly in regions lacking monitoring infrastructure. Integrating this study with physical techniques 
+may enhance the earthquake detection rate.
+In this paper, the literature review section is included in “Literature review” section In “Methodology and 
+materials” section, the methodology section is included, and it discusses the dataset preparation, deep neural 
+networks, recurrent neural networks, and the process pipeline & system architecture. In “Volume Scaling Adjusts 
+the amplitude to simulate different recording proximities or conditions” Section, the results and discussion 
+section are included. In “Audio Reversal Flips the waveform to force the model to prioritize spectral patterns 
+over absolute temporal order” section, the conclusion of the paper is included.
+Literature review
+The prediction of earthquake precursor prediction is considered to be one of the most challenging issues in 
+the subject of seismology. Though conventional methods are based on geophysical parameters, recent research 
+has also investigated new approaches like ML and DL models that use unusual animal behaviours to predict 
+earthquakes. This literature review is based on the major contributions made in these fields.
+Bhargava et al.11 sought to examine the importance of unusual behaviours in animals in earthquake 
+prediction. They argued that unusual behaviours in animals can accurately sense geophysical triggers for 
+earthquakes better than humans. They based their arguments on previous studies done in China, Japan, and the 
+USA, which showed promising results. However, they noted the importance of obtaining data and incorporating 
+unusual behaviours in animals in earthquake prediction algorithms. Liso et al.21 undertook a multi-parameter 
+study in Western Piedmont, Italy. They sought to find the correlation between unusual behaviours in animals 
+and earthquakes. In this study, unusual behaviours in animals were noted six hours prior to an earthquake. 
+The unusual behaviours were noted in dogs and cats. The authors noted a three-stage pattern of vocalization 
+Types
+Causes
+Preventions/mitigation
+Prediction & identification technologies
+Animal vocal behaviors 
+predictions
+Tectonic earthquakes
+Movement of tectonic plates 
+along faults (collision, 
+separation, sliding)
+Earthquake-resistant buildings, 
+flexible foundations, seismic building 
+codes, land-use planning
+Seismographs, GPS plate monitoring, 
+satellite radar (InSAR), seismic networks
+Some animals show restlessness, 
+unusual calls, agitation before 
+quakes
+Volcanic earthquakes
+Magma movement and 
+volcanic eruptions
+Volcano hazard zoning, evacuation 
+plans, monitoring volcanic activity
+Volcanic seismometers, thermal imaging, 
+gas sensors
+Animals may flee volcanic areas and 
+show panic vocalizations
+Collapse earthquakes
+Collapse of caves, mines, 
+underground structures
+Safe mining practices, ground 
+reinforcement, land stability surveys
+Ground-penetrating radar (GPR), 
+subsurface sensors
+Limited evidence; small animals 
+may react to vibrations
+Explosion-induced 
+earthquakes
+Nuclear tests, mining blasts, 
+quarry explosions
+Regulation of explosions, controlled 
+blasting techniques
+Seismic monitoring systems, vibration 
+sensors
+Animals react suddenly with fear 
+sounds after blasts
+Human-induced 
+earthquakes
+Reservoirs, fracking, 
+wastewater injection, mining
+Controlled water injection, geological 
+assessments, regulation
+Micro seismic monitoring, pressure 
+sensors, satellite imaging
+Animals may show stress behaviours 
+but not reliable prediction
+Subduction zone 
+earthquakes
+One tectonic plate sink under 
+another
+Tsunami warning systems, coastal 
+defences, evacuation drills
+Ocean buoys, deep-sea sensors, GPS, 
+seismographs
+Marine animals may change 
+movement patterns
+Table 1.  Classification of earthquake types with causes mitigation strategies and prediction technologies.
+ 
+Scientific Reports |        (2026) 16:18410 
+2
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 3 ---
+prior to earthquakes. Geophysical anomalies were noted in this study. Sánchez et al.22 analysed reports 
+of abnormal animal behaviour (AAB) in Colombia from 1610 to 2019. Their study identified 138 historical 
+cases linked to major earthquakes, with dogs, cattle, and horses being the most responsive species. Although 
+historical records emphasized coseismal reactions, modern media reports documented presence behaviours. 
+The authors concluded that AAB corresponds to seismic activity, strengthening it as a predictive tool. Kelley et 
+al.23 proposed that precursor crustal movements generate electromagnetic signals that animals perceive as sound 
+waves through electrophonic. While animal responses were inconsistent, their observations could complement 
+existing GPS monitoring to enhance short-term earthquake prediction. Astuti et al.24 developed an ASAD 
+system utilizing Mel Frequency Coefficients (MFCCs) and SVM to label abnormal animal sounds. Their system 
+achieved 100% accuracy in detecting sound variations from seven bird species, demonstrating its potential in 
+disaster prediction. Wikelski et al.25 conducted a study using bio-logging tags for cows, dogs, and sheep during 
+the 2016/2017 Italian earthquake series, observing more anticipatory behavior among stabled animals compared 
+to those living in the pasture. This study revealed the potential of using bio-logging for the early detection of 
+earthquakes through the observation of pre-seismic animal behavior.
+Abdalzaher et al.7 also designed a system called 2S-ML-EIOS, which uses ML for the prediction of earthquakes 
+and can provide the intensity of the earthquakes within two seconds of the detection of P-waves. XGB was 
+used for the development of the system, which provided an accuracy of 98.59% for six different intensity levels, 
+indicating the potential of the system. Muhammad et al.26 proposed a DNN model that enhanced precision by 
+20%, recall by 29%, and F1-score by 36% for seismic activity prediction in Chile, Southern California, and the 
+Hindukush region. Tonumoy et al.27 proposed a technique that converts seismograph data to audio formats, 
+resulting in 93.99% detection accuracy with minimized detection time and false alarms using a CNN and 
+LSTM network. Sadhukhan et al.8 analysed the correlations between climate change, environmental change, 
+and seismic activity using deep learning models, namely LSTM, Bi-directional LSTM, and Transformer models, 
+to examine global temperature anomalies and seismic parameters for earthquake magnitude prediction in 
+Indonesia, Japan, and the Hindu-Kush Karakoram Himalayan region, finding moderate feasibility for prediction 
+despite the limitations in data.
+Table 2 presents the most recent developments in seismic-data-driven models. Deep learning methodologies, 
+such as CNN, GNN, and DNN, have been applied to develop earthquake detection models. These models 
+showed good performance on several datasets, such as SCEDC, CEED, and USGS. Generalizability is commonly 
+hampered by data availability and regional requirements. Most research efforts have concentrated on seismic 
+waves in the waveform representation form.
+Jena et al.40 used geo-spatial data, probabilistic seismic hazard assessment, and deep learning to successfully 
+map soil liquefaction hazards in Australia, reaching classification accuracies of 94% and 93%. This study is very 
+informative for disaster management and the resilience of infrastructure. In another research, Huang et al.41 
+proposed a deep learning algorithm for predicting earthquakes of large magnitude (M6 +) in Taiwan, detecting 
+temporal patterns in seismic data from the previous 120 days with an R score of 0.303. They suggested that this 
+approach should be implemented in other regions with high seismic activity like Japan and Chile. However, 
+there are still some difficulties in predicting earthquake precursors using ML and DL methods. There are many 
+studies on predicting animal behaviour for forecasting that are not scientifically proven due to observational bias, 
+differences in responses among species, and the effect of environmental factors such as temperature and noise 
+pollution, which may cause incorrect predictions. Although ML methods have great potential for improvement, 
+they are often based on small datasets and cannot generalize well for different geological settings, with high 
+computational complexity that makes real-time prediction difficult.
+Zhu et al.35 developed a multitask DL approach referred to as PhaseNet + . PhaseNet + is significant in 
+the field of seismic monitoring. PhaseNet + is a significant improvement on the PhaseNet approach. The 
+PhaseNet + approach is important since it includes a number of tasks that are part of seismic monitoring. The 
+seismic monitoring tasks include the selection of phase arrival times, identification of first-motion polarity, 
+and phase association. The use of the multitasking approach is significant since it improves the performance of 
+Ref
+Author (year)
+Seismic datasets
+Models used
+Result analysis
+28
+Dascher-Cousineau et al. (2023)
+Southern California earthquake catalog
+RECAST
+Improved earthquake forecasting over ETAS
+29
+Tokuda et al. (2023)
+Real seismic swarm waveform data
+Multi-representation CNN
+Robust seismic phase detection in noisy conditions
+30
+Murshed et al. (2023)
+Seismic intensity benchmark datasets
+SC-GNN
+Reduced MSE in real-time intensity prediction
+31
+Yavas et al. (2024)
+SCEDC
+Random Forest
+Best 30-day earthquake prediction
+32
+Srivastava et al. (2024)
+Turkey aftershock data
+DynaPicker
+Improved phase picking
+33
+Cambrin et al. (2024)
+QuakeSet
+CNN
+Satellite-based earthquake benchmark
+34
+Zhu et al. (2025)
+CEED
+Unified seismic benchmark
+California ML benchmark
+35
+Zhu et al. (2025)
+Waveform benchmarks
+PhaseNet + 
+Improved multitask seismic monitoring
+36
+Kriuk & Kriuk (2026)
+Poseidon global catalog
+POSEIDON
+High F1-score for multi-event prediction
+37
+Ravishan et al. (2026)
+New Zealand seismic data
+Lightweight CNN
+Real-time edge P-wave detection
+38
+Nagamani et al. (2026)
+USGS + Kaggle
+ANN / RF / LR
+Operational earthquake probability prediction
+39
+Ahmad et al., (2026)
+Waveform quality dataset
+Quality-aware DNN
+Improved robust seismic detection
+Table 2.  Comparative recent state-of-the-art seismic data-based ML and DL models, datasets and 
+methodologies.
+ 
+Scientific Reports |        (2026) 16:18410 
+3
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 4 ---
+seismic monitoring. Xie42 discussed the application of DL in seismic engineering. The discussion on DL models 
+includes CNN, RNN, GAN, and GNN. In addition, the discussion on DL application includes seismic damage 
+evaluation, prediction, structure response, and modelling. It highlights the application of CNNs in vision-related 
+tasks and RNNs in sequence-related tasks. Navarro-Rodríguez et al.43 looked at 28 research in a systematic study 
+of ML methods for early earthquake magnitude estimation. The review emphasizes how ML and DL models 
+can improve the prediction precision of seismic early warning systems. Implementing these methods in real 
+time presents challenges. To encourage more research in seismic magnitude estimation, the need for consistent 
+benchmark datasets is underlined.
+As shown in Table 3, deep learning models, including LSTM and DNN architectures, have been utilized 
+for seismic forecasting. They are more efficient than conventional ML approaches. Present-day methods focus 
+largely on seismic waveforms. The lack of consideration of alternative approaches may hinder further progress 
+in the field of early earthquake forecasting.
+The study is relevant to the limitations of DL models in earthquake prediction, which require a large amount 
+of labelled data, which is usually scarce because of the low occurrence of earthquakes. It has been found that 
+data from seismic sources is not adequate for making precise predictions. To overcome these limitations, 
+we have proposed a new approach that combines the use of ML and DL models with the analysis of animal 
+vocalizations for making predictions about earthquake precursors. Unlike our previous research work, which 
+solely depended on data from seismic sources or personal experiences, our proposed work will utilize advanced 
+sound classification models for the analysis of animal sounds before earthquakes. This will enable us to identify 
+changes in the environment that are not possible through traditional approaches. An important part of our 
+proposed research work is the use of data augmentation methods to improve the efficiency of models trained on 
+animal vocalization data from cats, dogs, and birds. Our proposed model will also be able to adapt to different 
+locations around the world and will be efficient in both high and low seismic areas.
+Methodology and materials
+The methodology and materials section are based on a thorough analysis of animal vocalization data. The method 
+begins by extracting 21 features using the Librosa library. To improve the training dataset, we use sophisticated 
+augmentation techniques such as time stretching, pitch variation, and noise addition. The acoustic signals are 
+then classified for seismic risk using Bi-LSTM and GRU networks.
+Proposed model
+Figure 1 shows the proposed model for earthquake related to ML and DL for animal’s voice behaviours. The 
+system identifies earthquake precursors based on the analysis of variations in animal vocal behaviour. The system 
+applies both ML and DL techniques. Recordings of animal voices are obtained under normal and abnormal 
+situations, pre-processed, and converted to acoustic features. The features are labelled and stored for evaluation; 
+the data is divided into a training and testing set. DL models with a sequential structure (RNN, LSTM, GRU, Bi-
+LSTM) and ML models (RF, MLP, XGBoost) are trained to detect abnormal vocal behaviour. The best model is 
+used to classify unknown animal voices as either normal or abnormal to show possible earthquakes. Evaluation 
+metrics such as Accuracy, Precision, Recall, F1-score, and AUC are used.
+Dataset description
+The study examines the behaviour of animals prior to an earthquake, specifically analysing the sounds they 
+make before the occurrence of seismic events. The researchers collected audio clues from YouTube and Google 
+to identify the changes in behaviour of animals such as dogs and birds. Although the data was limited, the 
+researchers improved the audio data for deep learning by using data augmentation and feature extraction. The 
+Table 4 shows the extracted source voice files for DL and ML models. A balanced dataset was created, consisting 
+Ref
+Author (year)
+Description of research (Datasets and Models)
+Result analysis
+44
+Kuyuk & Susumu 
+(2018)
+Proposed an LSTM-based DL model. Utilized 305 three-component seismic waveform 
+records. Data sourced from Japan (2000–2018)
+Achieved 98.2% accuracy in classifying earthquakes. 
+Attained 83.3% accuracy on real earthquake events
+45
+Ocak et al. (2023)
+Used seismic response data from SDOF structures. Applied models KNN, RF, and 
+XGBoost for predictive analysis
+Achieved 96% accuracy with XGBoost
+46
+Wardhani et al. 
+(2025)
+A DL-based earthquake forecasting model has been proposed. Multi-layer LSTM 
+networks are used for analysing seismic data specifically from Indonesia
+Mean Squared Error (MSE): 0.3798. Root Mean Squared 
+Error (RMSE): 0.6163. Mean Absolute Error (MAE): 0.4146. 
+47
+Murwantara et al. 
+(2020)
+Developed ML models utilizing 30 years of historical earthquake data. Multinomial LR, 
+NBs, and SVM for prediction purposes
+SVM achieved the best performance with the lowest RMSE 
+of 0.751. LR had an RMSE of 0.777. NBs recorded an RMSE 
+of 0.922
+48
+Kang et al. (2024)
+Developed a DL model for post-earthquake damage assessment. Utilized a 1D-CNN 
+architecture with Bayesian optimization on CGAN-based seismic data augmentation
+Achieved 92.5% accuracy using wavelet scattering. Improved 
+performance to approximately 90.5% with data augmentation
+26
+Muhammad et al. 
+(2023)
+The model utilizes an DNN architecture. Historical datasets from Chile, Hindukush, 
+and Southern California were employed
+Achieved with accuracies of 98.28%, 95.13%, and 99.29% 
+high prediction performance (SVM, RF, LR)
+49
+Asha et al. (2025)
+NN 1, NN2, NN3, and LSTM models were developed using USGS seismic data for 
+earthquake magnitude and depth prediction
+LSTM showed the best performance with lowest error values 
+(MAE 0.3099, MSE 0.1869) for magnitude prediction and 
+improved depth estimation accuracy
+50
+Wang et al. (2022)
+EEWNet deep learning model developed using KiK-net seismic records for early 
+earthquake
+The model achieved lower prediction error than the Pd 
+method, with mean error − 0.02 and standard deviation 0.43
+Table 3.  Comparative review of state-of-the-art machine learning and deep learning approaches and results.
+ 
+Scientific Reports |        (2026) 16:18410 
+4
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 5 ---
+of 360,142 samples. It has 21 attributes and is equally split for training and validation. The training and validation 
+dataset together contain 180,000 normal samples and 180,142 abnormal samples. To test performance, a separate 
+test dataset of 3000 samples was created, consisting of 1500 normal and 1500 abnormal samples.
+The Fig. 2 shows the signal acquisition and time domain analysis. The procedure involves the capture of 
+signals and the recording of animal vocalizations, such as barking. The audio wave amplitudes vary according 
+to the loudness of the words being spoken. A sudden increase in pulses, over 111 in 0.29 s, indicates urgent 
+behaviour. When analysing frequency and spectrogram information, there are distinct signs of distress, with a 
+dominant frequency of 2506 Hz and other acoustic parameters: average pitch of 474.9 Hz, jitter of 5.959%, and 
+shimmer of 21.63%. Based on these characteristics, we create a set of 21 numeric attributes, including Root Mean 
+S. No
+Feature name
+Description
+1
+MFCCs
+MFCCs are crucial for identifying distinct sound signatures
+2
+RMS Energy
+Quantifies the total energy and loudness of the audio signal. High values indicate high-intensity sounds
+3
+ZCR
+Zero-Crossing Rate: Measures how many times the signal crosses the zero-amplitude line. Used to detect percussive sounds and background 
+noise levels
+4
+Spectral Centroid
+Represents the "centre of mass" of the frequency spectrum. It is often used to characterize the “brightness” or sharpness of the audio
+5
+Spectral Bandwidth
+Measures the spread of frequencies around the spectral centroid. It helps distinguish between harmonic sounds and noisy, wide-band sounds
+6
+Spectral Contrast
+Evaluates the difference between peaks and valleys in the frequency spectrum. This is critical for differentiating between harmonic textures 
+and percussive ones
+7
+Chroma Features
+Maps the audio into 12 distinct pitch classes. This is highly effective for analysing harmonic and melodic patterns in animal vocalizations
+8
+Tempo (BPM)
+Calculates the rhythmic speed of the audio in Beats Per Minute. This identifies patterns in the repetition of sounds or calls
+9–21
+Derived Temporal 
+Features
+Includes features such as Duration (dt), Delta Duration (dts), and Spectral Flux (fts), which capture how the sound changes over time
+Table 4.  Extracted audio features used for earthquake precursor detection from animal vocalizations.
+ 
+Fig. 1.  Proposed model detects earthquake precursors by analysing variations in animal vocal behaviors.
+ 
+Scientific Reports |        (2026) 16:18410 
+5
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 6 ---
+Square energy, Zero-Crossing Rate, and Mel-Frequency Cepstral Coefficients, labelled by class for supervised 
+learning.
+Frequency analysis (Fig. 3) discloses complex acoustic patterns in animal vocalizations. The strongest energy 
+peak is located near 2506 Hz (around − 41.6 dB), with additional peaks at 100 Hz, 390 Hz, and 1000 Hz. Based on 
+a Hann window function, the animal vocalizations have multiple frequency components that determine timbre 
+and loudness51,52. The paper also includes a table that summarizes audio feature extraction for animal vocal 
+signals, with a focus on the most important acoustic features and their role in ML and DL.
+The raw signal s(t) is applied to a Hann window and then transformed into its power spectrum through 
+FFT. The prominent peaks are at 100 Hz, 390 Hz, and 2506 Hz. To better represent how we perceive sound, the 
+spectrum is then converted to the Mel scale through triangular filters53. For each Mel band, the log of its energy 
+is computed to represent human sensitivity to loudness. Then, a Discrete Cosine Transform is performed on the 
+log Mel-energies, and the resulting MFCCs are obtained. In the current dataset, MFCCs mfcc_1 to mfcc_13, 
+along with zero-crossing rate (zcr) and spectral centroid, are used as 21 features to train an ML and DL model 
+to predict earthquake risk.
+The analysis of barking patterns (Fig. 4) before an earthquake shows a stressed acoustic pattern. The statistics 
+speak for themselves: average frequency of 474.9 Hz, with high-frequency spikes reaching 630 Hz, which is 
+indicative of alarm barking. The prominent frequency of 2506 Hz indicates an urgent, sharp acoustic signal. The 
+stability measures indicate jitter of 5.96% and shimmer of 21.63%, which is indicative of pronounced pitch and 
+amplitude variations due to fear. The audio signal contains 111 consecutive pulses in 0.291 s.
+Table 5 shows a comparison between the seismic dataset and the proposed animal vocalization behavior 
+dataset in terms of data type, source, and domain. Physical wave-form features are used for feature extraction in 
+seismic data. In the proposed dataset, acoustic features, including pitch and MFCC, were utilized. The seismic 
+dataset is a sensor-based dataset. Animal vocalization is a new approach that can complement other approaches 
+for event detection.
+Data augmentation
+Data augmentation increases the diversity of datasets, just as adding spices to food increases its diversity. Data 
+augmentation is helpful in MLs and DLs when we are dealing with small audio datasets. It may be difficult to 
+Fig. 2.  Signal acquisition and time-domain analysis for dog broking before earthquake.
+ 
+Scientific Reports |        (2026) 16:18410 
+6
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 7 ---
+obtain large and diverse audio samples, such as bird sounds or background noises, so data augmentation is a 
+good alternative. The basic concept is to generate new audio examples from existing audio files by applying a 
+number of operations, including: Stretching or compressing audio clips without altering the pitch. Altering the 
+pitch to simulate sounds of different tones. Adding background noise to simulate real-world environments. 
+Adjusting the volume to simulate sounds of different levels. Playing audio backwards for creative purposes. 
+Combining different operations, such as stretching and pitch shifting, can also increase the diversity of the 
+dataset. Data augmentation can help machine learning models learn to deal with the imperfections of real-world 
+audio.
+	1.	 Time Stretching: Modifies the duration of an audio signal without affecting its pitch.
+	
+s′(v) = s(αv)
+(1)
+	s(v): Original audio signal, s′(v): Time-stretched signal, α: Stretching factor, where α > 1 slows down the audio 
+and 0 < α < 1 speeds it up.
+	2.	 Pitch Shifting Alters the frequency content (pitch) while maintaining the original duration.
+Fig. 3.  Frequency analysis for dog broking before earthquake.
+ 
+Scientific Reports |        (2026) 16:18410 
+7
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 8 ---
+	
+s′(v) = s(v) · ej2πfv
+(2)
+s′(v): Pitch-shifted signal, f: Frequency shift factor, ej2πfv: Complex exponential representing a frequency shift 
+in the Fourier domain.
+	3.	 Adding Noise Introduces random noise to improve model robustness against background disturbances.
+	
+s′(v) = s(v) + η(v)
+(3)
+	η(v) : Noise function, typically Gaussian noise where η(v) ∼N(0, σ2).
+Feature
+Seismic data (like CEED Dataset)
+Proposed dataset (Animal vocal behavior)
+Data Type
+Seismic waveform signals (P-wave, S-wave)
+Audio signals (animal vocalizations)
+Source
+Seismic stations and sensors
+Field recordings / audio sensors
+Domain
+Geophysical measurements
+Bio-behavioural signals
+Data Characteristics
+Time-series waveform data
+Acoustic time-series data
+Feature Extraction
+Frequency, amplitude, wave velocity
+MFCC, pitch, spectral features
+Prediction Basis
+Ground motion and seismic activity
+Behavioural anomalies prior to events
+Real-time Capability
+High (sensor-based monitoring)
+High (continuous audio monitoring)
+Dataset Example
+CEED (Cascadia Earthquake Experiment Dataset)
+Collected animal vocalization dataset
+Limitation
+Requires dense sensor networks
+Requires labelled behavioural data
+Advantage
+Physically measurable and standardized
+Novel early indicator, complementary to seismic data
+Table 5.  Comparative analysis between seismic datasets like CEED and animal vocal behavior dataset.
+ 
+Fig. 4.  Voice analysis for dog broking before earthquake.
+ 
+Scientific Reports |        (2026) 16:18410 
+8
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 9 ---
+	4.	 Volume Scaling Adjusts the amplitude to simulate different recording proximities or conditions.
+	
+s′(v) = βs(v)
+(4)
+	
+β : Scaling factor, where β > 1 increases volume and β < 1 decreases volume.
+	5.	 Audio Reversal Flips the waveform to force the model to prioritize spectral patterns over absolute temporal 
+order.
+	
+s′(v) = s(−v)
+(5)
+	s (− v): The audio waveform played in reverse.
+	6.	 Combination of Methods
+	
+s′(v) = (βs(αv)) · ej2πfv + η(v)
+(6)
+Simultaneous application of multiple techniques to maximize dataset diversity. This composite equation 
+represents the integration of volume scaling (β), time stretching (α), pitch shifting (f), and noise addition (η) 
+into a single transformation. In this study, we used above discussed audio augmentation methods to expand and 
+diversify the dataset to increase the robustness of the model. These diverse augmentation strategies increase the 
+variability of our dataset, allowing the model to generalize efficiently across different acoustic conditions.
+Feature extraction and data cleaning
+The Table 6 illustrates the audio feature extraction framework employed to analyse animal vocalizations. The 
+table identifies the key acoustic features, their descriptions, and the manner in which the features are applied 
+for analysis. The table further explains how the features contribute to the development of a comprehensive 
+representation of the audio signals. The framework is intended to improve the efficiency of Machine Learning 
+and Deep Learning algorithms.
+Data Cleaning: Data cleaning is fundamental before training DL and ML models. Key steps include: Removing 
+redundant or irrelevant data by eliminating duplicates. Normalizing audio files for consistency in sample rates, 
+formats, and volume levels. Labelling and categorizing data with accurate metadata tagging (e.g., before or 
+after an earthquake). Addressing missing data by filling gaps or removing problematic entries. Applying noise 
+removal techniques to reduce unrelated environmental sounds. These steps contribute to a high-quality dataset 
+that enhances analysis and deep learning model performance.
+RNN algorithm
+RNNs (Fig. 5) are dynamic neural networks that are designed to address sequential and temporal dependencies 
+by utilizing recursive transitions of states. RNNs have feedback connections that enable them to maintain their 
+hidden representations of states and store historical data that are vital in capturing temporal correlations of long 
+duration. In relation to earthquake precursor analysis, animal vocalizations have sequential fluctuations in their 
+acoustics and are therefore suitable in capturing non-linear temporal characteristics of abnormal behavioural 
+Category
+Description
+Purpose in audio analysis
+Role in ML and DL models
+Feature Extraction
+Conversion of raw audio data into compact numerical 
+representations
+Reduces data complexity
+Enables efficient classification 
+recognition
+Audio Feature Types
+Extracting temporal, spectral, and perceptual features
+Represents behavioural and acoustic patterns
+Provides structured input features for 
+models
+Librosa Library
+Python-based audio analysis package that supports WAV, 
+MP3, and others with resampling functionality
+Performs time domain and frequency domain 
+analysis
+Facilitates automated feature extraction
+Spectrograms
+Visual representation of frequency content over time
+Analyse signal fluctuations and frequency 
+distribution
+Useful for DL-based pattern learning
+MFCCs
+MFCCs characteristics
+Widely used in speech and audio recognition
+Key features for classification models
+RMS Energy
+Measures signal loudness or intensity
+Identifies strong and weak sound segments
+Detect behavioural intensity variations
+Zero Crossing Rate ZCR
+Rate at which signal crosses zero amplitude
+Indicates noisiness
+Differentiate abnormal audio patterns
+Spectral Centroid
+Centre of mass of frequency spectrum
+Represents brightness or pitch level
+Helps differentiate sound tonal properties
+Spectral Bandwidth
+Spread of frequencies around centroid
+Distinguishes complex and simple sounds
+Enhances feature separability
+Spectral Contrast
+Difference between spectral peaks and valleys
+Captures timbral texture information
+Improves classification accuracy
+Chroma Features
+Energy distribution across pitch classes
+Useful in tonal and harmonic analysis
+Supports pattern recognition tasks
+Tempo
+Speed of audio measured in beats per minute
+Represents rhythmic behaviour
+Assists rhythm-based classification
+Audio Transformations
+Time stretching pitch shifting filtering normalization
+Prepares standardized audio signals
+Improves robustness and model 
+generalization
+Table 6.  Audio feature extraction and ML/DL-based audio analysis for animal vocalizations.
+ 
+Scientific Reports |        (2026) 16:18410 
+9
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 10 ---
+responses. It uses RNN-based sequence modelling in extracting vital temporal features from bio-acoustic signals 
+in intelligent prediction of seismic precursors.
+The RNN (Algorithm 1) technique utilizes the sequential processing of the data through recursive updates of 
+the hidden state. The model identifies the temporal relationship between the time steps to enhance the detection 
+capability. The model is used to detect earthquake alarms based on the pattern of animal vocal behaviour. 
+Forward propagation is used to predict the sequence of the data. BPTT is used to optimize the parameters of 
+the model.
+Algorithm 1.  RNN
+Fig. 5.  RNN architecture for earthquake detection through animal vocalization parametres.
+ 
+Scientific Reports |        (2026) 16:18410 
+10
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 11 ---
+LSTM algorithm
+The LSTM architecture (Fig. 6) is characterized by the use of specialized memory cells to handle the issue of 
+long-range temporal dependencies in the auditory signals. Additionally, the information flow in the LSTM cell 
+is controlled through the forget gate, input gate, and output gate to handle the issue of the vanishing gradient, 
+which is common in the standard recurrent neural network architecture, leading to stability in the classification 
+of the bio-acoustic signals as earthquake precursors.
+The LSTM (Algorithm 2) technique uses memory cells to process the sequential features of the acoustic 
+signals. It retains, updates, and forgets the information in the signals to better predict the seismic precursors. The 
+parameters are optimized using the Backpropagation technique to reduce the binary classification loss.
+Algorithm 2.  LSTM 
+Fig. 6.  LSTM architecture for earthquake detection through animal vocalization parameters.
+ 
+Scientific Reports |        (2026) 16:18410 
+11
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 12 ---
+GRU algorithm
+The GRU (Fig. 7) model is a type of RNN architecture that is used to handle temporal dependencies in audio 
+events. This model incorporates the use of the reset and update gates to manage information retention and 
+to combine the memory from the past with the new features in the input stream. This model is helpful in the 
+learning of short and long-term behaviour patterns. GRU has less computational complexity than the LSTM 
+model. The final hidden state representation is used to classify the occurrences of the precursors of earthquakes 
+through animal vocal patterns.
+Algorithm 3.  GRU
+Bi-LSTM algorithm
+The Bi-LSTM model (Fig. 8) is proposed to identify earthquake precursors based on animal sound recordings. 
+The I/P layer processes audio features from animal sounds. Bi-LSTM layers identify past and future contextual 
+dependencies. The O/P layer combines signals from past and future directions to improve pattern recognition. 
+It provides warnings on seismic risks as High Risk and Low Risk.
+The Bi-LSTM algorithm (Algorithm 4) processes voice features as sequential input data, effectively 
+relationships bidirectionally. In the forward pass, typical gating techniques update states from time step t = 1 
+to T. The backward pass processes the sequence in reverse from t = T to 1. Hidden representations from both 
+Fig. 7.  GRU architecture for earthquake detection through animal vocalization parameters.
+ 
+Scientific Reports |        (2026) 16:18410 
+12
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 13 ---
+forward and backward layers are concatenated at each time step that feature vector size is 2ℎ. The concatenated 
+output is then input into a activation function of SoftMax to derive final classification probabilities.
+Algorithm 4.  Bidirectional Long Short-Term Memory (Bi-LSTM) 
+Machine learning models and metrics
+The experimental MLs implemented for this study contains XGBoost, MLP, and RF, with optimized parameters, 
+as shown in Table 7. XGBoost was implemented with 300 estimators, a learning rate of 0.01, and a maximum depth 
+of 6 to minimize bias and variance, thereby improving the model’s generalization performance. Subsampling rate 
+0.8 and column sampling rate 0.8 were implemented to minimize overfitting, thereby improving the model’s 
+robustness. In the MLP model, two hidden layers with 64, 32 units, ReLU activation, and the Adam optimizer 
+with a learning rate of 0.001 are implemented to ensure convergence. Early stopping and L2 regularization 
+with alpha set to 0.0001 are implemented to prevent overfitting. For the implementation of steady learning, 
+the Random Forest model divides 200 trees with a maximum depth of 20 based on Gini impurity. Bootstrap 
+sampling and square root feature selection are implemented to maximize decision tree diversity. The model is 
+tested for classification efficiency and prediction reliability, the standard criteria are applied to the model.
+Accuracy, precision, recall, and the F1-score are important metrics for assessing model performance. 
+Accuracy measures (Eq. (48)) overall correctness by computing the ratio of successfully categorized examples to 
+total predictions. It can be misleading when dealing with imba lanced datasets. Precision assesses (Eq. (49)) the 
+dependability of positive predictions by comparing the ratio of TPs predictions to all expected positives, which is 
+important when FPs are pricy. Recall (Eq. (50)), or sensitivity, determines the proportion of TP cases accurately 
+Fig. 8.  Bi-LSTM architecture for earthquake detection through animal vocalization parameters.
+ 
+Scientific Reports |        (2026) 16:18410 
+13
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 14 ---
+identified, which is critical in situations were failing to identify positives has serious consequences54. The F1-
+Score combines Eq. (49) and (50) into a single metric using the harmonic mean, making it especially useful for 
+imbalanced datasets because it accounts for both FPs and FNs. Equations (48) to (51) show the computational 
+metrics.
+	
+Accuracy =
+TP + TN
+TP + TN + FP + FN 
+(48)
+	
+Precision =
+TP
+TP + FP 
+(49)
+	
+Recall =
+TP
+TP + FN 
+(50)
+	
+F1 = 2 × Precision × Recall
+Precision + Recall
+=
+2TP
+2TP + FP + FN 
+(51)
+Results and discussions
+In this study, we used a high-performance computer environment to help DL processes run more smoothly. The 
+software environment was organized using Google Collab, which used a cloud-based GPU specifically intended 
+for deep learning models, as well as hardware such as 16 GB RAM, an NVIDIA Tesla T4 GPU, and a multi-core 
+CPU to analyse big datasets. To properly test the model on previously unseen data, we divided the dataset into 
+80% training and 20% validation. The study focuses on animal behaviour as a forerunner to seismic activity, 
+using deep learning and machine learning approaches. We looked into the use of recurrent neural networks 
+(RNN), long short-term memory (LSTM), bidirectional LSTM (Bi-LSTM), and gated recurrent units (GRU) 
+in the DL component. We employed XGBoost, random forest (RF), and multi-layer perceptron (MLP) in the 
+machine learning component. The DL models were multi-layer models with hyperparameters optimized, trained 
+for 30 epochs with a batch size of 128 to quickly improve accuracy in the early stages.
+Model performance evaluation
+The Table 8 shows performance of three Machine Learning models: XGBoost, RF, and MLP. The study focuses on 
+earthquake precursor identification utilizing animal behaviours, combining ML and DL techniques. Models are 
+evaluated during the training, validation, and real-world testing phases. Accuracy, Precision, Recall, F1 Score, 
+and Area Under the Curve (AUC) are performance indicators used in assessments. The XGBoost model achieves 
+Model
+Hyperparameter
+Value used
+XGBoost
+N Estimators
+300
+Learning Rate (eta)
+0.01
+Maximum Depth (max_depth)
+6
+Subsample Ratio
+0.8
+Column Sample by Tree
+0.8
+Gamma (min_split_loss)
+0.1
+Minimum Child Weight
+1
+Objective Function
+binary: logistic
+MLP
+Hidden Layers
+(64, 32)
+Activation Function
+ReLU
+Solver
+Adam
+Learning Rate
+0.001
+Batch Size
+32
+Maximum Iterations
+500
+Alpha (L2 Regularization)
+0.0001
+Early Stopping
+True
+Momentum
+0.9
+Random Forest
+Number of Trees
+200
+Maximum Depth
+20
+Minimum Samples Split
+2
+Minimum Samples Leaf
+1
+Criterion
+Gini
+Max Features
+sqrt
+Bootstrap
+True
+Random State
+42
+Table 7.  Hyperparameter settings and tuning strategy for experimental ML models.
+ 
+Scientific Reports |        (2026) 16:18410 
+14
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 15 ---
+98.99% accuracy during training. It features a balanced precision and recall metric. Validation accuracy was 
+recorded at 98.81%, indicating good generalization. Environmental variables cause the performance on unseen 
+data to drop to 92.83%. Recall continues at 93.33 percent. The model has a high AUC value of 0.971. The RF 
+model has a training accuracy of 97.79% and a validation accuracy of 96.91 percent. When tested with real-
+world data, the accuracy was 90.63%. Precision is good at 91.40%, although recall is slightly lower at 89.86%. 
+The model’s AUC is 0.968. The MLP has a training accuracy of 98.89% and an AUC of 0.998, suggesting effective 
+nonlinear pattern learning. Validation accuracy is 97.81%, with testing accuracy at 95.33%. When compared to 
+other ML models, it gives higher to previously discovered animal voice differences.
+Table 9 shows the performance metrics for the four DL models. The metrics used to evaluate the models 
+include ACC, PRE, REC, F1-score, and AUC. The performance of the models is evaluated during the training, 
+validation, and testing phases. The RNN model has a high training accuracy of 97.26% with the AUC of 0.989. 
+Performance decreases during validation (96.96%) and testing (89.89%), indicating difficulty with long-term 
+dependencies in audio signals. The low F1-score indicates class imbalance. LSTM model presents enhanced 
+performance for long-term dependencies in sequential data. It achieved 98.99% training accuracy and an AUC 
+of 0.994. Maintained high validation accuracy at 98.81% with minimal overfitting. The performance of the 
+proposed Bi-LSTM model is the best compared to other DL models and ML models. The accuracy, precision, 
+recall, and F1-score of the model are 99.99%, with AUC of 1.00. The accuracy of the model during the validation 
+process is 99.95%. The accuracy of the model during the real-time test is 98.87%. The accuracy of the GRU model 
+during training is found to be 99.99%, and during validation, it is found to be 99.75%. Along with this, it has an 
+AUC of 1.00. When tested, the accuracy of the GRU model is found to be 97.83%, and it has a recall of 98.33%.
+Bi-LSTM model analysis
+The Bi LSTM model (Fig.  9) is extremely effective in detecting earthquake precursor patterns in animal 
+vocalizations. During training, it achieved 99.99% accuracy while maintaining good precision, recall, F1 score, 
+and an AUC of 1.00. This indicates near-perfect learning of the temporal auditory patterns. The convergence 
+curves reveal rapid stabilization of accuracy, precision, and recall while minimizing the training loss, proving 
+efficient and stable learning. The Bi LSTM model is extremely effective in detecting earthquake precursor 
+patterns in animal vocalizations. During training, a 99.99% accuracy was achieved while maintaining good 
+precision, recall, F1 score, and an AUC of 1.00. This indicates near-perfect learning of the temporal auditory 
+patterns. The convergence curves reveal rapid stabilization of accuracy, precision, and recall while minimizing 
+the training loss, proving efficient and stable learning. The accuracy of the Bi-LSTM model during the validation 
+process was 99.95%. The model has a high level of generalization with minimal overfitting. The precision and 
+DL models
+Model phase
+Accuracy (%)
+Precision (%)
+Recall (%)
+F1-Score (%)
+AUC
+RNN
+Training
+97.26
+97.01
+97.38
+97.28
+0.989
+Validation
+96.96
+95.88
+93
+93
+0.981
+Testing (Real world data)
+89.89
+90.02
+91.53
+89.94
+0.960
+LSTM
+Training
+98.99
+98.93
+99.01
+98.98
+0.994
+Validation
+98.81
+98.84
+98.79
+98.81
+0.993
+Testing (Real world data)
+93.30
+94.09
+92.40
+93.23
+0.991
+Bi-LSTM
+Training
+99.99
+99.99
+99.99
+99.99
+1.00
+Validation
+99.95
+99.96
+99.94
+99.98
+1.00
+Testing (Real world data)
+98.87
+98.84
+98.89
+98.86
+1.00
+GRU
+Training
+99.99
+99.99
+99.99
+99.99
+1.00
+Validation
+99.75
+99.76
+99.74
+99.78
+1.00
+Testing (Real world data)
+97.83
+97.40
+98.33
+96.86
+0.999
+Table 9.  Performances of DL models for earthquake detection.
+ 
+ML models
+Model phase
+Accuracy (%)
+Precision (%)
+Recall (%)
+F1-score (%)
+AUC
+XGBoost
+Training
+98.99
+98.93
+99.01
+98.98
+0.992
+Validation
+98.81
+98.84
+98.79
+98.81
+0.987
+Testing (Real world data)
+92.83
+92.40
+93.33
+92.86
+0.971
+Random Forest
+Training
+97.79
+97.76
+97.81
+97.78
+0.989
+Validation
+96.91
+96.78
+96.98
+96.89
+0.981
+Testing (Real world data)
+90.63
+91.40
+89.86
+90.61
+0.968
+MLP
+Training
+98.89
+98.85
+98.91
+98.88
+0.998
+Validation
+97.81
+97.77
+97.92
+97.65
+0.991
+Testing (Real world data)
+95.33
+95.26
+95.39
+90.34
+0.966
+Table 8.  Performances of ML models for earthquake detection.
+ 
+Scientific Reports |        (2026) 16:18410 
+15
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 16 ---
+recall values were balanced during the validation process. The graph of the validation loss was close to zero. 
+The model can identify significant sequential patterns in animal vocalizations. The model performed with an 
+accuracy, precision, and recall of 98.87%, 98.84%, and 98.89%, respectively, on real-world audio samples. The 
+model is robust and invariant to environmental changes and noise. The ROC curve in Fig. 9 shows excellent 
+separation between the classes. The AUC value was 1.00, which is excellent. The model can classify normal and 
+abnormal animal behaviors related to earthquake precursors.
+Fig. 9.  Performance evaluation curves of the proposed Bi-LSTM model.
+ 
+Scientific Reports |        (2026) 16:18410 
+16
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 17 ---
+Execution testing time analysis of ML and DL models
+Table 10 describes the total execution times for processing normal and abnormal records using the model. The 
+total execution times comprise the Feature Extraction Time (FET) for relevant features and Prediction Time 
+(PT) for generating outputs. The Normal Total Time (NTT) and Abnormal Total Time (ATT) are calculated 
+Model
+Condition
+Metric
+1
+10
+100
+500
+1000
+1500
+XGBoost
+Normal
+FET
+0.16
+2.30
+38.90
+86.38
+159.46
+248.30
+PT
+0.03
+0.00
+0.01
+0.00
+0.01
+0.04
+NTT
+0.19
+2.30
+38.91
+86.38
+159.47
+248.34
+Abnormal
+FET
+4.20
+18.13
+125.98
+565.56
+1032.54
+1413.49
+PT
+0.00
+0.02
+0.00
+0.01
+0.02
+0.02
+ATT
+4.20
+18.15
+125.98
+565.57
+1032.56
+1413.51
+Total
+NATT
+4.39
+20.45
+164.89
+651.95
+1192.03
+1661.85
+RF
+Normal
+FET
+0.20
+2.00
+30.14
+89.18
+200.89
+267.84
+PT
+0.02
+0.02
+0.01
+0.02
+0.04
+0.02
+NTT
+0.22
+2.02
+30.15
+89.20
+200.93
+267.86
+Abnormal
+FET
+3.24
+10.46
+116.04
+477.79
+950.21
+1403.89
+PT
+0.01
+0.01
+0.01
+0.02
+0.02
+0.02
+ATT
+3.25
+10.47
+116.05
+477.81
+950.23
+1403.91
+Total
+NATT
+3.47
+12.49
+146.50
+567.01
+1151.16
+1671.77
+MLP
+Normal
+FET
+0.20
+2.72
+42.67
+88.68
+156.61
+219.31
+PT
+0.01
+0.01
+0.04
+0.00
+0.00
+0.01
+NTT
+0.21
+2.73
+42.71
+88.68
+156.61
+219.32
+Abnormal
+FET
+1.06
+17.05
+117.86
+462.23
+958.17
+1403.36
+PT
+0.00
+0.00
+0.00
+0.05
+0.00
+0.06
+ATT
+1.06
+17.05
+117.86
+462.28
+958.17
+1403.42
+Total
+NATT
+1.27
+19.78
+160.57
+550.96
+1114.78
+1622.74
+RNN
+Normal
+FET
+0.14
+2.09
+32.11
+82.33
+158.80
+220.76
+PT
+0.78
+2.99
+0.60
+0.72
+0.77
+0.94
+NTT
+0.92
+5.08
+32.71
+83.05
+159.57
+221.70
+Abnormal
+FET
+1.12
+21.79
+111.75
+489.24
+908.49
+1406.46
+PT
+0.22
+0.14
+0.11
+0.24
+0.27
+0.48
+ATT
+1.34
+21.93
+111.86
+489.24
+908.76
+1406.94
+Total
+NATT
+2.26
+27.01
+144.57
+572.29
+1068.33
+1628.64
+LSTM
+Normal
+FET
+0.25
+1.42
+8.64
+75.72
+96.66
+141.11
+PT
+0.77
+0.84
+0.69
+0.63
+1.38
+1.46
+NTT
+1.02
+2.26
+9.33
+76.35
+98.04
+142.57
+Abnormal
+FET
+1.51
+10.12
+607.31
+269.68
+544.44
+804.38
+PT
+0.18
+0.09
+1.01
+0.14
+0.28
+0.25
+ATT
+1.69
+10.21
+608.92
+269.82
+544.72
+804.63
+Total
+NATT
+2.71
+12.47
+618.25
+346.17
+642.76
+947.20
+Bi-LSTM
+Normal
+FET
+0.08
+1.37
+55.03
+97.88
+177.45
+220.62
+PT
+0.71
+0.71
+3.57
+2.80
+5.34
+2.75
+NTT
+0.79
+2.08
+58.60
+100.68
+182.79
+223.37
+Abnormal
+FET
+3.34
+8.28
+138.19
+514.57
+964.71
+1419.52
+PT
+0.10
+0.12
+0.12
+0.16
+0.41
+0.49
+ATT
+3.44
+8.40
+138.31
+514.73
+965.12
+1420.01
+Total
+NATT
+4.23
+10.48
+196.91
+615.41
+1147.91
+1643.38
+GRU
+Normal
+FET
+0.06
+1.07
+25.87
+68.00
+124.09
+234.31
+PT
+0.71
+0.50
+0.55
+1.31
+1.06
+1.47
+NTT
+0.77
+1.57
+26.42
+69.31
+125.15
+235.78
+Abnormal
+FET
+0.75
+6.10
+67.23
+290.70
+590.44
+1474.59
+PT
+0.11
+0.10
+0.12
+0.11
+0.25
+0.52
+ATT
+0.86
+6.20
+67.35
+290.81
+590.69
+1475.11
+Total
+NATT
+1.63
+7.77
+93.77
+359.81
+715.84
+1710.89
+Table 10.  Execution time analysis of ML and DL models for earthquake precursor detection under varying 
+data sizes.
+ 
+Scientific Reports |        (2026) 16:18410 
+17
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 18 ---
+by summing the PT and FET. The total execution time (NATT) is a combination of NTT and ATT. Where, 1. 
+NTT = PT + FET, 2. ATT = PT + FET, and 3. NATT = NTT + ATT. It shows the comparison of the ML and DL 
+model execution times using datasets varying from 1 to 1500 audio files. This demonstrates the significance of 
+the feature extraction time (FET) in the overall processing time. Abnormal audio data require more computation, 
+thus increasing the time owing to noise and complex patterns. The total processing time (NATT) also increases 
+with larger dataset sizes, which indicates the scalability of the system. The GRU and MLP models exhibited 
+efficient execution times. The Bi-LSTM and LSTM models require more computational resources with larger 
+dataset sizes than the other models. The interchange for DL models is the balance between precision and the cost 
+of computation, which slows the processing time. The proposed method for predicting earthquake precursors 
+has excellent predictive capabilities. The system is also computationally feasible for handling large amounts of 
+data.
+Discussions
+In this section, the results obtained from experiments conducted on ML and DL algorithms for earthquake 
+precursor detection are presented. The analysis of animal vocal activity patterns was performed to show the 
+practicality of such models. The performance of these models and their statistical validation are also provided. A 
+comparative discussion of these and other methods is presented.
+Comparative analysis on experimental ML and DL models
+The Table 11 compares ML and DL models in the prediction of earthquake precursors based on accuracy and 
+AUC values. Bi-LSTM has the highest accuracy among the models, with 0.9887 accuracy and 1.00 AUC. GRU 
+and LSTM have the next highest accuracy after Bi-LSTM. The results show that deep sequential models have 
+higher than traditional ML models.
+The Fig. 10 shows a comparative analysis of all DL and ML models based on accuracy and AUC values. The 
+DL models outperformed traditional ML methods in detecting earthquake-related animal vocalizations. The 
+Bi-LSTM model achieved the highest performance accuracy of 0.9887 and an AUC of 1.00. The GRU model 
+also performed well in detecting earthquake precursor signals with an accuracy of 0.9783 and an AUC of 0.999. 
+The LSTM model showed a high AUC of 0.991, which indicates the success of using the sequential model in 
+this research. Traditional models such as XGBoost, Random Forest, MLP, and traditional RNN showed lower 
+accuracy and AUC values in detecting earthquake precursor signals.
+Statistical Validation and Cross-Validation Analysis of Proposed Bi-LSTM Model
+A k-fold cross-validation with k = 5 was used to examine the model robustness and generalization. The Bi-LSTM 
+model achieved a mean accuracy of 98.72%. The standard deviation was ± 0.31, indicating a steady performance 
+across different data splits. The evaluation metrics were assigned 95% confidence intervals (CIs). The Bi-LSTM 
+model scored a 95% confidence interval of [98.21%, 99.12%] for accuracy, demonstrating consistent predictions 
+across various sample conditions. Precision and memory also showed narrow confidence ranges. Paired t-tests 
+were used to assess the statistical significance of the proposed Bi-LSTM model compared to the baseline models 
+(RF, XGBoost, and LSTM). The Bi-LSTM model showed statistically significant improvements (p < 0.01). For 
+comparing the effectiveness of the Bi-LSTM approach compared with the other two baselines (RF and XGBoost), 
+as well as the conventional LSTM model, paired t-tests were applied. The findings revealed a statistically significant 
+superiority (p < 0.01) with regard to the Bi-LSTM algorithm. The ROC-AUC statistical comparison revealed that 
+the Bi-LSTM model had an AUC of approximately 1.00. The Bi-LSTM model performed significantly better than 
+the other models, with p-values less than 0.05.
+The Table 12 compares the ML and DL models based on cross-validation measures, such as mean accuracy, 
+standard deviation, confidence intervals, and AUC. The Bi-LSTM model exhibited the highest accuracy (98.72%) 
+and lowest variance (± 0.31). It also has a flawless AUC of 1.00, demonstrating its crucial performance and 
+stability. The Bi-LSTM model outperformed the baseline models, as evidenced by low p-values (< 0.05).
+Comparative analysis on existing related works versus proposal models
+This study compares the current earthquake prediction systems with a novel bioacoustics framework. This 
+focuses on the changes that improve the predictive capabilities of the system. Recent studies using seismic and 
+geodetic methods were also considered. The Bi-LSTM method is emphasized because of its high accuracy and 
+predictive ability. Table 13 compares the proposed earthquake precursor detection framework with those in 
+the literature over the last few years. Previous studies have employed seismic, geodetic, and historical data for 
+Model
+Accuracy
+AUC
+XGBoost
+0.9283
+0.971
+Random Forest
+0.9063
+0.968
+MLP
+0.9533
+0.966
+RNN
+0.8989
+0.960
+LSTM
+0.9330
+0.991
+Bi-LSTM
+0.9887
+1.00
+GRU
+0.9783
+0.999
+Table 11.  Comparative performance analysis of ML and DL models for earthquake precursor detection.
+ 
+Scientific Reports |        (2026) 16:18410 
+18
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 19 ---
+forecasting tasks. Notable contributions to the field of earthquake prediction in the last few years are as follows: 
+Zhang et al. employed a Fully CNN in the prediction task. Yavas et al. utilized the RF model in the prediction 
+task to forecast the earthquake magnitudes. The authors achieved an accuracy of 0.97 in the prediction task. 
+Quinteros-Cartaya et al. utilized the GNSS technique in the prediction task to quickly estimate earthquake 
+magnitudes. Kaftan et al. examined the efficiencies of different machine learning models for prediction tasks. 
+The authors found that the LSTM model performed better in the regression tasks. The proposed work employed 
+a bioacoustics-based framework to analyze animal voice behavior in the prediction task. The proposed model 
+achieved an accuracy of 0.9887 and an AUC value of 1.00 in the prediction task using the Bi-LSTM model. The 
+GRU model also performed well in the prediction task, achieving an accuracy of 0.9783 and an AUC of 0.999.
+The bioacoustics framework is superior to the current seismological and geodetic frameworks for earthquake 
+precursor detection. The method uses deep learning algorithms, especially bi-directional LSTM. This framework 
+considers animal acoustic communication.
+Model
+Mean-accuracy (%)
+Std. deviation
+95%-Confidence interval (%)
+AUC
+p-value (vs Bi-LSTM)
+XGBoost
+92.65
+± 0.85
+[91.10, 94.20]
+0.971
+ < 0.01
+RF
+90.21
+ ± 1.02
+[88.45, 92.05]
+0.968
+ < 0.01
+MLP
+94.87
+ ± 0.74
+[93.42, 96.10]
+0.966
+ < 0.01
+RNN
+89.75
+± 1.10
+[87.90, 91.60]
+0.960
+ < 0.01
+LSTM
+93.12
+ ± 0.68
+[91.85, 94.30]
+0.991
+ < 0.01
+GRU
+97.45
+ ± 0.42
+[96.80, 98.10]
+0.999
+ < 0.05
+Bi-LSTM (Proposed)
+98.72
+± 0.31
+[98.21, 99.12]
+1.00
+–
+Table 12.  Statistical performance comparison of ML and DL models using cross-validation.
+ 
+Fig. 10.  Comparative performance CA and AUC analysis of all experimental ML and DL models.
+ 
+Scientific Reports |        (2026) 16:18410 
+19
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 20 ---
+Comparative analysis on existing seismographic earthquake works and others versus 
+proposal model
+This study shows the comparison between seismic and ML earthquake prediction systems with a proposed 
+bioacoustics approach. Reviews the existing literature using seismic data and ML/DL models. The advances and 
+limitations of each approach are discussed. Reviews existing risk management systems for earthquake prediction.
+Zhao et al.60 conducted a scoping review regarding the usage of ML in preventing earthquakes and mitigating 
+disasters. There were 98 documents examined among 2271 documents concerning such themes as prediction 
+of earthquakes, resilient structures, and disaster recovery. It is evident from the results that ML proves to be 
+effective in finding complex patterns in seismic datasets leading to higher predicting accuracy. Ansari et al.61 
+created an STDP model utilizing DL and a FNN. The model evaluates tunnel damage using historical seismic 
+data. The results indicated consistent and robust prediction performance. The model is helpful for assessing 
+post-earthquake risks. Al Banna et al.62 conducted a study of 84 studies on artificial intelligence systems for 
+earthquake prediction. The review covers rule-based, ML, and DL approaches. A comparative evaluation of 
+approaches was carried out using datasets and performance measures. A rapid visual-based screening tool was 
+designed by Bektaş and Kegyes-Brassai63 using MLs for seismic risk assessment. This study used post-earthquake 
+datasets following the 2015 Gorkha earthquake. Nine different ML models were evaluated, and LightGBM and 
+CatBoost performed better than the other models. In the testing phase, LightGBM and CatBoost achieved 
+accuracy rates of 73.65% and 73.26%, respectively.
+The Table 14 compares modern seismic data-based models with a bioacoustics-based approach for earthquake 
+prediction. Advanced deep learning models, such as CNN, GNN, and hybrid RNN-LSTM, perform well, with 
+accuracies of up to 98%. The novel Bi-LSTM model that uses animal bioacoustics exceeded conventional 
+approaches, with an accuracy of 98.87%. This demonstrates the efficacy of the bioacoustics technique as a 
+supplemental method for earthquake prediction.
+Yilmaz and Dirikgil72 created a framework using ML algorithms to rapidly predict seismic risks in reinforced 
+concrete buildings. The dataset comprised 1680 cases in which the structures were found to have problems. 
+Of the eight different ML models investigated, XGBoost showed higher accuracy (92%) than the other 
+models. Öztürk73 suggested an ML model for forecasting the LSI using the data from the 2023 earthquake at 
+Kahramanmaraş and Hatay. Nine ML models were tested; the best result was achieved by RF with R2 = 0.94 and 
+MAE = 2.35. The second and third places by accuracy belong to M5P and REPTree, respectively. About 80% of 
+all forecasts have been considered. Current seismic algorithms perform well but depend on geophysical and 
+Ref
+Author (year)
+Seismic datasets
+Models used
+Test result
+64
+Turarbek et al. (2023)
+Regional seismic event records
+Deep CNN
+88.1% accuracy
+65
+Li et al. (2024)
+STEAD
+SeisT
+etection score
+66
+Gentili et al. (2024)
+Japan earthquake catalog
+NESTORE
+94% accuracy
+67
+Ahmed et al. (2024)
+USGS
+SVM / RF / XGBoost
+R2 = 0.93
+68
+Wang et al. (2025)
+DiTing + STEAD
+SeisMoLLM
+95.69% P-phase F1-score
+69
+Zhexebay et al. (2025)
+IRIS
+CNN
+94.1% accuracy
+70
+Leema et al. (2025)
+Regional seismic data
+SeismoQuakeGNN
+98% accuracy
+71
+Kaushal et al. (2025)
+Seismic event records
+Hybrid RNN-LSTM
+98% accuracy
+Present Study
+Animal bioacoustics
+Bi-LSTM
+98.87% accuracy
+Table 14.  Comparative analysis of recent seismic dataset-based ML\DL models versus the proposed 
+bioacoustics-based Bi-LSTM model for earthquake prediction.
+ 
+Ref
+Author
+Models and description
+Results and discussions
+55
+Zhang, Y., et al. 
+(2025)
+Developed a Fully-CNN model to predict seismic activity. Aims to predict 
+future seismic events
+Computational time was greatly decreased using the FCN.Molchan error 
+diagrams were employed for evaluation rather than classification accuracy 
+measures
+56
+Quinteros., et 
+al. (2025)
+Introduced MagEs, a deep learning model that uses high-rate GNSS 
+geodetic data for fast estimation of earthquake magnitude and integrates 
+with the DetEQ detection framework
+The MagEs model has been able to effectively estimate the magnitude of an 
+earthquake in just a few seconds after detection. The model uses HR GNSS 
+data for estimation
+57
+Kaftan, I., et al. 
+(2025)
+Several ML algorithms were employed for prediction purposes. The 
+prediction was made based on historical data from Western Turkey
+LSTM model: The performance metrics are given by RMSE = 0.1391, 
+MSE = 0.0193, MAE = 0.1046, and MAPE = 3.0631%
+58
+Kaushal, A., et 
+al. (2025)
+Developed a hybrid RNN–LSTM DL architecture to improve earthquake 
+prediction performance using seismic patterns
+The hybrid RNN-LSTM model achieved a prediction accuracy of 98%
+59
+Yavas, C.E., et 
+al. (2025)
+Aims is predicting maximum earthquake magnitude within a 30-day 
+window. 16 MLs with optimized features are used to seismic data
+The study uses sixteen MLs. RF is the best ML. RF’s AUC was nearer to 0.99 
+and its ACC was nearly 0.97
+Current study
+Advanced DL models, including LSTM, Bi-LSTM, and GRU, are more 
+effective in detecting earthquake precursors. These models outperform 
+classic ML algorithms such as XGBoost, RF, and MLP
+Bi-LSTM is the best performance with an ACC of 0.9887 and an AUC of 1.00
+GRU is also performed strongly, achieving an ACC of 0.9783 and an AUC 
+of 0.999
+Table 13.  Critical comparative analysis of the proposed model with existing relative research approaches.
+ 
+Scientific Reports |        (2026) 16:18410 
+20
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 21 ---
+regional information. The proposed bioacoustics model with Bi-LSTM performs even better and provides a new 
+way of complementing the existing methods of earthquake prediction.
+Conclusion
+The study presents a system for recognizing earthquake precursors. It utilizes animal vocal behavior analysis. 
+We used ML and DL techniques to identify earthquakes effectively. The experimental results indicate that 
+deep sequential models are more effective than traditional ML techniques. The Bi-LSTM model excelled all 
+others, achieving a testing accuracy of 98.87%. It showed an AUC of 1.00, highlighting its strong generalization 
+capability and robustness. GRU and LSTM models showed competitive results. Recurrent architectures are 
+useful for time-series earthquake detection. Scalability analysis was conducted for the proposed system using 
+3000 unseen audio samples, confirming the reliability of the system under increased workload conditions. It 
+highlights the potency of the bioacoustics method, combined with the latest deep learning techniques, for the 
+early detection of earthquakes. It has also identified the system as a cost-effective, supplementary early warning 
+system for regions without the latest seismic facilities.
+Future work
+The future research directions include IoT-based acoustic sensors for real-time data collection and long-term 
+environmental monitoring. Edge computing aims to reduce latency to facilitate faster decision-making in 
+seismically active areas that are hard to reach. We aim to develop large-scale, sensor-based, and systematically 
+annotated bioacoustics datasets collected from controlled environments and real-time monitoring systems 
+in earthquake-prone regions. The addition of more data from different species of animals from different 
+geographical locations is meant to improve the generalization capability of the model.
+Data availability
+The dataset and other materials used in this study is available from the corresponding authors.
+Received: 6 March 2026; Accepted: 9 April 2026
+References
+	 1.	 United States Geological Survey (USGS). Earthquake Hazards Program (Accessed 15 March 2025); ​h​t​t​p​s​:​/​/​w​w​w​.​u​s​g​s​.​g​o​v​/​n​a​t​u​r​a​l​
+-​h​a​z​a​r​d​s​/​e​a​r​t​h​q​u​a​k​e​-​h​a​z​a​r​d​s
+	 2.	 EM-DAT. The 2010 Haiti Earthquake: Disaster response and recovery (Accessed 15 March 2025); https://www.emdat.be
+	 3.	 United States Geological Survey (USGS. The 2008 Sichuan Earthquake: Seismology and Impact (Accessed 15 March 2025); ​h​t​t​p​s​:​/​/​
+e​a​r​t​h​q​u​a​k​e​.​u​s​g​s​.​g​o​v​
+	 4.	 Japan Meteorological Agency. The 2011 Tohoku Earthquake and Tsunami: Lessons from Japan (Accessed 15 March 2025); ​h​t​t​p​s​:​/​/​w​
+w​w​.​j​m​a​.​g​o​.​j​p​
+	 5.	 National Disaster Management Authority, India. Disaster management in India: The 2001 Gujarat earthquake (Accessed 15 March 
+2025); https://ndma.gov.in
+	 6.	 Zhang, M. et al. Brief communication: Effective earthquake early warning systems: Appropriate messaging and public awareness 
+roles. Nat. Hazards Earth Syst. Sci. 21(10), 3243–3250. https://doi.org/10.5194/nhess-21-3243-2021 (2021).
+	 7.	 Abdalzaher, M. S., Soliman, M. S. & El-Hady, S. M. Seismic intensity estimation for earthquake early warning using optimized 
+machine learning model. IEEE Trans. Geosci. Remote Sens. 61, 1–11. https://doi.org/10.1109/TGRS.2023.3296520 (2023).
+	 8.	 Sadhukhan, B., Chakraborty, S., Mukherjee, S. & Samanta, R. K. Climatic and seismic data-driven deep learning model for 
+earthquake magnitude prediction. Front. Earth Sci. 11, 1082832. https://doi.org/10.3389/feart.2023.1082832 (2023).
+	 9.	 Lakshmi, K., Nagesh, Y. & Krishna, M. V. Analysis on predicting earthquakes through an abnormal behavior of animals. Int. J. Sci. 
+Eng. Res. 5(4), 845–857 (2014).
+	10.	 Hayakawa, M. & Yamauchi, H. Unusual animal behavior as a possible candidate of earthquake prediction. Appl. Sci. 14(10), 4317. 
+https://doi.org/10.3390/app14104317 (2024).
+	11.	 bhargava2009earthquake: Earthquake prediction through animal behavior: A review vol. 78, 159–165 (2009)
+	12.	 Lott, D. F., Hart, B. L. & Howell, M. W. Retrospective studies of unusual animal behavior as an earthquake predictor. Geophys. Res. 
+Lett. 8(12), 1203–1206. https://doi.org/10.1029/GL008i012p0120330 (1981).
+	13.	 Convertito, V., Giampaolo, F., Amoroso, O. & Piccialli, F. Deep learning forecasting of large induced earthquakes via precursory 
+signals. Sci. Rep. 14(1), 2964. https://doi.org/10.1038/s41598-024-52935-2 (2024).
+	14.	 Kirschvink, J. L. Earthquake prediction by animals: Evolution and sensory perception. Bull. Seismol. Soc. Am. 90, 312–323. ​h​t​t​p​s​:​/​
+/​d​o​i​.​o​r​g​/​1​0​.​1​7​8​5​/​0​1​1​9​9​8​0​1​1​4​ (2000).
+	15.	 Fidani, C., Freund, F., Grant, R. Unusual behaviour of cows prior to a large earthquake. In EGU General Assembly conference 
+abstracts 2013–13865. https://doi.org/10.3390/ani4020292 (2013).
+	16	 Hayakawa, M. Earthquake precursor studies in Japan. In Pre-earthquake processes: A multidisciplinary approach to earthquake 
+prediction studies 7–18 (Wiley, 2018). https://doi.org/10.1002/9781119156949.ch2.
+	17.	 Wei, S. et al. A comparison on data augmentation methods based on deep learning for audio classification. J. Phys.: Conf. Ser. 1453, 
+012085. https://doi.org/10.1088/1742-6596/1453/1/012085 (2020).
+	18.	 Galkina, A., Grafeeva, N. Machine learning methods for earthquake prediction: A survey. In Proceedings of the Fourth Conference 
+on Software Engineering and Information Management (SEIM-2019), Saint Petersburg, Russia, vol. 13 25 (2019).
+	19	 Kulkarni, M., Mulay, C., Marathe, S. & Itankar, P. Earthquake prediction using machine learning. Int. J. Adv. Res., Ideas Innov. 
+Techno 7(3), 806 (2021).
+	20	 VijayaSaraswathi, R. Machine learning-powered earthquake early warning system. Int. J. Innov. Sci. Res. Technol. (IJISRT) 9(6), 
+1492–1503. https://doi.org/10.38124/ijisrt/IJISRT24JUN1107 (2024).
+	21.	 Liso, G., Fidani, C. & Viotto, A. Unusual animal behaviour before earthquakes and multiple parameter monitoring in Western 
+Piedmont. Earth Sci. 3, 14–25. https://doi.org/10.11648/j.earth (2014).
+	22.	 Sánchez, J. J. Reports of abnormal animal behavior in relation to earth-quakes in Colombia. Boletın Geológíco. 51 (1) (2024)
+	23.	 Garstang, M. & Kelley, M. C. Understanding animal detection of precursor earthquake sounds. Animals 7(9), 66. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​
+0​.​3​3​9​0​/​a​n​i​7​0​9​0​0​6​6​ (2017).
+Scientific Reports |        (2026) 16:18410 
+21
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 22 ---
+	24.	 Astuti, W., Aibinu, A., Salami, M. E., Akmelawati, R., Muthalif, A. G. Animal sound activity detection using multi-class support 
+vector machines. In 2011 4th International Conference on Mechatronics (ICOM) 1–5. https://doi.org/10.1109/ICOM.2011.5937122 
+(2011).
+	25.	 Wikelski, M. et al. Potential short-term earthquake forecasting by farm animal monitoring. Ethology 126(9), 931–941. ​h​t​t​p​s​:​/​/​d​o​i​.​
+o​r​g​/​1​0​.​1​1​1​1​/​e​t​h​.​1​3​0​7​8​ (2020).
+	26.	 Muhammad, D., Ahmad, I., Khalil, M. I., Khalil, W. & Ahmad, M. O. A generalized deep learning approach to seismic activity 
+prediction. Appl. Sci. 13(3), 1598. https://doi.org/10.3390/app13031598 (2023).
+	27.	 Mukherjee, T., Singh, C., Biswas, P. K. A novel approach for earthquake early warning system design using deep learning techniques. 
+arXiv preprint arXiv:2101.06517 https://doi.org/10.48550/arXiv.2101.06517 (2021).
+	28	 Dascher-Cousineau, K., Shchur, O., Brodsky, E. E. & Günnemann, S. Using deep learning for flexible and scalable earthquake 
+forecasting. J. Geophys. Res.: Solid Earth https://doi.org/10.1029/2023JB026955 (2023).
+	29.	 Tokuda, T., Nakata, R. & Okubo, M. Seismic-phase detection using multiple deep learning models based on local and global 
+waveform representations. Geophys. J. Int. 235(2), 1163–1178. https://doi.org/10.1093/gji/ggad253 (2023).
+	30.	 Murshed, R. U. et al. Real-time seismic intensity prediction using self-supervised contrastive graph neural network for earthquake 
+early warning. arXiv https://doi.org/10.48550/arXiv.2306.14336 (2023).
+	31.	 Yavas, C. E., Chen, L., Kadlec, C. & Ji, Y. Improving earthquake prediction accuracy in Los Angeles with machine learning. Sci. Rep. 
+14, 27684. https://doi.org/10.1038/s41598-024-76483-x (2024).
+	32.	 Li, W. et al. Earthquake monitoring using deep learning with a case study of the Kahramanmaras Turkey earthquake aftershock 
+sequence. Solid Earth 15(2), 197–213. https://doi.org/10.5194/se-15-197-2024 (2024).
+	33.	 Cambrin, D. R., Stevens, E., Tuia, D., & Lobry, S. QuakeSet: A dataset and low-resource models to monitor earthquakes through 
+Sentinel-1. arXiv. https://doi.org/10.48550/arXiv.2403.18116 (2024).
+	34.	 Zhu, W., Wang, H., Rong, B., Yu, E., Zuzlewski, S., Tepp, G., Taira, T., Marty, J., Husker, A., & Allen, R. M. California earthquake 
+dataset for machine learning and cloud computing (CEED). arXiv. https://doi.org/10.48550/arXiv.2502.11500 (2025).
+	35.	 Zhu, W., Song, J., Wang, H., & Münchmeyer, J. Towards end-to-end earthquake monitoring using a multitask deep learning model. 
+arXiv preprint arXiv:2506.06939. https://doi.org/10.48550/arXiv.2506.06939 (2025).
+	36.	 Kriuk, B., & Kriuk, F. POSEIDON: Physics-optimized seismic energy inference and detection operating network. arXiv. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​
+g​/​1​0​.​4​8​5​5​0​/​a​r​X​i​v​.​2​6​0​1​.​0​2​2​6​4​ (2026).
+	37.	 Ravishan, D., Herath, P., Doyle, E. E. H. & Prasanna, R. Lightweight convolutional neural network for real-time earthquake P-wave 
+detection on edge devices in New Zealand. Sci. Rep. 16(1), 42568. https://doi.org/10.1038/s41598-026-42568-y (2026).
+	38.	 Nagamani, K. et al. Disaster management and earthquake prediction system using machine learning. Int. J. Res. Publ. Eng., Technol. 
+Manag. (IJRPETM) 9(2), 495–499. https://doi.org/10.15662/IJRPETM.2026.0902002 (2026).
+	39.	 Ahmad, N., Ullah, A., & Khan, M. Data quality aware deep learning for reliable seismic event detection. ResearchGate. (2026). ​h​t​t​p​
+s​:​/​/​w​w​w​.​r​e​s​e​a​r​c​h​g​a​t​e​.​n​e​t​/​p​u​b​l​i​c​a​t​i​o​n​/​3​9​8​0​2​1​1​3​6​_​D​a​t​a​_​Q​u​a​l​i​t​y​_​A​w​a​r​e​_​D​e​e​p​_​L​e​a​r​n​i​n​g​_​f​o​r​_​R​e​l​i​a​b​l​e​_​S​e​i​s​m​i​c​_​E​v​e​n​t​_​D​e​t​e​c​t​i​o​n
+	40.	 Jena, R., Pradhan, B., Almazroui, M., Assiri, M. & Park, H.-J. Earthquakeinduced liquefaction hazard mapping at national-scale in 
+Australia using deep learning techniques. Geosci. Front. 14(1), 101460. https://doi.org/10.1016/j.gsf.2022.101460 (2023).
+	41.	 Huang, J., Wang, X., Zhao, Y., Xin, C. & Xiang, H. Large earthquake magnitude prediction in Taiwan based on deep learning neural 
+network. Neural Netw. World https://doi.org/10.14311/NNW.2018.28.009 (2018).
+	42.	 Xie, Y. Deep learning in earthquake engineering: A comprehensive review. ASCE Open Multidiscip. J. Civ. Eng. 3(1), 03125001. 
+https://doi.org/10.48550/arXiv.2405.09021 (2025).
+	43.	 Navarro-Rodríguez, A. et al. Recent advances in early earthquake magnitude estimation by using machine learning algorithms: A 
+systematic review. Appl. Sci. 15(7), 3492. https://doi.org/10.3390/app15073492 (2025).
+	44.	 Kuyuk, H. S. & Susumu, O. Real-time classification of earthquake using deep learning. Procedia Comput. Sci. 140, 298–305. ​h​t​t​p​s​:​
+/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​1​6​/​j​.​p​r​o​c​s​.​2​0​1​8​.​1​0​.​3​2​3​ (2018).
+	45.	 Ocak, A. et al. Prediction of damping capacity demand in seismic base isolators via machine learning. Comput. Model. Eng. Sci. 
+138(3), 2915–2934. https://doi.org/10.32604/cmes.2024.047653 (2024).
+	46.	 Wardhani, T. P. M. et al. Deep learning approach in seismology: Enhancing earthquake forecasting using K-means clustering and 
+LSTM networks. J. Inf. Commun. Technol. 24(1), 29–51. https://doi.org/10.32890/jict2025.24.1.2 (2025).
+	47.	 Murwantara, I. M., Yugopuspito, P. & Hermawan, R. Comparison of machine learning performance for earthquake prediction in 
+Indonesia using 30 years historical data. TELKOMNIKA (Telecommun., Comput., Electron. Control.) 18(3), 1331–1342. ​h​t​t​p​s​:​/​/​d​o​i​
+.​o​r​g​/​1​0​.​1​2​9​2​8​/​T​E​L​K​O​M​N​I​K​A​.​v​1​8​i​3​.​1​4​7​5​6​ (2020).
+	48.	 Kang, S. et al. Deep learning method for post-earthquake damage assessment of frame structures based on time–frequency analysis 
+and CGAN. Earth Syst. Environ. https://doi.org/10.1007/s41748-024-00458-1 (2024).
+	49.	 Asha, V., Devi, P. D. V., Shreya, A., Manisha, N., & Hasini, K. C. Seismic shift: Predicting earthquakes with deep learning. In 
+Proceedings of international conference on computer science and communication engineering (ICCSCE 2025) (eds Katiyar, J. K. et al.) 
+3005–3017. https://doi.org/10.2991/978-94-6463-858-5_252 (Atlantis Press, 2025).
+	50	 Wang, Y., Li, X., Wang, Z. & Liu, J. Deep learning for magnitude prediction in earthquake early warning. Georisk Assess. Manag. 
+Risk Eng. Syst. Geohazards https://doi.org/10.1016/j.gr.2022.06.009 (2022).
+	51.	 Terlapu, P. V. Drinkers voice recognition intelligent system: An ensemble stacking machine learning approach. Ann. Data Sci. 
+12(4), 1157–1187. https://doi.org/10.1007/s40745-024-00559-8 (2025).
+	52.	 Vital, T. P. R., Nayak, J., Naik, B. & Jayaram, D. Probabilistic neural network-based model for identification of Parkinson’s disease 
+by using voice profile and personal data. Arab. J. Sci. Eng. 46(4), 3383–3407. https://doi.org/10.1007/s13369-020-05080-7 (2021).
+	53.	 Vital Terlapu, P. & Prasad Reddy Sadi, R. Real-time speech-based intoxication detection system: Vowel biomarker analysis with 
+artificial neural networks. Int. J. Comput. Digit. Syst. 15(1), 1637–1666. https://doi.org/10.12785/ijcds/1501116 (2024).
+	54.	 Salakapuri, R. et al. Intelligent brain tumor detection using hybrid finetuned deep transfer features and ensemble machine learning 
+algorithms. Sci. Rep. 15(1), 23899. https://doi.org/10.1038/s41598-025-08689-6 (2025).
+	55.	 Zhang, Y., Liu, X. & Wang, J. Forecasting future earthquakes with deep neural networks. Geophys. J. Int. 240(1), 81–95. ​h​t​t​p​s​:​/​/​d​o​i​
+.​o​r​g​/​1​0​.​1​0​9​3​/​g​j​i​/​g​g​a​e​3​5​8​ (2025).
+	56.	 Quinteros-Cartaya, C., Diaz, M. & Garcia, R. A deep learning pipeline for large earthquake analysis using GNSS data. Earth Sci. 
+Inf. https://doi.org/10.1007/s12145-025-02023-4 (2025).
+	57.	 Kaftan, I. & Aydin, M. Machine learning applications for earthquake magnitude prediction using seismic datasets. Appl. Sci. 
+15(20), 10909. https://doi.org/10.3390/app152010909 (2025).
+	58.	 Kaushal, A., Sharma, R. & Singh, P. Earthquake prediction optimization using hybrid RNN–LSTM deep learning model. Soil Dyn. 
+Earthq. Eng. 181, 108358. https://doi.org/10.1016/j.soildyn.2025.109432 (2025).
+	59.	 Yavas, C. E., Karabulut, H. & Ozturk, S. Improving earthquake prediction accuracy using machine learning models and optimized 
+seismic features. Sci. Rep. 14(1), 76483. https://doi.org/10.1038/s41598-024-76483-x (2024).
+	60.	 Zhao, Y., Lv, S. & Liu, P. Advances in earthquake prevention and reduction based on machine learning: A scoping review. IEEE 
+Access 13, 42187–42204. https://doi.org/10.1109/ACCESS.2025.3541289 (2025).
+	61.	 Ansari, A., Rao, K. S., Jain, A. K. & Ansari, A. Deep learning model for predicting tunnel damages and track serviceability under 
+seismic environment. Model. Earth Syst. Environ. 9(1), 1349–1368. https://doi.org/10.1007/s40808-022-01556-7 (2022).
+	62.	 Al Banna, M. H. et al. Application of artificial intelligence in predicting earthquakes: State-of-the-art and future challenges. IEEE 
+Access 8, 192880–192923. https://doi.org/10.1109/ACCESS.2020.3029859 (2020).
+Scientific Reports |        (2026) 16:18410 
+22
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/
+
+--- Sayfa 23 ---
+	63.	 Bektaş, N. & Kegyes-Brassai, O. Developing a machine learning-based rapid visual screening method for seismic assessment of 
+existing buildings on a case study data from the 2015 Gorkha, Nepal earthquake. Bull. Earthq. Eng. 23(12), 4981–5019. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​0​0​7​/​s​1​0​5​1​8​-​0​2​4​-​0​1​9​2​4​-​x​ (2025).
+	64	 Turarbek, A. et al. Deep convolutional neural network for accurate prediction of seismic events. Int. J. Adv. Comput. Sci. Appl. 
+https://doi.org/10.14569/IJACSA.2023.0141070 (2023).
+	65.	 Li, S. et al. SeisT: A foundational deep learning model for earthquake monitoring tasks. IEEE Trans. Geosci. Remote Sens. 62, 1–16. 
+https://doi.org/10.1109/TGRS.2024.3371503 (2024).
+	66.	 Gentili, S., Marzocchi, W. & Taroni, M. Forecasting strong subsequent earthquakes in Japan using an improved version of 
+NESTORE machine learning algorithm. arXiv https://doi.org/10.48550/arXiv.2408.12956 (2024).
+	67.	 Ahmed, F., & Bin Harez, J. Earthquake magnitude prediction using machine learning techniques. In 2024 IEEE International 
+Conference on Interdisciplinary Approaches in Technology and Management for Social Innovation (IATMSI) 1–6. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​
+1​1​0​9​/​I​A​T​M​S​I​6​0​4​2​6​.​2​0​2​4​.​1​0​5​0​2​7​7​0​ (IEEE, 2024).
+	68.	 Wang, X., Liu, F., Su, R., Wang, Z., Bai, L., & Ouyang, W. SeisMoLLM: Advancing seismic monitoring via cross-modal transfer with 
+pre-trained large language model. arXiv. https://doi.org/10.48550/arXiv.2502.19960 (2025).
+	69.	 Zhexebay, D. et al. Deep learning for early earthquake detection: Application of convolutional neural networks for P-wave 
+detection. Appl. Sci. 15(7), 3864. https://doi.org/10.3390/app15073864 (2025).
+	70.	 Leema, A. et al. SeismoQuakeGNN: A hybrid framework for spatio-temporal earthquake prediction with transformer-enhanced 
+models. Front. Artif. Intell. https://doi.org/10.3389/frai.2025.1690476 (2025).
+	71.	 Kaushal, A., Gupta, A. K. & Sehgal, V. K. Earthquake prediction optimization using deep learning hybrid RNN-LSTM model for 
+seismicity analysis. Soil Dyn. Earthq. Eng. https://doi.org/10.1016/j.soildyn.2025.109432 (2025).
+	72	 Yilmaz, M. & Dirikgil, T. A data-driven approach for rapid seismic risk prediction of RC buildings. Bull. Earthq. Eng. ​h​t​t​p​s​:​/​/​d​o​i​.​o​
+r​g​/​1​0​.​1​0​0​7​/​s​1​0​5​1​8​-​0​2​6​-​0​2​3​8​4​-​1​ (2026).
+	73.	 Öztürk, M. Earthquake-induced liquefaction severity index prediction using machine learning techniques. J. Mt. Sci. 22(10), 
+3769–3789. https://doi.org/10.1007/s11629-025-0023-4 (2025).
+Author contributions
+Authors Surya Pavan Kumar Gudla, Rakesh Salakapuri and Panduranga Vital Terlapu contributed to Idea Con­
+ceptualization, Methodology, Review, Editing, Software, and Writing Original Draft. All authors Rambabu Pem­
+ula, Kishore Raju Kalidindi and Koppala Venugopal read and approved the final manuscript.
+Funding
+Open access funding provided by Symbiosis International (Deemed University). No specific funding was re­
+ceived for this study.
+Declarations
+Competing interests
+The authors declare no competing interests.
+Ethical approval
+This study does not involve human participants, clinical trials, or animal experimentation. All data used in 
+this research were obtained from publicly available sources and handled in accordance with ethical research 
+standards. The study complies with all relevant institutional, national, and international guidelines for ethical 
+research and data usage.
+Additional information
+Correspondence and requests for materials should be addressed to R.S. or S.P.K.G.
+Reprints and permissions information is available at www.nature.com/reprints.
+Publisher’s note  Springer Nature remains neutral with regard to jurisdictional claims in published maps and 
+institutional affiliations.
+Open Access  This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 
+4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in 
+any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide 
+a link to the Creative Commons licence, and indicate if you modified the licensed material. You do not have 
+permission under this licence to share adapted material derived from this article or parts of it. The images or 
+other third party material in this article are included in the article’s Creative Commons licence, unless indicated 
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence 
+and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to 
+obtain permission directly from the copyright holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​
+n​s​.​o​r​g​/​l​i​c​e​n​s​e​s​/​b​y​-​n​c​-​n​d​/​4​.​0​/​.​
+© The Author(s) 2026 
+Scientific Reports |        (2026) 16:18410 
+23
+| https://doi.org/10.1038/s41598-026-48690-1
+www.nature.com/scientificreports/

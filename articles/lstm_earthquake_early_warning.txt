@@ -1,0 +1,890 @@
+
+--- Sayfa 1 ---
+Bounding and Filling: A Fast and Flexible
+Framework for Image Captioning
+Zheng Ma1, Changxin Wang1, Bo Huang1, Zixuan Zhu2, and Jianbing Zhang1 ⋆
+1 Nanjing University
+2 University of Glasgow
+{maz,cx.wang,191300018}@smail.nju.edu.cn
+zzx349313@gmail.com, zjb@nju.edu.cn
+Abstract. Most image captioning models following an autoregressive
+manner suffer from significant inference latency. Several models adopted
+a non-autoregressive manner to speed up the process. However, the vanilla
+non-autoregressive manner results in subpar performance, since it gen-
+erates all words simultaneously, which fails to capture the relationships
+between words in a description. The semi-autoregressive manner employs
+a partially parallel method to preserve performance, but it sacrifices in-
+ference speed. In this paper, we introduce a fast and flexible framework
+for image captioning called BoFiCap based on bounding and filling tech-
+niques. The BoFiCap model leverages the inherent characteristics of im-
+age captioning tasks to pre-define bounding boxes for image regions and
+their relationships. Subsequently, the BoFiCap model fills correspond-
+ing words in each box using two-generation manners. Leveraging the
+box hints, our filling process allows each word to better perceive other
+words. Additionally, our model offers flexible image description gener-
+ation: 1) by employing different generation manners based on speed or
+performance requirements, 2) producing varied sentences based on user-
+specified boxes. Experimental evaluations on the MS-COCO benchmark
+dataset demonstrate that our framework in a non-autoregressive man-
+ner achieves the state-of-the-art on task-specific metric CIDEr (125.6)
+while speeding up 9.22× than the baseline model with an autoregressive
+manner; in a semi-autoregressive manner, our method reaches 128.4 on
+CIDEr while a 3.69× speedup.
+Keywords: Image Captioning · Non-Autoregressive · Knowledge Dis-
+tillation.
+1
+Introduction
+Image captioning tasks require models to automatically generate a sentence that
+describes a given image. Thanks to advancements in computer vision [11,22] and
+natural language processing [13,25], numerous captioning models can accurately
+describe images [2,5,27]. The application of image captioning extends to var-
+ious fields, including facilitating language learning in children, aiding visually
+⋆Corresponding author.
+arXiv:2310.09876v1  [cs.CV]  15 Oct 2023
+
+--- Sayfa 2 ---
+2
+Z. Ma et al.
+(b) Semi-Autoregressive Manner
+a cute
+dog lying
+on the
+floor
+(a) Non-Autoregressive Manner
+a cute dog lying on the floor
+Bounding
+NA Filling
+a cute dog
+the floor
+lying on
+SA Filling
+a cute dog lying on the floor
+dog
+floor
+a cute dog
+lying on
+the floor
+(c) Bounding and Filling (Ours)
+Ground Truth
+Fig. 1. (Top) exhibits a description that can be split into several boxes, each of which
+describes a region in the image or a relation between two regions. (Bottom) exhibits
+the difference between non-autoregressive manner, semi-autoregressive manner, and
+our BoFiCap. Our model bounds a series of boxes in advance, and then flexibly fills
+words in these boxes using NA or SA filling manner.
+impaired individuals in comprehending their environment, and alerting drivers
+to potential hazards during autonomous driving.
+In a real-time application, inference speed is a crucial factor to consider as
+models need to provide quick responses. However, many high-performing cap-
+tioning models utilizing an autoregressive manner [14,18,24] generate descrip-
+tions incrementally, word by word, resulting in significant inference latency. Re-
+searchers have recognized this challenge and have employed non-autoregressive
+[6,7,9,10] or semi-autoregressive manner [8,31] to speed up. The non-autoregressive
+manner generates a description in parallel, as displayed in Figure 1(a), which
+greatly improves the inference speed but often leads to performance degrada-
+tion, repetition, and omissions [8]. These issues arise due to the absence of inter-
+word dependencies since each word is predicted simultaneously, leading to a
+limited understanding of its contextual role within the description. The semi-
+autoregressive manner combines parallel and serial generation, as illustrated in
+Figure 1(b), striking a balance between speed and performance. However, it only
+produces a fixed and semantically meaningless chunk at each step.
+It is observed that descriptions typically employ a noun phrase to depict an
+image region and utilize a conjunctive or verb phrase to articulate the relation-
+ship between two regions. As depicted in Figure 1 (Top), ‘a cute dog’, and ‘the
+floor’ are noun phrases, with each phrase describing a distinct region in the im-
+age. ‘lying on’ is a verb phrase that articulates the relationship between the two
+noun phrases. If certain boxes representing regions or the relationship between
+
+--- Sayfa 3 ---
+Bounding and Filling: A Fast and Flexible Framework for Image Captioning
+3
+regions can be predefined, the captioning model can generate descriptions based
+on the arrangement of these boxes. By doing so, words can establish mutual
+understanding through their association with specific boxes. Drawing inspira-
+tion from this concept, in this paper we propose a novel framework for fast and
+flexible image captioning via bounding and filling named BoFiCap. To begin
+with, BoFiCap establishes a series of bounding boxes to facilitate description
+generation. During the decoding phase, BoFiCap utilizes two filling methods,
+namely, non-autoregressive (NA) filling and semi-autoregressive (SA) filling, to
+populate the boxes with the appropriate words. As illustrated in Figure 1 (c),
+NA filling corresponds to the non-autoregressive manner, simultaneously pop-
+ulating all boxes, while SA filling aligns with the semi-autoregressive manner,
+progressively populating each box in sequential steps. Regarding the distinction
+in decoding between the two filling methods, SA filling exhibits the better abil-
+ity to capture word dependencies compared to NA filling, as the SA method
+fills boxes incrementally, thus allowing it to leverage boxes already populated
+with words. Hence, we introduce an imitation strategy wherein NA filling imi-
+tates the behavior of SA filling to improve its capability to comprehend other
+words. Moreover, BoFiCap has the capability to generate diverse descriptions
+in a flexible manner by choosing various filling methods or providing different
+arrangements of boxes. The main contributions of this paper are outlined as
+follows:
+– We propose BoFiCap, a fast and flexible framework for image captioning that
+decouples the generating process into bounding and filling stages. BoFiCap
+utilizes advanced bounding techniques to define boxes and subsequently fills
+them using either the NA or SA filling approach. Additionally, our model
+offers the capability to generate diverse descriptions for the same image in a
+flexible manner.
+– To enhance the performance of BoFiCap, we introduce parameter sharing
+between the decoders of the NA and SA methods. Furthermore, we propose
+an imitating strategy that improves the ability of NA filling to capture word
+dependencies.
+– Experimental results demonstrate the effectiveness of our approach. In a non-
+autoregressive manner, our method achieves state-of-the-art performance
+while achieving a 9.22× speedup compared to the baseline model. In a
+semi-autoregressive manner, our method achieves a CIDEr score of 128.4,
+accompanied by a 3.69× speedup.
+2
+Preliminary
+In this section, we will briefly review three decoding manners in literature, includ-
+ing autoregressive manner, non-autoregressive manner, and semi-autoregressive
+manner. Given an image I, the image captioning task is requested to generate
+a description S = {w1, w2, . . . , wT }, with T denoting the total length of this
+description.
+
+--- Sayfa 4 ---
+4
+Z. Ma et al.
+Autoregressive Manner. In an autoregressive manner, the output of the t-
+th step depends on the previous sequence, and the probability of a sequence is
+the combination of the probabilities of all words. It can use the chain rule to
+decompose the likelihood of sequences:
+P(S|I) =
+T
+Y
+t=1
+P(wt|w<t, I),
+(1)
+where w<t = {w1, w2, . . . , wt−1} represents the generated words before step t.
+Non-Autoregressive Manner. The non-autoregressive manner is proposed to
+address the high inference latency problem. It breaks dependency on previously
+generated words and generates them in parallel, which can be formulated as:
+P(S|I) =
+T
+Y
+t=1
+P(wt|I).
+(2)
+Semi-Autoregressive Manner. In a semi-autoregressive manner, a group of
+words is generated in one step, which is parallel in the group and autoregressive
+between groups. Assuming S can be divided in {g1, g2, . . . , gN}, where N is the
+number of groups, the semi-autoregressive manner can be formulated as:
+P(S|I) =
+N
+Y
+t=1
+P(gt|g<t, I),
+(3)
+where g<t = {g1, g2, . . . , gt−1} is the generated groups before step t.
+3
+Proposed Method
+NP
+VP
+CP
+a woman and a man walking on a road with many trees
+a woman and a man
+walking on a road with many trees
+a woman
+a man
+and
+a road with many trees
+walking on
+many trees
+with
+a road
+Level 1
+Level 2
+Level 3
+Fig. 2. A description is parsed into a tree structure by a constituency parser.
+3.1
+Generating Hierarchical Boxes
+We use a constituency parser [30] to split sentences in advance. To be specific,
+a description is parsed into a hierarchical tree structure in which the layers
+from shallow to deep represent coarse-to-fine bounding information. As shown
+
+--- Sayfa 5 ---
+Bounding and Filling: A Fast and Flexible Framework for Image Captioning
+5
+in Figure 2, a whole description is first divided into ‘a woman and a man’ and
+‘walking on a road with many trees’. Then, the two items can be divided into
+finer components. We define three types of boxes: NP-box, VP-box, and CP-box,
+corresponding to NP, VP, and CP labels in the constituency parser We name
+them level-k to distinguish different levels, where k = −1 represents all phrases
+that can no longer be cut.
+ a woman  /  and  /  a man  /  walking on  /  a road with many trees
+Feature Encoder
+Bounding Module
+Semi-Autoregressive Decoder
+Non-Autoregressive Decoder
+NP-box CP-box NP-box
+Ground Truth
+Box Label Loss
+VP-box NP-box
+. . .
+. . .
+[BOS]
+[BOS]
+[BOS]
+[BOS]
+[BOS]
+[BOS]
+. . .
+[BOS]
+[BOS]
+woman
+and
+and
+. . .
+on
+NA Generation Loss
+Imitating Loss
+SA Generation Loss
+. . .
+pre-process bounding
+2
+1
+2
+2
+5
+Bounding
+Filling
+NP-box
+CP-box
+NP-box
+VP-box
+NP-box
+2
+1
+2
+2
+5
+NP-box
+CP-box
+NP-box
+. . . NP-box
+NP-box
+CP-box
+NP-box
+. . .
+NP-box
+Box Label
+Fig. 3. The illustration of our BoFiCap. (Low Left) exhibits the regions are encoded
+by the feature encoder. (Upper Left) exhibits the process of bounding, it will predict
+bounding boxes information for filling. (Right) exhibits our BoFiCap for NA and SA
+filling manners. Noted that the non-autoregressive and semi-autoregressive decoder
+share parameters.
+3.2
+BoFiCap Model Architecture
+Generally, our BoFiCap model is built on Transformer [25]. As displayed in
+Figure 3, it consists of three modules: feature encoder, bounding module, and
+filling module.
+Feature Encoder. The feature encoder aims to encode the image into a visual
+context. In our framework, we extract regions (denoted as R) from raw images
+in advance by a faster-RCNN model [2] which uses bottom-up attention and is
+trained on Visual Genome datasets [17]. The architecture of the feature encoder
+is as same as the encoder of the vanilla Transformer [25], but we remove the
+position encoding because regions cannot be arranged linearly.
+Bounding Module. To bound a series of boxes, three aspects should be con-
+sidered in our bounding module: 1) the number of boxes, denoted as N. 2) the
+number of words in each box, denoted as L = {l1, l2, . . . , lN}. 3) the type of
+each box, denoted as C = {c1, c2, . . . , cN}. Further, we can define bounding in-
+formation as B = {b1, b2, . . . , bN}, where bi = {ci, ci, . . . , ci
+|
+{z
+}
+li
+}, thus enabling B to
+integrate the above three aspects of information.
+
+--- Sayfa 6 ---
+6
+Z. Ma et al.
+Our bounding module generates bounding information autoregressively, which
+consists of one Transformer decoder layer and two linear classifiers to predict the
+type of boxes and the number of corresponding words. Specifically, conditioning
+on the image regions extracted from raw images, our bounding module predicts
+the bounding information of one box, namely the type of one box and the number
+of corresponding words, in one step. The probability of bounding information
+can be factorized as:
+P(B|R) =
+N
+Y
+t=1
+P(bt|b<t, R) =
+N
+Y
+t=1
+P(lt, ct|b<t, R).
+(4)
+Filling Module. Our filling module includes two decoders with different man-
+ners: the non-autoregressive decoder and semi-autoregressive decoder for NA
+and SA filling respectively, which are as same as the decoder of the vanilla
+Transformer architecturally. Three pieces of information are input in our filling
+module, including visual context, bounding information and history words.
+In SA filling manner, the SA decoder will fill one box with words in one step.
+The target description probability can be factorized as:
+P(S|B, R) =
+N
+Y
+t=1
+P(gt|g<t, b≤t, R),
+(5)
+where gt represents the filled words in box bt. Note that the number of words
+in each box bi may be different, which means that the generated words at the
+t−1-th step can not be directly regarded as the input at the t-th step. To address
+this issue, we propose a copy strategy called Position-wise Copy. Intuitively, the
+two words that are closer in position are likely to be closer in relation. Assuming
+the output of last step is gt−1 = {w1, w2, . . . , wlt−1}, and current step’s output is
+gt = {w
+′
+1, w
+′
+2, . . . , w
+′
+lt}, each word wi in gt−1 will be copied ni times by Position-
+wise Copy:
+ni =
+
+⌊lt/lt−1⌋,
+i ≤lt−1 −lt%lt−1,
+⌊lt/lt−1⌋+ 1, i > lt−1 −lt%lt−1,
+(6)
+where ⌊·⌋is a floor function.
+In the NA filling manner, the NA decoder fills all boxes at once. The target
+description probability can be factorized as:
+P(S|B, R) =
+T
+Y
+t=1
+P(wt|B, R).
+(7)
+3.3
+Imitating Strategy
+Because the SA filling is partially parallel, which fills a box in one step, it better
+captures the relationship between words and performs better than the NA filling.
+Therefore, in our model we let the NA filling imitate the SA filling by an online
+
+--- Sayfa 7 ---
+Bounding and Filling: A Fast and Flexible Framework for Image Captioning
+7
+knowledge distillation method [29]. We follow the previous work [12] to make
+the output of the NA filling close to the SA filling when training them jointly.
+In the filling stage, assuming the target words’ probabilities of NA filling
+and SA filling are {pn
+w1, pn
+w2, . . . , pn
+wT } and {ps
+w1, ps
+w2, . . . , ps
+wT } respectively, the
+imitating loss can be represented by a Kullback-Leibler (KL) Divergence as:
+LImit = 1
+T
+T
+X
+t=1
+pn
+wt log pn
+wt
+pswt
+.
+(8)
+3.4
+Model Training
+CE Training Stage. Our BoFiCap model contains two steps in the CE training
+stage: bounding and filling. The bounding step needs to predict the type of boxes
+and the number of words to be filled in each box. The objective of this step is to
+minimize the negative log-likelihood of the correct type of boxes and the number
+of words using the maximum likelihood estimation (Box Label Loss):
+LBound = −
+N
+X
+t=1
+log Pθ(lt, ct|b<t, R).
+(9)
+The filling step is filling all boxes predicted in advance using NA or SA filling.
+NA filling fills the boxes in parallel, the loss of which is the sum of the negative
+log-likelihood of the correct words (NA Generation Loss) as:
+LNA = −
+T
+X
+t=1
+log Pθ(wt|B, R).
+(10)
+SA filling fills a box in one step, the loss of which can be calculated (SA
+Generation Loss) as:
+LSA = −
+N
+X
+t=1
+log Pθ(gt|g<t, b≤t, R).
+(11)
+We train our BoFicap model jointly in NA and SA filling, so the objective
+function for BoFiCap can be written as:
+L = LBound + LNA + LSA + LImit.
+(12)
+RL Training Stage. In the RL training stage, we directly minimize the neg-
+ative expected reward using SCST [23]:
+L = −1
+M
+M
+X
+m=1
+(r(Sn) −b) ▽log(pθ(Sn)),
+(13)
+where r is the CIDEr metric, pθ(Sn) is the probability of the m-th sample de-
+scription, and b is the baseline reward. We refer to the previous work [20] for the
+value of b and set M = 5 in our experiments.
+
+--- Sayfa 8 ---
+8
+Z. Ma et al.
+Models
+BLEU-1 BLEU-4 METEOR ROUGE CIDEr SPICE Latency Speedup
+Autoregressive Models
+AIC (beam=1)
+80.5
+38.9
+29.0
+58.7
+129.4
+22.8
+192ms
+1.73×
+AIC (beam=3)
+80.9
+39.3
+29.0
+58.9
+130.2
+22.8
+332ms
+1.00×
+Non-Autoregressive Models
+MNIC [9]
+75.4
+30.9
+27.5
+55.6
+108.1
+21.0
+-
+2.80×
+FNIC [6]
+/
+36.2
+27.1
+55.3
+115.7
+20.2
+-
+8.15×
+CMAL [10]
+80.3
+37.3
+28.1
+58.0
+124.0
+21.8
+-
+13.90×
+IBM [7]
+77.2
+36.6
+27.8
+56.2
+113.2
+20.9
+-
+3.06×
+BoFiCap-NA (Ours)
+80.1
+38.2
+28.4
+58.2
+125.6
+22.1
+36ms
+9.22×
+Semi-Autoregressive Models
+PNAIC [8]
+80.4
+38.3
+29.0
+58.4
+129.4
+22.2
+-
+2.17×
+SATIC [31]
+80.8
+38.4
+28.8
+58.5
+129.0
+22.7
+-
+1.65×
+SAIC [28]
+80.4
+38.7
+29.4
+58.5
+128.3
+22.2
+-
+1.55×
+BoFiCap-SA (Ours)
+80.5
+38.9
+28.8
+58.8
+128.4
+22.7
+90ms
+3.69×
+Table 1. Performance comparisons with different evaluation metrics on the test set
+of MS COCO. All values except Latency and Speedup are reported as a percentage
+(%). ‘/’ denotes that the results are not reported.‘-’ denotes unfair comparison because
+latency is greatly affected by different devices so we do not report them in other models.
+Our Latency is tested on a GeForce GTX 1080 Ti GPU. The Speedup values are from
+the corresponding papers. The top results under each decoding manner are in bold.
+BoFiCap-NA and BoFiCap-SA are our models with the non-autoregressive filling and
+the semi-autoregressive filling, respectively.
+4
+Experiments
+4.1
+Experimental Settings
+We experiment with the MS COCO dataset [4] that is widely used in image
+captioning tasks, including 123,287 images and each image has five captions at
+least. We refer to the karpathy’s split [16] to split the dataset into 113,287, 5,000,
+and 5,000 images for training, validation, and offline testing. We count all words
+in captions and omit words that occur less than five times to build a vocabulary
+that comprises 9,487 words. In addition, for efficiency, we truncate captions that
+are longer than 16 in training. We use the autoregressive captioning model (AIC)
+as our teacher model.
+Evaluation Metrics. We evaluate our model using a variety of automatic
+metrics, including BLEU-1/4 [21], METEOR [3], ROUGE [19], CIDEr [26] and
+SPICE [1], which denoted as B1/4, M, R, C, and S, respectively for convenience.
+We also use latency and speedup to compare the efficiency to other models.
+4.2
+Main Comparison Results
+We compare the performance of our proposed method to various baseline models
+in two manners and report the results in Table 1. Our observations are summa-
+rized below.
+
+--- Sayfa 9 ---
+Bounding and Filling: A Fast and Flexible Framework for Image Captioning
+9
+Our proposed method BoFiCap-NA outperforms a variety of compelling non-
+autoregressive baselines in NA filling, regarding BLEU-4, METEOR, ROUGE,
+CIDEr, and SPICE metrics, while maintaining a 9.22× speedup. In SA filling,
+we observe that our proposed method BoFiCap-SA has a competitive perfor-
+mance compared to models in a semi-autoregressive manner, which achieves
+state-of-the-art results on BLEU-4, ROUGE, and SPICE while maintaining a
+3.69× speedup. We report the result of the BoFiCap-SA trained solely since
+joint training has a negative impact on its performance, and we will discuss this
+phenomenon in Section 5.
+5
+Analysis
+Effect of Hierarchical Split Method. Performance and speed evaluation of
+BoFiCap models at different hierarchical splits level-k is reported in Table 2. We
+observe that in SA filling, the acceleration primarily results from the reduction of
+decoding steps because the model trained with a shallow layer split generates de-
+scriptions with fewer boxes. Comparing the results from layers 1 to 2, we see that
+the speedup changes from 5.19× to 8.51× while only suffering a slight drop in
+the CIDEr score (1.6 points). In NA filling, the acceleration mainly results from
+the reduction of bounding box steps and predicting the number of corresponding
+words because our bounding module bounds boxes in an autoregressive manner.
+Comparing the results from layers 1 to 2, we see that the speedup changes from
+11.45× to 13.83× while only experiencing a slight drop in the CIDEr score (1.7
+points).
+Models
+k
+B4
+M
+R
+C
+S
+Speedup
+AIC(beam=3)
+/
+39.3
+29.0
+58.9
+130.2
+22.8
+1.00×
+BoFiCap-NA
+1
+36.8
+27.9
+57.7
+122.1
+21.5
+13.83×
+2
+37.6
+28.2
+58.1
+123.8
+21.9
+11.45×
+-1
+38.2
+28.4
+58.2
+125.6
+22.1
+9.22×
+BoFiCap-SA
+1
+37.6
+28.1
+58.2
+123.3
+21.7
+8.51×
+2
+38.2
+28.4
+58.4
+124.9
+22.2
+5.19×
+-1
+38.5
+28.7
+58.5
+127.5
+22.6
+3.69×
+Table 2. Effect of hierarchical box splits evaluated on MSCOCO test set. k denotes
+the level of box splits.
+Ablation Studies. In a non-autoregressive manner, we implement a single
+vanilla non-autoregressive model named NAIC. In Table 3, we observe that our
+BoFiCap-NA with bounding boxes greatly improves the CIDEr score from 108.5
+to 122.3. Further improvements can be achieved by adding joint training and
+imitating strategy, resulting in our BoFiCap-NA model reaching the state of
+the art on the CIDEr score (125.6). Regarding our semi-autoregressive manner,
+the joint training method results in a slight drop in the performance of our
+BoFiCap-SA. This is because we use a shared decoder to help our BoFiCap-NA,
+and their decoding processes are different. We also observe that the imitating
+strategy hardly works in BoFiCap-SA because it allows the BoFiCap-NA model
+to imitate the output of the BoFiCap-SA model, but this strategy has little effect
+on BoFiCap-SA.
+
+--- Sayfa 10 ---
+10
+Z. Ma et al.
+Models
+Methods
+B4
+M
+R
+C
+S
+NAIC
+/
+30.8
+25.6
+55.4
+108.5
+19.6
+BoFiCap-NA
++Bound
+37.6
+28.1
+58.0
+122.3
+21.8
++Bound+Joint
+37.9
+28.3
+58.2
+124.7
+22.0
++Bound+Joint+Imit
+38.2
+28.4
+58.2
+125.6
+22.1
+BoFiCap-SA
++Bound
+38.9
+28.8
+58.8
+128.4
+22.7
++Bound+Joint
+38.6
+28.7
+58.5
+127.2
+22.7
++Bound+Joint+Imit
+38.5
+28.7
+58.5
+127.5
+22.6
+Table 3. Effect of three methods evaluated on MS COCO test set, where Bound, Joint,
+and Imit represent the bounding boxes, joint training, and Imitating strategy.
+AIC: a black and white photo of street signs in front of a building.
+NAIC: a black and white photo of street street with street signs in front  of a 
+           building.
+BoFiCap-NA: a black and white photo of  street building with a clock tower.
+BoFiCap-SA: a black and white photo of  street signs with a clock tower.
+GT : an old black and white photo of pennsylvania avenue.
+AIC: a black and white cow standing in a field.
+NAIC: a cow standing on on grass in the field.
+BoFiCap-NA: a black cow standing in the grass in a field.
+BoFiCap-SA: a black cow standing in the grass in a field.
+GT : a cow stands in the grassy area of a yard.
+BoFiCap-SA (k=-1): a man sitting on a couch with a cat and a laptop.
+BoFiCap-SA (k= 2): a man sitting on a couch with a cat and a laptop.
+BoFiCap-SA (k= 1): a man sitting on a couch with a cat and a laptop.
+GT : a man sitting in a chair with a cat and a laptop.
+BoFiCap-NA (k=-1): a young boy sitting on the floor holding a cell phone.
+GT : a young boy sitting on a rug holding a cell phone.
+BoFiCap-NA (k= 2): a young boy sitting on the floor  holding a cell phone.
+BoFiCap-NA (k= 1): a young boy sitting on the floor holding a phone.
+BoFiCap-NA: a donut and a cup of coffee on a table.
+                       (given boxes: NP×2  CP×1  NP×4  CP×1  NP×2)
+GT : a cup of coffee and a doughnut are on a table.
+BoFiCap-NA: a donut sitting on a wooden table.
+                       (given boxes: NP×2  VP×2  NP×3)
+BoFiCap-NA: a cup of coffee next to a donut.
+                       (given boxes: NP×4  CP×2  NP×2)
+BoFiCap-SA: a man and a woman standing next to each other.
+                       (given boxes: NP×2  CP×1  NP×2  VP×3  NP×2)
+GT : a man standing next to a woman inside of a building.
+BoFiCap-SA: a man with a tie and a woman in a building.
+                       (given boxes: NP×2  CP×1  NP×2  CP×1  NP×2  CP×1  NP×2)
+BoFiCap-SA: a couple standing in a building. 
+                       (given boxes: NP×2  VP×2  NP×2)
+Fig. 4. Examples of captions generated from different models. GT denotes ground-
+truth captions.
+Case Study. We present six examples in Figure 4. In the top two examples
+shown in Figure 4, we compare the sentences generated from AIC, NAIC, and
+two manners of BoFiCap models. Overall, all the models effectively represent
+the visual content of the given image. Compared to the baseline NAIC, the sen-
+tences generated by both manners of our BoFiCap model are fluent and precise.
+Moreover,our BoFiCap model can accurately assign words with the correspond-
+ing box type, resulting in descriptions that are more syntactically structured
+and less repetitive. To exhibit the diverse generation ability of BoFiCap, we also
+provide multiple sentences generated with different boxes or split levels in the
+middle and bottom of Figure 4.
+6
+Related Work
+Non-Autoregressive Image Captioning. Overall, non-autoregressive image
+captioning models can be divided into two categories: latent transformer [15]
+based and iterative refinement based. Following the latent transformer, Fei[6]
+firstly predicts ordered keywords with an RNN and then generates the complete
+sentence simultaneously. Gao et al.[9] utilize a refinement strategy on sentence
+generation, which means the sentence is iterated multiple times and each it-
+eration generates part of the words in the final sentence. Fei [7] also adopts an
+
+--- Sayfa 11 ---
+Bounding and Filling: A Fast and Flexible Framework for Image Captioning
+11
+iterative refinement strategy and constructs a latent variable to bridge the image
+encoder and textual decoder, which is iteratively optimized to improve genera-
+tion quality during inference. Besides, Guo et al.[10] propose to use multi-agent
+reinforcement learning to model the sentence-level objective. Different from all
+the above work, our NA filling method makes two innovations: 1) we use the
+bounding boxes to enhance the decoder’s ability to capture dependencies be-
+tween words. 2) we improve the performance of the NA filling method by jointly
+training the model with two filling manners and using the imitating strategy.
+Semi-Autoregressive Image Captioning. Although the performance of the
+non-autoregressive model has been enhanced by many methods, it still falls be-
+hind of state of the art results [5,14]. Recently, some works have explored how
+to make a trade-off between quality and speed by utilizing a semi-autoregressive
+manner. Generally, these methods generate descriptions in a group type intro-
+duced in Section 2. Zhou et al.[31] simply treat each block as one group. Fei[8]
+organizes the words in the same position in each block into one group. Yan et
+al.[28] adopt a slightly special two-stage generation paradigm, where the first
+word in each block is generated autoregressively, then the rest words will be
+generated simultaneously. But our groups are meaningful phrases rather than
+fixed blocks, and we utilize bounding boxes as hints for each group generation.
+7
+Conclusion
+In this paper, we propose a new framework for image captioning, BoFiCap,
+that utilizes bounding and filling techniques. In contrast to previous accelerated
+approaches, our method utilizes the properties of descriptive sentences to decom-
+pose generation steps using bounding and filling. Furthermore, our framework
+provides flexible image description generation to meet the specific needs of users.
+8
+Acknowledgements
+We would like to thank the anonymous reviewers for their constructive com-
+ments. This work was supported by NSFC No. 62176115.
+References
+1. Anderson, P., Fernando, B., Johnson, M., Gould, S.: Spice: Semantic propositional
+image caption evaluation. In: Proc. of ECCV (2016)
+2. Anderson, P., He, X., Buehler, C., Teney, D., Johnson, M., Gould, S., Zhang,
+L.: Bottom-up and top-down attention for image captioning and visual question
+answering. In: Proc. of CVPR (2018)
+3. Banerjee, S., Lavie, A.: Meteor: An automatic metric for mt evaluation with im-
+proved correlation with human judgments. In: Proc. of ACL workshop (2005)
+4. Chen, X., Fang, H., Lin, T.Y., Vedantam, R., Gupta, S., Doll´ar, P., Zitnick, C.L.:
+Microsoft coco captions: Data collection and evaluation server. arXiv preprint
+arXiv:1504.00325 (2015)
+5. Cornia, M., Stefanini, M., Baraldi, L., Cucchiara, R.: Meshed-memory transformer
+for image captioning. In: Proc. of CVPR (2020)
+6. Fei, Z.c.: Fast image caption generation with position alignment. arXiv preprint
+arXiv:1912.06365 (2019)
+
+--- Sayfa 12 ---
+12
+Z. Ma et al.
+7. Fei, Z.: Iterative back modification for faster image captioning. In: Proc. of ACM
+MM (2020)
+8. Fei, Z.: Partially non-autoregressive image captioning. In: Proc. of AAAI (2021)
+9. Gao, J., Meng, X., Wang, S., Li, X., Wang, S., Ma, S., Gao, W.: Masked non-
+autoregressive image captioning. arXiv preprint arXiv:1906.00717 (2019)
+10. Guo, L., Liu, J., Zhu, X., He, X., Jiang, J., Lu, H.: Non-autoregressive im-
+age captioning with counterfactuals-critical multi-agent learning. arXiv preprint
+arXiv:2005.04690 (2020)
+11. He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition.
+In: Proc. of CVPR (2016)
+12. Hinton, G.E., Vinyals, O., Dean, J.: Distilling the knowledge in a neural network.
+CoRR (2015)
+13. Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Comput. (1997)
+14. Huang, L., Wang, W., Chen, J., Wei, X.Y.: Attention on attention for image cap-
+tioning. In: Proc. of ICCV (2019)
+15. Kaiser, L., Bengio, S., Roy, A., Vaswani, A., Parmar, N., Uszkoreit, J., Shazeer,
+N.: Fast decoding in sequence models using discrete latent variables. In: Proc. of
+ICML (2018)
+16. Karpathy, A., Fei-Fei, L.: Deep visual-semantic alignments for generating image
+descriptions. In: Proc. of CVPR (2015)
+17. Krishna, R., Zhu, Y., Groth, O., Johnson, J., Hata, K., Kravitz, J., Chen, S.,
+Kalantidis, Y., Li, L., Shamma, D.A., Bernstein, M.S., Fei-Fei, L.: Visual genome:
+Connecting language and vision using crowdsourced dense image annotations. Int.
+J. Comput. Vis. (2017)
+18. Li, Y., Pan, Y., Yao, T., Mei, T.: Comprehending and ordering semantics for image
+captioning. In: Proc. of CVPR (2022)
+19. Lin, C.Y.: Rouge: A package for automatic evaluation of summaries. In: Text sum-
+marization branches out (2004)
+20. Luo, R.: A better variant of self-critical sequence training. CoRR (2020)
+21. Papineni, K., Roukos, S., Ward, T., Zhu, W.J.: Bleu: a method for automatic
+evaluation of machine translation. In: Proc. of ACL (2002)
+22. Ren, S., He, K., Girshick, R.B., Sun, J.: Faster R-CNN: towards real-time object
+detection with region proposal networks. In: Proc. of NeurIPS (2015)
+23. Rennie, S.J., Marcheret, E., Mroueh, Y., Ross, J., Goel, V.: Self-critical sequence
+training for image captioning. In: Proc. of CVPR (2017)
+24. Song, Z., Zhou, X., Dong, L., Tan, J., Guo, L.: Direction relation transformer for
+image captioning. In: Proc. of ACM MM (2021)
+25. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser,
+ L., Polosukhin, I.: Attention is all you need. Proc. of NeurIPS (2017)
+26. Vedantam, R., Lawrence Zitnick, C., Parikh, D.: Cider: Consensus-based image
+description evaluation. In: Proc. of CVPR (2015)
+27. Vinyals, O., Toshev, A., Bengio, S., Erhan, D.: Show and tell: A neural image
+caption generator. In: Proc. of CVPR (2015)
+28. Yan, X., Fei, Z., Li, Z., Wang, S., Huang, Q., Tian, Q.: Semi-autoregressive image
+captioning. In: Proc. of ACM MM (2021)
+29. Zhang, Y., Xiang, T., Hospedales, T.M., Lu, H.: Deep mutual learning. In: Proc.
+of CVPR (2018)
+30. Zhang, Y., Zhang, Y., Qi, P., Manning, C.D., Langlotz, C.P.: Biomedical and
+clinical english model packages in the stanza python NLP library. CoRR (2020)
+31. Zhou, Y., Zhang, Y., Hu, Z., Wang, M.: Semi-autoregressive transformer for image
+captioning. In: Proc. of ICCV (2021)

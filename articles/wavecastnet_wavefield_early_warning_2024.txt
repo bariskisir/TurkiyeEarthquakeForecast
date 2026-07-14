@@ -1,0 +1,2441 @@
+
+--- Sayfa 1 ---
+Note
+This post-print corrects a minor typographic error in Algorithm 1 of
+the published version: three instances of x were intended to be y.
+Enhancing the statistical evaluation of earthquake
+forecasts – An application to Italy
+Jonas R. Brehmer
+Heidelberg Institute for Theoretical Studies
+Kristof Kraus and Tilmann Gneiting
+Heidelberg Institute for Theoretical Studies
+Karlsruhe Institute of Technology (KIT)
+Marcus Herrmann and Warner Marzocchi
+University of Naples, Federico II
+February 3, 2026
+Abstract
+Testing earthquake forecasts is essential to obtain scientific information on fore-
+casting models and sufficient credibility for societal usage. We aim at enhancing
+the testing phase proposed by the Collaboratory for the Study of Earthquake Pre-
+dictability (CSEP, Schorlemmer et al., 2018) with new statistical methods supported
+by mathematical theory. To demonstrate their applicability, we evaluate three short-
+term forecasting models that were submitted to the CSEP-Italy experiment, and two
+ensemble models thereof. The models produce weekly overlapping forecasts for the
+expected number of M4+ earthquakes in a collection of grid cells. We compare the
+models’ forecasts using consistent scoring functions for means or expectations, which
+are widely used and theoretically principled tools for forecast evaluation. We fur-
+ther discuss and demonstrate their connection to CSEP-style earthquake likelihood
+model testing, and specifically suggest an improvement of the T-test. Then, using
+tools from isotonic regression, we investigate forecast reliability and apply score de-
+compositions in terms of calibration and discrimination. Our results show where
+and how models outperform their competitors and reveal a substantial lack of cal-
+ibration for various models. The proposed methods also apply to full-distribution
+(e. g., catalog-based) forecasts, without requiring Poisson distributions or making
+any other type of parametric assumption.
+Keywords. Calibration; earthquake count; forecast evaluation; reliability dia-
+gram; scoring function.
+1
+Introduction
+Earthquake forecasting has broad, manifold impact: It demarcates the interface between
+seismology and society, being the basic scientific component of any sound seismic risk
+reduction strategy; simultaneously, it is the ultimate scientific challenge for seismologists,
+because it allows testing different hypotheses about earthquake occurrence processes.
+Owing to the physical complexity of earthquake occurrence and our lack of knowl-
+edge, earthquake forecasts are unavoidably probabilistic, meaning they provide the full
+1
+arXiv:2405.10712v2  [stat.AP]  2 Feb 2026
+
+--- Sayfa 2 ---
+or parts of the predictive distribution of future seismicity. To be of scientific and practi-
+cal use, the earthquake forecasting enterprise must be intimately linked to a solid testing
+phase, which allows seismologists to evaluate the reliability and predictive performance
+of the forecasts and give them the necessary credibility they need for societal purposes.
+Enhancing the testing phase of earthquake forecasts is the main motivation of this paper.
+Presently, several flavors of physics-based (e.g., Cattania et al., 2018; Mancini et al.,
+2019; Sharma et al., 2020; Dahm and Hainzl, 2022) or statistical (e.g., Gerstenberger
+et al., 2005; Falcone et al., 2010; Lombardi and Marzocchi, 2010; Woessner et al., 2010;
+Bayliss et al., 2020) models exist that issue such forecasts. To date, the most common
+methods to evaluate the resulting model output are set by the Collaboratory for the
+Study of Earthquake Predictability (CSEP) and rely on standardized prospective tests.
+Prospective tests only use data gathered after the model was submitted to an experiment.
+CSEP is a continuously evolving enterprise, both in the format of the forecasts and in the
+set of tests. To preserve transparency and reproducibility, CSEP maintains the original
+models’ forecasts and related data to allow any scientist to re-run the experiment with,
+e.g., an updated set of tests. A key part of the CSEP testing strategy is an approach
+that can be broadly termed earthquake likelihood model testing (Kagan and Jackson,
+1995; Schorlemmer et al., 2007). In its original format, it partitions the testing region
+into grid cells and assigns a log likelihood to each forecast, which comprises Poisson log
+likelihoods for observed counts of earthquakes. Although similar in form, the approach
+differs in crucial aspects from widely used statistical out-of-sample forecast evaluation
+methods developed for count data in other scientific fields (Czado et al., 2009; Kolassa,
+2016).
+In this paper we aim at providing additional statistical procedures that are deeply
+rooted in probability theory to evaluate and compare earthquake forecasts.
+Specifi-
+cally, we build on recent advances in Brehmer et al. (2024) and illustrate how CSEP’s
+log likelihood-based testing method is related to consistent scoring (or loss) functions,
+which are well-established tools from decision theory to compare forecast performance
+(Gneiting and Raftery, 2007; Gneiting, 2011). Furthermore, we introduce methods pro-
+posed by Gneiting and Resin (2023) to investigate a model’s reliability, and we apply
+score decompositions in terms of calibration and discrimination capabilities. We use
+the newly proposed tools to compare and analyze five forecasting models regarding the
+operational earthquake forecasting (OEF) system in Italy (Marzocchi et al., 2014). The
+final goal is to propose additional mathematical resources that may make the CSEP
+testing phase stronger.
+Terminology and technical settings matter, and to create an effective bridge between
+different fields, here seismology and mathematics, we need to pay attention to fundamen-
+tal concepts and terminology of the mathematical theory used, starting with the details
+of the forecast format. Specifically, we consider forecasts of the number of earthquakes
+in a given space–time–magnitude bin. As argued by Nandan et al. (2019), forecasting
+models ought to embrace the full distribution of the number of earthquakes. However,
+a full-distribution forecast can always be reduced to its mean or expected value, and it
+is this simplified format on which we focus here. Thus, the forecast is a nonnegative
+2
+
+--- Sayfa 3 ---
+36°N
+38°N
+40°N
+42°N
+44°N
+46°N
+48°N
+ 6°E
+10°E
+14°E
+18°E
+195
+42
+17
+5
+2
+1
+1
+10
+100
+4.0
+4.5
+5.0
+5.5
+6.0
+6.5
+7.0
+Magnitude
+Count
+Figure 1: Left: Forecast region of OEF-Italy (orange grid, 8993 grid cells, which corre-
+sponds to the testing region of the Italian CSEP experiment) and locations of observed
+M4+ target earthquakes (crossed circles) between 2005 April 16 and 2020 May 20; Right:
+Logarithmic bar plot of earthquake magnitudes. For similar displays, see Figure 1 of
+Herrmann and Marzocchi (2023), Figure 1 of Spassiani et al. (2023), and Figure 2 of
+Brehmer et al. (2024).
+real number, which represents a mean or expected count, and the respective outcome is
+the observed count, which is a nonnegative integer. Evidently, short-term earthquake
+forecasts operate within a low probability (Jordan et al., 2011) or low count environment,
+where an overwhelming majority of the observed counts is zero. Serafini et al. (2022)
+and Spassiani et al. (2023) consider an even simpler format, namely that of probability
+forecasts for the binary event of at least one target earthquake occurring in any given
+space–time–magnitude bin, to which we also relate. The setting of single-valued fore-
+casts in the form of an expected count or number, on which we focus in this paper, fits
+current practice at CSEP and allows for comprehensive comparisons.
+Figure 1 depicts the Italian CSEP testing region in which the five models produce
+forecasts in the form of the expected number of earthquakes in space–time–magnitude
+bins. We term the first two models as LM (Lombardi and Marzocchi, 2010) and FCM
+(Falcone et al., 2010). Both are ETAS models, but with customized structure and cali-
+bration choices. The third model, termed LG (Lolli and Gasperini, 2003; Woessner et al.,
+3
+
+--- Sayfa 4 ---
+2010), is based on the short-term earthquake probability (STEP) model (Gerstenberger
+et al., 2005). These three models were evaluated in the Italian CSEP experiment (Taroni
+et al., 2018, providing one-day ahead forecasts). The fourth model, SMA, is a weighted-
+average ensemble of the previous three models and used in OEF-Italy (Marzocchi et al.,
+2014); its weights are proportional to the inverse of the log likelihood of the observed
+data following the score model averaging (SMA) rule and are continuously updated with
+new observations. We additionally include a further weighted-average ensemble of the
+three candidates, termed logistic regression-based weighted average (LRWA) (Herrmann
+and Marzocchi, 2023), where the weighting is based on logistic regression (specifically,
+the variant fit to M3+ earthquakes with fitting scheme #2, see their Appendix C).
+The models issue forecasts in the form of the expected number of earthquakes with
+magnitudes equal to or larger than four (M4+, the target threshold) in the next seven
+days for each of the 8993 spatial grid cells of the testing region. On any given day, the
+forecast is a collection of 8993 positive values which we denote via x(j)
+c,t , where j represents
+the model, c the grid cell, and t the day. To evaluate these forecasts, we consider M4+
+target earthquakes that occurred between 2005 April 16 and 2020 May 26 in the testing
+region. This yields 5520 days in total and results in 5514 days of forecast–observation
+pairs. The observations yc,t represent the number of M4+ target earthquakes in grid cell
+c during the seven-day period starting at t, and become available after day t + 6.
+The models issue forecasts at 00:00 on each day and immediately after M3.5+ earth-
+quakes. We do not consider the latter (intra-day) runs and thus obtain an equally spaced
+sequence of forecasts in time. A crucial benefit of the expected counts format is that
+forecasts can be aggregated spatially,1 as visualized in the top panel of Figure 2. We see
+that the models vary in several dimensions. The respective forecasts have different back-
+ground levels (top, bottom) and feature distinct spatial smoothness (bottom), though
+they are strongly correlated with each other. In the next two sections we focus on termi-
+nology and theoretical concepts, but also provide extensive analyses and demonstrations
+based on these forecasts.
+2
+Comparative evaluation via consistent scoring functions
+Consistent scoring functions are mathematically principled tools for the overall evalua-
+tion, comparison, and ranking of competing forecast models. We take scoring functions
+to be negatively oriented penalties that a forecaster wishes to minimize. In a nutshell, if
+the forecast posits an expected count x and the count y realizes, the penalty is S(x, y).
+In practice, scores are suitably averaged.
+For instance, in the setting of OEF-Italy, which spatially coincides with the testing
+region of the Italian CSEP experiment, there are C = 8993 grid cells and T = 5514 test
+days. The total score of model j over the testing region and testing period from Figure 1
+1The aggregation is simply by summation. For example, the expected count for the entire CSEP
+testing region equals the sum of the expected counts for the 8993 grid cells. In contrast, full-distribution
+forecasts do not allow for linear nor other straightforward types of aggregation from bins.
+4
+
+--- Sayfa 5 ---
+0.3
+1.0
+3.0
+2006
+2008
+2010
+2012
+2014
+2016
+2018
+2020
+Forecast value
+LM
+FCM
+LG
+SMA
+LRWA
+Observed earthquakes
+Entire CSEP Italy Region
+LM
+FCM
+LG
+ 6°E
+12°E
+18°E
+ 6°E
+12°E
+18°E
+ 6°E
+12°E
+18°E
+36°N
+40°N
+44°N
+48°N
+SMA
+LRWA
+ 6°E
+12°E
+18°E
+ 6°E
+12°E
+18°E
+36°N
+40°N
+44°N
+48°N
+10−7
+10−5
+10−3
+Forecast
+value
+Seven-Day Period Starting 2005 April 16
+Figure 2: Expected number forecasts of the five models.
+Top: temporal evolution,
+aggregated over the testing region for each day; Bottom: spatial distribution for the
+initial seven-day period in OEF-Italy, with forecast values below 10−7 represented in
+white.
+5
+
+--- Sayfa 6 ---
+is
+¯S(j) = 1
+T
+T
+X
+t=1
+¯S(j)
+t ,
+(1)
+where
+¯S(j)
+t
+=
+C
+X
+c=1
+S
+
+x(j)
+c,t , yc,t
+
+(2)
+is the spatially aggregated score for model j on day t. Considering all C grid cells and
+T days, the total score considers n = C × T = 8993 × 5514 individual forecast cases in
+OEF-Italy. Note that we use summation rather than averaging to define the spatially
+aggregated score at (2), as the summation yields numerical values that are convenient
+to report, compare, and interpret.
+A key question then is which scoring function ought to be used, and we emphasize
+that the choice needs to be mathematically consistent with the scope and format of
+the forecast, which represents the a priori mean or expected number of earthquakes.
+Despite our focus on forecasts in the form of expected counts, it is instructive to begin
+the discussion in the setting of full-distribution forecasts.
+2.1
+Proper scoring rules for full-distribution forecasts
+To fix the idea, let P be a full-distribution forecast for count data, such as the number of
+earthquakes in a space–time–magnitude bin. Evidently, P is a probability distribution
+on the set of the nonnegative integers. We adopt notation from Czado et al. (2009) and
+denote its probability mass function by (pk)∞
+k=0 and the respective cumulative distribu-
+tion function (CDF) by (Pk)∞
+k=0, where Pk = Pk
+j=0 pj for any integer k ≥0.
+In this setting, a scoring rule R(P, y) assigns a penalty based on the full-distribution
+forecast P and the corresponding observed count y. The scoring rule R ought to be such
+that
+EY ∼QR(Q, Y ) ≤EY ∼QR(P, Y ),
+(3)
+where E denotes the expectation operator, P and Q are full-distribution forecasts, and
+Y ∼Q specifies that Y is a random variable with distribution Q. Indeed, if Q is the
+true (though typically unknown) distribution of the count, then the full-distribution
+forecast Q ought to outperform any other forecast P in terms of the expected value of
+the score. A scoring rule for which the expectation inequality in (3) is true for all P, Q
+in a class P of probability distributions is said to be proper relative to P. If equality in
+(3) occurs only when P = Q, the scoring rule is strictly proper. Propriety is an essential
+characteristic of a scoring rule which encourages honest and coherent forecasts (Gneiting
+and Raftery, 2007) and ensures that appropriate and complete usage of information is
+rewarded (Holzmann and Eulert, 2014).
+Key examples of proper scoring rules for count data include the logarithmic score,
+which is defined as
+R(P, y) = −log py
+(4)
+6
+
+--- Sayfa 7 ---
+and depends on the forecast P only through the probability mass py at the observed
+count, and the ranked probability score,
+R(P, y) =
+y
+X
+k=0
+P 2
+k +
+∞
+X
+k=y+1
+(1 −Pk)2 = EY ∼P |Y −y| −1
+2 EY ∼P |Y −Y ′|,
+(5)
+where Y and Y ′ are independent copies of a random variable with distribution P. The
+representation at right in (5) holds whenever the distribution P has a finite (as opposed
+to infinite) expected value, and it demonstrates that the ranked probability score can
+be interpreted in terms of (fractional) counts. Czado et al. (2009) and Kolassa (2016)
+provide detailed discussions of these and other proper scoring rules.
+2.2
+Consistent scoring functions for expected counts
+In the context of forecasts of a mean or expected count, consistency is the equivalent of
+propriety (Savage, 1971; Gneiting, 2011). Specifically, let P be the class of probability
+distributions on the nonnegative integers with finite mean or expectation, and let P ∈P
+have expectation µP . The scoring function S is consistent for forecasts of an expected
+count if
+EY ∼P S(µP , Y ) ≤EY ∼P S(x, Y )
+(6)
+for all distributions P ∈P and nonnegative numbers x. The scoring function is strictly
+consistent if equality in (6) implies x = µP . Consistency ensures that reporting the truth
+is an optimal strategy when forecasters are rewarded according to their realized scores,
+and strict consistency guarantees that the true expectation µP is the only minimizer
+of the expected score EY ∼P S(x, Y ). Hence, a forecast is preferred over its competitors
+if it achieves lower average scores.
+To see the connection to strictly proper scoring
+rules, we note that if S(x, y) is a consistent scoring function in the sense of Eq. (6) then
+R(P, y) = S(µP , y) is a proper scoring rule for full-distribution forecasts in the sense of
+Eq. (3).2
+Due to the condition (6) prescribed by consistency, it is an intricate question what
+consistent scoring functions are available for expected counts. Summarizing results orig-
+inally due to Savage (1971) and reviewed by Gneiting (2011) and Brehmer et al. (2024),
+among others, the (strictly) consistent scoring functions for an expected count are of the
+form
+S(x, y) = ϕ(y) −ϕ(x) −ϕ′(x)(y −x) + h(y),
+(7)
+where x ≥0, y ∈{0, 1, . . .}, ϕ is a (strictly) convex function, ϕ′ is a subgradient of ϕ,
+and h is an essentially arbitrary function.3
+2Indeed, if P, Q ∈P then EY ∼Q R(Q, Y ) = EY ∼Q S(µQ, Y ) ≤EY ∼Q S(µP , Y ) = EY ∼Q R(P, Y ), which
+demonstrates the claim.
+3A subgradient is a generalization of a derivative; whenever a derivative exists, the subgradient is
+unique and coincides with the derivative. For further technical discussion we refer to Section 3.1 of
+Gneiting (2011), Section 2 of Brehmer et al. (2024), and Appendix A.1 in this current paper.
+7
+
+--- Sayfa 8 ---
+Table 1: Predictive performance of forecast models for OEF-Italy in terms of the average
+score ¯S from (1) under the Poisson scoring function at (9) and the quadratic scoring
+function at (8). The best (lowest) score in each column is highlighted in green.
+Score
+Poisson
+Quadratic
+LM
+2.71
+0.8407
+FCM
+2.80
+0.8459
+LG
+3.02
+0.8465
+SMA
+2.73
+0.8437
+LRWA
+2.69
+0.8421
+The most prominent example of a strictly consistent scoring function for an expected
+value in the scientific literature is the quadratic scoring function
+Squad(x, y) = (x −y)2 ,
+(8)
+which arises from ϕ(x) = x2 and h(y) = 0 in (7). This function is symmetric in the
+sense that Squad(x, y) = Squad(y, x). Another valid choice of a convex function in (7) is
+ϕ(x) = x(log x −1). Taking h(y) = −ϕ(y), this yields the Poisson scoring function Spois
+defined by
+Spois(x, y) = x −y log x
+(9)
+for expected counts x > 0 and observed numbers y ∈{0, 1, . . .} of target earthquakes,
+which also is strictly consistent. The case x = 0 does not occur in typical practice, but
+can be handled by assigning Spois(0, 0) = 0 and Spois(0, y) = +∞for y ∈{1, 2, . . .}.
+For a connection to proper scoring rules, note that the logarithmic score at (4)
+recovers the Poisson score at (9) when py is the probability mass of a Poisson distribution
+with rate x > 0, save for terms that depend on the outcome y only. In other words,
+Spois(x, y) corresponds to the log likelihood of a Poisson distributed random variable and
+therefore is equivalent to the main evaluation function used in the earthquake likelihood
+model testing approach (Schorlemmer et al., 2007). However, the connection is purely
+formal, and the use of the Poisson scoring function neither explicitly nor implicitly
+requires Poisson distributions or any other type of parametric assumptions, as pointed
+out by Brehmer et al. (2024).
+Both the quadratic and the Poisson scoring function
+are members of the extended Patton family, which is an extension to count data of the
+scoring functions proposed by Patton (2011). For details see Appendix A.2.
+As Table 1 shows, the quadratic score and the Poisson score yield distinct rankings
+of the five models. Under the quadratic scoring function, the LM model has the best
+(lowest) score; under the Poisson scoring function the LRWA model shows the lowest
+score.4 As there are many strictly consistent scoring functions, it is unclear whether
+conclusions are reasonably stable with respect to the choice of scoring function.
+In
+4Differences between Tables 1–3 in this current paper and Table 1 in Brehmer et al. (2024), as well
+as between Table 3 and Table 1 in Herrmann and Marzocchi (2023), stem from a corrected spatial
+8
+
+--- Sayfa 9 ---
+investigating this stability, we rely on an alternative characterization of scoring functions
+from Ehm et al. (2016). To this end, we define the elementary scoring function Sθ with
+threshold parameter θ > 0, namely,
+Sθ(x, y) =
+ 0,
+x, y ≤θ or x, y ≥θ,
+|y −θ|,
+otherwise,
+(10)
+which arises from the classical representation (7) by choosing the convex function ϕ(x) =
+max(x −θ, 0) and h(y) = 0. Thus, Sθ assigns a score of zero if the expected number x
+and the observed count y lie on the same side of θ, and a score that equals the distance
+between y and θ otherwise. We note that Sθ is a consistent, but not a strictly consistent,
+scoring function since x = y is not the only minimizer of the score.
+Remarkably, Sθ represents a cost–benefit scenario in a stylized decision problem
+with a decision threshold at θ, where θ can be interpreted as the ratio of the socio-
+economic cost of a preventive measure under consideration, such as an evacuation, over
+the (monetized) benefit (per earthquake) of the measure, e. g., the number of saved
+human lives (per earthquake). If the expected number of earthquakes x lies below the
+threshold θ, the induced optimal decision is to take no action; if x is above θ, the induced
+optimal decision is to apply the preventive measure.5 In this scenario Sθ(x, y) at (10)
+is proportional to the difference of the cost or loss under the optimal decision induced
+by the forecast x and the (hypothetical) cost under the optimal decision in hindsight
+(Ehm et al., 2016, Section 3.1). Notwithstanding the crude simplifications in the stylized
+decision problem, decision thresholds (only) take (very) small positive values in practical
+problems of short-term forecasts of damaging earthquakes.
+The results of Ehm et al. (2016) imply that subject to modest regularity conditions,
+a consistent scoring function S for an expected count admits a representation of the form
+S(x, y) =
+Z ∞
+0
+Sθ(x, y) w(θ) dθ,
+(11)
+where w(θ) is a non-negative weight function that assigns relevance to the threshold
+parameter θ > 0 for the elementary scoring function Sθ from (10). As noted by Taggart
+(2022, p. 306), the score is “the weighted average of economic regret over user decision
+thresholds, where the weight emphasises those decision thresholds in the corresponding
+region of interest.” The scoring function S in (11) is strictly consistent if the weight
+function w(θ) is strictly positive. If we put h(x) = 0, then the convex function ϕ in the
+classical representation (7) and the weight function w in the nearly equivalent, but more
+interpretable, representation (11) relate to each other in simple ways. Specifically, if ϕ
+admits a second derivative ϕ′′, then w(θ) = ϕ′′(θ) for θ > 0. For example, the quadratic
+scoring function at (8) arises from the choice ϕ(x) = x2, which yields the uniform weight
+function w(θ) = ϕ′′(θ) = 2 for θ > 0, so all values of the decision threshold θ are
+binning of earthquakes that occurred exactly on grid cell boundaries. Details are available at https:
+//github.com/jbrehmer42/Earthquakes_Italy.
+5Let c be the socio-economic cost of the preventive measure, and let b denote its monetized benefit
+per earthquake. Then the measure ought to be undertaken if bx > c or x > c/b = θ.
+9
+
+--- Sayfa 10 ---
+weighted equally. The Poisson scoring function at (9) arises from the convex function
+ϕ(x) = x(log x −1), which yields the corresponding weight function w(θ) = ϕ′′(θ) = θ−1
+for θ > 0, so small positive values of the decision threshold θ receive dominant weights.
+Importantly, this analysis demonstrates that in the setting of earthquake forecasting,
+the Poisson scoring function with its emphasis on small positive decision thresholds is
+more relevant than the quadratic scoring function.
+To investigate how forecast performance depends on the choice of the consistent
+scoring function, we can plot a Murphy diagram. In the original form proposed by Ehm
+et al. (2016), the Murphy diagram plots the average score (1) under the elementary
+scoring function Sθ from (10) for the model(s) at hand as a function of the threshold
+parameter θ. Here we adapt the Murphy diagram to the low probability and low count
+setting of earthquake forecasts and introduce the logarithmic Murphy diagram, where
+we plot against log(θ). Conveniently, the integral under a model’s logarithmic Murphy
+curve equals its average Poisson score.6 If a model has a lower average elementary score
+than its competitors for every choice of the threshold parameter θ, then it has superior
+forecast performance with respect to all strictly consistent scoring functions for the mean.
+Figure 3 shows a logarithmic Murphy diagram for the five OEF-Italy forecast models.
+It is interesting to observe that each of the five models has certain ranges of θ under
+which it performs best in terms of the average score under Sθ. The LM model shows
+outstanding performance at larger values of θ and thus has the smallest average score
+under the quadratic scoring function, which gives equal weight to all values of θ. The
+LRWA ensemble model shows excellent performance across all values of θ and has the
+smallest average score under the Poisson scoring function.
+As we have argued, the
+Poisson scoring function emphasizes performance at small values of θ that societally
+are the most relevant, and a model’s average Poisson score equals the area under the
+logarithmic Murphy curve.
+2.3
+The Diebold–Mariano test of equal predictive ability
+Worthy of note, scoring functions rank the forecast models’ performance, but to make
+formal statistical inference, additional procedures and assumptions are required.
+To
+check for statistically significant differences in forecast performance, we consider tests
+of the (null) hypothesis of equal predictive performance for two models in terms of a
+given scoring function S. For this purpose, we make use of the Diebold–Mariano test,
+which is a carefully adapted Student’s t-test (Diebold and Mariano, 1995; Gneiting and
+Katzfuss, 2014, Section 3.1).
+Specifically, we consider the daily scores ¯S(j)
+t
+and ¯S(k)
+t
+of models j and k on day t from
+(2), which are obtained after spatial aggregation, with the individual scores for the grid
+cells summed up, and summarize forecast performance over the whole testing region for
+6The claim follows immediately from our discussion of the representation (11) for the Poisson scoring
+function and the fact that
+R ¯Sθ d(log θ) =
+R ¯Sθθ−1 dθ.
+The average score (1) under the elementary
+scoring function Sθ at (10) is identically zero for sufficiently small and sufficiently large values of θ, so
+the integral is guaranteed to be finite.
+10
+
+--- Sayfa 11 ---
+10−10
+10−8
+10−6
+10−4
+10−2
+100
+102
+0.0
+0.1
+0.2
+0.3
+−23.0
+−18.4
+−13.8
+−9.2
+−4.6
+0.0
+4.6
+θ
+log(θ)
+Elementary score
+LM
+FCM
+LG
+SMA
+LRWA
+Figure 3: Logarithmic Murphy diagram for the five forecast models. Each curve plots a
+model’s total elementary score ¯Sθ from (1) versus log θ. Tickmarks at bottom indicate
+log θ; tickmarks at top show θ. The colored bar at top indicates the model with the
+lowest value of ¯Sθ. The integral under a model’s curve equals the average Poisson score
+from Table 1.
+one seven-day forecast period.7 The top panel in Figure 4 shows these daily scores based
+on the Poisson scoring function Spois for the five forecast models. It uses a logarithmic
+scale, because the daily scores are much larger for forecast periods t that contain M4+
+target earthquakes, corresponding to counts yc,t ≥1 for at least one grid cell c. The
+LM model generally performs worst on forecast periods without M4+ earthquakes, as
+it possesses the highest daily scores for such t, and frequently performs best on forecast
+periods with M4+ earthquakes, when it possesses low scores.
+This is mirrored by the second panel in Figure 4, which shows the difference ¯S(j)
+t
+−¯S(k)
+t
+in the daily scores between the LM model (k), which we employ as reference throughout
+the paper, and its competitors (j), again using the Poisson scoring function. In forecast
+periods with M4+ earthquakes, the majority of the score differences are positive, so the
+LM model attains the best scores and the FCM model the worst scores for these periods.
+A look back at the top panel of Figure 2 provides a straightforward explanation: the
+LM model issues the highest expected count forecasts, whereas the FCM model issues
+the lowest forecasts. The bottom two panels in Figure 4 show the information gain (IG)
+7Appendix C concerns spatial displays of Poisson score differences, obtained after temporal aggrega-
+tion.
+11
+
+--- Sayfa 12 ---
+and information gain per earthquake (IGPE) of the LM model over the other models.
+As we prove analytically in Appendices B.1 and B.2, IG and IGPE are multiples of the
+cumulative, spatially aggregated Poisson score difference between the model at hand
+and the LM model. However, while IG can grow indefinitely, IGPE is normalized by the
+cumulative number of observed target earthquakes and thus tends to stabilize over the
+course of the evaluation period.
+To check for statistically significant differences in forecast performance, we apply
+the Diebold–Mariano test on the daily scores ¯S(j)
+t
+from (2), which operates under the
+null hypothesis that model j and model k perform equally well in terms of the scoring
+function S.8 If the null hypothesis is true, the test statistic
+z(j,k) =
+√
+T
+¯S(j) −¯S(k)
+ˆσ(j,k)
+(12)
+has a standard normal distribution in the limit as the number T of testing times grows
+larger.9 In (12), ˆσ2
+(j,k) is an estimate of the variance of the daily score differences that
+accounts for temporal dependencies and related effects (Diebold and Mariano, 1995),
+namely,
+ˆσ2
+(j,k) = ˆγ(j,k)(0) + 2
+L
+X
+l=1
+ˆγ(j,k)(l)
+(13)
+where
+ˆγ(j,k)(l) = 1
+T
+T
+X
+t=l+1
+(¯S(j)
+t
+−¯S(k)
+t
+−¯d(j,k))(¯S(j)
+t−l −¯S(k)
+t−l −¯d(j,k))
+and
+¯d(j,k) = ¯S(j) −¯S(k).
+The summation in the expression (13) for ˆσ2
+(j,k) is over the sample autocovariance ˆγ(j,k)(l)
+of the score differences at lags l up to an integer value L after which the score differentials
+can be considered uncorrelated.
+If L ≥1 then (13) applies; if L = 0 then ˆσ2
+(j,k) =
+ˆγ(j,k)(0). For OEF-Italy, we set L = 6 due to the overlap of the seven-day test periods
+at lags up to six days.
+A positive value of z(j,k) at (12) arises from a smaller average score for model k; a
+negative value stems from a smaller average score for model j. From z(j,k), a one-sided
+p value can be derived, namely,
+p = 1 −Φ
+ z(j,k)
+
+,
+(14)
+8The Diebold–Mariano test applies not only under the Poisson score, but under any scoring rule or
+scoring function, such as those discussed by Lerch et al. (2017), Serafini et al. (2022), Brehmer et al.
+(2024), and Heinrich-Mertsching et al. (2024), among others.
+9The standard normal distribution arises as the limit of the Student’s tν-distribution for an increasing
+number of degrees of freedom ν. The number T of testing times needs to be sufficiently large for the limit
+to be applicable; typically, values of T in the low thousands suffice. Note the stark and pleasant contrast
+to the CSEP T-test: For the Diebold–Mariano test, we have theoretical guarantees of its validity (in
+the sense described in the next footnote) in sufficiently large samples. For the CSEP T-test there are
+no theoretical guarantees available. In fact, we are unaware of even a single setting in which the CSEP
+T-test yields the required uniformity of the p-value under the null hypothesis.
+12
+
+--- Sayfa 13 ---
+1
+10
+100
+Poisson score
+Number of
+earthquakes
+= 0
+> 0
+−100
+−1
+−0.01
+0
+0.01
+1
+100
+Score difference
+0
+500
+1000
+1500
+Information Gain (IG)
+LM
+FCM
+LG
+SMA
+LRWA
+−0.5
+0.0
+0.5
+1.0
+2006
+2008
+2010
+2012
+2014
+2016
+2018
+2020
+IG per event
+Figure 4: From top to bottom: Spatially aggregated daily Poisson score (2) for the five
+forecast models; Daily Poisson score difference relative to the LM model; Cumulative
+Poisson score difference or information gain (IG) of the LM model over the other models;
+Information gain per earthquake (IGPE) of the LM model over the other models. In
+the first two panels, two different markers are used: triangles for periods with one or
+more M4+ target earthquakes, and circles otherwise. Note the logarithmic scale in the
+upper two panels. All quantities are negatively oriented, i.e., the smaller the better for
+the color-coded model. For technical details see Appendix B.1.
+13
+
+--- Sayfa 14 ---
+Table 2: Diebold–Mariano test of the null hypothesis of equal predictive ability in terms
+of the Poisson scoring function for the five forecast models. We show the respective
+total Poisson score (diagonal), the z statistic (above diagonal), and the one-sided p
+value (below diagonal). Columns identify model j and rows model k in the z statistic
+at (12).
+LRWA
+LM
+SMA
+FCM
+LG
+LRWA
+2.69
+1.17
+1.64
+2.27
+2.84
+LM
+0.12
+2.71
+0.60
+1.56
+2.45
+SMA
+0.05
+0.27
+2.73
+2.46
+3.05
+FCM
+0.01
+0.06
+0.01
+2.80
+2.83
+LG
+0.00
+0.01
+0.00
+0.00
+3.02
+where Φ is the CDF of a standard normal random variable. Under the null hypothesis
+of equal predictive ability in terms of the scoring function S the p value at (14) is
+approximately uniformly distributed. A small value of p (typically, smaller than 0.01 or
+0.05) allows for the rejection of the null hypothesis in favor of the alternative hypothesis
+of superior predictive ability of model k; a large value of p (typically, larger than 0.95 or
+0.99) suggests superior predictive ability of model j.
+Table 2 shows the results for the five forecast models. The Diebold–Mariano test
+rejects the null hypothesis of equal predictive ability in terms of the Poisson scoring
+functions for all pairs of models, except for the pairs LRWA and LM, LM and SMA,
+and LM and FCM. The LRWA ensemble model shows the best performance in terms of
+the Poisson score, with score differences that are statistically significant, except for the
+comparison to the LM model.
+A valid test of significance10 generates p values that are uniform between 0 and 1 when
+the null hypothesis is true, and shows power by rejecting the null hypothesis with high
+probability when it is false (Lehmann and Romano, 2022). We now report on a simulation
+experiment that demonstrates these desirable properties for the Diebold–Mariano test.
+First, we consider two models for which the null hypothesis of equal predictive ability is
+true. To achieve this, we define models MixA and MixB in the setting of OEF-Italy. At
+any given time t, MixA chooses randomly between the FCM and the LG forecast, with
+equal probability, whereas MixB uses the other forecast. Viewed as stochastic processes,
+MixA and MixB have equal predictive ability.11 However, individual replicates of MixA
+10We use the term valid test in the sense of satisfying conditions (3.10) and (3.14) in Lehmann and
+Romano (2022), which conforms with typical practice throughout the scientific literature. By Lemma
+3.3.1 in Lehmann and Romano (2022), these conditions guarantee the uniformity of the p value under
+the null hypothesis.
+11The equal predictive ability is immediate from the fact that the distribution of the random triple
+(MixA, MixB, Y ) is the same as the distribution of the random triple (MixB, MixA, Y ).
+14
+
+--- Sayfa 15 ---
+MixA vs. MixB
+MixA vs. LM
+MixB vs. LM
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+Figure 5: Histograms of p values for Diebold–Mariano tests of equal predictive ability
+in terms of the Poisson scoring function for (Left) MixA versus MixB; (Middle) MixA
+versus LM; and (Right) MixB versus LM, based on 400 replicates.
+and MixB yield distinct scores. The histogram at left in Figure 5 shows the p values
+that arise from 400 replicates of Diebold–Mariano tests of MixA (index j) versus MixB
+(index k); as desired, the histogram is nearly uniform. The histograms at middle and
+at right in Figure 5 show the p values in the 400 tests of MixA versus LM, and MixB
+versus LM, respectively, which all lead to the rejection of the null hypothesis in favor of
+superior predictive ability of the LM model.
+2.4
+Comparison to the CSEP T-test
+At this stage, let us compare to the CSEP T-test, which also aims to compare the
+predictive ability of two models. As proposed by Rhoades et al. (2011, Section 2.3), the
+CSEP T-test of equal predictive ability is based on quantities called the information
+gain (IG(j,k)) and the information gain per earthquake (IGPE
+(j,k)) of model k over model
+j, respectively. In Appendix B.2 we prove that
+IG(j,k) = T
+
+¯S(j) −¯S(k)
+and
+IGPE
+(j,k) = T
+NT
+
+¯S(j) −¯S(k)
+,
+(15)
+where NT = PT
+t=1
+PC
+c=1 yc,t, are both multiples of the Poisson score difference ¯S(j)−¯S(k).
+Table 3 illustrates the relationships between the total Poisson score, the Poisson score
+difference, the information gain IG(j,k), and the information gain per earthquake IGPE
+(j,k)
+for our five forecast models, where the index k stands for the LM model, the index j for
+the model at hand, and where T = 5514 and NT = 1834.
+These relationships demonstrate two key insights. First, IG(j,k) and IGPE
+(j,k) are per-
+fectly valid tools for comparing the predictive performance of model forecasts in the
+form of expected earthquake counts. Second, despite their derivation in terms of Pois-
+son likelihoods in Rhoades et al. (2011), the use of IG(j,k) and IGPE
+(j,k) does not depend on
+the assumption of Poisson-distributed earthquake counts, nor does it rely on any other
+parametric distributions. The only assumption that needs to be made is that the model
+15
+
+--- Sayfa 16 ---
+Table 3: Predictive performance according to the total Poisson score (¯S(j)), the Poisson
+score difference, information gain IG(j,k), and information gain per earthquake (IGPE
+(j,k))
+of the LM model (k) relative to the model at hand (j). The best (lowest) score in each
+column is highlighted in green.
+¯S(j)
+¯S(j) −¯S(k)
+IG(j,k)
+IGPE
+(j,k)
+LM
+2.71
+0.000
+0.000
+0.000
+FCM
+2.80
+0.084
+463.572
+0.253
+LG
+3.02
+0.308
+1697.038
+0.925
+SMA
+2.73
+0.020
+111.393
+0.061
+LRWA
+2.69
+−0.018
+−96.795
+−0.053
+forecasts represent expected counts in the technical sense of the expectation or mean
+of a random variable, as pointed out previously (Brehmer et al., 2024). Importantly,
+these arguments support the use of IG(j,k) and IGPE
+(j,k) in much broader settings than
+previously thought feasible.
+As noted before, additional procedures and assumptions are required to make formal
+statistical inference.
+In this regard, the T-test proposed in Section 2.3 of Rhoades
+et al. (2011) has shortcomings in the form of an incorrectly specified variance estimate.
+As a consequence, the underlying test statistic has an incorrect standardization factor,
+and the p value generated by the T-test generally fails to be uniform under the null
+hypothesis of equal predictive ability. For details, we refer to Appendix B.3, where we
+demonstrate these issues in displays analogous to Table 2 and Figure 5. In this light, we
+recommend that the CSEP T-test be evolved into the Diebold–Mariano test based on
+spatially aggregated Poisson scores. The two approaches rank models in the very same
+way, but they differ in the statistical properties of the tests; only the Diebold–Mariano
+test shows the desired standardization and, thus, the desired behavior under the null
+hypothesis.
+We hasten to emphasize that the CESP T-test and the Diebold–Mariano test are
+closely related: They both are variants of the classical Student’s t-test, and if one corrects
+for issues in the estimation of the variance as described in Appendix B.3, the CSEP T-
+test morphs into the Diebold–Mariano test. Thus, we provide an improved version of the
+CSEP T-test by taking care of clerical issues that have not received sufficient attention
+thus far.
+3
+Calibration, reliability, and discrimination
+Up to now we have focused on comparative evaluation of the models — we have asked
+whether a model is better than its competitors. We now turn to the question of calibra-
+tion and ask how well a model’s forecasts agree with the outcomes. Briefly, calibration is
+a joint property of the forecasts and the outcomes that summarizes the degree of mutual
+16
+
+--- Sayfa 17 ---
+consistency. It thus addresses the question whether a forecast provides reliable infor-
+mation about the outcomes. This kind of testing has been originally named consistency
+tests since the first CSEP-related studies (e.g., Werner et al., 2010) and their predecessor
+(Schorlemmer et al., 2007); it puts the focus on formal statistical tests of the agreement
+between forecasts and observations given specific parametric assumptions. In other sci-
+entific fields, these types of questions have been addressed via the calibration concept
+(e.g., Gneiting et al., 2007; Wei and Held, 2014; Gneiting and Resin, 2023). Similar to
+CSEP’s consistency definition, calibration refers to the statistical consistency between
+the forecasts and the observations. However, similar to the point process-oriented tech-
+niques proposed by Bray and Schoenberg (2013), Thorarinsdottir (2013), and Bray et al.
+(2014), our focus here is on calibration checks from a diagnostic perspective, where the
+goal is to identify, and eventually remedy, model deficiencies.
+3.1
+Conditional calibration
+Since our study deals with models that produce forecasts for the expected or mean
+number of earthquakes, we ask whether the forecasts are mean-calibrated, i.e., whether
+the forecasted means are consistent with the observed numbers of earthquakes. To state
+this mathematically, we follow Gneiting and Resin (2023) and conceptualize in terms of
+a random vector (X, Y ) where X is the forecast and Y the corresponding observation.
+Then the forecast X is conditionally mean-calibrated, or simply calibrated, if
+E(Y | X) = X
+(16)
+holds, i.e., if the conditional mean or expectation of the outcome, given any forecast
+value X = x, equals x. In practice, mean-calibration implies, e.g., that, considering all
+grid cells and days on which an expected count of x = 0.70 earthquakes is forecasted,
+the number of observed earthquakes averages to 0.70.12 Hence, such a forecast is also
+termed reliable. Naturally, no real-world model can provide perfectly calibrated fore-
+casts, thus we are more interested in how much it deviates from the ideal in (16). The
+problem of a model’s validation, which is a basic component of any scientific enterprise,
+requires further work, because it should also consider epistemic uncertainty (Marzocchi
+and Jordan, 2018). We intend to address this issue in future work.
+3.2
+Mean-reliability curves
+In situations where the forecasts take only a few different values, it is straightforward
+to check for mean-calibration by pooling forecasts with a specific value and, for each
+such group, comparing to the corresponding average value of the outcomes. However,
+mean-forecasts usually take arbitrarily different values, such that this approach is in-
+appropriate without cumbersome and possibly subjective binning of the forecasts. The
+recently developed CORP (Consistent, Optimally binned, Reproducible, and PAV al-
+gorithm based) approach of Dimitriadis et al. (2021) and Gneiting and Resin (2023)
+12In estimation problems, this type of property is commonly referred to as unbiasedness.
+17
+
+--- Sayfa 18 ---
+Input: tuples (x1, y1), . . . , (xn, yn)
+Output: calibrated values bx1, . . . , bxn
+rearrange indices such that x1 ≤· · · ≤xn
+partition into bins B1:1, . . . , Bn:n and let bxi = yi for i = 1, . . . , n
+while there are bins Bk:i and B(i+1):l such that bx1 ≤· · · ≤bxi and bxi > bxi+1 do
+merge Bk:i and B(i+1):l into Bk:l and let bxi = (yk + · · · + yl)/(l −k + 1) for
+i = k, . . . , l
+end
+Algorithm 1: PAV algorithm based on forecast–outcome tuples (x1, y1), . . . ,
+(xn, yn). The rearrangement of the indices allows for a succinct description of the
+algorithm, which is adopted from Gneiting and Resin (2023, p. 3249).
+addresses these issues and yields a mathematically principled, graphical assessment of
+mean-calibration. While the initial development by Dimitriadis et al. (2021) concerned
+probability forecasts of binary outcomes, we follow Gneiting and Resin (2023) in consid-
+ering mean-forecasts of real-valued outcomes.
+Given a set of forecast–observation pairs (x1, y1), . . . , (xn, yn) the CORP approach
+uses nonparametric isotonic mean regression to calculate a sequence of (re) calibrated
+values ˆx1, . . . , ˆxn, respectively. The nonparametric isotonic regression approach is im-
+plemented by the classical pool adjacent violators (PAV) algorithm (Ayer et al., 1955;
+de Leeuw et al., 2009).
+As described in Algorithm 1, the PAV technique sorts the
+forecast–observation pairs and then partitions the index set {1, . . . , n} into bins Bk:l =
+{k, . . . , l} of consecutive integers, which are pooled in an iterative fashion, until mean-
+calibration is achieved. The resulting nonparametric isotonic regression curve yields a
+calibrated value ˆx for the original forecast value x. When viewed as a function of the
+original forecast values, and interpolated linearly in between, the calibrated values form
+a nondecreasing, piecewise linear curve that typically includes horizontal segments.
+The calibrated value ˆx is an estimate of the conditional expectation E(Y | X = x)
+and thus it should be close to x under the mean-calibration property in (16).
+The
+mean-reliability curve is the graph of the piecewise linear function that arises from
+an interpolation of the points (x1, ˆx1), . . . , (xn, ˆxn), where we assume, for simplicity
+of the description, that x1 ≤· · · ≤xn. Horizontal segments in a mean-reliability curve
+then correspond to distinct forecast values xi ≤· · · ≤xj such that ˆxi = · · · = ˆxj.
+A perfectly calibrated forecast has a mean-reliability curve directly on the diagonal.
+Major deviations from the diagonal in the mean-reliability diagram indicate a lack of
+mean-calibration and can be interpreted diagnostically.
+In the spatio-temporal setting of earthquake forecasting, we have n = C × T and the
+forecast–observation pairs (x1, y1), . . . , (xn, yn) correspond to the collection of tuples
+
+x(j)
+c,t , yc,t
+
+c=1,...,C; t=1,...,T
+with forecast values x(j)
+c,t from model j and corresponding counts yc,t of target earth-
+quakes. For an initial illustration, Figure 6 provides mean-reliability diagrams for the
+18
+
+--- Sayfa 19 ---
+LM forecast and artificially manipulated variants thereof. As the forecast values are
+mostly very small, the typical linear–linear diagram is hard to interpret in this setting.
+Instead, we plot reliability diagrams on an empirical CDF scale on both the horizontal
+and the vertical axes. Specifically, we use the empirical CDF of the forecast values over
+all five models (LM, FCM, LG, SMA, and LRWA), all grid cells, and all test times to
+scale the axes. For example, a linear value of 0.20 indicates the 20th percentile in this
+aggregated distribution, and the tickmarks correspond to 0, 10−7, 10−6, 10−5, 10−4, and
+the maximum 0.88 of the forecast values, respectively. The mean-reliability curve for the
+LM model in the left panel is rather close to the diagonal, as desired, though it remains
+below the diagonal, and in fact at zero, for forecast values up to about 3.3 · 10−6. The
+same panel also shows the mean-reliability curve for the perfectly (re) calibrated LM
+forecast (LM rc), which is directly on the diagonal, as enforced by the PAV algorithm.
+The middle panel in Figure 6 shows mean-reliability curves that result from under-
+forecasting and overforecasting, respectively. Specifically, the LM ×4 forecast multiplies
+the expected count under the LM model by a factor of 4. This results in overforecasts,
+with observed earthquake counts that are substantially lower on average than the ma-
+nipulated forecast value and, therefore, a mean-reliability curve that is well below the
+diagonal. The LM ×0.25 forecast divides the LM forecast by a factor of 4, which results
+in underforecasts and a mean-reliability curve mostly well above the diagonal. The right
+panel shows an overconfident variant of the LM model (‘LM overconf’) that issues fore-
+cast values too far out in the tails, and an underconfident version (‘LM underconf’) that
+pushes the forecast values away from the extreme tails.13 The mean-reliability curves
+show the characteristic S-shape for an underconfident forecast, and the typical inverse
+S-shape for an overconfident forecast, respectively.
+Figure 7 shows reliability diagrams for the five forecast models. In practice, mean-
+reliability curves deviate from the diagonal even when the hypothesis of mean-calibration
+is true, for reasons of sampling variability alone. We use consistency bands to address
+the question whether an observed deviation from the diagonal can reasonably be at-
+tributed to random (sampling) fluctuations alone, despite the forecasts being calibrated.
+Thus, the 90 per cent consistency bands in Figure 7 range (pointwise) from the 5th
+to the 95th percentile of mean-reliability curves that are sampled under the hypothe-
+sis of mean-calibration, using the method described in Appendix D. In addition to the
+mean-reliability curves, we show histograms for the forecast values for the model at
+hand, using the same empirical CDF scale based on all five models aggregated, as de-
+scribed above and used for the mean-reliability curves. The LM model is well calibrated
+as its mean-reliability curve fluctuates around the diagonal mostly within the 90 per
+cent consistency band that quantifies the variation of the calibration curve under the
+hypothesis of mean-calibration. In contrast, the calibration curves of the FCM, LG,
+and SMA models oftentimes leave the consistency bands. Apart from the FCM model,
+13Specifically, the LM overconf forecast agrees with LM ×0.25 for an LM model output ≤10−5 and
+agrees with LM ×4 for an LM model output > 10−5. The LM underconf forecast agrees with LM ×4
+for an LM model output ≤0.25 · 10−5, agrees with LM ×0.25 for an LM model output ≥4 · 10−5, and
+equals 10−5 otherwise.
+19
+
+--- Sayfa 20 ---
+Score  2.712
+MCB   0.062
+DSC   1.077
+UNC   3.727
+Score  2.649
+MCB   0.000
+DSC   1.077
+UNC   3.727
+Score  2.908
+MCB   0.259
+DSC   1.077
+UNC   3.727
+Score  3.309
+MCB   0.660
+DSC   1.077
+UNC   3.727
+Score  3.276
+MCB   0.627
+DSC   1.077
+UNC   3.727
+Score  2.895
+MCB   0.225
+DSC   1.056
+UNC   3.727
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+Forecast value x
+Mean-calibrated forecast value x^
+LM rc
+LM
+LM x0.25
+LM x4
+LM underconf
+LM overconf
+Figure 6: Mean-reliability curves for the LM forecast and artificially manipulated vari-
+ants thereof as described in the text, using an empirical CDF transform aggregated over
+all models to scale the axes: original and (re) calibrated forecast (left); over- and under-
+forecast (middle); over- and underconfident forecast (right). The tickmarks correspond
+to non-transformed, original values of 0, 10−7, 10−6, 10−5, 10−4, and 0.88, respectively.
+We also show the associated total Poisson score at (1) and its decomposition into miscal-
+ibration (MCB), discrimination (DSC), and uncertainty (UNC) components from (19),
+as described in Section 3.3.
+20
+
+--- Sayfa 21 ---
+Score  2.712
+MCB   0.062
+DSC   1.077
+UNC   3.727
+Score  2.796
+MCB   0.134
+DSC   1.065
+UNC   3.727
+Score  3.020
+MCB   0.110
+DSC   0.817
+UNC   3.727
+LM
+FCM
+LG
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+Score  2.732
+MCB   0.105
+DSC   1.100
+UNC   3.727
+Score  2.694
+MCB   0.076
+DSC   1.109
+UNC   3.727
+SMA
+LRWA
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+10−7
+10−5
+10−4
+Forecast value x
+Mean-calibrated forecast value x^
+Histogram
+Forecast value
+(CDF transform)
+Figure 7: Mean-reliability curves as in Figure 6, but for the five forecast models, along
+with 90 per cent consistency bands (shaded), using an empirical CDF transform aggre-
+gated over all models to scale the axes. The inset histograms depict the distribution of
+a model’s forecast values after this transform.
+21
+
+--- Sayfa 22 ---
+which frequently issues very small forecasts, as indicated by the spike at the lower range
+of the inset histogram, small and moderate forecast values generally tend to be too large
+(i.e., overforecasting) since the calibration curve is beneath the diagonal for small fore-
+casted means, and large forecast values (on the CDF scale) tend to be too small (i.e.,
+underforecasting), for a slight indication of underconfidence.
+3.3
+Miscalibration–discrimination (MCB–DSC) diagrams
+As illustrated in Figures 6 and 7, mean-reliability curves allow for a diagnostic interpre-
+tation of a model’s performance in terms of calibration. In a related development, and
+also based on the CORP (re) calibration method, Gneiting and Resin (2023) introduce
+a decomposition of the average score
+¯S = 1
+n
+n
+X
+i=1
+S(xi, yi)
+(17)
+for a collection (x1, y1), . . . , (xn, yn) of forecast–observation pairs that allows for an in-
+terpretation in terms of (mis) calibration and discrimination ability.
+Specifically, let
+ˆx1, . . . , ˆxn denote the PAV (re) calibrated forecasts that correspond to x1, . . . , xn, re-
+spectively, and let ˆxmg = 1
+n
+Pn
+i=1 yi denote the overall (or marginal) mean, which serves
+as a simple baseline mean-forecast. Given a consistent scoring function S we let
+¯Src = 1
+n
+n
+X
+i=1
+S(ˆxi, yi)
+and
+¯Smg = 1
+n
+n
+X
+i=1
+S(ˆxmg, yi)
+denote the average score of the (re) calibrated forecast and the marginal forecast, re-
+spectively. We can then define the miscalibration (MCB), discrimination (DSC), and
+uncertainty (UNC) components of the average score ¯S as
+MCB = ¯S −¯Src,
+DSC = ¯Smg −¯Src,
+and
+UNC = ¯Smg,
+(18)
+respectively. The MCB term compares the original forecast to the calibrated one, and
+attains its minimal value of zero if, and only if, the original forecast is calibrated; the
+DSC term compares the best constant forecast to the calibrated forecast, and attains
+its minimal value of zero if, and only if, xi = x1 for i = 1, . . . , n (Gneiting and Resin,
+2023). In other words, the MCB reflects how unreliable a model is, whereas the DSC
+term reflects how well a model can sort out different scenarios (e. g., here especially back-
+ground seismicity and triggered seismicity). The UNC term is independent of the issued
+forecast values and quantifies the variability of the outcomes. All three components are
+nonnegative and yield the CORP score decomposition
+¯S = MCB −DSC + UNC.
+(19)
+Evidently, low MCB and high DSC terms are desirable, and a low average score ¯S might
+stem from low MCB, or high DSC, or both. Analogously, a high average score might
+stem from high MCB, or low DSC, or both.
+22
+
+--- Sayfa 23 ---
+3 10
+3.05
+3.00
+2.95
+2.90
+2.85
+2.80
+2.75
+2.70
+.6
+LM
+FCM
+LG
+SMA
+LRWA
+UNC = 3.73
+Total Score
+0.05
+0.10
+0.15
+  0.80
+  0.85
+  0.90
+  0.95
+  1.00
+  1.05
+  1.10
+0.68
+0.67
+0.66
+0.65
+0.64
+0.63
+0.62
+LM
+FCM
+LG
+SMA
+LRWA
+UNC = 0.70
+Number Score
+0.03
+0.04
+0.05
+0.06
+0.07
+0.08
+0.10
+0.11
+Miscalibration (MCB)
+Discrimination (DSC)
+Figure 8: MCB–DSC diagram for the five forecast models under the Poisson scoring
+function, for (Left) the total score at (1) and (Right) the number score at (20). For the
+pairs of models connected by (dotted) lines, the (two-sided) Diebold–Mariano test does
+not reject the null hypothesis of equal predictive ability in terms of the Poisson scoring
+function at the 0.10 significance level.
+For an illustration of the decomposition (19) under the Poisson scoring function on
+manipulated LM forecasts we return to Figure 6, where n = C×T. We note that the (re)
+calibrated LM forecast shares DSC with the original LM model, but has lower (namely,
+zero) MCB. The LM ×4 and LM ×0.25 forecasts also share DSC with the original LM
+model, but have much larger MCB. These observations highlight that DSC only reflects
+the relative context of a model’s forecast values. The ‘LM overconf’ and ‘LM underconf’
+forecasts degrade MCB and/or DSC. Similarly, Figure 7 illustrates the decomposition
+(19) for the five forecast models under the Poisson scoring function.
+For a more succinct presentation of the CORP score decomposition at (19) we con-
+sider miscalibration–discrimination (MCB–DSC) diagrams, as introduced in related con-
+texts by Dimitriadis et al. (2023) and Gneiting et al. (2023). An MCB–DSC diagram
+plots, for each model considered, DSC on the vertical axis versus MCB on the horizontal
+axis. In view of the relationship at (19), models with an equal average score ¯S are rep-
+resented on parallel lines with positive slope,14 and models at upper left in the diagram
+score best, with low MCB and high DSC, whereas models at lower right score worst,
+with high MCB and low DSC. Models that are located (roughly) on one of the parallel
+lines have a similar average score but trade MCB for DSC, or vice versa. The left panel
+14As the relationships in (15) demonstrate, these lines also indicate equal information gain, or equal
+information gain per earthquake.
+23
+
+--- Sayfa 24 ---
+in Figure 8 shows an MCB–DSC diagram for the five forecast models from Figure 7
+using the total score (1). Accordingly, the inferior performance of the LG model stems
+from a substantial lack of discrimination ability (evidently from Figure 4, it performs
+well for quiescent periods, i.e., background seismicity, but worst during the sequences in
+central Italy 2009 and 2016). The LRWA and LM models outperform their competitors
+and show pleasant balance between calibration and discrimination. The differences in
+the total score between the LRWA, LM, SMA, and FCM models are modest.
+The right panel in Figure 8 shows an MCB–DSC diagram for spatially aggregated
+model forecasts, as shown in the top panel of Figure 2. Specifically, the number score of
+model j,
+¯S(j)
+# = 1
+T
+T
+X
+t=1
+S
+ C
+X
+c=1
+x(j)
+c,t ,
+C
+X
+c=1
+yc,t
+!
+,
+(20)
+is the average score of the spatially aggregated expected numbers of target earthquakes.15
+In typical practice, analyses based on total scores as in (1) and analyses based on number
+scores as in (20) yield similar, if not identical, model rankings. Yet, we prefer total scores
+since comparisons of spatially aggregated forecasts in number scores ignore regional
+differences in predictive performance. For example, a model that overforecasts in some
+part of the testing region and underforecasts in another part gets penalized by the total
+score in (1), but if the effects balance each other, the model’s deficiencies may not
+be discernible from the number score in (20). In the spatially aggregated setting, the
+number of forecast cases dwindles to n = T, as opposed to n = C × T for the total score
+at the grid cell level. While the rankings of the five forecast models under the total score
+and under the number score are identical, the LG model now lacks predominantly in
+terms of MCB.
+As noted, forecasts in the form of expected counts allow for aggregation at any desired
+spatial and/or temporal level, and we encourage the development of multi-resolution
+evaluation approaches in the spirit of Asim et al. (2023).
+3.4
+Comparison to existing CSEP methodology
+Our focus in this section has been on diagnostics, where the goal is to identify, and even-
+tually remedy, model deficiencies in terms of the notions of (mis) calibration, also referred
+to as reliability, and discrimination ability. In contrast, extant CSEP methodology for
+model evaluation has put the focus on formal statistical tests of agreement between
+forecasts and outcomes, frequently under the label of earthquake likelihood model testing
+15Interestingly, if there are no target earthquakes at a given time t, then the models’ contributions to
+the total score equal their contributions to the number score. This follows from the fact that if S is the
+Poisson scoring function at (9) then
+¯S(j)
+t
+=
+C
+X
+c=1
+S(x(j)
+c,t , yc,t) = S
+ C
+X
+c=1
+x(j)
+c,t ,
+C
+X
+c=1
+yc,t
+!
++
+C
+X
+c=1
+S
+ 
+x(j)
+c,t
+PC
+b=1 x(j)
+b,t
+, yc,t
+!
+−1.
+The middle term on the right-hand side reduces to the constant 1 if yc,t = 0 for c = 1, . . . , C, which
+proves the claim.
+24
+
+--- Sayfa 25 ---
+(Kagan and Jackson, 1995; Schorlemmer et al., 2007). For example, the CSEP L-test,
+CL-test, and N-test operate under the (questionable) joint hypothesis that the modeled
+expected cell counts are correct, and that each observed count has a Poisson distribu-
+tion. A model then might fail the test when either one or both of the hypotheses are
+false. In particular, this happens when the expected cell counts are perfectly correct,
+but the observed counts do not come from the Poisson distribution. Conversely, while a
+passed test expresses the fact that there is no evidence against either of the hypotheses,
+a model might pass the test, and yet be inferior to competitors that fail the test. Thus,
+the outcomes of these tests may be misleading, except for cases where the model issues
+full-distribution forecasts that are explicitly Poisson distributions.
+The Poisson assumption was avoided by Savran et al. (2020), who tested full-distribu-
+tion (i.e., catalog-based) earthquake forecasts with nonparametric analogs to the grid-
+based CSEP tests (N-, M-, L-, and S-test). These tests were implemented in (py)CSEP
+(Savran et al., 2022), but they only address consistency/calibration of full-distribution
+forecasts, not comparative evaluations. The tools proposed in our paper are also non-
+parametric and do not rely on a Poisson assumption. They are straightforward to imple-
+ment and, in addition to model ranking via scoring functions, they can be used diagnos-
+tically, via mean-reliability curves and MCB–DSC diagrams, to identify, and eventually
+remedy, model deficiencies. In addition, the proposed methods facilitate comparing also
+full-distribution forecasts.
+Worthy of note, as for the current CSEP testing implementation, both calibration
+and consistency tests do not account for the so-called epistemic uncertainty, considering
+only one model or the (weighted) mean of a set of models. The consequences of that have
+been discussed in depth by Marzocchi and Jordan (2014). Here we just mention that
+a proper model validation can be made only considering such an uncertainty. Hence,
+model consistency and calibration have mostly an heuristic value that tells us how much
+and how the observations deviate from the forecasts.
+4
+Conclusion
+In this study we considered short-term earthquake forecasting models for the Italian
+CSEP testing region and evaluated their forecasts (in the form of expected earthquake
+counts) with consistent scoring functions, mean-reliability diagrams, and miscalibration–
+discrimination (MCB–DSC) diagrams. We illustrated that evaluation methods based on
+scoring functions offer a comprehensive assessment of the models. They yield a broader
+perspective on the existing CSEP testing framework and provide a valuable tool box for
+earthquake model assessment. Specifically, we make the following recommendations.
+• There are many consistent scoring functions for forecasts in the format of expected
+counts, with the Poisson score playing a distinguished role in low probability en-
+vironments.
+Use Murphy diagrams to consider all consistent scoring functions
+simultaneously; the area under a logarithmic Murphy curve equals the average
+Poisson score.
+25
+
+--- Sayfa 26 ---
+• Retain the established practice of binary model comparisons via the information
+gain per earthquake (IGPE: Vere-Jones, 2003; Harte and Vere-Jones, 2005; Rhoades
+et al., 2011) measure. The IGPE measure equals (up to a factor) the difference in
+the average Poisson score (Eq. 15) and is much broader applicable than previously
+thought, as its use does not depend on any parametric assumptions.
+• If formal inference is the goal, which depends on accurate uncertainty quantifica-
+tion, replace the CSEP T-test by its close relative, the Diebold–Mariano test based
+on spatially aggregated scores, which comprehensively accounts for sampling vari-
+ability.
+• Use mean-reliability curves as a diagnostic tool to assess calibration.
+• An average score ¯S can be decomposed into MCB, DSC, and UNC components.
+Compare and investigate them for multiple models in MCB–DSC diagrams.
+Importantly, the evaluation methods proposed here are model-agnostic, i.e., they can be
+applied to any type of forecast (in the form of expected earthquake counts), regardless
+of the model or technique that produced them. Forecast and data characteristics such as
+spatial-temporal clustering and heavy tailed distributions affect the intrinsic variability
+in these methods, which gets quantified via the denominator in the Diebold–Mariano
+statistic (12) and consistency bands in mean-reliability diagrams. While further work in
+these directions may be the focus of future research, we are confident that these tools
+will help pave the way to improvements in the evaluation, selection, and development of
+earthquake forecasting models.
+It is important to stress that our results hold only in terms of mean-forecasts. In
+particular, we do not claim that the LRWA and LM models are superior in all facets.
+The results indicate that they are slightly better at producing mean-forecasts for the
+number of earthquakes. A key reason for this is that the forecasts of the LM model are
+well-calibrated and overall higher than the forecasts of its competitors. Hence, the LM
+model is not as severely underforecasting as the LG and FCM models on days when
+(many) earthquakes happen.
+As emphasized by Nandan et al. (2019) it would be best if these forecasts specified
+the full distribution of earthquake counts, as this provides most information on the likely
+implications of different actions. Yet, full-distribution forecasts may not be available due
+to their complexity, reporting traditions, ease of forecast communication, or the need for
+aggregation. However, full-distribution forecasts can be supplied in the form of a col-
+lection of synthetic catalogs (also called stochastic event sets) of future earthquakes.16
+Importantly, if collections of synthetic catalogs are interpreted as full-distribution fore-
+casts, we can deduce mutually consistent full (empirical) distribution forecasts at any
+desired level of spatial and/or temporal aggregation. The evaluation methods proposed
+in this paper also apply to full-distribution forecasts, by converting them to the implied
+mean-forecasts, as implemented here, which does not require smoothing nor parametric
+assumptions.
+16In their experiments, Nandan et al. (2019) use a collection of five million synthetic catalogs.
+26
+
+--- Sayfa 27 ---
+Data Availability
+The tables and figures were produced with R (R Core Team, 2024). Code for reproduc-
+tion is available on https://github.com/jbrehmer42/Earthquakes_Italy, where we
+also provide details on slight differences to previously reported scores (see footnote 4 de-
+scribing Table 1). Data are available from Marcus Herrmann (marcus.herrmann@unina.it)
+upon request.
+Acknowledgments
+Jonas Brehmer, Tilmann Gneiting, and Kristof Kraus are grateful for support by the
+Klaus Tschira Foundation. Marcus Herrmann and Warner Marzocchi were supported
+by the ‘Multi-Risk sciEnce for resilienT commUnities undeR a changiNg climate’ (RE-
+TURN) project, funded by the European Union’s NextGenerationEU and the Italian
+Ministry of University and Research (MUR) under the National Recovery and Resilience
+Plan (PNRR; Code PE0000005). We thank two anonymous reviewers, Johannes Bracher,
+Alexander Jordan, and Johannes Resin for helpful discussions and remarks.
+References
+Asim, K. M., Hainzl, S., Schorlemmer, D., Iturrieta, P., Bayona, J. A., Savran, W. H.,
+Werner, M. and Marzocchi, W. (2023). Statistical power of spatial earthquake forecast
+tests. Geophysical Journal International, 233, 2053–2066. URL https://doi.org/
+10.1093/gji/ggad030.
+Ayer, M., Brunk, H. D., Ewing, G. M., Reid, W. T. and Silverman, E. (1955). An empir-
+ical distribution function for sampling with incomplete information. Annals of Mathe-
+matical Statistics, 26, 641–647. URL https://doi.org/10.1214/aoms/1177728423.
+Bayliss, K., Naylor, M., Illian, J. and Main, I. G. (2020). Data-driven optimization of
+seismicity models using diverse data sets: Generation, evaluation, and ranking using
+Inlabru. Journal of Geophysical Research: Solid Earth, 125, e2020JB020226. URL
+https://doi.org/10.1029/2020JB020226.
+Bray, A. and Schoenberg, F. P. (2013). Assessment of point process models for earth-
+quake forecasting. Statistical Science, 28, 510–520. URL https://doi.org/10.1214/
+13-STS440.
+Bray, A., Wong, K., Barr, C. D. and Schoenberg, F. P. (2014). Voronoi residual anal-
+ysis of spatial point process models with applications to California earthquake fore-
+casts. Annals of Applied Statistics, 8, 2247–2267. URL https://doi.org/10.1214/
+14-AOAS767.
+Brehmer, J. R., Gneiting, T., Herrmann, M., Marzocchi, W., Schlather, M. and Strokorb,
+K. (2024). Using scoring functions to evaluate point process forecasts. Annals of the
+27
+
+--- Sayfa 28 ---
+Institute of Statistical Mathematics, 76, 47–71.
+URL https://doi.org/10.1007/
+s10463-023-00875-5.
+Cattania, C., Werner, M. J., Marzocchi, W., Hainzl, S., Rhoades, D., Gerstenberger,
+M., Liukis, M., Savran, W., Christophersen, A., Helmstetter, A., Jimenez, A., Steacy,
+S. and Jordan, T. H. (2018). The forecasting skill of physics-based seismicity models
+during the 2010–2012 Canterbury, New Zealand, earthquake sequence. Seismological
+Research Letters, 89, 1238–1250. URL https://doi.org/10.1785/0220180033.
+Czado, C., Gneiting, T. and Held, L. (2009). Predictive model assessment for count
+data. Biometrics, 65, 1254–1261. URL https://doi.org/10.1111/j.1541-0420.
+2009.01191.x.
+Dahm, T. and Hainzl, S. (2022).
+A Coulomb stress response model for time-
+dependent earthquake forecasts. Journal of Geophysical Research: Solid Earth, 127,
+e2022JB024443. URL https://doi.org/10.1029/2022JB024443.
+de Leeuw, J., Hornik, K. and Mair, P. (2009). Isotone optimization in R: Pool-Adjacent-
+Violators Algorithm (PAVA) and active set methods. Journal of Statistical Software,
+32, 1–24. URL https://doi.org/10.18637/jss.v032.i05.
+Diebold, F. X. and Mariano, R. S. (1995). Comparing predictive accuracy. Journal
+of Business & Economic Statistics, 13, 253–263. URL https://doi.org/10.1198/
+073500102753410444.
+Dimitriadis, T., Gneiting, T., Jordan, A. and Vogel, P. (2023). Evaluating probabilistic
+classifiers: The triptych. International Journal of Forecasting. URL https://doi.
+org/10.1016/j.ijforecast.2023.09.007.
+Dimitriadis, T., Gneiting, T. and Jordan, A. I. (2021).
+Stable reliability diagrams
+for probabilistic classifiers. Proceedings of the National Academy of Sciences of the
+United States of America, 118, e2016191118. URL https://doi.org/10.1073/pnas.
+2016191118.
+Ehm, W., Gneiting, T., Jordan, A. and Kr¨uger, F. (2016). Of quantiles and expectiles:
+Consistent scoring functions, Choquet representations and forecast rankings. Journal
+of the Royal Statistical Society. Series B. Statistical Methodology, 78, 505–562. URL
+https://doi.org/10.1111/rssb.12154.
+Falcone, G., Console, R. and Murru, M. (2010). Short-term and long-term earthquake
+occurrence models for Italy: ETES, ERS and LTST. Annals of Geophysics, 53, 41–50.
+URL https://doi.org/10.4401/ag-4760.
+Gerstenberger, M. C., Wiemer, S., Jones, L. M. and Reasenberg, P. A. (2005). Real-
+time forecasts of tomorrow’s earthquakes in California. Nature, 435, 328–331. URL
+https://doi.org/10.1038/nature03622.
+28
+
+--- Sayfa 29 ---
+Gneiting, T. (2011). Making and evaluating point forecasts. Journal of the American
+Statistical Association, 106, 746–762. URL https://doi.org/10.1198/jasa.2011.
+r10138.
+Gneiting, T., Balabdaoui, F. and Raftery, A. E. (2007). Probabilistic forecasts, cal-
+ibration and sharpness. Journal of the Royal Statistical Society Series B: Statisti-
+cal Methodology, 69, 243–268. URL https://doi.org/10.1111/j.1467-9868.2007.
+00587.x.
+Gneiting, T. and Katzfuss, M. (2014).
+Probabilistic forecasting.
+Annual Review
+of Statistics and Its Application, 1, 125–151.
+URL https://doi.org/10.1146/
+annurev-statistics-062713-085831.
+Gneiting, T. and Raftery, A. E. (2007). Strictly proper scoring rules, prediction, and
+estimation.
+Journal of the American Statistical Association, 102, 359–378.
+URL
+https://doi.org/10.1198/016214506000001437.
+Gneiting, T. and Resin, J. (2023). Regression diagnostics meets forecast evaluation: Con-
+ditional calibration, reliability diagrams, and coefficient of determination. Electronic
+Journal of Statistics, 17, 3226–3286. URL https://doi.org/10.1214/23-EJS2180.
+Gneiting, T., Wolffram, D., Resin, J., Kraus, K., Bracher, J., Dimitriadis, T., Ha-
+genmeyer, V., Jordan, A. I., Lerch, S., Phipps, K. and Schienle, M. (2023).
+Model diagnostics and forecast evaluation for quantiles.
+Annual Review of
+Statistics and Its Application, 10, 597–621.
+URL https://doi.org/10.1146/
+annurev-statistics-032921-020240.
+Harte, D. and Vere-Jones, D. (2005).
+The entropy score and its uses in earthquake
+forecasting. Pure and Applied Geophysics, 162, 1229–1253. URL https://doi.org/
+10.1007/s00024-004-2667-2.
+Heinrich-Mertsching, C., Thorarinsdottir, T. L., Guttorp, P. and Schneider, M. (2024).
+Validation of point process predictions with proper scoring rules. Scandinavian Journal
+of Statistics, 51, 1533–1566. URL https://doi.org/10.1111/sjos.12736.
+Herrmann, M. and Marzocchi, W. (2023). Maximizing the forecasting skill of an ensemble
+model. Geophysical Journal International, 234, 73–84. URL https://doi.org/10.
+1093/gji/ggad020.
+Holzmann, H. and Eulert, M. (2014). The role of the information set for forecasting —
+with applications to risk management. Annals of Applied Statistics, 8, 595–621. URL
+https://doi.org/10.1214/13-AOAS709.
+Jordan, T. H., Chen, Y.-T., Gasparini, P., Madariaga, R., Main, I., Marzocchi, W.,
+Papadopoulos, G., Sobolev, G., Yamaoka, K. and Zschau, J. (2011).
+Operational
+earthquake forecasting. State of knowledge and guidelines for utilization. Annals of
+Geophysics, 54, 316–391. URL https://doi.org/10.4401/ag-5350.
+29
+
+--- Sayfa 30 ---
+Kagan, Y. Y. and Jackson, D. D. (1995).
+New seismic gap hypothesis: Five years
+after. Journal of Geophysical Research: Solid Earth, 100, 3943–3959. URL https:
+//doi.org/10.1029/94JB03014.
+Kolassa, S. (2016). Evaluating predictive count data distributions in retail sales fore-
+casting. International Journal of Forecasting, 32, 788–803. URL https://doi.org/
+10.1016/j.ijforecast.2015.12.004.
+Lehmann, E. L. and Romano, J. P. (2022).
+Testing Statistical Hypotheses.
+4th ed.
+Springer. URL https://doi.org/10.1007/978-3-030-70578-7.
+Lerch, S., Thorarinsdottir, T. L., Ravazzolo, F. and Gneiting, T. (2017). Forecaster’s
+dilemma: Extreme events and forecast evaluation. Statistical Science, 32, 106–127.
+URL https://doi.org/10.1214/16-STS588.
+Lolli, B. and Gasperini, P. (2003). Aftershocks hazard in Italy. Part I: Estimation of
+time-magnitude distribution model parameters and computation of probabilities of
+occurrence. Journal of Seismology, 7, 235–257. URL https://doi.org/10.1023/A:
+1023588007122.
+Lombardi, A. M. and Marzocchi, W. (2010). The ETAS model for daily forecasting of
+Italian seismicity in the CSEP experiment. Annals of Geophysics, 53, 155–164. URL
+https://doi.org/10.4401/ag-4848.
+Mancini, S., Segou, M., Werner, M. J. and Cattania, C. (2019). Improving physics-based
+aftershock forecasts during the 2016–2017 Central Italy earthquake cascade. Journal
+of Geophysical Research: Solid Earth, 124, 8626–8643. URL https://doi.org/10.
+1029/2019JB017874.
+Marzocchi, W. and Jordan, T. H. (2014). Testing for ontological errors in probabilis-
+tic forecasting models of natural systems. Proceedings of the National Academy of
+Sciences, 111, 11973–11978. URL https://doi.org/10.1073/pnas.1410183111.
+Marzocchi, W. and Jordan, T. H. (2018). Experimental concepts for testing probabilistic
+earthquake forecasting and seismic hazard models. Geophysical Journal International,
+215, 780–798. URL https://doi.org/10.1093/gji/ggy276.
+Marzocchi, W., Lombardi, A. M. and Casarotti, E. (2014). The establishment of an
+operational earthquake forecasting system in Italy. Seismological Research Letters,
+85, 961–969. URL https://doi.org/10.1785/0220130219.
+Nandan, S., Ouillon, G., Sornette, D. and Wiemer, S. (2019).
+Forecasting the full
+distribution of earthquake numbers is fair, robust, and better. Seismological Research
+Letters, 90, 1650–1659. URL https://doi.org/10.1029/2022JB024380.
+Patton, A. J. (2011).
+Volatility forecast comparison using imperfect volatility prox-
+ies.
+Journal of Econometrics, 160, 246–256.
+URL https://doi.org/10.1016/j.
+jeconom.2010.03.034.
+30
+
+--- Sayfa 31 ---
+R Core Team (2024). R: A language and environment for statistical computing. R Foun-
+dation for Statistical Computing, Vienna, Austria. URL https://www.R-project.
+org/.
+Rhoades, D., Schorlemmer, D., Gerstenberger, M., Christophersen, A., Zechar, J. D. and
+Imoto, M. (2011). Efficient testing of earthquake forecasting models. Acta Geophysica,
+59, 728–747. URL https://doi.org/10.2478/s11600-011-0013-5.
+Savage, L. J. (1971). Elicitation of personal probabilities and expectations. Journal of
+the American Statistical Association, 66, 783–801. URL https://doi.org/10.2307/
+2284229.
+Savran, W. H., Bayona, J. A., Iturrieta, P., Asim, K. M., Bao, H., Bayliss, K., Herrmann,
+M., Schorlemmer, D., Maechling, P. J. and Werner, M. J. (2022). pycsep: a python
+toolkit for earthquake forecast developers. Seismological Society of America, 93, 2858–
+2870. URL https://doi.org/10.1785/0220220033.
+Savran, W. H., Werner, M. J., Marzocchi, W., Rhoades, D. A., Jackson, D. D., Milner,
+K., Field, E. and Michael, A. (2020). Pseudoprospective evaluation of UCERF3-ETAS
+forecasts during the 2019 Ridgecrest sequence. Bulletin of the Seismological Society
+of America, 110, 1799–1817. URL https://doi.org/10.1785/0120200026.
+Schorlemmer, D., Gerstenberger, M., Wiemer, S. and Jackson, D. (2007). Earthquake
+likelihood model testing.
+Seismological Research Letters, 78, 17–29.
+URL https:
+//doi.org/10.1785/gssrl.78.1.17.
+Schorlemmer, D., Werner, M. J., Marzocchi, W., Jordan, T. H., Ogata, Y., Jack-
+son, D. D., Mak, S., Rhoades, D. A., Gerstenberger, M. C., Hirata, N., Liukis,
+M., Maechling, P. J., Strader, A., Taroni, M., Wiemer, S., Zechar, J. D. and
+Zhuang, J. (2018). The Collaboratory for the Study of Earthquake Predictability:
+Achievements and priorities.
+Seismological Research Letters, 89, 1305–1313.
+URL
+https://doi.org/10.1785/0220180053.
+Serafini, F., Naylor, M., Lindgren, F., Werner, M. J. and Main, I. (2022). Ranking
+earthquake forecasts using proper scoring rules: Binary events in a low probability
+environment.
+Geophysical Journal International, 230, 1419–1440.
+URL https://
+doi.org/10.1093/gji/ggac124.
+Sharma, S., Hainzl, S., Z¨oeller, G. and Holschneider, M. (2020). Is Coulomb stress the
+best choice for aftershock forecasting? Journal of Geophysical Research: Solid Earth,
+125, e2020JB019553. URL https://doi.org/10.1029/2020JB019553.
+Spassiani, I., Falcone, G., Murru, M. and Marzocchi, W. (2023). Operational earth-
+quake forecasting in Italy: Validation after 10 yr of operativity. Geophysical Journal
+International, 234, 2501–2518. URL https://doi.org/10.1093/gji/ggad256.
+31
+
+--- Sayfa 32 ---
+Taggart, R. (2022). Evaluation of point forecasts for extreme events using consistent
+scoring functions. Quarterly Journal of the Royal Meteorological Society, 148, 306–
+320. URL https://doi.org/10.1002/qj.4206.
+Taroni, M., Marzocchi, W., Schorlemmer, D., Werner, M. J., Wiemer, S., Zechar, J. D.,
+Heiniger, L. and Euchner, F. (2018). Prospective CSEP evaluation of 1-day, 3-month,
+and 5-yr earthquake forecasts for Italy. Seismological Research Letters, 89, 1251–1261.
+URL https://doi.org/10.1785/0220180031.
+Thorarinsdottir, T. L. (2013). Calibration diagnostics for point process models via the
+probability integral transform. Stat, 2, 150–158. URL https://doi.org/10.1002/
+sta4.25.
+Vere-Jones, D. (2003). Selected Papers from Volume 30 of Vychislitel’naya Seysmologiya,
+chap. Probabilities and information gain for earthquake forecasting. American Geo-
+physical Union, 104–114. URL https://doi.org/10.1029/CS005p0104.
+Wei, W. and Held, L. (2014). Calibration tests for count data. Test, 23, 787–805. URL
+https://doi.org/10.1007/s11749-014-0380-8.
+Werner, M. J., Zechar, J. D., Marzocchi, W., Wiemer, S. and the CSEP-Italy Working
+Group (2010).
+Retrospective evaluation of the five-year and ten-year CSEP-Italy
+earthquake forecasts. Annals of Geophysics, 53, 11–30. URL https://doi.org/10.
+4401/ag-4840.
+Wilks, D. (2016). “The stippling shows statistically significant grid points”: How re-
+search results are routinely overstated and overinterpreted, and what to do about
+it.
+Bulletin of the American Meteorological Society, 97, 2263–2273.
+URL https:
+//doi.org/10.1175/BAMS-D-15-00267.1.
+Woessner, J., Christophersen, A., Zechar, J. D. and Monelli, D. (2010). Building self-
+consistent, short-term earthquake probability (STEP) models: Improved strategies
+and calibration procedures. Annals of Geophysics, 53, 141–154. URL https://doi.
+org/10.4401/ag-4812.
+Zhang, L., Mai, P. M., Thingbaijam, K. K., Razafindrakoto, H. N. and Genton, M. G.
+(2015). Analysing earthquake slip models with the spatial prediction comparison test.
+Geophysical Journal International, 200, 185–198. URL https://doi.org/10.1093/
+gji/ggv088.
+32
+
+--- Sayfa 33 ---
+Appendices
+A
+Consistent scoring functions
+A.1
+Technical details for the Bregman representation
+Consider the Bregman representation (7), namely,
+S(x, y) = ϕ(y) −ϕ(x) −ϕ′(x)(y −x),
+for a scoring function that is consistent for the mean-functional.
+For simplicity we
+ignore the function h(y), and we recall that ϕ is a convex function with subgradient ϕ′.
+Regarding our setting of count data, where the mean-forecast x ≥0 is a nonnegative
+number, whereas the outcome y ∈{0, 1, . . .} is a nonnegative integer, we distinguish
+three cases for this representation.
+In case I the convex function ϕ is continuous and differentiable on the nonnegative
+halfaxis with ϕ(0) and ϕ′(0) being real numbers. A key example is ϕ(x) = xb for b > 1.
+Then the score S(x, y) is well-defined and finite for all x ≥0 and y ∈{0, 1, . . .}.
+In case II the convex function ϕ is defined on the strictly positive halfaxis with
+ϕ(0) = limx↓0 ϕ(x) being finite, but ϕ′(0) = limx↓0 ϕ′(x) = −∞.
+A key example is
+ϕ(x) = −xb for 0 < b < 1. Then the score S(x, y) is well-defined and finite for x > 0
+and y ∈{0, 1, . . .}. To allow for the mean-forecast x = 0, we define S(0, 0) = 0 and
+S(0, y) = +∞for y ∈{1, 2, . . .}, which retains consistency.
+In case III the convex function ϕ is defined on the strictly positive halfaxis with
+ϕ(0) = limx↓0 ϕ(x) = +∞and ϕ′(0) = limx↓0 ϕ′(x) = −∞. A key example is ϕ(x) = xb
+for b < 0. Then the score S(x, y) is well-defined and finite for x > 0 and y ∈{1, 2, . . .},
+but there is no obvious extension that maintains consistency.
+A.2
+Extended Patton family of consistent scoring functions
+The original Patton family of consistent scoring functions for an expected value (Patton,
+2011) is parameterized in terms of a real-valued index b and defined via
+Sb(x, y) =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+yb −xb
+b(b −1) −xb−1
+b −1(y −x),
+b /∈{0, 1},
+y
+x −log y
+x −1,
+b = 0,
+y log y
+x −(y −x),
+b = 1,
+(A.1)
+for an expected value x > 0 and an outcome y > 0. The members Sb of the Patton
+family are strictly consistent scoring functions for an expected value, as they are of the
+33
+
+--- Sayfa 34 ---
+form (7) with the strictly convex function
+ϕb(x) =
+
+
+
+
+
+
+
+
+
+xb
+b(b −1),
+b /∈{0, 1},
+−log x,
+b = 0,
+x log x,
+b = 1,
+(A.2)
+and a certain choice of h(y). The Patton family nests both the Poisson scoring function
+(b = 1) at (9) and the quadratic scoring function (b = 2) at (8), up to a constant factor
+and terms that only depend on y. However, the specific choice of h(y) yields expressions
+for Sb(x, y) that can be undefined when x = 0 or y = 0, and so the Patton functions
+need to be modified to evaluate forecasts of earthquake counts.
+To accommodate count data, while retaining the nesting property, we define the
+extended Patton family via
+S0
+b(x, y) = Sb(x, y) −Sb(1, y) + 1
+2yb −b
+2y + 3 −b
+2
+(A.3)
+for x > 0 and y > 0. The members S0
+b of the extended Patton family are still strictly
+consistent, since S0
+b(x, y) agrees with Sb(x, y) up to terms that depend on y only, and
+thus they are of the form (7) with the same choice of ϕb.
+To extend S0
+b(x, y) to x ≥0 and y ∈{0, 1, . . .} we proceed as discussed in Ap-
+pendix A.1. If b > 1 we are in case I and extend by continuity. If 0 < b ≤1 we are in
+case II and extend by setting S0
+b(0, 0) = 0 and S0
+b(0, y) = +∞for y ∈{1, 2, . . .}. If b ≤0
+we are in case III, when there is no obvious extension. The expression in (A.3) yields
+S0
+b(x, y) = x −y log x for x > 0 and y ∈{0, 1, . . .} when b = 1, and S0
+b(x, y) = 1
+2(y −x)2
+for x ≥0 and y ∈{0, 1, . . .} when b = 2, and thus the extended Patton family nests
+both the Poisson scoring function and (1
+2 times) the quadratic scoring function.
+B
+Further technical details and results for Section 2
+In this appendix, we provide further technical details and supplementary results for
+Section 2. Throughout, the scoring function S is the Poisson scoring function at (9).
+Whenever feasible, we present formulas in the generic spatio-temporal setting of earth-
+quake forecasts, where there are C grid cells and T regularly spaced test times, with
+earthquake count yc,t in grid cell c ∈{1, . . . , C} at time t ∈{1, . . . , T}. In the specific
+case of the OEF-Italy there are C = 8993 grid cells and T = 5514 test times.
+B.1
+Quantities in Figure 4 panels
+We give technical details for the quantities displayed in the four panels of Figure 4. To
+this end, suppose that model j issues forecasts in the form of expected cell counts x(j)
+c,t .
+As defined at (2), the spatially aggregated score of model j at time t is
+¯S(j)
+t
+=
+C
+X
+c=1
+S
+
+x(j)
+c,t , yc,t
+
+,
+(B.1)
+34
+
+--- Sayfa 35 ---
+which is the quantity plotted against time t in the first (top) panel in Figure 4, where
+the index j stands for the LM, FCM, LG, SMA, and LRWA model, respectively. The
+second panel in Figure 4 shows the daily score difference
+d(j,k)
+t
+= ¯S(j)
+t
+−¯S(k)
+t ,
+(B.2)
+where the index j stands for the FCM, LG, SMA, and LRWA model, and the index k
+for the LM model.
+Not surprisingly, plots of daily Poisson scores or daily Poisson score difference are
+highly irregular. To obtain smoother curves, one can plot the cumulative score difference
+D(j,k)
+t
+=
+t
+X
+u=1
+d(j,k)
+u
+(B.3)
+against time t, as in Figure 2 of Taroni et al. (2018) and in the third panel of our Figure 4.
+Alternatively, Figures 5, 6, and C2 of Herrmann and Marzocchi (2023) and the fourth
+panel of our Figure 4 plot the normalized quantity
+D(j,k)
+t
+/Nt,
+(B.4)
+where
+Nt =
+t
+X
+u=1
+C
+X
+c=1
+yc,u
+(B.5)
+is the cumulative count of target earthquakes over the test region and test times u ∈
+{1, . . . , t}. We note that the quantities (B.1) to (B.4), which are displayed in the four
+rows of Figure 4, are all negatively oriented, i.e., the smaller the better.
+B.2
+Total Poisson score, information gain, and information gain per
+earthquake in spatio-temporal settings
+Let us recall from (1) that the total score of model j is
+¯S(j) = 1
+T
+T
+X
+t=1
+¯S(j)
+t ,
+where ¯S(j)
+t
+is the spatially aggregated score for model j on day t from (B.1). The z
+statistic (12) of the Diebold–Mariano test of equal predictive ability of model j and
+model k is a multiple of the difference
+¯S(j) −¯S(k),
+(B.6)
+where S is the Poisson score. We proceed to prove the claims in (15) that the information
+gain IG(j,k) and the information gain per earthquake IGPE
+(j,k) of model k over model j
+also are multiples of the Poisson score difference at (B.6).
+35
+
+--- Sayfa 36 ---
+We start with time t fixed and consider the definition of the information gain in the
+purely spatial setting of Eq. (17) in Rhoades et al. (2011, p. 740). In this simpler setting,
+the information gain of model k over model j at time t is
+C
+X
+c=1
+yc,t
+
+log x(k)
+c,t −log x(j)
+c,t
+
+−
+C
+X
+c=1
+
+x(k)
+c,t −x(j)
+c,t
+
+.
+(B.7)
+To see the equivalence of our Eq. (B.7) and Eq. (17) in Rhoades et al. (2011), note the
+specification of the quantity ik at the top of their page 731 and the fact that
+C
+X
+c=1
+yc,t
+
+log x(k)
+c,t −log x(j)
+c,t
+
+=
+∞
+X
+z=1
+z
+C
+X
+c=1
+1(yc,t = z)
+
+log x(k)
+c,t −log x(j)
+c,t
+
+represents the score differences in bins with observed target earthquakes. Summing the
+expression for the information gain at time t in (B.7) over testing times t ∈{1, . . . , T},
+the spatio-temporal information gain IG(j,k) of model k over model j is
+IG(j,k) =
+T
+X
+t=1
+C
+X
+c=1
+yc,t
+
+log x(j)
+c,t −log x(k)
+c,t
+
+−
+T
+X
+t=1
+C
+X
+c=1
+
+x(j)
+c,t −x(k)
+c,t
+
+.
+(B.8)
+Invoking Eqs. (9), (2), (1), and (B.6), we see that the information gain IG(j,k) is of the
+form stated in Eq. (15).
+The expression for the information gain per earthquake IGPE
+(j,k) = IG(j,k)/NT in
+Eq. (15) is now immediate. We note that in the case of OEF-Italy, due to the over-
+lap of the seven-day forecast periods, the earthquake count NT equals seven times the
+number of unique target earthquakes in the catalog.
+B.3
+Results for the CSEP T-test
+As we have demonstrated in the previous section, the CSEP T-test of equal predictive
+ability of two models (Rhoades et al., 2011, Section 2.3) is based on the information gain
+per earthquake,
+IGPE
+(j,k) = T
+NT
+
+¯S(j) −¯S(k)
+,
+of model k over model j as defined at (15). Rhoades et al. (2011) posit that under the
+null hypothesis of equal predictive ability the statistic
+Θ(j,k) = N1/2
+T
+IGPE
+(j,k)
+s(j,k)
+,
+(B.9)
+where
+s2
+(j,k) =
+1
+NT −1
+T
+X
+t=1
+C
+X
+c=1
+yc,t
+
+∆(j,k)
+c,t
+2
+−
+1
+NT (NT −1)
+ T
+X
+t=1
+C
+X
+c=1
+yc,t ∆(j,k)
+c,t
+!2
+36
+
+--- Sayfa 37 ---
+MixA vs. MixB
+MixA vs. LM
+MixB vs. LM
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+Figure B.1: As Figure 5, but for the CSEP T-test.
+and ∆(j,k)
+c,t
+= log x(j)
+c,t −log x(k)
+c,t , has a Student’s t-distribution with NT −1 degrees of
+freedom.
+While s(j,k) aims to quantify the variability of the daily score differences,
+this line of reasoning suffers from the omission of terms associated to grid cells and
+time periods without target earthquakes, a neglect of the effects of spatio-temporal
+dependencies, and related issues in the estimation of sampling variability.17 As a result,
+the test statistic (B.9) is not properly standardized, and in general the one-sided p value
+generated by the T-test, namely,
+p = 1 −Ψ
+ Θ(j,k)
+
+,
+(B.10)
+where Ψ denotes the CDF of the Student’s t-distribution with NT −1 degrees of freedom,
+fails to be uniform between 0 and 1 when the null hypothesis is true.
+We illustrate these issues in the simulation setting of Section 2.3. Figure B.1 is the
+same as Figure 5 in Section 2.3, but now considering the CSEP T-test rather than the
+Diebold–Mariano test. The left histogram in Figure B.1 shows the p values that arise
+from 400 replicates of CSEP T-tests of MixA (index j) versus MixB (index k); we see
+17Specifically, the information gain per earthquake in Eq. (17) of Rhoades et al. (2011) is normalized
+by the observed count N of target earthquakes. Yet, it involves the quantities ˆ
+NA and ˆ
+NB, i.e., data
+from all forecast bins regardless of occurred target earthquakes. Hence, the quantity N in the CSEP
+T-statistic in the line that follows Eq. (18) of Rhoades et al. (2011) ought to be replaced by the (typically
+much larger) number of all forecast bins, n, which is the proper sample size in this context (save for
+further adjustments in case of dependencies, e.g., from overlapping forecast windows).
+The sample variance in Eq. (18) of Rhoades et al. (2011) is only computed from N bins (with strictly
+positive earthquake counts); instead, it ought to be computed from the Poisson score differences over
+all n bins (regardless of occurred target earthquakes). Furthermore, the sample variance involves the
+logarithmic terms in the Poisson score only, while ignoring the linear terms that sum to ˆ
+NA and ˆ
+NB,
+respectively. Additional detail is available from the authors upon request.
+One might argue that the CSEP T-test attempts to estimate the variance of the information gain
+per earthquake (IGPE). However, IGPE normalizes by the observed count N of target earthquakes,
+which may be zero. So, viewed as a random variable, IGPE may be undefined due to division by zero.
+Fortunately, there is an easy way out of this conundrum, namely, to avoid division by the observed count
+and consider the information gain (IG) and score differences in lieu of IGPE, which in view of Eq. (15)
+amounts to evolving the CSEP T-test into the Diebold–Mariano test.
+37
+
+--- Sayfa 38 ---
+Table B.1: As Table 2, but for the CSEP T-test of the null hypothesis of equal predictive
+ability. We show the respective information gain per earthquake (IGPE
+(j,k), diagonal) from
+Table 3, the test statistic (Θ(j,k), Eq. (B.9), above diagonal), and the one-sided p value
+(Eq. (B.10), below diagonal). Rows identify model j and columns model k in the test
+statistic at (B.9).
+LRWA
+LM
+SMA
+FCM
+LG
+LRWA
+−0.053
+5.304
+11.337
+15.677
+28.277
+LM
+0.000
+0.000
+4.380
+11.382
+23.965
+SMA
+0.000
+0.000
+0.061
+10.641
+30.186
+FCM
+0.000
+0.000
+0.000
+0.253
+18.942
+LG
+0.000
+0.000
+0.000
+0.000
+0.925
+MixA vs. MixB
+MixA vs. LM
+MixB vs. LM
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+0
+0.25
+0.5
+0.75
+1
+Figure B.2: As Figure B.1, but using forecasts on Mondays only.
+that the histogram deviates considerably from the desired uniformity between 0 and 1.
+Specifically, 85 of the 400 p values are smaller than 0.05, and 101 of them are larger than
+0.95, so that the two-sided CSEP T-test rejects at a ratio of (85 + 101)/400 = 0.465,
+grossly failing to attain the nominal level of 0.10 under the null hypothesis. We conclude
+that the CSEP T-test rejects the null hypothesis of equal predictive ability more often
+than warranted. This behavior is mirrored in Table B.1, where the T-test rejects the
+null hypothesis of equal predictive ability for every pair of the five forecast models.
+One might speculate that the undesirable behavior under the null hypothesis stems
+predominantly from the overlap of the seven-day forecast periods in OEF-Italy.
+In
+this light, we repeat the analysis in Figure B.2 and Table B.2, but now considering
+forecasts issued on Mondays only, to avoid overlap in the seven-day forecast periods.
+Unfortunately, the aforementioned issues prevail. In the 400 tests of MixA versus MixB,
+104 of the 400 p values are smaller than 0.05, and 108 of them are larger than 0.95,
+rather than the nominal 20.
+38
+
+--- Sayfa 39 ---
+CSEP T-test
+MixA vs. MixB
+CSEP T-test
+MixA
+S vs. MixB
+S
+DM Test
+MixA vs. MixB
+DM Test
+MixA
+S vs. MixB
+S
+Mon
+Tue
+Wed
+Thu
+Fri
+Sat
+Sun
+0
+0.25 0.5 0.75
+1
+0
+0.25 0.5 0.75
+1
+0
+0.25 0.5 0.75
+1
+0
+0.25 0.5 0.75
+1
+Figure B.3: Histograms of p values for the CSEP T-test (Left) and the Diebold–Mariano
+(DM) test (Right) of equal predictive ability in terms of the Poisson scoring function for
+MixA versus MixB, and MixS
+A versus MixS
+B, respectively, based on 400 replicates. The
+tests use forecasts for non-overlapping weekly periods issued Monday (Top) through
+Sunday (Bottom). Compared to Figures 5, B.1, and B.2, note the zoomed in vertical
+axis.
+39
+
+--- Sayfa 40 ---
+Table B.2: As Table B.1, but using forecasts on Mondays only.
+LRWA
+LM
+SMA
+FCM
+LG
+LRWA
+−0.068
+1.929
+6.117
+6.097
+10.618
+LM
+0.027
+0.000
+1.777
+4.650
+8.549
+SMA
+0.000
+0.038
+0.070
+3.964
+10.664
+FCM
+0.000
+0.000
+0.000
+0.266
+6.731
+LG
+0.000
+0.000
+0.000
+0.000
+0.910
+For a more comprehensive analysis see Figure B.3, where the first and third columns
+show histograms of p values for the CSEP T-test and the Diebold–Mariano test of
+equal predictive ability for MixA versus MixB for non-overlapping weekly periods, issued
+Monday through Sunday, respectively. While MixA versus MixB randomize between the
+FCM model and the LG model at any given time t, another option is to randomize
+between the two models at any grid cell c, with the assignment kept fixed over time.
+We refer to the spatially randomized forecasts as MixS
+A and MixS
+B, respectively, and
+show histograms of p values for the CSEP T-test and Diebold–Mariano test of equal
+predictive ability for MixS
+A versus MixS
+B in the second and fourth column of Figure B.3.
+The Diebold–Mariano test always yields uniform histograms for the p values, as desired.
+The CSEP T-test instead yields U-shaped histograms, resulting from an underestimated
+variance of score differences, which entails test statistics that are larger (in absolute
+value) than warranted and, consequently, rejections of the null hypothesis well beyond
+the nominal level.
+C
+Forecast performance at the grid cell level
+While Sections 2.2 and 2.3 considered overall and temporal assessments of a model’s
+predictive performance, respectively, we might also ask in which areas of the testing
+region one can find remarkable differences in forecast performance. To do so, we can
+study the performance via temporally aggregated scores for each of the 8993 grid cells
+in OEF-Italy. Specifically, we consider the average score difference between model j and
+model k in grid cell c, given by
+∆(j,k)
+c
+= 1
+T
+T
+X
+t=1
+
+S(x(j)
+c,t , yc,t) −S(x(k)
+c,t , yc,t)
+
+,
+(C.1)
+where S is the Poisson scoring function. We here use the average instead of the total score
+to normalize to daily performance. We again let k stand for the LM model. Positive
+values of ∆(j,k)
+c
+indicate that the LM model produces superior forecasts in grid cell c.
+40
+
+--- Sayfa 41 ---
+SMA − LM
+LRWA − LM
+FCM − LM
+LG − LM
+ 6°E
+10°E
+14°E
+18°E
+ 6°E
+10°E
+14°E
+18°E
+36°N
+40°N
+44°N
+36°N
+40°N
+44°N
+−10−4 0
+10−4
+10−2
+Score
+difference
+Obs.
+earthquakes
+Figure C.1: Average score difference (C.1) under the Poisson scoring function between
+the LM (index k) and the other four models (index j, shown panels).
+Framed cells
+represent bins with at least one target earthquake.
+Positive differences (blue color)
+indicate that the LM model has superior forecast performance; negative differences (red
+color) indicate inferior performance.
+41
+
+--- Sayfa 42 ---
+Figure C.1 plots ∆(j,k)
+c
+, i.e., the average score difference between the LM model and
+model j in grid cell c, for the four competitor models. In line with our previous analysis,
+the LM model exhibits superior forecast performance compared to FCM, SMA, and LM
+in most grid cells with observed M4+ target earthquakes, especially in central Italy.
+While the FCM model receives lower scores than the LM model in regions with less
+seismicity, the LG model performs worse than the LM model in those. Compared to
+LRWA, the sign of the score differences is more mixed. We emphasize that these results
+are to be interpreted diagnostically, with formal statistical inference being challenging in
+spatial settings due to massive dependencies and issues of multiple testing (Zhang et al.,
+2015; Wilks, 2016).
+D
+Generation of consistency bands for mean-reliability di-
+agrams
+To accommodate for the non-negative integer character of earthquake counts we use
+a resampling procedure based on Algorithm 3 in Gneiting and Resin (2023) for the
+generation of the consistency bands in Figure 7. The algorithm requires fully specified
+predictive distributions from which it then samples. In the setting at hand we have
+mean-forecasts (more specifically, expected counts) at our disposal only. To derive a
+fully specified predictive distribution from the mean-forecast at hand, we adapt the
+unconditional distribution of the number of observed target earthquakes. Specifically, if
+the vector (p0, p1, . . . , pm) ∈[0, 1]m+1 comprises the empirical frequencies of observing
+0, 1, . . . , m earthquakes in the record at hand, we derive the predictive distribution Fx
+associated with the mean-forecast x as the discrete probability measure on 0, 1, . . . , m
+with masses (p0 + εx, p1, . . . , pm)/(1 + εx), where εx is such that
+x =
+1
+1 + εx
+m
+X
+j=1
+j pj,
+(D.1)
+which ensures that the distribution Fx has mean x.
+Then we apply Algorithm 3 in
+Gneiting and Resin (2023) to the respective collection of pairs (Fx, x).
+42

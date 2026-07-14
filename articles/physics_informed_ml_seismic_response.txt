@@ -1,0 +1,1458 @@
+
+--- Sayfa 1 ---
+ 
+ 
+ 
+1Corresponding Authors 
+PHYSICS-INFORMED MACHINE LEARNING FOR SEISMIC RESPONSE 
+PREDICTION OF NONLINEAR STEEL MOMENT RESISTING FRAME 
+STRUCTURES 
+R. Bailey Bonda, Pu Renb, Jerome F. Hajjara,1, and Hao Sunc,1 
+a Department of Civil and Environmental Engineering, Northeastern University, Boston, MA 02115, USA 
+b Machine Learning and Analytics Group, Lawrence Berkeley National Lab, Berkeley, CA 94720, USA 
+c Gaoling School of Artificial Intelligence, Renmin University of China, Beijing, 100872, China 
+ 
+Abstract: There is growing interest in using machine learning (ML) methods for structural 
+metamodeling due to the substantial computational cost of traditional simulations. Purely data-
+driven strategies often face limitations in model robustness, interpretability, and dependency 
+on extensive data. To address these challenges, this paper introduces a novel physics-informed 
+machine learning (PiML) method that integrates scientific principles and physical laws into 
+deep neural networks to model seismic responses of nonlinear structures. The approach 
+constrains the ML model's solution space within known physical bounds through three main 
+features: dimensionality reduction via combined model order reduction and wavelet analysis, 
+long short-term memory (LSTM) networks, and Newton’s second law. Dimensionality 
+reduction addresses structural systems' redundancy and boosts efficiency while extracting 
+essential features through wavelet analysis. LSTM networks capture temporal dependencies 
+for accurate time-series predictions. Manipulating the equation of motion helps learn system 
+nonlinearities and confines solutions within physically interpretable results. These attributes 
+allow for model training with sparse data, enhancing accuracy, interpretability, and robustness. 
+Furthermore, a dataset of archetype steel moment resistant frames under seismic loading, 
+available in the DesignSafe-CI Database [1], is considered for evaluation. The resulting 
+metamodel handles complex data better than existing physics-guided LSTM models and 
+outperforms other non-physics data-driven networks. 
+Keywords: physics-informed machine learning, seismic response prediction, nonlinear 
+dynamics, fragility analysis, steel moment resisting frame 
+1. INTRODUCTION 
+Modern structural analysis models for complex and nonlinear engineering systems heavily 
+rely on computational methods to solve numerical simulations. The finite element method 
+(FEM) [2], with applications in fluid flow, heat transfer, electromagnetic potential, structural 
+analysis, and many other domains, is one of the most common simulation-based methods used 
+
+--- Sayfa 2 ---
+ 
+ 
+ 
+ 
+Bond - 2
+in dynamic model creation and nonlinear response history analysis (NRHA). In the last decade, 
+computational power has grown synchronously with complex engineering problems with 
+intricate geometries, nonlinear hysteretic material behavior, nonstationary response variables, 
+and under stochastic spatiotemporal loading [3]. Despite the growing supply of high-
+performance/cloud computing clusters and facilities, demands of growing FEM complexity for 
+NRHA are still prohibited by computational power and run time. Furthermore, optimization 
+techniques (e.g. topology optimization [4], particle swarm optimization [5,6] etc.), and 
+epistemic uncertainties of external loading require numerous simulations (e.g., Monte Carlo 
+simulations [7,8] and incremental dynamic analysis (IDA) [9,10] of nonlinear structural 
+systems for fragility and reliability analysis) which can exponentially increase the 
+computational demand.  
+Structural metamodeling can supplement more expensive computer analyses, facilitate 
+multi-objective optimization and design exploration, and possess faster run times compared to 
+traditional structural modeling for repetitive loading [11–13]. Metamodeling has taken many 
+forms, including statistical analysis [14–19], response surface methodologies (RSM) [20–22], 
+and kriging [23–26]. The model output associated with these metamodeling techniques offers 
+varying degrees of response detail. Some techniques produce course variables (e.g., static 
+engineering design parameters (EDPs), like peak displacements, drifts, etc.). Other methods 
+keep detailed time-varying information for more in-depth analysis, capturing frequency, 
+duration, and energy content of the time series response. Metamodels only capturing EDPs 
+often cannot quantify cumulative damage metrics of structural components and sometimes rely 
+on simplified assumptions (e.g., the generalized linear regression models assumes a normal 
+distribution [14,15]).  
+Recently, neural networks (NN) and machine learning (ML) have been shown to 
+supplement existing metamodeling approaches or used on their own, creating a new class of 
+structural metamodeling all together and can be classified as data-driven approaches [13,27–
+31]. Particularly, pioneering studies have applied convolutional neural networks (CNNs), 
+recurrent neural networks (RNNs), and long short-term memory (LSTM) networks to project 
+the time history seismic responses of civil structures [32–34]. Oh et al. [35] utilized a CNN 
+architecture to predict building displacement responses from ground motion acceleration 
+measurements. Perez-Ramirez et al. [36] harnessed a nonlinear autoregressive exogenous 
+model to train an RNN, predicting response time histories for a 1:20 scaled, 38-story high-rise 
+
+--- Sayfa 3 ---
+ 
+ 
+ 
+ 
+Bond - 3
+building structure exposed to seismic excitations and ambient vibrations. Similarly, an RNN-
+based methodology, utilizing gated recurrent units in tandem with ensemble learning, was 
+proposed by Zhang et al. [37] to scrutinize the time-variant uncertainty in structural response. 
+Ahmed et al. [38] employed a stacked LSTM model to evaluate the seismic damage states of 
+frame buildings and non-ductile bridges, demonstrating its superior accuracy and efficiency in 
+contrast to conventional LSTM models. Moreover, Zhang et al. [39] harnessed stacked GM 
+sequences as inputs, constructing an LSTM model to predict displacement response histories 
+of nonlinear steel structures under seismic loads. Soleimani-Babakamali et al. [40] devised an 
+encoder-decoder architecture with LSTM and CNN layers for probabilistic seismic demand 
+analysis for a building inventory, propagating structural uncertainties into seismic demand 
+models. Kundu et al. [41] introduced an LSTM-based algorithm to quantify seismic response 
+uncertainties by addressing the stochastic nature of dynamic loads and uncertainties in 
+structural system parameters. Li et al. [42] introduced a model order reduction technique with 
+subsampling and wavelet transformations with a standard LSTM network for seismic response 
+prediction with synthetic ground motion data and matching structural response of high-fidelity 
+structures. Torky and Ohno [43] introduced a fusion ConvLSTM-LSTM model with data order 
+reduction techniques on various data representations for real-time system identification. Ning 
+et al. [30] compare three ML models (e.g., LSTM, WaveNet, and CNN) to model the structural 
+response of three structures. While these models have demonstrated sufficient predictions of 
+structural behavior on their respective datasets, due to the nature of black box learning, these 
+data-driven approaches require large synthetic or augmented datasets to reach desired levels of 
+accuracy. Additionally, in many cases, the interpretability of a black box model is questionable 
+and has been found to produce responses that are outside of physical possibilities [44]. 
+Purely mechanics driven models (e.g., FEM and NRHA) aim to explain natural phenomena 
+through mathematics utilizing Newtonian physics to resolve high fidelity structural equilibrium 
+and compatibility which has been refined for centuries and validated with real world data. Pure 
+data-driven techniques, relatively new in development, have been shown to capture highly 
+nonlinear and complex behavior, poses fast inferencing capabilities, and are computationally 
+efficient after training, but require large datasets with unique examples and generally perform 
+poorly for cases outside of the training dataset [30,42]. Hybrid modeling aims to combine the 
+benefits of physic-based and data-driven approach [45,46]. Hybrid modeling is particularly 
+effective when data is limited and generally is lower fidelity compared to purely data-driven 
+
+--- Sayfa 4 ---
+ 
+ 
+ 
+ 
+Bond - 4
+modeling approaches. However, it still maintains statistical significance and relies less on 
+human engineered features compared to models based entirely on physics. For example, 
+constraints on the CNN and RNN (e.g., LSTM) models can inform physical insights into the 
+training process to guide models to physically relevant solutions and deal with small datasets 
+common in structural earthquake engineering [32]. Zhang et al. [45] embedded physics into a 
+one-dimensional CNN model to predict seismic responses of three datasets, including sensor 
+measurements from a real structure, for model training and validation. Zhang et al. [46] 
+expanded on this work by incorporating multiple LSTM networks to model hysteretic and state 
+variable response separately while utilizing the equation of motion in model development. 
+Wang and Wu [47] utilize physics in a knowledge-enhanced deep learning algorithm to 
+simulate the wind-induced linear/nonlinear structural dynamic response. The synthesis of the 
+temporality of RNNs was employed by Sadeghi Eshkevari et al. [48] in a physics-based RNN 
+model to estimate the dynamic response of systems subjected to seismic ground motions. 
+Although these methods produce detailed reconstructions of the time history response of their 
+training data, the structures being modeled are relatively simple (e.g., single-degree of freedom 
+structures, or shear-type multi-degree of freedom structures with numerical based hysteresis, 
+or structures that are less than 3 stories) and might not be capable of expressing complex 
+behavior of modeled material and geometric nonlinearities for a range of building heights, 
+including tall buildings. 
+To this end, a physics-informed machine learning (PiML) metamodel is presented in this 
+work to balance nonlinear relationships of NN parameters and Newtonian physical models. 
+Model order reduction techniques are taken from the data-driven literature to enhance the 
+training of hybrid model for time series prediction of special steel moment resisting frame 
+(SMRF) structures under dynamic seismic loading. LSTM networks are chosen for their 
+superior performance in sequence-to-sequence modeling and established performance for 
+metamodeling full sequence time series. A physics-informed network was chosen to constrain 
+the solution space to physical bounds and allow the model to be trained on less data with a real 
+measured ground motion dataset. The presented PiML metamodel is shown to predict structural 
+response of complex archetype building frames, previously unaccounted for in the full time 
+series response prediction of PiML metamodel literature. Additionally, the presented model is 
+shown to be trained and tested with a dataset of force-response pairs from the commonly used 
+
+--- Sayfa 5 ---
+ 
+ 
+ 
+ 
+Bond - 5
+Miranda ground motion set [49] opposed to synthetic ground motions common in many of the 
+above studies.  
+2. METHEDOLOGY 
+2.1 Problem Definition 
+A structural metamodel is used to capture underlying nonlinear behaviors of archetypal 
+buildings from input-output (e.g., force-response) data. These models are trained with high-
+fidelity NRHA simulations, like FEM, or measured sensing data of a structure, to reproduce 
+the structural behavior (e.g., time history response, peak EDP, cumulative damage states, etc.). 
+For illustrative purposes, consider the response of a nonlinear multi-degree-of-freedom 
+(MDOF) structure under dynamic loading governed by the equation of motion (EOM): 
+ 
+𝐌𝐌𝐮𝐮𝐭𝐭𝐭𝐭(t) + 𝐂𝐂𝐮𝐮𝐭𝐭(t) + 𝐟𝐟𝐬𝐬(t) = −𝐌𝐌𝜞𝜞𝐚𝐚𝐠𝐠(t),
+t ∈τ  
+(1) 
+ 
+𝐟𝐟𝐬𝐬(t) = λ𝐊𝐊𝐊𝐊(t) + (1 −λ)𝐊𝐊𝐊𝐊(t) 
+(2) 
+where 𝐌𝐌, 𝐂𝐂, 𝐊𝐊 are the mass, damping, and stiffness matrices; 𝐮𝐮𝐭𝐭𝐭𝐭, 𝐮𝐮𝐭𝐭, 𝐮𝐮∈ℝ𝑛𝑛× τ are the 
+acceleration, velocity, and displacement vectors of dimensionality 𝑛𝑛, with τ time-steps, 
+relative to the ground; 𝜞𝜞 is the force distribution vector over the system; 𝐚𝐚𝐠𝐠 is the time series 
+earthquake ground acceleration vector; 𝐟𝐟𝐬𝐬(t) is the restoring force function; λ is the ratio of 
+post-yield to pre-yield stiffness; and 𝐫𝐫(t) is the non-observable hysteretic parameter. The 
+restoring force function is complex and of high order and can be thought of more generally as 
+𝐟𝐟𝐬𝐬(t) = 𝐺𝐺(𝐮𝐮(t), 𝐫𝐫(t)), where 𝐺𝐺 is an unknown latent function. The metamodel aims at finding 
+a parsimonious solution of 𝐺𝐺, mapping the mass normalized seismic input, 𝜞𝜞𝐚𝐚𝐠𝐠(t), to the 
+nonlinear structural response, 𝐮𝐮(t) and its derivatives. Eqn. (3) is formulated by rearranging 
+and mass normalizing Eqn. (1), where 𝝃𝝃𝒅𝒅 is a mass normalized damping matrix. 
+ 
+𝒈𝒈(𝐭𝐭) = 𝐌𝐌−1𝐟𝐟𝐬𝐬(t) ≈ −𝜞𝜞𝐚𝐚𝐠𝐠(t) −𝐮𝐮𝐭𝐭𝐭𝐭(t) − 𝝃𝝃𝒅𝒅𝐮𝐮𝐭𝐭(t) 
+(3) 
+In NRHA of structures with large nonlinearities influenced by complex dynamic loading, 
+fast estimation of 𝒈𝒈(𝐭𝐭) is of significant interest.  
+2.2 Model Order Reduction 
+For many reasonable archetypal structures, the dimensionality of the state variable response 
+(e.g., n) often exceeds hundreds or more. Such high dimensionality poses challenges in terms 
+of training stability, computational demands, and often results in an unnecessary level of 
+precision for metamodeling applications. To surmount these challenges, model order reduction 
+techniques have been developed to identify distinguishing characteristics of the input order 
+
+--- Sayfa 6 ---
+ 
+ 
+ 
+ 
+Bond - 6
+dimension, thereby reducing the size of the dataspace, and substantially mitigating the 
+computational time associated with ML model training. 
+One classical model order reduction method is to introduce a reduced basis of generalized 
+coordinates using static condensation of the initial FEM. This approach is grounded in the 
+recognition that DOFs with mass dominate the dynamic behavior of structures, and thus, by 
+selectively isolating these DOFs, the resulting reduced-order model can capture the 
+fundamental response characteristics. This strategy leads to enhanced computational 
+efficiency, capturing the primary motion of the structure, and simplifying the model creation 
+and validation with physical intuition. However, it is important to acknowledge that by 
+exclusively considering DOFs with mass, certain complex behaviors arising from higher-order 
+dynamics or localized effects (associated with non-mass DOFs) may be overlooked. Therefore, 
+the applicability of this approach should be evaluated based on specific requirements, desired 
+accuracy levels, and available computational resources. The aim of PiML metamodeling in this 
+approach is not to capture smaller-scale details of the structure, but to understand the behavior 
+on a more global scale. Thus, in the ensuing examples, the focus will be on selectively isolating 
+and learning the responses of DOFs with mass through the PiML learning process. 
+2.3 Wavelet Analysis 
+In dynamic structural analysis problems, force-response pairs generally consist of large 
+amounts of time steps. Employing ML modeling on datasets with large sequence lengths, such 
+as ground motion time series, will increase computational costs and could cause memory 
+problems. Therefore, it can be beneficial to reduce the temporal dimension. 
+Wavelet approximations offer many advantages for this task [50]. Wavelets are 
+mathematical functions that divide data into different frequency components, allowing each 
+component to be analyzed with a resolution matched to its scale [50]. They are particularly 
+useful for analyzing signals that have non-stationary or variable characteristics over time [50]. 
+Firstly, by decomposing the signal into different scales and frequencies, wavelets can capture 
+localized features and generalized variations within the dataset [50]. This capability makes 
+wavelet approximations particularly well-suited for capturing the salient dynamics of complex 
+structural models. Secondly, wavelets provide a flexible framework for time-frequency 
+analysis, enabling the representation of both low-frequency trends and high-frequency 
+oscillations, separating true data-structures from noise  [50]. This versatility allows for a more 
+comprehensive exploration of the underlying dynamics, facilitating a more accurate and 
+
+--- Sayfa 7 ---
+ 
+ 
+ 
+ 
+Bond - 7
+nuanced PiML metamodel. Moreover, wavelet approximations can effectively handle non-
+stationary and irregularly sampled time series, which are commonly encountered in real-world 
+applications.  
+The wavelet function , ψ(t) is characterized by its scaling function, 𝜙𝜙(𝑡𝑡), effectively 
+replicating a band-pass filter where each scaling level halves the bandwidth. Following the data 
+preprocess methodologies outlined in [42], the dyadic wavelets are adopted here: 
+ 
+ψs(τ; t) = 2
+s
+2ψ(2st −τ) 
+(4) 
+where 𝑠𝑠 ∈ ℤ is the wavelet scaling parameter and  𝜏𝜏∈ ℤ is the time shift parameter 
+identifying translation of the wavelet. In this context, 𝜏𝜏, has constant meaning to Eqn. (1). 
+Among the family of dyadic wavelets, the Daubechies wavelet of order 6 is chosen, similar to 
+[42] and suitable for engineering applications for its compact form and orthogonality. The 
+scaling function is thus defined as: 
+ 
+𝜙𝜙(𝑡𝑡) = ෍𝑐𝑐(𝜏𝜏)𝜙𝜙(2𝑡𝑡−𝜏𝜏)
+𝜏𝜏
+ 
+(5) 
+where 𝑐𝑐(𝜏𝜏) is the scaling coefficient. The wavelet function can then be obtained for all time 
+steps using Eqn. (6) and Eqn. (4): 
+ 
+ψ(t) = ෍(−1)𝜏𝜏𝑐𝑐(𝜏𝜏+ 1)𝜙𝜙(2𝑡𝑡+ 𝜏𝜏)
+𝜏𝜏
+ 
+(6) 
+For a particular time history, 𝒳𝒳(𝑡𝑡), the wavelet transformation is accomplished by:  
+ 
+𝒳𝒳(𝑡𝑡) = ෍𝑊𝑊𝑠𝑠𝑎𝑎,𝒳𝒳(𝜏𝜏)𝜙𝜙𝑠𝑠(𝜏𝜏; 𝑡𝑡)
+𝜏𝜏
++ ෍෍𝑊𝑊𝑠𝑠𝑑𝑑,𝒳𝒳(𝜏𝜏)𝜓𝜓𝑠𝑠𝑑𝑑(𝜏𝜏; 𝑡𝑡)
+𝜏𝜏
+𝑠𝑠
+𝑠𝑠𝑑𝑑=0
+ 
+(7) 
+where 𝑊𝑊𝑠𝑠𝑎𝑎,𝒳𝒳(𝜏𝜏) and 𝑊𝑊𝑠𝑠𝑑𝑑,𝒳𝒳(𝜏𝜏) ∈ℝ× ℤ are the approximated and detailed coefficients (e.g., 
+from the high-pass and low-pass filters), respectively. By ignoring the detailed component of 
+Eqn. (7) (e.g., the second term in Eqn. (7)) a wavelet approximation of the original signal can 
+be made: 
+ 
+𝒳𝒳(𝑡𝑡) ≈෍𝑊𝑊𝑠𝑠𝑎𝑎,𝒳𝒳(𝜏𝜏)𝜙𝜙𝑠𝑠(𝜏𝜏; 𝑡𝑡)
+𝜏𝜏
+ 
+(8) 
+From the approximated coefficients and use of the scaling function, a reconstruction of the 
+original signal can be produced. In the metamodeling context, a wavelet approximation can be 
+applied to the reduced input (ground motion) and reduced output (structural response variables) 
+from the model order reduction parameters of the structure:  
+ 
+𝑞𝑞𝑗𝑗(𝑡𝑡) ≈ ෍𝑊𝑊𝑠𝑠𝑎𝑎,𝑞𝑞𝑗𝑗(𝜏𝜏)𝜙𝜙𝑠𝑠(𝜏𝜏; 𝑡𝑡)
+𝜏𝜏
+ 
+(9) 
+
+--- Sayfa 8 ---
+ 
+ 
+ 
+ 
+Bond - 8
+ 
+𝑝𝑝𝑗𝑗(𝑡𝑡) ≈ ෍𝑊𝑊𝑠𝑠𝑎𝑎,𝑝𝑝𝑗𝑗(𝜏𝜏)𝜙𝜙𝑠𝑠(𝜏𝜏; 𝑡𝑡)
+𝜏𝜏
+ 
+(10) 
+where 𝑞𝑞𝑗𝑗(𝑡𝑡) and 𝑝𝑝𝑗𝑗(𝑡𝑡) ∈ℝ× 𝜏𝜏 are the 𝑗𝑗th reduced input and output. Similar to [42], the 
+approximated wavelet coefficients (e.g., 𝑊𝑊𝑠𝑠𝑎𝑎,𝑞𝑞𝑗𝑗(𝜏𝜏) and 𝑊𝑊𝑠𝑠𝑎𝑎,𝑝𝑝𝑗𝑗(𝜏𝜏)) are thus directly applied to 
+the PiML metamodel for training and testing.  
+2.4 LSTM Network 
+In recent years, NNs continue to proliferate in scientific computing [51]. Weighted 
+connections and shifting bias parameters allow various architectures of connected artificial 
+neurons to learn patterns to approximate a generalized form of input data. Additionally, 
+different connections have been developed for different types of data (e.g., numerical, 
+categorical, text, images, and time series) and to solve different tasks (e.g., pattern recognition, 
+natural language processing, temporal forecasting, etc.). A training stage, utilizing training data 
+shifts model parameters until model performance is deemed satisfactory followed by a testing 
+stage, utilizing data previously unseen by the model, with fixed model parameters to validate 
+the model. 
+A RNN is a class of networks with one set of shareable network parameters; the 
+connections between nodes form a cycle or loop [32]. RNNs are commonly used on time series 
+data for detection, generation, synthesis, and translation tasks. Figure 1(a) shows an RNN loop 
+with block “L” where the input 𝑋𝑋𝜏𝜏 and output 𝑌𝑌𝜏𝜏 occur at every time step and another 
+connection is made as an output of L which is then fed back into the network [52]. This loop 
+is known as a recurrent connection, allowing the network to learn temporal behavior. The 
+network can be unrolled with time (e.g., Figure 1(b) [52]). While training an RNN, the network 
+parameters associated with L will update with different training examples. During testing, 
+however, the network parameters in L are consistent and do not change with time.   
+Figure 1: (a) RNN loop; (b) An “unrolled” RNN [52] 
+Long Short-Term Memory (LSTM) Networks were introduced by Hochreiter and 
+Schmidhuber [34] as an extension to RNNs. The recurrent connection of an LSTM network 
+
+--- Sayfa 9 ---
+ 
+ 
+ 
+ 
+Bond - 9
+links the output of a network with itself to give the learning process persistence, utilizing 
+information learned earlier in the sequence data in the prediction of the next time [33,52]. A 
+typical LSTM network consists of an input layer (e.g., time series sequence), hidden layers 
+(e.g., multiple LSTM and fully connected neural network (FCNN) layers), and an output layer 
+(e.g., time series sequence). The term “LSTM” can be applied to the network, the layers in the 
+network, or the specific units that make up the LSTM layer. An input element at time 𝜏𝜏 is 
+mapped through the LSTM network to an output element at time 𝜏𝜏 for 𝜏𝜏= [1, 𝑚𝑚] making this 
+network adept to sequence-to-sequence modeling. The input and output sequences must be 
+formatted as three-dimensional tensors; the first dimension is the sequence length and changes 
+with time, the second dimension is the batch size or data object number, and the third dimension 
+consists of the input or output features (a.k.a. the channel or model order).   
+Figure 2 shows an abbreviated network architecture and individual LSTM unit. The LSTM 
+unit shares weights and biases across the entire temporal space within the layer. Figure 2 (a) 
+shows an “unrolled” LSTM network like Figure 1(b). The main highway of the LSTM unit is 
+termed the cell state, which passes information from previous time steps to future time steps, 
+with minor linear interactions [52]. Four feeder gates interact with the cell state to accomplish 
+the recurrent nature of the LSTM cell and learn complex time-dependent data structures: a 
+forget gate, an input gate, a hyperbolic tangent layer, and an output gate. The input gate and 
+hyperbolic tangent layers filter input activation into the internal cell state, the output gate 
+regulates output activation into the LSTM unit output, and the forget gate effectively throws 
+away unneeded information from the cell state. 
+Figure 2: (a) Architecture of a deep LSTM Network with 𝑚𝑚 LSTM layers and FCNN layers from input 
+sequence 𝑋𝑋𝑛𝑛 to output sequence 𝑌𝑌𝑛𝑛; (b) single LSTM unit structure of the 𝑙𝑙th LSTM layer at time 𝜏𝜏, 
+
+--- Sayfa 10 ---
+ 
+ 
+ 
+ 
+Bond - 10
+including the unit’s input 𝑋𝑋𝜏𝜏
+(𝑙𝑙), the unit’s output 𝑌𝑌𝜏𝜏
+(𝑙𝑙), the cell state input and output ቄ𝒄𝒄𝜏𝜏−1 
+(𝑙𝑙) , 𝒄𝒄𝜏𝜏 
+(𝑙𝑙)ቅ, the 
+hidden state input and output ቄ𝒉𝒉𝜏𝜏−1 
+(𝑙𝑙) , 𝒉𝒉𝜏𝜏
+(𝑙𝑙)ቅ, and the memory gates variables ቄ𝒇𝒇𝜏𝜏
+(𝑙𝑙), 𝒊𝒊𝜏𝜏
+(𝑙𝑙), 𝒄𝒄෤𝜏𝜏
+(𝑙𝑙), 𝒐𝒐𝜏𝜏
+(𝑙𝑙)ቅ. 
+The following equations demonstrate the operations of the feeder gates and their corresponding 
+weights, 𝑾𝑾𝛼𝛼
+(𝑙𝑙), and biases, 𝒃𝒃𝛼𝛼
+(𝑙𝑙), (where 𝛼𝛼= {𝑓𝑓, 𝑖𝑖, 𝑐𝑐, 𝑜𝑜} corresponding to the forget gate, input gate, tanh 
+layer or output gate, respectively) within the 𝑙𝑙𝑡𝑡ℎ LSTM layer. Reference Figure 2 and Equations (11)-
+(16) for weight and bias interactions from the input as 𝐗𝐗𝑡𝑡, forget gate as 𝐟𝐟𝑡𝑡
+(𝑙𝑙), input gate as 𝐢𝐢𝑡𝑡
+(𝑙𝑙), 
+hyperbolic tangent gate as 𝐜𝐜෤𝑡𝑡
+(𝑙𝑙), output gate as 𝐨𝐨𝑡𝑡
+(𝑙𝑙), cell state memory as  𝐜𝐜𝑡𝑡
+(𝑙𝑙), and the hidden state output 
+as 𝐡𝐡𝑡𝑡
+(𝑙𝑙) which corresponds to the output as 𝐘𝐘𝑡𝑡 [46].  
+ 
+𝐟𝐟𝑡𝑡
+(𝑙𝑙) = 𝜎𝜎ቀ𝑾𝑾𝑓𝑓
+(𝑙𝑙) ∙[𝐡𝐡𝑡𝑡−1, 𝐗𝐗𝑡𝑡](l) + 𝒃𝒃𝑓𝑓
+(𝑙𝑙)ቁ 
+(11) 
+ 
+𝐢𝐢𝑡𝑡
+(𝑙𝑙) = 𝜎𝜎ቀ𝑾𝑾𝑖𝑖
+(𝑙𝑙) ∙[𝐡𝐡𝑡𝑡−1, 𝐗𝐗𝑡𝑡](l) + 𝒃𝒃𝑖𝑖
+(𝑙𝑙)ቁ 
+(12) 
+ 
+𝐜𝐜෤𝑡𝑡
+(𝑙𝑙) = tanh ቀ𝑾𝑾𝑐𝑐
+(𝑙𝑙) ∙[𝐡𝐡𝑡𝑡−1, 𝐗𝐗𝑡𝑡](l) + 𝒃𝒃𝐶𝐶
+(𝑙𝑙)ቁ 
+(13) 
+ 
+𝐨𝐨𝑡𝑡
+(𝑙𝑙) = 𝜎𝜎ቀ𝑾𝑾𝑜𝑜
+(𝑙𝑙) ∙[𝐡𝐡𝑡𝑡−1, 𝐗𝐗𝑡𝑡](l) + 𝒃𝒃𝑜𝑜
+(𝑙𝑙)ቁ 
+(14) 
+ 
+𝐜𝐜𝑡𝑡
+(𝑙𝑙) = 𝐟𝐟𝑡𝑡
+(𝑙𝑙) ∗𝐜𝐜𝑡𝑡−1
+(𝑙𝑙) + 𝐢𝐢𝑡𝑡
+(𝑙𝑙) ∗𝐜𝐜෤𝑡𝑡
+(𝑙𝑙) 
+(15) 
+ 
+𝐡𝐡𝑡𝑡
+(𝑙𝑙) = 𝐨𝐨𝑡𝑡
+(𝑙𝑙) ∗tanh ቀ𝐜𝐜𝑡𝑡
+(𝑙𝑙)ቁ 
+(16) 
+where 𝜎𝜎 is the logistic sigmoid function; tanh is the hyperbolic tangent function; ∗ represents the 
+Hadamard product (element-wise product). A pass through a LSTM layer encodes long-term 
+dependence, allowing important information learned from the beginning of the time series to pervade 
+through to the end and unimportant information to be forgotten. The FCNN layers then decode the last 
+LSTM layer output into the necessary data structure of the desired output space.  
+A data-driven approach, utilizing a simple LSTM network, is created to compare the 
+performance enhancements of the PiML metamodel. The LSTM network outputs the state 
+variables response of the structure directly; this output is compared to the ground-truth state 
+variables to form the data loss as seen in Figure 3. In this data-driven approach, the loss 
+function only consists of the data loss.  
+
+--- Sayfa 11 ---
+ 
+ 
+ 
+ 
+Bond - 11
+ 
+Figure 3: Simple data-driven LSTM metamodel architecture 
+2.5 Physics-Informed Machine Learning Metamodel Architecture 
+The proposed PiML architecture extends the recent utilization of multiple Deep LSTM 
+networks for physics-informed metamodeling techniques from [46] and is capable of handling 
+larger nonlinearities and more complex datasets.  PiML in the proposed network utilizes four 
+main features: Step 1 - the LSTM network, Step 2 – a wavelet reconstruction of the full time-
+series, Step 3 – a finite difference filter, and Step 4 – application of Newton’s second law (e.g., 
+the EOM) through the nonlinear restoring force variable, 𝒈𝒈. Figure 4 shows the general stages 
+of the PiML metamodeling framework. The unique aspect of this network relies on a physical 
+constraint to the objective function (e.g., loss function) during training of the LSTM network’s 
+weights and biases. The LSTM network itself is unchanged with regards to the network 
+architecture used in traditional ML. 
+ 
+Figure 4: Schematic architecture of the PiML metamodel 
+The first LSTM layer inputs the wavelet coefficients of the control force, and outputs a 
+hidden state, cell state, and output to the corresponding networks blocks. A total of two LSTM 
+layers are used followed by an FCNN consisting of three hidden layers with the hyperbolic 
+
+--- Sayfa 12 ---
+ 
+ 
+ 
+ 
+Bond - 12
+tangent activation function. The output of the FCNN (e.g., the network output, 𝐖𝐖[𝒖𝒖, 𝒖𝒖𝒕𝒕, 𝒈𝒈]) 
+consists of three nodes, corresponding to the wavelet coefficients of the displacement, velocity, 
+and restoring force. The network output is then passed to wavelet reconstruction to produce the 
+full time series of the response variables (e.g., 𝒖𝒖, 𝒖𝒖𝒕𝒕, 𝒈𝒈) and then to a finite difference-based 
+filter.  
+The finite difference-based filter (e.g., a gradient-free convolutional filter) is utilized to 
+represent discrete numerical differentiation [53,54] and calculate a derivative term for both the 
+physics loss and state-space loss. Specifically, the first-order central difference method is 
+considered to approximate the time derivatives based on the learned variables, given by: 
+𝐾𝐾𝑡𝑡=
+1
+2𝛿𝛿𝛿𝛿[−1,0,1]. 
+(17) 
+where 𝛿𝛿𝛿𝛿 is the time interval. It is worth noting that the computation of derivatives for the first 
+and last steps is not directly feasible due to the inherent nature of the central finite difference 
+scheme. Thus, forward, central, and backward differences are combined to get a derivative 
+variable length equal to the input variable length. The displacement, u, passes the filter and 
+outputs the velocity vector, 𝒖𝒖ෝ𝒕𝒕. The velocity, 𝒖𝒖𝒕𝒕, passes the filter and results in the acceleration 
+vector, 𝒖𝒖ෝ𝒕𝒕𝒕𝒕. The differentiation step enforces the network outputs to obey differentiation rules 
+among the state variables, confining the solution space to physical bounds.  
+A new variable, 𝒈𝒈∗, is constructed using the training data and network output as described 
+in Equation (18). 𝑔𝑔∗ represents the pseudo ground truth restoring force of the structure and will 
+be compared with the 𝒈𝒈 of the wavelet reconstructed network output. The known structure of 
+the EOM is formulated on the right-hand side of Equation (18), while the unknown and 
+unobservable nonlinear portion is isolated on the left-hand side. Thus, 𝒈𝒈∗ will iterate to a more 
+optimal representation of the data while constraining the learning of the state variable response.  
+ 
+𝒈𝒈∗= 𝒖𝒖𝒕𝒕𝒕𝒕
+𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕+ 𝜞𝜞𝒂𝒂𝒈𝒈+ 𝝃𝝃𝒅𝒅𝒖𝒖𝒕𝒕 
+(18) 
+The loss function (e.g., model error function) is constructed by combining three functions: 
+the residual loss (physics loss), data loss, and state space loss. The residual loss, ℒ𝑟𝑟(𝜃𝜃), 
+minimizes L2 norm error between 𝒈𝒈∗ and 𝒈𝒈. The data loss, ℒ𝑑𝑑(𝜃𝜃), minimizes the L2 norm 
+error between the ground truth of the training state variables, 𝒖𝒖𝒕𝒕𝒕𝒕
+𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕, 𝒖𝒖𝒕𝒕
+𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕, 𝒖𝒖𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕𝒕 with the 
+differentiation output 𝒖𝒖ෝ𝒕𝒕𝒕𝒕 and the network output 𝒖𝒖𝒕𝒕 and 𝒖𝒖, respectively. Finally, the state 
+space loss, ℒ𝑠𝑠𝑠𝑠(𝜃𝜃), minimizes the L2 norm of the network output 𝒖𝒖𝒕𝒕, and the differentiation 
+output 𝒖𝒖ෝ𝒕𝒕. Each of these terms will be weighted to balance their effect on the overall 
+optimization function, ℒ(𝜃𝜃). These weights are known as hyperparameters that can change the 
+
+--- Sayfa 13 ---
+ 
+ 
+ 
+ 
+Bond - 13
+overall performance of loss minimization. The data loss weights ( 𝛿𝛿1, 𝛿𝛿2, 𝛿𝛿3 ) are found 
+according to Equations to (19)-(21). The state space loss weight, 𝛿𝛿𝑠𝑠𝑠𝑠, is set to equal 𝛿𝛿2 because 
+both loss components hold similar magnitudes. The residual loss weight, 𝛼𝛼, is found through a 
+parametric study, but generally to make the loss components contribute to the global loss 
+equally.  
+ 
+𝛿𝛿1 = 1.0 
+(19) 
+ 
+𝛿𝛿2 ≈
+𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚ቀ𝑠𝑠𝑠𝑠𝑠𝑠൫𝑢𝑢𝑡𝑡𝑡𝑡
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ℎ൯ቁ
+𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚ቀ𝑠𝑠𝑠𝑠𝑠𝑠൫𝑢𝑢𝑡𝑡
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ℎ൯ቁ
+ 
+(20) 
+ 
+𝛿𝛿3 ≈
+𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚ቀ𝑠𝑠𝑠𝑠𝑠𝑠൫𝑢𝑢𝑡𝑡𝑡𝑡
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ℎ൯ቁ
+𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚൫𝑠𝑠𝑠𝑠𝑠𝑠(𝑢𝑢𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ℎ)൯ 
+(21) 
+For each training iteration (e.g., each epoch), the loss function, ℒ(𝜃𝜃) from Figure 2, will 
+produce an error or gradient value which will be backpropagated through the layers of the 
+network, attributed in some portion to the model parameters, 𝜃𝜃  (e.g., LSTM and FCNN 
+weights and biases). These parameters will be updated via stochastic gradient descent and the 
+Adam optimizer [55].  
+In this application, the LSTM network is thought to be capable of learning order 
+dependence in the response data while the finite difference-based filter and the EOM confine 
+the solution space to realistic results. These features reduce the need for large training sets, 
+relieve overfitting issues, and increase the robustness of the trained model for more reliable 
+prediction. The model order reduction of the training and testing data further speed up the 
+training and reduce redundancy in the response data. Validation and performance examples of 
+the network architecture are shown in the following section. 
+3. EXAMPLES 
+In the following examples, nonlinear time-history responses of structures are generated by 
+numerical simulations to compose the ground-truth data. This ground-truth data is compared 
+to the structural response generated with the PiML metamodel as well as a response generated 
+with a data-driven LSTM network. The case studies consist of nonlinear special steel moment 
+resisting frames (SMRFs), sourced from the database created by Guan et al. (2020) [56] and 
+downloaded from the DesignSafe-CI Data Depot [1,57]. The total dataset comprised 81 one-
+story, 149 five-story, 122 nine-story, 78 fourteen-story, and 38 nineteen-story steel moment 
+frames. The parameters considered in the dataset are shown in Table 1. 
+
+--- Sayfa 14 ---
+ 
+ 
+ 
+ 
+Bond - 14
+Table 1: SMRF Database Design Specifications [57] 
+Category 
+Parameters 
+Values considered in archetype design 
+space 
+Geometric 
+Configuration 
+Number of stories  
+1, 5, 9, 14, and 19 
+Number of bays  
+1, 3, and 5 
+First story/typical story height  
+1.0, 1.5, and 2.0 
+Bay width  
+20 ft (6.10 m), 30 ft (9.14 m), and 40 ft 
+(12.19 m) 
+Number of LFRSs  
+Two in principal direction 
+Typical story height  
+13 ft (3.96 m) 
+Load 
+Information 
+Floor dead load  
+50 psf (2.39 kN/m2), 80 psf (3.83 kN/m2), & 
+110 psf (5.27 kN/m2) 
+Roof dead load  
+20 psf (0.96 kN/m2), 67.5 psf (3.23 kN/m2), 
+& 115 psf (5.51 kN/m2) 
+Floor live load  
+50 psf (2.39 kN/m2) 
+Roof live load  
+20 psf (0.96 kN/m2) 
+Design 
+conservatism 
+Allowable drift limit  
+2% 
+Steel strength 
+Yield stress  
+50 ksi (345 MPa) 
+3.1 Structural Finite Element Model and Seismic Excitation 
+The SMRF design methodology was derived and validated from experimental data from 
+the Applied Technology Council (ATC)-123 project [56–59]. Frames were designed using the 
+equivalent lateral force (ELF) analysis procedure. Seismic story forces were approximated 
+from the fundamental period and calculated with ASCE 7-16. Initially, seismic forces are 
+estimated using the building's fundamental period, in accordance with ASCE 7-16 [60]. 
+Preliminary beam and column sizes are decided with engineering judgment and basic rules of 
+thumb [56], considering accidental torsion. An elastic model is analyzed for gravity and lateral 
+seismic forces, and structural deformations and member forces are obtained. Story drifts are 
+then adjusted and compared against limits (e.g., 2% allowable drift); if they exceed, member 
+sizes are increased and the process is repeated, including stability checks. Further, the structural 
+members are checked for ductility, strength, and stability according to specific standards [60–
+63]. The commonly used reduce beam section (RBS) connection was chosen, ensuring they 
+meet strength and design criteria. The site conditions matched that in the ATC-123 project 
+[58], specifically site class D and spectral accelerations of = 2.25g and = 0.6g. Finally, the 
+design is refined for practical construction considerations, like using consistent member sizes 
+
+--- Sayfa 15 ---
+ 
+ 
+ 
+ 
+Bond - 15
+across floors and accounting for deeper columns in lower stories for splices. Further details on 
+the steel frame archetypes can be found in Guan et al. (2020) [56]. 
+To analyze the steel frames, numerical models were created and assessed using the 
+OpenSees software [64]. The beams and columns were represented using concentrated plastic 
+hinge beam-column elements to simulate the nonlinear material behavior of steel beam-column 
+components. These elements comprised two nonlinear hinges at both ends and a linear elastic 
+beam-column element in the middle. A zero-length rotational spring featuring a modified 
+Ibarra-Medina-Krawinkler (IMK) material [65,66] was employed for the modeling of 
+nonlinear hinges. The possible shear yielding at the SMRF panel zone is considered through 
+panel zone modeling using a combination of elastic elements and zero length rotational springs 
+[56]. Additionally, a leaning column, connected to the frame with truss elements, is used to 
+account for P-Δ effects. The leaning column’s hinge is simulated using a zero-length rotational 
+spring that possesses minimal rotational stiffness. For simplicity, the training and testing results 
+of one SMRF model per story level in the dataset (namely 1, 5, 9, 14, and 19 stories, 
+corresponding to building IDs 0, 81, 567, 1053, and 1539 [57]) were chosen to demonstrate 
+the PiML metamodel’s performance in the following sections. Figure 5 depicts the structural 
+layouts of example SMRF structure and a detail of the panel zone. 
+
+--- Sayfa 16 ---
+ 
+ 
+ 
+ 
+Bond - 16
+ 
+Figure 5: Five 2D SMRF structural layouts [56] 
+A synthetic dataset of nonlinear time-history responses of the structure is generated under 
+the excitation of 240 ground motions obtained from a study by Miranda (1999) [49] to align 
+with the Miranda suite of the SMRF structural models [56,57].  
+
+--- Sayfa 17 ---
+ 
+ 
+ 
+ 
+Bond - 17
+The ground motions were scaled utilizing the FEMA P695 [67] methodology to amplify 
+the targeted training and testing data in which the residual drift is significant and the relative 
+nonlinear hysteretic behavior is large. Record scaling is a two-step process [67]. Step 1: 
+Normalization of records with normalization factor (𝑁𝑁𝑁𝑁): this factor normalizes the ground 
+acceleration time series by their respective peak ground velocities to remove unwarranted 
+variability between records due to inherent differences in event magnitude, distance, source 
+type, and site conditions without eliminating record-to-record variability [67].  Step 2: 
+Anchoring of records with scale factor 1 (𝑆𝑆𝐹𝐹1): this factor is used to “anchor” the ground 
+acceleration time series by a specific ground motion intensity such that median spectral 
+acceleration of the record set (𝑆𝑆𝑀𝑀) matches the design level spectral acceleration at the 
+fundamental period of structure (𝑆𝑆̂𝑆𝑆) [67]. The two layers of scaling are described in Equations 
+(22)-(24). 
+ 
+𝑎𝑎𝑔𝑔
+𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠(𝑡𝑡) = 𝑁𝑁𝑁𝑁∗𝑆𝑆𝐹𝐹1 ∗𝑎𝑎𝑔𝑔
+𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟(𝑡𝑡) 
+(22) 
+ 
+𝑁𝑁𝑁𝑁= median(𝑃𝑃𝑃𝑃𝑃𝑃)
+𝑃𝑃𝑃𝑃𝑃𝑃
+ 
+(23) 
+ 
+𝑆𝑆𝐹𝐹1 = 𝑆𝑆𝑀𝑀
+𝑆𝑆̂𝑆𝑆
+ 
+(24) 
+Due to the anchoring step, each ground motion suite is scaled slightly differently based on 
+structural building properties (e.g., first mode fundamental period). The 5% critically damped 
+response spectra of the unscaled and scaled ground motions are shown in Figure 5 for the 1 
+story SMRF. For the unscaled ground motions, the peak ground acceleration (PGA) of the 
+records vary from 0.03g to 0.77g with a mean of 0.17g, while the scaled ground motions for 
+the record sets are shown in Table 2. The records were recorded at free fields or the first floor 
+of a low-rise structure at firm sites with shear wave velocities greater than 590 ft/s (180 m/s) 
+from the upper 100 ft (30 m) layer. More details of the ground motion suite can be found in 
+Miranda (1999) [49]. 
+Table 2: SMRF ground motion suite 
+Building Information 
+Ground Motion Suite Information 
+Building 
+ID [57] 
+Number of 
+Stories 
+First Mode 
+Period 
+[sec] 
+Average 
+PGA [g] 
+Min PGA 
+[g] 
+Max PGA 
+[g] 
+Std. 
+PGA [g] 
+0 
+1 
+0.511 
+0.98 
+0.19 
+3.41 
+0.62 
+81 
+5 
+1.107 
+0.89 
+0.17 
+3.10 
+0.56 
+567 
+9 
+1.547 
+0.69 
+0.14 
+2.40 
+0.44 
+1053 
+14 
+1.818 
+0.61 
+0.12 
+2.14 
+0.39 
+1539 
+19 
+2.311 
+0.50 
+0.10 
+1.73 
+0.31 
+
+--- Sayfa 18 ---
+ 
+ 
+ 
+ 
+Bond - 18
+ 
+ 
+(a) 
+(b) 
+Figure 6: (a) unscaled acceleration spectra for the 240 ground motion records; (b) scaled 
+acceleration spectra for Building 0. 
+3.2 PiML Metamodel Training and Testing 
+The input scaled ground accelerations were combined with the response of the high-fidelity 
+finite element SMRF model to create input/output data pairs. To establish the size for the PiML 
+metamodels’ training set, the number of data pairs was initially set at 20 and then progressively 
+increased in increments of 20, until it reached a maximum of 200 pairs. As expected, the model 
+performance enhanced with larger training sets, but in general improvements plateaued at 100 
+pairs for the PiML metamodels. Therefore, for training, 100 pairs were randomly selected from 
+a total of 240 ground motion and corresponding state variable responses. The remaining 140 
+pairs were allocated for validation and testing.  
+So that each channel, or DOF of the structure, contributes equally to the training process, 
+an absolute scaling method is administered such that each value in a channel is normalized 
+between -1 and 1. The scaling is done independently for each channel, based on the maximum 
+absolute value in that channel and the result maintains the sign of the original data. After 
+normalization, a wavelet transformation was applied as described in Section 2.4. Specifically, 
+this transformation used a sixth-order Daubechies wavelet with a scale parameter of s = 2, 
+generating wavelet coefficients used for training and testing.  
+During the training phase, the loss value, derived in Figure 4, attributes gradients to the 
+network parameters, 𝜃𝜃, and are backpropagated through the layers of the network. A parametric 
+analysis was performed to tune the network hyperparameters of the PiML metamodel. 
+
+--- Sayfa 19 ---
+ 
+ 
+ 
+ 
+Bond - 19
+Specifically, a minibatch size of 20, weight decay parameter of 1e-6, and initial learning rate 
+of 2e-2 were chosen, alongside a learning rate decay period of 300 epochs and a multiplicative 
+factor of 0.95. These hyperparameters were uniformly applied across all datasets and proved 
+effective in minimizing the loss function across various scenarios. While data-specific tuning 
+of these hyperparameters may enhance performance for each individual dataset, pursuing data 
+specific tuning is unfeasible within real-world implementations. A hyperbolic tangent 
+activation function was chosen for the FCNN as it outperformed other common activation 
+functions during testing. Additionally, the incorporation of Batch Normalization (Batch 
+Norm.) layers between hidden layers of the FCNN facilitated the attainment of a consistent 
+distribution of activation values throughout the training process. The training was conducted 
+using a computer system equipped with 28 Intel Core i9-10900KF CPUs and NVIDIA GeForce 
+RTX 3090 GPU card, which featured CUDA compatibility, facilitating accelerated deep 
+learning operations. The computer code was implemented in the PyTorch framework [68]. 
+The calibrated (e.g., trained) PiML metamodel, which utilized the network parameters 
+𝜃𝜃 (e.g., weights and biases or 𝑾𝑾𝛼𝛼
+(𝑙𝑙)and 𝒃𝒃𝛼𝛼
+(𝑙𝑙)) from the minimum validation loss epoch, was used 
+to predict structural state variable responses with unknown and unseen ground motions as input 
+(e.g., the testing set ground motions). The testing data also includes the reference (e.g., ground 
+truth) output state variable response, which can then be compared to the metamodel output to 
+display the performance of the PiML metamodel. Figure 7 shows a typical result (e.g., response 
+data for the high-fidelity model, the PiML metamodel, and the data-driven LSTM network) for 
+each structure tested under one ground motion input. Successful validation implies that the 
+model can adequately predict structural responses under different conditions. 
+ 
+(a) 
+(b) 
+
+--- Sayfa 20 ---
+ 
+ 
+ 
+ 
+Bond - 20
+ 
+(c) 
+(d) 
+ 
+ 
+(e) 
+(f) 
+ 
+(g) 
+(h) 
+ 
+ 
+(i) 
+(j) 
+Figure 7: Comparative outputs of response state variables from the PiML metamodel and LSTM 
+network, showcasing: (a) a 1 story SMRF typical response; (b) zoomed-in signal of (a); (c) a 5 story 
+SMRF’s typical response; (d) an zoomed-in signal of (c);(e) a 9 story SMRF’s typical response; (f) 
+zoomed-in signal of (e); (g) a 14 story SMRF’s typical response; (h) zoomed-in signal of (g); (i) a 19 
+story SMRF’s typical response; and (j) zoomed-in signal of (i). 
+
+--- Sayfa 21 ---
+ 
+ 
+ 
+ 
+Bond - 21
+3.3 Evaluation and Validation 
+To showcase the model's robustness, a validation approach was implemented where each 
+model was trained on 10 different, randomly chosen subsets from the full set of data. This 
+approach is similar to the widely recognized 10-fold cross-validation technique in ML, which 
+mitigates risks of overfitting or underfitting that can arise from using a single test set [69]. In 
+this approach, 100 data pairs are chosen from the full suite of 240 data pairs for training 
+randomly 10 times. Each subset is utilized once for training, and the model's performance is 
+evaluated on the remaining data, allowing for error calculation across various configurations. 
+This strategy not only decreases the variance in performance assessment compared to a single 
+hold-out test set but also provides a more comprehensive evaluation over diverse data subsets.  
+The performance of the models is evaluated using various metrics, designed to assess 
+different aspects of model accuracy and reliability. A widely used measure for comparing two 
+time-series is the root mean square error normalized by the range of the signal (𝑅𝑅𝑅𝑅𝑅𝑅𝐸𝐸𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟). 
+Normalizing by range is beneficial for comparing data with varying magnitudes. This is a 
+common metric that can provide a single evaluation value for an entire suite of test and 
+predicted time-series (Eqn. (25)). Additionally, the Pearson’s correlation coefficient (CC) is 
+selected to offer a single evaluation figure, providing insight into the correlation between the 
+predicted and reference response time-series (Eqn. (26)).  
+ 
+𝑅𝑅𝑅𝑅𝑅𝑅𝐸𝐸𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟= 1
+𝑙𝑙෍ඨ
+൫𝑦𝑦𝑙𝑙
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡−𝑦𝑦𝑙𝑙
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝൯
+2
+max(𝑦𝑦𝑙𝑙
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡) −min(𝑦𝑦𝑙𝑙
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ℎ)
+𝑙𝑙
+𝑖𝑖
+ 
+(25) 
+ 
+𝐶𝐶𝐶𝐶= 1
+𝑙𝑙෍
+∑(𝑦𝑦𝑙𝑙,𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡−𝑦𝑦ത𝑙𝑙
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡)(𝑦𝑦𝑙𝑙,𝑖𝑖
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝−𝑦𝑦ത𝑙𝑙
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝)
+𝜏𝜏 
+𝑖𝑖
+ට∑൫𝑦𝑦𝑙𝑙,𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡−𝑦𝑦ത𝑙𝑙
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡൯
+2
+𝜏𝜏 
+𝑖𝑖
+ට∑൫𝑦𝑦𝑙𝑙,𝑖𝑖
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝−𝑦𝑦ത𝑙𝑙
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝൯
+2
+𝜏𝜏 
+𝑖𝑖
+𝑙𝑙
+𝑖𝑖
+ 
+(26) 
+In the above equations, 𝑦𝑦𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡 represents a specific state variable (e.g., displacement, 
+velocity, acceleration, or restoring force), reference response, 𝑦𝑦𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝 is either the state variable 
+response of the PiML or the LSTM network, 𝑙𝑙 is the number of ground motions in the test set 
+(e.g., 140), 𝜏𝜏 is the sequence length of the signal, and a bar represents the mean of the signal. 
+A box and whisker plot representation of the 𝑅𝑅𝑅𝑅𝑅𝑅𝐸𝐸𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟 and the CC of the testing data set for 
+the 10 trials are shown in Figure 8 and Figure 9 respectively. For each metric and each 
+structure, the PiML metamodel has lower mean errors with fewer outliers overall compared to 
+the data-driven LSTM network.     
+
+--- Sayfa 22 ---
+ 
+ 
+ 
+ 
+Bond - 22
+ 
+Figure 8: A box-and-whisker plot for the RMSE normalized by range for 10 independent trials of the 
+PiML vs. LSTM for (a) displacement error; (b) velocity error; (c) acceleration error; and (d) the 
+restoring force error. 
+ 
+Figure 9: A box-and-whisker plot for the correlation coefficient (CC) for 10 independent trials of the 
+PiML vs. LSTM for (a) displacement; (b) velocity; (c) acceleration; and (d) the restoring force 
+The peak error (𝐿𝐿𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝) measures the difference between the peak values in the predicted 
+and reference data, displaying the model's ability to accurately replicate the extreme values in 
+the response series (e.g., peak story drift, etc.) (Eqn. (27)). The amplitude loss calculates the 
+average of the amplitude differences over ‘𝜏𝜏’ time steps evaluating the model's precision in 
+replicating the magnitude of fluctuations in the time-series across the duration of the signal 
+(Eqn. (28)). The energy loss quantifies the relative difference in the integrated response over 
+time between the predicted and original data (Eqn. (29)).  
+
+--- Sayfa 23 ---
+ 
+ 
+ 
+ 
+Bond - 23
+ 
+𝐿𝐿𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝= 𝑚𝑚𝑚𝑚𝑚𝑚|𝑦𝑦𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡| −𝑚𝑚𝑚𝑚𝑚𝑚|𝑦𝑦𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝|
+𝑚𝑚𝑚𝑚𝑚𝑚|𝑦𝑦𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡|
+ 
+(27) 
+ 
+𝐴𝐴= 1
+𝜏𝜏 ෍ห𝑦𝑦𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡−𝑦𝑦𝑖𝑖
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝ห
+|𝑦𝑦𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡|
+𝜏𝜏 
+𝑖𝑖
+ 
+(28) 
+ 
+ℇ=
+∑|𝑦𝑦𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡|
+𝜏𝜏 
+𝑖𝑖
+−∑ห𝑦𝑦𝑖𝑖
+𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝ห
+𝜏𝜏 
+𝑖𝑖
+∑ห𝑦𝑦𝑖𝑖
+𝑡𝑡𝑡𝑡𝑡𝑡𝑡𝑡ห
+𝜏𝜏 
+𝑖𝑖
+ 
+(29) 
+One value is taken for each of these three-error metrics (e.g., 𝐿𝐿𝑝𝑝𝑝𝑝𝑝𝑝𝑝𝑝, 𝐴𝐴, and ℇ) for all 
+examples in the test set (e.g., 140 data pairs). These 140 error metric values are then converted 
+into a cumulative distribution function (CDF) to show the probability that the metric is above 
+or below a certain value. Individual CDFs for the 10 trials are show as thin lines for the PiML 
+(red) and LSTM (blue) metamodels in Figure 10, Figure 11, and Figure 12. A thick line 
+represents the mean of all CDFs for the PiML an LSTM metamodels. It is shown, for the 
+majority of the structures and state variables, that the PiML outperforms the LSTM network in 
+all error metrics.  
+Importantly, metrics such as the 𝑅𝑅𝑅𝑅𝑅𝑅𝐸𝐸𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟, peak loss, and amplitude loss focus on 
+localized prediction quality, scrutinizing the model's accuracy at individual time steps. In 
+contrast, the correlation coefficient and energy loss compare the global quality of the 
+predictions, considering the entire response series. 
+
+--- Sayfa 24 ---
+ 
+ 
+ 
+ 
+Bond - 24
+ 
+Figure 10: Peak error for all frames and all state variables 
+
+--- Sayfa 25 ---
+ 
+ 
+ 
+ 
+Bond - 25
+ 
+Figure: Amplitude error for all frames and all state variables 
+
+--- Sayfa 26 ---
+ 
+ 
+ 
+ 
+Bond - 26
+ 
+Figure 11: Energy error for all frames and all state variables 
+3.4 Future Work 
+The dataset of 621 SMRF was chosen to expand on the scope of the PiML metamodels. 
+Transfer learning is currently being explored to transfer model parameters for one structure to 
+another to save training effort and maintain accuracy for other structural models in the 
+database. Additionally, various use case applications of this model, like incremental dynamic 
+analysis, fragility analysis, and development of seismic performance factors, are being 
+considered in our future work.  
+
+--- Sayfa 27 ---
+ 
+ 
+ 
+ 
+Bond - 27
+4. CONCLUSION 
+This research incorporates physical constraints of traditional earthquake engineering and 
+structural dynamics with innovative elements of ML, creating a novel physics-informed deep 
+learning approach for predicting nonlinear structural seismic responses. Particularly, the PiML 
+metamodel is capable of mapping seismic input to detailed global response time-histories of 
+response state variables, (e.g., 𝐚𝐚𝐠𝐠
+metamodeling
+ሱ⎯⎯⎯⎯⎯⎯⎯⎯⎯ሮ𝐮𝐮𝐭𝐭𝐭𝐭, 𝐮𝐮𝐭𝐭, 𝐮𝐮, 𝐠𝐠). The EOM and a differentiation 
+filter are taken as constraints and incorporated in the ML network architecture to guide the 
+model training to a physics-based solution space. Another distinguishing feature of the 
+proposed framework is the application of the wavelet transformation, a method known to 
+capture localized features and variation, capable of providing a flexible time-frequency 
+deconstruction and reconstruction of the time-series input/output pairs. In this case, wavelets 
+were particularly found to effectively handle the non-stationarity and irregularity in the residual 
+drift of the displacement data, thereby enhancing the accuracy and nuance of PiML 
+metamodels. In this way, the trained PiML metamodel can accurately capture structural 
+dynamics even with limited training/validation data.  
+For demonstration purposes, the PiML metamodeling architecture is tested on steel 
+moment resisting frame models downloaded from the Design-Safe CI data depot [56,57] and 
+compared with a non-physics guided, data-driven LSTM network. For all five frame structures, 
+the PiML outperforms the data-driven network in reconstruction in the state variable responses.  
+The PiML metamodel introduced in this work provides three key benefits. Firstly, it ensures 
+clear interpretability by integrating physical principles, which not only lends meaning to the 
+model's outputs but also enhances the understanding of its operations. Secondly, the model 
+demonstrates superior generalizability and robust inference capabilities, attributed to the 
+incorporation of embedded physics. This approach effectively constrains network outputs, 
+mitigates overfitting, and diminishes the reliance on extensive training datasets, thereby 
+bolstering model reliability for predictions. Lastly, the model boasts exceptional efficiency and 
+accuracy in its performance, making it adept at handling datasets of limited richness without 
+compromising on speed or precision. 
+5. ACKNOWLEDGMENTS 
+This material is based upon work supported by the National Science Foundation under 
+Grant No. CMMI-2013067 and Northeastern University. The authors would like to thank 
+James Fong for his assistance with this research. 
+
+--- Sayfa 28 ---
+ 
+ 
+ 
+ 
+Bond - 28
+6. DATA AVAILABILITY STATEMENT 
+All the source codes to reproduce the results in this study are available on GitHub at 
+https://github.com (detailed URL will be provided after official publication of this paper). 
+7. REFERENCES 
+[1] 
+E.M. Rathje, C. Dawson, J.E. Padgett, J.-P. Pinelli, D. Stanzione, A. Adair, P. Arduino, 
+S.J. Brandenberg, T. Cockerill, C. Dey, M. Esteva, F.L. Haan, M. Hanlon, A. Kareem, 
+L. Lowes, S. Mock, G. Mosqueda, DesignSafe: New Cyberinfrastructure for Natural 
+Hazards 
+Engineering, 
+Nat. 
+Hazards 
+Rev. 
+18 
+(2017) 
+1–7. 
+https://doi.org/10.1061/(asce)nh.1527-6996.0000246. 
+[2] 
+T.J. Hughes, The finite element method: linear static and dynamic finite element 
+analysis, Courier Corporation, 2012. 
+[3] 
+V. Plevris, G.C. Tsiatas, Computational structural engineering: Past achievements and 
+future 
+challenges, 
+Front. 
+Built 
+Environ. 
+4 
+(2018) 
+1–5. 
+https://doi.org/10.3389/fbuil.2018.00021. 
+[4] 
+O. Sigmund, K. Maute, Topology optimization approaches: A comparative review, 
+Struct. Multidiscip. Optim. 48 (2013) 1031–1055. https://doi.org/10.1007/s00158-013-
+0978-6. 
+[5] 
+J. Park, K.Y. Kim, Meta-modeling using generalized regression neural network and 
+particle swarm optimization, Appl. Soft Comput. J. 51 (2017) 354–369. 
+https://doi.org/10.1016/j.asoc.2016.11.029. 
+[6] 
+J.-P. Lin, G. Wang, R. Xu, Particle Swarm Optimization–Based Finite-Element 
+Analyses and Designs of Shear Connector Distributions for Partial-Interaction 
+Composite 
+Beams, 
+J. 
+Bridg. 
+Eng. 
+24 
+(2019) 
+04019017. 
+https://doi.org/10.1061/(asce)be.1943-5592.0001371. 
+[7] 
+M. Shinozuka, Monte Carlo solution of structural dynamics, Comput. Struct. 2 (1972) 
+855–874. https://doi.org/10.1016/0045-7949(72)90043-0. 
+[8] 
+J.W. Baker, Efficient analytical fragility function fitting using dynamic structural 
+analysis, 
+Earthq. 
+Spectra. 
+31 
+(2015) 
+579–599. 
+https://doi.org/10.1193/021113EQS025M. 
+[9] 
+D. Vamvatsikos, C.A. Cornell, Incremental dynamic analysis, Earthq. Eng. Struct. Dyn. 
+31 (2002) 491–514. https://doi.org/10.1002/eqe.141. 
+[10] D. Vamvatsikos, M. Fragiadakis, Incremental dynamic analysis for estimating seismic 
+
+--- Sayfa 29 ---
+ 
+ 
+ 
+ 
+Bond - 29
+performance sensitivity and uncertainty, Earthq. Eng. Struct. Dyn. (2010) 141–163. 
+https://doi.org/10.1002/eqe.935. 
+[11] T.W. Simpson, J.D. Peplinski, P.N. Koch, J.K. Allen, Metamodels for computer-based 
+engineering design: Survey and recommendations, Eng. Comput. 17 (2001) 129–150. 
+https://doi.org/10.1007/PL00007198. 
+[12] G.G. Wang, S. Shan, Review of metamodeling techniques in support of engineering 
+design optimization, J. Mech. Des. Trans. ASME. 129 (2007) 370–380. 
+https://doi.org/10.1115/1.2429697. 
+[13] Y. Xie, M. Ebad Sichani, J.E. Padgett, R. DesRoches, The promise of implementing 
+machine learning in earthquake engineering: A state-of-the-art review, Earthq. Spectra. 
+36 (2020) 1769–1801. https://doi.org/10.1177/8755293020919419. 
+[14] Y. Xie, J. Zhang, R. DesRoches, J.E. Padgett, Seismic fragilities of single-column 
+highway bridges with rocking column-footing, Earthq. Eng. Struct. Dyn. 48 (2019) 843–
+864. https://doi.org/10.1002/eqe.3164. 
+[15] C.A. Cornell, F. Jalayer, R.O. Hamburger, D.A. Foutch, Probabilistic Basis for 2000 
+SAC Federal Emergency Management Agency Steel Moment Frame Guidelines, J. 
+Struct. Eng. 128 (2002) 526–533. htttp://www.ascelibrary.org. 
+[16] T. Kim, O.S. Kwon, J. Song, Clustering-based adaptive ground motion selection 
+algorithm for efficient estimation of structural fragilities, Earthq. Eng. Struct. Dyn. 50 
+(2021) 1755–1776. https://doi.org/10.1002/eqe.3418. 
+[17] S. Durieux, H. Pierreval, Regression metamodeling for the design of automated 
+manufacturing system composed of parallel machines sharing a material handling 
+resource, Int. J. Prod. Econ. 89 (2004) 21–30. https://doi.org/10.1016/S0925-
+5273(03)00199-3. 
+[18] A. Roy, S. Chakraborty, Support vector regression based metamodel by sequential 
+adaptive sampling for reliability analysis of structures, Reliab. Eng. Syst. Saf. 200 
+(2020) 106948. https://doi.org/10.1016/j.ress.2020.106948. 
+[19] Y. Xiao, F. Yue, X. Wang, X. Zhang, Reliability-Based Design Optimization of 
+Structures Considering Uncertainties of Earthquakes Based on Efficient Gaussian 
+Process 
+Regression 
+Metamodeling, 
+Axioms. 
+11 
+(2022). 
+https://doi.org/10.3390/axioms11020081. 
+[20] R. Segura, J.E. Padgett, P. Paultre, Metamodel-Based Seismic Fragility Analysis of 
+
+--- Sayfa 30 ---
+ 
+ 
+ 
+ 
+Bond - 30
+Concrete 
+Gravity 
+Dams, 
+J. 
+Struct. 
+Eng. 
+146 
+(2020) 
+1–17. 
+https://doi.org/10.1061/(asce)st.1943-541x.0002629. 
+[21] J. Seo, L. Dueñas-Osorio, J.I. Craig, B.J. Goodno, Metamodel-based regional 
+vulnerability estimate of irregular steel moment-frame structures subjected to 
+earthquake 
+events, 
+Eng. 
+Struct. 
+45 
+(2012) 
+585–597. 
+https://doi.org/10.1016/j.engstruct.2012.07.003. 
+[22] P. Towashiraporn, Building seismic fragilities using response surface metamodels, 
+Georgia 
+Institute 
+of 
+Technology, 
+2004. 
+http://onlinelibrary.wiley.com/doi/10.1002/cbdv.200490137/abstract. 
+[23] S. Minas, R.E. Chandler, T. Rossetto, BEA: An efficient Bayesian emulation-based 
+approach for probabilistic seismic response, Struct. Saf. 74 (2018) 32–48. 
+https://doi.org/10.1016/j.strusafe.2018.04.002. 
+[24] S. Ghosh, A. Roy, S. Chakraborty, Kriging Metamodeling-Based Monte Carlo 
+Simulation for Improved Seismic Fragility Analysis of Structures, J. Earthq. Eng. 25 
+(2021) 1316–1336. https://doi.org/10.1080/13632469.2019.1570395. 
+[25] I. Gidaris, A.A. Taflanidis, G.P. Mavroeidis, Kriging metamodeling in seismic risk 
+assessment based on stochastic ground motion models, Earthq. Eng. Struct. Dyn. 44 
+(2015) 2377–2399. https://doi.org/10.1002/eqe.2586. 
+[26] Y. Shi, Z. Lu, L. Xu, S. Chen, An adaptive multiple-Kriging-surrogate method for time-
+dependent 
+reliability 
+analysis, 
+Appl. 
+Math. 
+Model. 
+70 
+(2019) 
+545–571. 
+https://doi.org/10.1016/j.apm.2019.01.040. 
+[27] R. Ghiasi, M.R. Ghasemi, M. Noori, Comparative studies of metamodeling and AI-
+Based techniques in damage detection of structures, Adv. Eng. Softw. 125 (2018) 101–
+112. https://doi.org/10.1016/j.advengsoft.2018.02.006. 
+[28] A. Khosravi, S. Nahavandi, D. Creighton, A prediction interval-based approach to 
+determine optimal structures of neural network metamodels, Expert Syst. Appl. 37 
+(2010) 2377–2387. https://doi.org/10.1016/j.eswa.2009.07.059. 
+[29] X. Yuan, G. Chen, P. Jiao, L. Li, J. Han, H. Zhang, A neural network-based multivariate 
+seismic classifier for simultaneous post-earthquake fragility estimation and damage 
+classification, 
+Eng. 
+Struct. 
+255 
+(2022) 
+113918. 
+https://doi.org/10.1016/j.engstruct.2022.113918. 
+[30] C. Ning, Y. Xie, L. Sun, LSTM, WaveNet, and 2D CNN for nonlinear time history 
+
+--- Sayfa 31 ---
+ 
+ 
+ 
+ 
+Bond - 31
+prediction 
+of 
+seismic 
+responses, 
+Eng. 
+Struct. 
+286 
+(2023) 
+116083. 
+https://doi.org/10.1016/j.engstruct.2023.116083. 
+[31] H.T. Thai, Machine learning for structural engineering: A state-of-the-art review, 
+Structures. 38 (2022) 448–491. https://doi.org/10.1016/j.istruc.2022.02.003. 
+[32] J. Schmidhuber, Deep Learning in neural networks: An overview, Neural Networks. 61 
+(2015) 85–117. https://doi.org/10.1016/j.neunet.2014.09.003. 
+[33] J. Chung, C. Gulcehre, K. Cho, Y. Bengio, Empirical Evaluation of Gated Recurrent 
+Neural Networks on Sequence Modeling, (2014) 1–9. http://arxiv.org/abs/1412.3555. 
+[34] S. Hochreiter, J. Schmidhuber, Long Short-Term Memory, Neural Comput. 9 (1997) 
+1735–1780. 
+[35] B.K. Oh, Y. Park, H.S. Park, Seismic response prediction method for building structures 
+using convolutional neural network, Struct. Control Heal. Monit. 27 (2020) 1–17. 
+https://doi.org/10.1002/stc.2519. 
+[36] C.A. Perez-Ramirez, J.P. Amezquita-Sanchez, M. Valtierra-Rodriguez, H. Adeli, A. 
+Dominguez-Gonzalez, R.J. Romero-Troncoso, Recurrent neural network model with 
+Bayesian training and mutual information for response prediction of large buildings, 
+Eng. Struct. 178 (2019) 603–615. https://doi.org/10.1016/j.engstruct.2018.10.065. 
+[37] K. Zhang, N. Chen, J. Liu, M. Beer, A GRU-based ensemble learning method for time-
+variant uncertain structural response analysis, Comput. Methods Appl. Mech. Eng. 391 
+(2022) 114516. https://doi.org/10.1016/j.cma.2021.114516. 
+[38] B. Ahmed, S. Mangalathu, J.S. Jeon, Seismic damage state predictions of reinforced 
+concrete structures using stacked long short-term memory neural networks, J. Build. 
+Eng. 46 (2022) 103737. https://doi.org/10.1016/j.jobe.2021.103737. 
+[39] R. Zhang, Z. Chen, S. Chen, J. Zheng, O. Büyüköztürk, H. Sun, Deep long short-term 
+memory networks for nonlinear structural seismic response prediction, Comput. Struct. 
+220 (2019) 55–68. https://doi.org/10.1016/j.compstruc.2019.05.006. 
+[40] M.H. Soleimani-Babakamali, M. Zaker Esteghamati, Estimating seismic demand 
+models of a building inventory from nonlinear static analysis using deep learning 
+methods, 
+Eng. 
+Struct. 
+266 
+(2022) 
+114576. 
+https://doi.org/10.1016/j.engstruct.2022.114576. 
+[41] A. Kundu, S. Ghosh, S. Chakraborty, A long short-term memory based deep learning 
+algorithm for seismic response uncertainty quantification, Probabilistic Eng. Mech. 67 
+
+--- Sayfa 32 ---
+ 
+ 
+ 
+ 
+Bond - 32
+(2022) 103189. https://doi.org/10.1016/j.probengmech.2021.103189. 
+[42] B. Li, S.M.J. Spence, Metamodeling through Deep Learning of High-Dimensional 
+Dynamic Nonlinear Systems Driven by General Stochastic Excitation, J. Struct. Eng. 
+148 (2022) 1–15. https://doi.org/10.1061/(asce)st.1943-541x.0003499. 
+[43] A.A. Torky, S. Ohno, Deep learning techniques for predicting nonlinear multi-
+component seismic responses of structural buildings, Comput. Struct. 252 (2021) 
+106570. https://doi.org/10.1016/j.compstruc.2021.106570. 
+[44] H. Salehi, R. Burgueño, Emerging artificial intelligence methods in structural 
+engineering, 
+Eng. 
+Struct. 
+171 
+(2018) 
+170–189. 
+https://doi.org/10.1016/j.engstruct.2018.05.084. 
+[45] R. Zhang, Y. Liu, H. Sun, Physics-guided convolutional neural network (PhyCNN) for 
+data-driven seismic response modeling, Eng. Struct. 215 (2020) 110704. 
+https://doi.org/10.1016/j.engstruct.2020.110704. 
+[46] R. Zhang, Y. Liu, H. Sun, Physics-informed multi-LSTM networks for metamodeling 
+of nonlinear structures, Comput. Methods Appl. Mech. Eng. 369 (2020) 1–21. 
+https://doi.org/10.1016/j.cma.2020.113226. 
+[47] H. Wang, T. Wu, Knowledge-Enhanced Deep Learning for Wind-Induced Nonlinear 
+Structural 
+Dynamic 
+Analysis, 
+J. 
+Struct. 
+Eng. 
+146 
+(2020) 
+1–14. 
+https://doi.org/10.1061/(asce)st.1943-541x.0002802. 
+[48] S. Sadeghi Eshkevari, M. Takáč, S.N. Pakzad, M. Jahani, DynNet: Physics-based neural 
+architecture design for nonlinear structural response modeling and prediction, Eng. 
+Struct. 229 (2021). https://doi.org/10.1016/j.engstruct.2020.111582. 
+[49] E. Miranda, Approximate Seismic Lateral Deformation Demands in Multistory 
+Buildings, J. Struct. Eng. 125 (1999) 417–425. 
+[50] Y. Kitada, Identrification of nonlinear structural dynamic systems using wavelets, J. 
+Eng. Mech. 124 (1998) 1059–1066. https://doi.org/doi:10.1061/(ASCE)0733-
+9399(1998)124:10(1059). 
+[51] G.E. Karniadakis, I.G. Kevrekidis, L. Lu, P. Perdikaris, S. Wang, L. Yang, Physics-
+informed 
+Machine 
+Learning, 
+Nat. 
+Rev. 
+Phys. 
+3 
+(2021) 
+422–440. 
+https://doi.org/10.1038/s42254-021-00314-5. 
+[52] C. 
+Olah, 
+Understanding 
+LSTM 
+Networks, 
+Colah’s 
+Blog. 
+(2016). 
+https://colah.github.io/posts/2015-08-Understanding-LSTMs/. 
+
+--- Sayfa 33 ---
+ 
+ 
+ 
+ 
+Bond - 33
+[53] Y. Zhu, N. Zabaras, P.S. Koutsourelakis, P. Perdikaris, Physics-constrained deep 
+learning for high-dimensional surrogate modeling and uncertainty quantification 
+without 
+labeled 
+data, 
+J. 
+Comput. 
+Phys. 
+394 
+(2019) 
+56–81. 
+https://doi.org/10.1016/j.jcp.2019.05.024. 
+[54] P. Ren, C. Rao, Y. Liu, J.X. Wang, H. Sun, PhyCRNet: Physics-informed convolutional-
+recurrent network for solving spatiotemporal PDEs, Comput. Methods Appl. Mech. 
+Eng. 389 (2022) 114399. https://doi.org/10.1016/j.cma.2021.114399. 
+[55] D.P. Kingma, J.L. Ba, Adam: A method for stochastic optimization, 3rd Int. Conf. 
+Learn. Represent. ICLR 2015 - Conf. Track Proc. (2015) 1–15. 
+[56] X. Guan, H. Burton, M. Shokrabadi, A database of seismic designs, nonlinear models, 
+and seismic responses for steel moment-resisting frame buildings, Earthq. Spectra. 37 
+(2020) 1199–1222. https://doi.org/10.1177/8755293020971209. 
+[57] X. Guan, H. Burton, M. Shokrabadi, A database of seismic designs, nonlinear models, 
+and seismic responses for steel moment resisting frame buildings, Designsafe-CI. (2020) 
+Epub ahead of print 24. https://doi.org/10.17603/ds2-8yc7-1285. 
+[58] FEMA P-2012, Assessing Seismic Performance of Buildings with Configuration 
+Irregularities: Calibrating Current Standards and Practices, Redwood City, CA, 2018. 
+www.ATCouncil.org. 
+[59] X. Guan, H. Burton, T. Sabol, Python-based computational platform to automate seismic 
+design, nonlinear structural model construction and analysis of steel moment resisting 
+frames, 
+Eng. 
+Struct. 
+224 
+(2020) 
+111199. 
+https://doi.org/10.1016/j.engstruct.2020.111199. 
+[60] ASCE 7-16: Minimum design loads for buildings and other structures, 2000. 
+https://doi.org/10.1061/9780872629042. 
+[61] (AISC) American Institute of Steel Construction, Seismic Provisions for Structural Steel 
+Buildings, AISC, Chicago, 2016. 
+[62] American Institute of Steel Construction (AISC), Specification for Structural Steel 
+Buildings, ANSI/AISC 360-16, AISC, Chicago, Illonois, 2016. 
+[63] American Institute of Steel Construction (AISC), Seismic Provisions for Structural Steel 
+Buildings, ANSI/AISC 341-16, AISC, Chicago, Illonois, 2016. 
+[64] S. Mazzoni, F. McKenna, M.H. Scott, G.L. Fenves, Open System for Earthquake 
+Engineering Simulation (OpenSEES) user command-language manual, Pacific Earthq. 
+
+--- Sayfa 34 ---
+ 
+ 
+ 
+ 
+Bond - 34
+Eng. Res. Cent. (2006) 465. 
+[65] L.F. Ibarra, Global Collapse of Frame Structures under Seismic Excitations, Stanford 
+University, 2003. 
+[66] L.F. Ibarra, R.A. Medina, H. Krawinkler, Hysteretic models that incorporate strength 
+and stiffness deterioration, Earthq. Eng. Struct. Dyn. 34 (2005) 1489–1511. 
+https://doi.org/10.1002/eqe.495. 
+[67] FEMA, Quantification of building seismic performance factors, Applied Technology 
+Council, US Department of Homeland Security, FEMA P695, 2009. 
+[68] A. Paszke, Pytorch: An imperative style, high-performance deep learning library., 
+(2019). 
+[69] Y. Grandvalet, Y. Bengio, Hypothesis Testing for Cross-Validation, (2006) 1–10. 
+http://www.iro.umontreal.ca/~lisa/bib/pub_subject/language/pointeurs/xv_rho_stat_tr1
+285.pdf. 
+ 

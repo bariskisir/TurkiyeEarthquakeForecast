@@ -1,0 +1,29 @@
+/* Integrates Leaflet sizing and theme overrides with forecast markers, observed-event labels, public controls, and expandable popup diagnostics. */
+.map-shell, .map-loading { flex: 1 1 auto; min-height: 430px; width: 100%; background: var(--map-bg); }
+.map-shell { position: relative; }
+.map-shell .map, .map { height: 100%; width: 100%; }
+.map-loading { display: grid; place-items: center; color: var(--muted); }
+.leaflet-container { font-family: inherit; background: var(--map-bg); }
+.leaflet-tile { width: 256.5px !important; height: 256.5px !important; }
+.leaflet-control-zoom a { color: var(--ink); background: var(--card); border-color: var(--line); }
+.leaflet-control-zoom a:hover { color: var(--green); background: var(--segment); }
+.leaflet-control-attribution { color: var(--muted); background: color-mix(in srgb, var(--card) 82%, transparent) !important; }
+.leaflet-control-attribution a { color: var(--green); }
+.leaflet-tooltip.forecast-year-label { padding: 0; color: #fff; background: transparent; border: 0; box-shadow: none; font-size: 9px; font-weight: 900; line-height: 1; pointer-events: none; }
+.leaflet-tooltip.forecast-year-label::before, .leaflet-tooltip.recent-marker-label::before { display: none; }
+.leaflet-tooltip.recent-marker-label { padding: 0; color: #fff; background: transparent; border: 0; box-shadow: none; font-size: 8px; font-weight: 900; line-height: 1; pointer-events: none; text-shadow: 0 1px 2px rgba(0, 0, 0, .9); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { color: var(--ink); background: var(--card); }
+.leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 12px 36px rgba(0, 0, 0, .3); }
+.popup-rank { margin-bottom: 5px; color: var(--green); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; }
+.popup-score { margin: 8px 0; color: var(--green); font-family: Georgia, serif; font-size: 30px; }
+.popup-score span { color: var(--muted); font: 11px Inter, sans-serif; }
+.popup dl { margin: 8px 0; }
+.popup dl div { padding: 5px 0; display: flex; justify-content: space-between; gap: 15px; border-bottom: 1px solid var(--soft-line); }
+.popup dt { color: var(--muted); }
+.popup dd { margin: 0; font-weight: 700; text-align: right; }
+.popup p { margin: 10px 0 0; color: var(--muted); font-size: 10px; }
+.popup-more { margin-top: 6px; }
+.popup-more-toggle { padding: 0; color: var(--muted); background: none; border: 0; font-size: 11px; font-weight: 700; }
+.popup-more-toggle:hover { color: var(--green); }
+.popup-more-body { margin-top: 2px; }
+.recent-popup > strong { max-width: 280px; display: block; line-height: 1.35; }

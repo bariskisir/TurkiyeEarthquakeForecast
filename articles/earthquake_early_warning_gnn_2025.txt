@@ -1,0 +1,1864 @@
+
+--- Sayfa 1 ---
+Load Forecasting for Households and Energy
+Communities: Are Deep Learning Models Worth the
+Effort?
+Lukas Moosbrugger
+a, Valentin Seiler
+a, Philipp Wohlgenannt
+a,
+Sebastian Hegenbart
+b, Sashko Ristov
+c, Elias Eder
+a,
+Peter Kepplinger
+a,∗
+aillwerke vkw Endowed Professorship for Energy Efficiency, Energy Research Centre,
+Vorarlberg University of Applied Sciences, Dornbirn, Austria
+bDigital Factory Vorarlberg GmbH, Dornbirn, Austria
+cDepartment of Computer Science, University of Innsbruck, Innsbruck, Austria
+Abstract
+Energy communities (ECs) play a key role in enabling local demand shift-
+ing and enhancing self-sufficiency, as energy systems transition toward de-
+centralized structures with high shares of renewable generation.
+To opti-
+mally operate them, accurate short-term load forecasting is essential, par-
+ticularly for implementing demand-side management strategies. With the
+recent rise of deep learning methods, data-driven forecasting has gained sig-
+nificant attention, however, it remains insufficiently explored in many prac-
+tical contexts. Therefore, this study evaluates the effectiveness of state-of-
+the-art deep learning models—including LSTM, xLSTM, and Transformer
+architectures—compared to traditional benchmarks such as K-Nearest Neigh-
+bors (KNN) and persistence forecasting, across varying community size, his-
+torical data availability, and model complexity. Additionally, we assess the
+benefits of transfer learning using publicly available synthetic load profiles.
+On average, transfer learning improves the normalized mean absolute er-
+ror by 1.97 percentage points when only two months of training data are
+available.
+Interestingly, for less than six months of training data, simple
+persistence models outperform deep learning architectures in forecast accu-
+racy. The practical value of improved forecasting is demonstrated using a
+∗Corresponding author. Email: peter.kepplinger@fhv.at
+Preprint submitted to Next Energy
+July 21, 2025
+arXiv:2501.05000v5  [cs.LG]  18 Jul 2025
+
+--- Sayfa 2 ---
+mixed-integer linear programming optimization for ECs with a shared bat-
+tery energy storage system. For an energy community with 50 households,
+the most accurate deep learning model achieves an average reduction in finan-
+cial energy costs of 8.06%. Notably, a simple KNN approach achieves average
+savings of 8.01%, making it a competitive and robust alternative. All imple-
+mentations are publicly available to facilitate reproducibility. These findings
+offer actionable insights for ECs, and they highlight when the additional
+complexity of deep learning is warranted by performance gains.
+Keywords:
+Load Forecasting, Energy Communities, Deep Learning,
+Transformer, xLSTM
+1. Introduction
+Energy communities (ECs) are continuously gaining attention, as they
+accelerate the transition to renewable energy and enhance self-sufficiency by
+enabling local balancing of supply and demand.
+ECs are groups of indi-
+viduals or organizations that produce, manage, and consume energy locally,
+through the use of public grid infrastructure, often with the goal of increasing
+sustainability and reducing energy costs [1, 2]. For an efficient operation of
+these entities—and to improve both self-sufficiency and financial benefit [3]—
+model predictive control (MPC) methods have been employed with notable
+success [4, 5].
+In practice, MPC requires accurate forecasts of exogenous variables such
+as electrical power demand, heat load, or photovoltaic (PV) production.
+Many recent studies have been affiliated with heat load forecasting using
+data-driven or physics-based methods [6–8]. However, the highest relevance
+for ECs lies in an accurate prediction of the electric power. A meaningful
+distinction can be drawn between long-term and short-term power forecast-
+ing: the former is crucial for strategic planning and infrastructure devel-
+opment [9, 10], whereas the latter is essential for real-time optimization of
+flexible energy assets [11, 12].
+Numerous models have been proposed for short-term load forecasting,
+covering time horizons ranging from one hour up to one week [11]. More re-
+cently, neural networks using Long Short-Term Memory (LSTM) have been
+widely regarded as popular models for short-term load forecasting of house-
+holds [11, 13, 14]. Within the development of the most competitive deep
+learning models, many studies have replaced LSTMs with Transformer mod-
+2
+
+--- Sayfa 3 ---
+els due to their ability to handle long-range dependencies and efficiently
+parallelize computations.
+Several recent studies highlight the superior performance of Transformer-
+based models over LSTMs in the context of short-term load forecasting. For
+example, Semmelmann et al. [15] compared the forecasting errors of LSTMs
+and Transformers for an EC consisting of 21 households and concluded that
+Transformer models outperform LSTMs.
+Other independently conducted
+studies [16–19] all came to similar conclusions when evaluating single highly
+aggregated load profiles representing entire cities and regions. L’Heureux et
+al. [20] additionally showed that a Transformer-based model outperforms a
+state-of-the-art recurrent model when tested on 20 highly aggregated load
+profiles from an energy utility company.
+In 2024, Beck et al. [21] introduced the xLSTM model.
+The authors
+claimed that this model performs favorably when compared to state-of-the-
+art Transformers, both in performance and scaling. They demonstrated that
+xLSTM exhibits performance comparable to Transformers, with notable ad-
+vantages such as linear rather than quadratic growth in memory consumption
+as the model input size increases. This improvement addresses scalability
+challenges, making xLSTM a more efficient option to handle larger inputs.
+A first work by Kraus et al. [22] demonstrates the effectiveness of xLSTM
+for long-term forecasting across various publicly available time series, with
+forecast horizons ranging from 96 to 720 hours. In contrast to prior work,
+the present study applies xLSTM in a short-term forecasting context, using
+a 24-hour horizon aligned with the requirements of our MPC application.
+In the context of ECs, the forecast accuracy is often deteriorated by a
+lack of sufficient historical records [23], irrespective of the used ML-based
+model. To address this challenge, transfer learning emerges as a promising
+solution by enabling knowledge reuse from related data. This approach is
+based on the idea that knowledge learned during one task can be reused to
+boost the performance on a related task [24]. In Moosbrugger et al. [25],
+the potential of leveraging transfer learning was demonstrated using open-
+access synthetic (also called standard) load profiles to improve load forecast
+error for renewable ECs with limited historical data.
+The study utilized
+a bidirectional LSTM model pre-trained on open-access synthetic profiles,
+achieving a 62% reduction in mean squared error (MSE) for forecasted load
+in an energy community of 74 households, while also significantly improving
+training stability.
+Even though MPC has been extensively applied in the context of ECs,
+3
+
+--- Sayfa 4 ---
+most studies assume either perfect load forecasts or rely on narrowly defined
+assumptions regarding the forecasting method. These simplifications limit
+the applicability of the results, as forecasting models are typically tested in
+isolated scenarios rather than evaluated across a range of conditions such as
+community size, training data availability, or model complexity, leaving a gap
+in understanding how different forecasting algorithms perform under varying
+conditions. This gap is addressed via the following research questions:
+1. Is the use of forecasting models based on deep learning methods justi-
+fied across different EC configurations?
+2. Can transfer learning using publicly available synthetic load profiles
+improve the forecast accuracy of deep learning models in data-scarce
+ECs?
+3. How is the financial benefit of MPC-based flexibility optimization im-
+pacted by the load forecast?
+To answer these research questions, load profiles, aggregation levels, train-
+ing data durations, and model sizes are realistically varied, providing a more
+comprehensive evaluation. This approach aligns with the recommendation
+of Pinheiro et al. [26], who noted that many existing studies demonstrate
+the superiority of a proposed technique on narrowly defined datasets, often
+hiding their weaknesses. Therefore, this study provides several contributions:
+1. We quantify the data availability threshold at which advanced deep
+learning models begin to significantly outperform conventional baseline
+models.
+2. We propose and evaluate a novel application of transfer learning from
+publicly available synthetic load profiles for EC load forecasting.
+3. We demonstrate the financial implications of forecast accuracy through
+a case study of a simulated EC, highlighting the economic benefits of
+using simple models such as k-nearest neighbors (KNN).
+This study therefore critically assesses the suitability of current deep
+learning approaches for household and EC load forecasting by systemati-
+cally probing their sensitivity to real-world scenarios and investigating the
+value of improved forecasting accuracy for energy system optimization.
+4
+
+--- Sayfa 5 ---
+2. Methods
+To assess the impact of load forecast accuracy on potential financial bene-
+fits of storage optimization, a comprehensive framework was developed. This
+framework, and the data used, are publicly available in a GitHub reposi-
+tory [27]. It includes: (1) a performance benchmark of data-driven forecast-
+ing algorithms, (2) a sensitivity analysis of the models developed, and (3) an
+evaluation of their individual financial impacts within a case study. Fig. 1
+provides an overview of the methodological approach used in this study.
+Figure 1: Summary of the research design for the present study.
+In accordance with Fig. 1, different types of data were used and curated to
+evaluate various models regarding their load forecasting capabilities. Typ-
+ical input features for short-term load forecasting were derived, including
+5
+
+--- Sayfa 6 ---
+datetime information, weather conditions, and historical load data, which
+corresponds to other load forecasting studies [7, 9, 15, 19, 26, 28].
+In the next step, three deep learning models (xLSTM, LSTM, and Trans-
+former) were compared against two baseline models: Persistence Prediction
+and k-Nearest Neighbors (KNN). Each model performs day-ahead short-term
+load forecasting, predicting an hourly power load profile from midnight to
+the following midnight. The models were trained and tested on various con-
+figurations in terms of community size, training dataset size, and model com-
+plexity. The practical value of improved forecasting was analyzed through a
+mixed-integer linear programming (MILP) optimization model for ECs with
+shared battery energy storage.
+2.1. Data description
+This study is based on 4,500 household load profiles from the UK Power
+Networks smart meter dataset [29], which contains electricity consumption
+data from households in London. To construct virtual ECs, subsets of 1,
+2, 10, 50, or 100 households were randomly selected from the dataset. This
+selection process was repeated 20 times for each community size, without
+replacement, resulting in 100 unique virtual ECs. All profiles span the period
+from July 2012 to February 2014. Q4 of 2013 was used as the test period, with
+the preceding 12 months used for training in all baseline model evaluations.
+The effect of using different quarters of 2013 as the testing period was also
+evaluated in a robustness analysis, which can be found in Appendix B.
+In addition to the London smart meter data, synthetic load profiles were
+used to pretrain the deep learning models, as detailed in Section 2.2. For
+these purposes, the German synthetic load profiles provided by the Python
+package demandlib [30] were employed. This package generates hourly syn-
+thetic load data for an arbitrary year and can even forecast loads for future
+years, making it a useful resource for transfer learning applications.
+Besides the above load profiles, all available Meteostat [31] weather fea-
+tures for London from 2012 to 2014 were utilized. These features include
+ambient temperature, dew point, wind direction, wind speed, air pressure,
+and relative humidity.
+2.2. Machine Learning Methods
+For each of the virtual ECs, two baseline models and three deep learn-
+ing models were trained and evaluated. A detailed description of the input
+features and the model architecture is provided in this section.
+6
+
+--- Sayfa 7 ---
+2.2.1. Input Features
+The current datetime, past weather data, and past load values were used
+as model input features, consistent with previous load forecasting studies [7,
+9, 15, 26]. This resulted in 20 input features in total, which are detailed as
+follows:
+• Day of the week: Encoded as a one-hot vector, represented as a
+binary 7-dimensional vector with one ”hot” bit and public holidays
+assigned to Sunday [15, 32].
+• Hour of the day: Encoded cyclically. The hour of day was mapped
+onto a unit circle using sine and cosine transformations to preserve its
+cyclical nature.
+• Day of the year: Encoded cyclically, similar to the hour of day fea-
+ture.
+• Lagged load profiles: These features include the hourly load mea-
+surements from one, two, and three weeks prior to the current timestep.
+Preliminary analysis showed that these days exhibit the highest corre-
+lation with the target values, outperforming more recent lags such as
+the previous day.
+• Weather data: All weather features described in Section 2.1 from
+the 24 hours preceding the forecast were used as input features for the
+model.
+2.2.2. Deep Learning Methods
+Two widely used deep learning methods for load forecasting—LSTMs and
+Transformers—were selected for this comparative study, based on findings
+from the literature review [11, 13–18, 20]. Additionally, the recently proposed
+xLSTM model [21] was included in the evaluation.
+Figure 2 illustrates the deep learning architectures used. We adopted the
+established LSTM-based architecture used in Kong et al. [13] by using multi-
+ple dense, i.e., fully connected layers as a single regression head for predicting
+the load. An encoder-only Transformer architecture was employed following
+Nie et al. [33]. For xLSTMs, we adopted the approach and the parameter
+settings provided in the reference implementation by Beck et al. [21].
+For the sake of a fair comparative study, the model sizes, i.e., the number
+of trainable parameters, were set to be comparable across all architectures.
+7
+
+--- Sayfa 8 ---
+Empirical results indicate that 5k parameters serve as a robust and fair base-
+line for this problem setting. A detailed summary of all model parameters
+used can be found in Appendix C.
+All models were optimized using Adam [34] across 100 training epochs,
+with a batch size of 256 and a learning rate schedule that declined in four
+stages: 0.01, 0.005, 0.001, and 0.0005.
+Figure 2: Overview of the sequence-to-sequence deep learning models evaluated in this
+study. Here, T represents the number of timesteps (24 hours), and F denotes the number
+of features (20).
+In a previous study [25], we already applied transfer learning by using
+synthetic load profiles. This approach was extended to the present study.
+During pre-training, models were exposed to openly available synthetic load
+profiles (as described in Section 2.1) spanning the entire period from July
+2012 to February 2014. The learned parameters from this phase were then
+used in a fine-tuning step of the model using the target EC profiles.
+8
+
+--- Sayfa 9 ---
+The models were trained using the mean absolute error (MAE) loss, as
+energy applications typically prioritize minimizing absolute errors rather than
+squared errors, due to the mostly linear relation between energy costs and
+used energy:
+MAE = 1
+n
+n
+X
+i=1
+|yi −ˆyi|
+(1)
+To enable comparisons across ECs of varying sizes within the same table
+or figure, the results were evaluated using the normalized mean absolute error
+(nMAE):
+nMAE = MAE
+¯y
+(2)
+where the normalization factor ¯y represents the arithmetic mean.
+The individual models were trained on an Ubuntu 22.04 system equipped
+with 32 CPU cores running at 3.2 GHz and 132 GB of RAM. To ensure
+reproducibility, a conda environment file is supplied, detailing the primary
+dependencies, including Python 3.11 [35] and PyTorch 2.2 [36].
+2.2.3. Benchmark Methods
+The aforementioned state-of-the-art deep learning methods were bench-
+marked against two simple and commonly used methods:
+• Persistent Prediction Method: This benchmark method predicts the
+load of the next day to be exactly the same load as it was seven days
+ago. Gross et al. [37] call this the naive seasonal model.
+• KNN [37]: A nearest neighbor regressor, using the same input features
+as the deep learning methods (see Section 2.1).
+The specific KNN
+configuration was selected based on preliminary experiments on the
+training set. The number of neighbors was set to k = 40, meaning
+that each hourly load value is predicted based on the 40 most similar
+historical hours, determined using Euclidean distance. Additionally,
+closer neighbors are assigned greater influence through distance-based
+weighting.
+9
+
+--- Sayfa 10 ---
+Figure 3: Forecast error sensitivity analysis. Each dimension is varied independently, with
+all other parameters held at their baseline, as indicated by the grey boxes above.
+2.3. Sensitivity Analysis
+The sensitivity of the models was analyzed with respect to varying EC
+properties, levels of data availability, and model properties. The experiments
+were specifically designed to evaluate the impact of the community size, train-
+ing size, model size and the effectiveness of transfer learning. The approach
+is illustrated in Fig. 3.
+The baseline configuration (depicted in grey), as
+explained in the individual sections above, is defined with the following pa-
+rameters: A model size of 5k parameters, a community size of 50 households,
+and a training set spanning 12 months. From this baseline, a systematic
+exploration was conducted to examine how the forecast errors depend on the
+individual parameters, which are subsequently explained in greater detail:
+• Community size: To investigate different levels of aggregation, five
+different community sizes were selected for comparison. According to
+the Austrian Coordination Office for Energy Communities [38], most
+ECs in Austria fall into one of three size categories: 2–10, 10–50, or
+50–100 households. Based on this classification, the boundary cases of
+1, 2, 10, 50, and 100 households were chosen for this study. In the
+parameter grid, 50 households represent the baseline community size.
+• Training size: We further considered a variety of training dataset
+sizes, to evaluate the practical challenge of insufficient training data.
+The amount of available training data was set to 2 months for the
+first evaluation, then progressively increased to 4, 6, and 9 months. To
+10
+
+--- Sayfa 11 ---
+ensure that each trained model has been exposed to all seasons of a year,
+a reasonable training period is comprised of 12 months. We therefore
+used 12 months as a robust baseline. Furthermore, 15 months of data
+were used, representing the maximum amount of available training data
+in the dataset used for the investigation.
+The sequential data split
+strategy is illustrated in Figure 4.
+• Model size: To assess the impact of the model size, each model was
+constructed with a different number of parameters—targeting approx-
+imately 0.1k, 0.2k, 0.5k, 5k, 20k, 40k, and 80k.
+• Transfer learning: To quantify the impact of transfer learning, model
+performance was evaluated across different training set sizes, both with
+and without applying transfer learning.
+Figure 4: Data split strategy: The final quarter of 2013 (Q4) serves as the testset, with
+varying lengths of the immediately preceding data used for training. Test results for other
+seasonal periods are provided in the Appendix A.
+2.4. Case Study on the Financial Implications of Load Forecasting
+Using the following case study, the financial impact of load forecasting
+errors in ECs was evaluated by utilizing a community battery energy stor-
+age system (BESS). The general goal was to reduce daily energy costs via
+intraday load shifting under a real-time price (RTP) tariff. The BESS was
+controlled through MPC, utilizing the forecasting models above for the power
+load. Details of the case study design are subsequently described. Fig. 5 gives
+a schematic overview of the case study.
+11
+
+--- Sayfa 12 ---
+Figure 5: Scheme of the case study EC with community BESS. E denotes the energy
+stored in the community BESS, Pch is the charging power, Pdis is the discharging power,
+Pload is the electrical load of the EC and Pgrid is the consumed power from the grid, which
+has to be purchased.
+The EC was modeled with a RTP based on the Austrian tariff structure.
+The price index of the Energy Exchange Austria (EXAA) [39] was used in
+combination with network usage fees and taxes according to current Aus-
+trian standards to form the EC tariff. To evaluate optimal battery size, two
+schemes were applied:
+1. A per-household-capacity of 12 kWh was assumed—which is the opti-
+mal capacity per household according to Barbour et al. [40]—and scaled
+linearly with community size.
+2. A fixed community size of 10 households was used to evaluate the
+optimal BESS capacity in a range of 5 kWh to 200 kWh, aligning with
+typical community-scale battery systems noted in [40].
+A 4-hour (C-Rate = 0.25) BESS with a maximum power of Pmax is in-
+stalled with symmetric charging and discharging efficiencies of ηch = ηdis =
+92.2%, respectively, resulting in a round-trip efficiency of 85%, which is in
+accordance with [41]. The simulation was executed for a test period ranging
+from October 1, 2013, to December 31, 2013, with the time period discretized
+to an hourly resolution. The optimization was conducted once per day to
+determine the optimal future schedule.
+The optimization model distinguishes between state and process vari-
+ables. State variables are indexed via t and defined for one point in time,
+while process variables are indexed via p and defined for one time period. N
+periods result in N + 1 time points. Et is the energy content of the BESS
+12
+
+--- Sayfa 13 ---
+at time point t and Pch,p, Pdis,p, ˆPload,p, Pgrid,p are the charging, discharging,
+load and grid powers for each period p, respectively. The MILP uses the load
+forecast ˆPload,p and the RTPs πp as inputs. The resulting daily optimization
+problem can be formulated as follows:
+min
+Pch,Pdis
+X
+p∈P
+Pgrid,pπp∆t
+(3)
+P = {0, . . . , 23}
+(4)
+T = {0, . . . , 24}
+(5)
+s.t. ∀p ∈P :
+Pgrid,p + Pdis,p = Pch,p + ˆPload,p
+(6)
+Pgrid,p ≥0.15 ˆPload,p
+(7)
+Ep+1 −Ep =
+
+ηchPch,p −Pdis,p
+ηdis
+
+∆t
+(8)
+0 ≤Pch,p ≤bch,pPmax
+(9)
+0 ≤Pdis,p ≤bdis,pPmax
+(10)
+bch,p + bdis,p = 1
+(11)
+and s.t. ∀t ∈T :
+Emin ≤Et ≤Emax
+(12)
+and s.t.:
+E0 = Estart
+(13)
+E24 = Eend
+(14)
+with:
+E = (E0, · · · , E24) ∈R25
+(15)
+Pch = (Pch,0, · · · , Pch,23) ∈R24
+(16)
+Pdis = (Pdis,0, · · · , Pdis,23) ∈R24
+(17)
+Pgrid = (Pgrid,0, · · · , Pgrid,23) ∈R24
+(18)
+ˆPload =
+
+ˆPload,0, · · · , ˆPload,23
+
+∈R24
+(19)
+bch = (bch,0, · · · , bch,23) ∈{0, 1}24
+(20)
+bdis = (bdis,0, · · · , bdis,23) ∈{0, 1}24
+(21)
+Eq. 3 defines the objective function minimizing the daily electrical energy
+costs. Eqs. 4 and 5 define sets of indices for all time periods and time points,
+13
+
+--- Sayfa 14 ---
+respectively. The power balance of the EC is defined in Eq. 6, while Eq. 7
+forces the solution of the optimization problem to fulfill that the grid supplies
+at least 15% of the total electrical load, based on the forecast. This constraint
+acts as a buffer to prevent feed-in of excess energy into the power grid,
+which can occur if the actual load is significantly lower than the forecasted
+load—causing the BESS to discharge energy that is not consumed. Since
+feed-in is not compensated under standard electricity tariffs, such scenarios
+should be avoided. Note that Eq. 7 is not contained in the perfect prediction
+scenario. Eqs. 8-12 describe the BESS model, where ηch and ηdis are the
+charging and discharging efficiencies, respectively.
+Emin and Emax denote
+minimum and maximum BESS capacity, respectively. The energy balance of
+the BESS is described in Eq. 8. Eqs. 9-11 prevent simultaneous charging and
+discharging via the binary variables bch and bdis and to enforce the maximum
+power limitation. The initial and end conditions of the BESS are defined by
+Eqs. 13 and 14. Note that the optimization uses the forecasted load ˆPload
+without a feedback loop, as real-time measurements of up to 100 households
+can be considered very challenging in practice. Consequently, the grid is used
+to compensate for forecast errors. The resulting grid power Pgrid,p at period
+p, employing the solution of the optimization problem to the realized EC
+load, can therefore be calculated by
+Pgrid,p = Pch,p −Pdis,p + Pload,p.
+(22)
+Here Pload,p is the resulting load of the EC in period p.
+3. Results and Discussion
+In the following section, key findings are presented, whereas detailed nu-
+merical results, including comprehensive results for all models, are provided
+in Appendix A.
+3.1. Preliminary Analysis
+The preliminary analysis aims to provide context and support for the core
+findings presented in later sections.
+Linear Feature Correlation
+Fig. 6 illustrates the Pearson correlation coefficient among individual fea-
+tures within an EC comprising 50 households over a 20-month period. It
+14
+
+--- Sayfa 15 ---
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+Saturday
+Sunday
+Hour-of-day-sine
+Hour-of-day-cosine
+Day-of-year-sine
+Day-of-year-cosine
+Lagged-power-21d
+Lagged-power-14d
+Lagged-power-7d
+Temperature
+Dew-point
+Wind-direction
+Wind-speed
+Air-pressure
+Humidity
+1.00
+0.75
+0.50
+0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+Pearson Correlation Coefficient (-)
+Figure 6: Linear correlation between each input feature and the target load profile.
+confirms that, as expected, features such as lagged power values and day-of-
+year exhibit significant correlations with the target load power profile. On
+the other hand, features such as ambient temperature and dew point are neg-
+atively correlated with load power, as lower temperatures are associated with
+increased heating and lighting demand throughout the year. The sine part
+of the sinusoidal hour-of-day encoding is also strongly negatively correlated,
+since it reaches its minimum around 6 p.m., which is typically aligned with
+the daily maximum in load demand. The strong correlation with lagged load
+values represents the reasoning for using a persistence model for short-term
+forecasting.
+Forecast for One Sample Energy Community
+Fig. 7 shows daily forecasts for a sample EC under the baseline config-
+uration. It indicates that the forecast error remains low for the majority of
+the test set. In particular, the daily nMAE from October to mid-December
+fluctuates around 10% on most days. An example load profile of a day with
+strong forecast accuracy is shown in Fig. 7(b). As expected, forecast errors
+peak during the Christmas holidays, reflecting the distinct energy consump-
+tion patterns of the holiday season. This anomaly is illustrated in Fig. 7(c).
+15
+
+--- Sayfa 16 ---
+Oct 01
+Nov 01
+Dec 01
+Dec 31
+Date
+0
+10
+20
+30
+40
+nMAE (%)
+(a)
+00:00
+03:00
+06:00
+09:00
+12:00
+15:00
+18:00
+21:00
+00:00
+Time
+0
+20
+40
+60
+80
+100
+120
+Load (kW)
+Forecast of Oct 04
+(b)
+Predicted
+Real
+00:00
+03:00
+06:00
+09:00
+12:00
+15:00
+18:00
+21:00
+00:00
+Time
+0
+20
+40
+60
+80
+100
+120
+Load (kW)
+Forecast of Dec 27
+(c)
+Predicted
+Real
+Figure 7: Performance of the Transformer model on a sample EC using the baseline
+configuration. (a) Daily forecast errors across the entire test period. (b) Example of a day
+with a relatively low forecast error (nMAE = 4.8%). (c) Example of a day with a relatively
+high forecast error (nMAE = 36.6%), where the entire period from noon to midnight is
+clearly overestimated.
+3.2. Sensitivity Analysis
+This subsection presents how changes to key parameters affect the load
+forecasting error.
+Training with Limited Data
+Fig. 8 illustrates the performance improvement of the deep learning mod-
+els compared to the persistence prediction benchmark, both regarding the
+available training data. Notably, the persistence prediction is independent
+of the available amount of training data.
+It is seen that the nMAE of the persistent predictor is smaller compared
+16
+
+--- Sayfa 17 ---
+2
+4
+6
+9
+12
+15
+Training Data Size (Month)
+7.5
+10.0
+12.5
+15.0
+17.5
+20.0
+22.5
+25.0
+nMAE (%)
+Transformer Model
+Persistence Prediction
+Figure 8: Minimum, arithmetic mean, maximum, and distribution of load forecasts with
+different sizes of training data. Each setting includes results from 20 ECs, based on the
+baseline configuration. While results for the Transformer are presented, the behavior is
+the same for other deep learning models and KNN, as shown in Appendix A.
+to the deep learning models with up to six months of training data. However,
+with nine months of training data or more, the deep learning models out-
+perform persistent prediction, with a difference in nMAE ranging from 1.8
+percentage points to 2.0 percentage points, depending on the model type.
+This finding is particularly valuable for newly established ECs, which can
+initially rely on persistence prediction for MPC and transition to more so-
+phisticated models after operating for nine months.
+Fig. 8 further demonstrates that the forecast error decreases significantly
+as the size of the training data increases. The models demonstrate improved
+generalization to new days when trained on a larger volume of historical
+data. However, this reduction in error appears to plateau at approximately
+12 months of training data, indicating diminishing returns from additional
+historical data beyond this point. This suggests that the model effectively
+captures all temporal patterns within that training period.
+Fig. 9 depicts the nMAE of the investigated deep learning models trained
+with and without transfer learning. The varying effect of transfer learning is
+emphasized by providing a comparison of models trained with two months of
+available training data (a), and models trained with 12 months of available
+training data (b).
+As illustrated in Fig. 9(a), transfer learning using synthetic load profiles
+shows a notable reduction in nMAE for two months of available training
+data. Across all trained models, the average nMAE improvement is 1.97
+17
+
+--- Sayfa 18 ---
+xLSTM
+LSTM
+Transformer
+0
+5
+10
+15
+20
+25
+30
+nMAE (%)
+(a)
+2mo Train Data
+2mo Train Data + TL
+xLSTM
+LSTM
+Transformer
+(b)
+12mo Train Data
+12mo Train Data + TL
+Figure 9: Forecast error of deep learning models with and without transfer learning (TL),
+using (a) a training set of 2 months and (b) a training set of 12 months. The column
+shows the mean over 20 ECs. All other settings follow the baseline configuration.
+percentage points. Remarkably, this improvement is achieved despite using
+synthetic profiles from Germany rather than the UK for pretraining. Fig. 9(b)
+illustrates that as training duration increases, the benefits of transfer learning
+diminish—and may even become slightly negative. This is because the model
+eventually learns all relevant temporal patterns from the target data itself,
+leaving little advantage to be gained from the pretrained knowledge.
+This finding underscores the versatility and generalizing ability of syn-
+thetic profiles for pretraining, for cases with limited training data.
+Un-
+like specific profiles that may risk overfitting the models, synthetic profiles
+demonstrate broad applicability across diverse scenarios.
+Impact of the Model Size
+In Fig. 10, the impact of the model complexity is illustrated, thus nMAE
+(a) and training duration (b) are depicted for varying model sizes. These
+results reveal several noteworthy insights.
+The Transformer model’s accuracy is very stable across varying model
+sizes, i.e., across different hyperparameter settings. For model sizes of 0.2k
+parameters or more, the average nMAE fluctuates at most by 0.45 percent-
+age points, while the standard deviation remains nearly independent of the
+model’s parameter count, with a maximum fluctuation of 0.27 percentage
+points.
+This illustrates that higher-capacity models, due to the larger number of
+parameters, do not necessarily result in higher accuracy. Quite opposing, the
+18
+
+--- Sayfa 19 ---
+0
+5
+10
+15
+20
+25
+30
+nMAE (%)
+(a)
+0.1k 0.2k 0.5k
+5k
+20k
+40k
+80k
+Model Size
+0
+5
+10
+15
+20
+Train Duration (min)
+(b)
+Figure 10: Load forecasting nMAE illustrated using the Transformer model (a), and total
+training duration of the entire forecasting framework (b). All computations are based on
+results from 20 ECs under the baseline configuration. The whiskers in (a) indicate the
+standard deviation over all ECs.
+models can be configured to have as few as 200 parameters, yet still deliver
+a sufficiently low nMAE. This finding is especially relevant for small edge
+computing devices, such as home automation systems with limited compu-
+tational resources, as it suggests that smaller models can achieve compara-
+ble performance without the need for extensive computational power. As
+Fig. 10(b) illustrates, the increase in training duration, although moderate,
+is not justified by a corresponding decrease in nMAE.
+Impact of Different Community Sizes
+The impact of the EC aggregation size is depicted in Fig. 11 in terms of
+nMAE. The results indicate that nMAE is strongly influenced by community
+size. In particular, a decrease of nMAE with increasing community size is
+19
+
+--- Sayfa 20 ---
+1
+2
+10
+50
+100
+Community Size (Number of Households)
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90
+nMAE (%)
+Figure 11: Minimum, arithmetic mean, maximum, and distribution of nMAE across dif-
+ferent community sizes, illustrated using the Transformer model. Each setting is based on
+the results of 20 different profiles, following the baseline configuration.
+seen throughout the range investigated. At the same time, the standard de-
+viation decreases with nMAE. The present trend, although illustrated using
+the Transformer architecture, is consistent across all models in the study (see
+Appendix A).
+All forecasting algorithms are evaluated regarding their forecasting capa-
+bility for different levels of aggregation. The results are depicted in Fig. 12 for
+single households (light blue circles) and for ECs comprised of 100 households
+(black markers).
+Fig. 12 demonstrates that the persistence model consistently performs
+worse than deep learning models at both low and high aggregation sizes.
+The performance gap gets stronger at higher aggregation levels, such as 100
+households, where the forecast deviation is small.
+Finally, it is worth emphasizing that all three deep learning models ex-
+hibit comparable performance across various community sizes, with only mi-
+nor differences observed. As a result, any of these models can be selected for
+load forecasting. The model choice can therefore be based on specific needs
+or preferences, without concerns about significant variations in forecast er-
+ror. This enables users to prioritize factors such as ease of implementation,
+computational efficiency, or seamless integration with existing systems.
+20
+
+--- Sayfa 21 ---
+0
+10 20 30 40 50 60 70 80
+nMAE (%)
+Persistence
+KNN
+LSTM
+xLSTM
+Transformer
+h = 100
+h = 1
+Figure 12: Forecast nMAE of 20 single households (light blue circles, h = 1) and 20
+communities consisting of 100 households (orange squares, h = 100). Circles and squares
+represent the mean values, while the whiskers indicate the standard deviations. All other
+settings follow the baseline configuration.
+3.3. Financial Impact of Forecast Errors
+To evaluate the average cost savings for the case study, a non-optimized
+scenario without BESS utilization is computed as the reference case. This
+reference case corresponds to a use case without any flexibility. For the inves-
+tigations with utilization of the BESS flexibility, power load predictors (fore-
+casting models) are evaluated against a baseline representing a perfect pre-
+diction. The corresponding optimization results are summarized in Fig. 13,
+with the average savings regarding the size of the EC (a) and the size of the
+BESS (b).
+Next to the perfect prediction, which assumes perfect knowledge of the
+load, the best results for a 100-household energy community are achieved
+using the Transformer leading to cost savings of up to 8.39%. The remaining
+two deep learning methods—LSTM and xLSTM—perform comparably well,
+and the performance differences between the three deep learning methods are
+minor. It is seen that the difference in average savings between the perfect
+prediction scenario and the various forecasting scenarios is decreasing with an
+increased level of aggregation. This is attributed to the improved forecast ac-
+curacy for larger, aggregated loads. While deep learning models outperform
+benchmark models especially in smaller ECs, the performance gap narrows as
+the community size increases. For large ECs (e.g., 100 households), the rela-
+tive cost savings converge across all forecasting models, ranging from 8.28%
+to 8.39%. However, deep learning models still provide a slightly superior load
+forecast accuracy, as indicated by lower nMAE values.
+21
+
+--- Sayfa 22 ---
+(a)
+1
+2
+10
+50
+100
+Community Size (Nr. of Households)
+0
+2
+4
+6
+8
+10
+Average Savings (%)
+Perfect
+Persistence
+KNN
+xLSTM
+LSTM
+Transformer
+(b)
+5
+50
+100
+150
+200
+Battery Size (kWh)
+0
+2
+4
+6
+8
+10
+12
+14
+Average Savings (%)
+Perfect
+Persistence
+KNN
+xLSTM
+LSTM
+Transformer
+Figure 13: (a) Average relative savings (%) across different community sizes, with BESS
+capacity scaled linearly at 12 kWh per household. (b) Average savings (%) for communities
+of 10 households across different shared BESS capacities.
+22
+
+--- Sayfa 23 ---
+Smaller ECs tend to exhibit higher peak loads relative to their BESS
+capacity, which limits their ability to shift loads effectively. This limitation
+is particularly evident under the perfect prediction scenario, where the load
+shifting potential is constrained not only by the forecast accuracy but also by
+physical system limitations. In contrast, larger ECs benefit from less volatile
+load profiles and proportionally larger BESS capacities, enabling more effi-
+cient load shifting. Fig. 13(b) illustrates the relationship between average
+relative savings and BESS size for an EC consisting of 10 households. Rel-
+ative average savings between 0.5% and 12% are achievable for BESS sizes
+between 5 and 200 kWh. As the energy demand remains constant but the
+available flexibility increases with larger BESS sizes, cost savings improve
+accordingly. It is clear that a 5 kWh BESS is relatively undersized for a
+10-household EC and leads to limited savings.
+In this case study, all prediction methods perform relatively well, because
+for RTP-driven load shifting, the price signal is the most important incen-
+tive, which is published one day in advance by EXAA. In contrast, other
+objectives, such as increasing self-sufficiency or reducing peak load are gen-
+erally more prediction-sensitive, emphasizing the significance of high-quality
+predictions [42].
+4. Conclusions
+This study critically evaluates the suitability of deep learning models
+for short-term load forecasting in ECs, comparing them against traditional
+benchmarks such as persistence prediction and KNN regression. The findings
+suggest that while deep learning methods are often considered state-of-the-
+art, their performance is not universally superior—especially in scenarios
+with limited training data.
+To improve the performance of the forecasting methods in data-scarce
+environments, transfer learning from publicly available synthetic load pro-
+files was applied.
+In scenarios with limited training data—such as only
+two months—this method reduced forecasting errors by nearly 2 percentage
+points. This underscores the versatility and generalization ability of these
+synthetic profiles for pretraining.
+Notably, simple methods like persistence forecasting outperform deep
+learning models when training data is restricted to six months or less, re-
+gardless of the use of transfer learning. However, as the training data size
+23
+
+--- Sayfa 24 ---
+increases, deep learning models show significant improvements in forecast
+accuracy and are getting less reliant on transfer learning.
+In addition to predictive performance, the study quantifies the financial
+implications of load forecasting accuracy using a mixed-integer linear pro-
+gramming case study.
+For a community of 10 households with a shared
+battery energy storage system of 120 kWh, the best-performing deep learn-
+ing model (xLSTM) achieved average energy cost savings of 7.18%. Interest-
+ingly, the simple KNN approach yielded approximately the same cost savings,
+namely 7.21%, despite its lower model complexity and forecast accuracy.
+Thus, the research questions posed in the introduction of this study can
+be answered as follows:
+1. In the context of ECs, deep learning models are not always worth the
+effort—especially for ECs with less than six months of available data,
+where simpler models like persistence prediction yield lower forecasting
+errors.
+2. For applications that nevertheless want to use deep learning methods
+with only a few month of training data, transfer learning from publicly
+available synthetic load profiles improves the average forecasting error.
+3. From a financial perspective, simple methods such as KNN can yield
+cost savings comparable to deep learning models, making them a viable
+option especially in resource-constrained environments.
+In future research, the results provided by this study can be built on by
+comparing forecasting models across a broader range of optimization scenar-
+ios. Nonetheless, this study contributes valuable insights to the design and
+operation of energy communities and highlights the trade-offs between model
+complexity, data availability, and practical benefits. These contributions lay
+a strong foundation for advancing more efficient and practical energy man-
+agement strategies.
+CRediT authorship contribution statement
+Lukas Moosbrugger: Writing - Original Draft, Visualization, Software,
+Validation, Methodology, Data curation, Formal analysis, Conceptualization.
+Valentin Seiler: Writing - Review & Editing, Visualization, Validation,
+Methodology, Conceptualization. Philipp Wohlgenannt: Writing - Re-
+view & Editing, Software, Validation, Methodology, Conceptualization. Se-
+bastian Hegenbart: Writing - Review & Editing, Validation, Methodology,
+24
+
+--- Sayfa 25 ---
+Conceptualization. Sashko Ristov: Writing - Review & Editing, Valida-
+tion, Methodology, Conceptualization.
+Elias Eder: Writing - Review &
+Editing, Visualization, Validation, Methodology, Conceptualization. Peter
+Kepplinger: Writing - Review & Editing, Validation, Conceptualization,
+Supervision, Resources, Project administration, Funding acquisition.
+Declaration of competing interest
+The authors declare that they have no known competing financial inter-
+ests or personal relationships that could have appeared to influence the work
+reported in this paper.
+Data availability
+This paper was created with a strong focus on transparency. Therefore,
+the data of the prediction method (including smartmeter load, weather, syn-
+thetic loads for pretraining, holiday calendar, etc.) is publicly accessible in
+a GitHub repository [27].
+Only the EXAA price signal referenced in the case study section cannot
+be provided due to legal restrictions. However, users are encouraged to obtain
+this data independently, as it is freely available for download.
+Acknowledgements
+The authors gratefully acknowledge the financial support from the Aus-
+trian Research Promotion Agency FFG for the Hub4FlECs project (COIN
+FFG 898053).
+The authors also gratefully acknowledge Fiona Feurstein’s
+support in proofreading the manuscript.
+Appendix A. Extended Results
+Tables A.1 and A.2 present additional results, including those for predic-
+tors not shown in the result figures.
+25
+
+--- Sayfa 26 ---
+Table A.1: Model comparison across different dimensions using the mean nMAE (%)
+of 20 load profiles and in brackets standard deviation (%) of these 20 load profiles.
+All models in this table use transfer learning from synthetic load profiles.
+Setup
+KNN
+Persistence
+xLSTM
+LSTM
+Transformer
+Model Size
+0.1k
+11.24 (0.93)
+12.79 (1.13)
+- (-)
+19.18 (1.82)
+21.39 (2.21)
+0.2k
+11.24 (0.93)
+12.79 (1.13)
+- (-)
+11.82 (0.97)
+10.82 (0.92)
+0.5k
+11.24 (0.93)
+12.79 (1.13)
+- (-)
+10.91 (1.00)
+10.83 (0.83)
+5k
+11.24 (0.93)
+12.79 (1.13)
+11.16 (1.00)
+10.84 (0.92)
+10.91 (0.91)
+20k
+11.24 (0.93)
+12.79 (1.13)
+11.79 (0.88)
+11.55 (0.95)
+11.04 (0.97)
+40k
+11.24 (0.93)
+12.79 (1.13)
+12.60 (1.16)
+11.90 (0.85)
+11.27 (0.99)
+80k
+11.24 (0.93)
+12.79 (1.13)
+12.53 (1.11)
+12.46 (1.23)
+11.19 (1.10)
+Testset
+(2013)
+Q1
+13.70 (1.57)
+14.02 (1.64)
+12.25 (1.66)
+12.48 (1.52)
+11.73 (1.69)
+Q2
+14.12 (1.31)
+14.54 (1.01)
+12.41 (1.37)
+12.13 (1.07)
+12.00 (1.21)
+Q3
+11.96 (1.09)
+11.89 (0.97)
+10.40 (0.85)
+10.56 (0.72)
+10.03 (0.86)
+Q4
+12.59 (1.09)
+12.79 (1.13)
+11.56 (1.36)
+11.56 (1.23)
+11.20 (1.33)
+Community
+Size
+1
+53.84 (15.54)
+57.25 (17.94)
+49.01 (12.77)
+49.79 (12.37)
+48.58 (13.16)
+2
+39.04 (17.77)
+44.98 (17.17)
+36.59 (9.74)
+37.55 (10.63)
+36.45 (9.01)
+10
+21.63 (3.43)
+24.86 (3.13)
+21.12 (3.02)
+21.13 (3.07)
+21.20 (3.39)
+50
+11.24 (0.93)
+12.79 (1.13)
+11.16 (1.00)
+10.84 (0.92)
+10.91 (0.91)
+100
+8.94 (0.40)
+10.10 (0.49)
+8.45 (0.45)
+8.33 (0.41)
+8.40 (0.61)
+Training Size
+2 mo
+15.81 (1.82)
+12.79 (1.13)
+18.22 (2.09)
+14.87 (2.54)
+16.56 (2.73)
+4 mo
+15.79 (1.82)
+12.79 (1.13)
+17.56 (1.83)
+15.24 (1.73)
+16.76 (2.68)
+6 mo
+16.40 (1.79)
+12.79 (1.13)
+14.57 (1.68)
+13.46 (1.55)
+15.06 (2.13)
+9 mo
+12.59 (1.09)
+12.79 (1.13)
+11.56 (1.36)
+11.56 (1.23)
+11.20 (1.33)
+12 mo
+11.24 (0.93)
+12.79 (1.13)
+11.16 (1.00)
+10.84 (0.92)
+10.91 (0.91)
+15 mo
+11.22 (0.92)
+12.79 (1.13)
+10.83 (0.86)
+10.77 (0.87)
+10.95 (0.91)
+Table A.2: Model comparison without transfer learning across different dimensions
+using the mean nMAE (%) of 20 load profiles and in brackets the standard devia-
+tion (%).
+Setup
+KNN
+Persistence
+xLSTM
+LSTM
+Transformer
+Training Size
+2 mo
+15.81 (1.82)
+12.79 (1.13)
+19.09 (3.70)
+18.35 (2.70)
+18.10 (3.30)
+4 mo
+15.79 (1.82)
+12.79 (1.13)
+17.32 (1.92)
+16.34 (2.12)
+16.40 (1.79)
+6 mo
+16.40 (1.79)
+12.79 (1.13)
+14.83 (1.65)
+14.55 (1.73)
+14.43 (1.54)
+9 mo
+12.59 (1.09)
+12.79 (1.13)
+11.53 (0.96)
+11.60 (1.37)
+11.35 (1.25)
+12 mo
+11.24 (0.93)
+12.79 (1.13)
+10.94 (0.86)
+10.79 (0.82)
+10.78 (0.82)
+15 mo
+11.22 (0.92)
+12.79 (1.13)
+10.95 (0.81)
+10.77 (0.84)
+10.85 (0.83)
+26
+
+--- Sayfa 27 ---
+Table A.3: Optimization results from the case study, comparing different prediction models
+across varying community sizes. All values represent averages over 20 distinct communi-
+ties. Parameters not explicitly mentioned remain at baseline values, with cost evaluations
+conducted over Q4 of 2013.
+Community Size
+Model
+nMAE (%)
+Costs (e)
+Savings (e)
+Savings (%)
+1 Household
+Unoptimized
+299.06
+Perfect
+0.00
+280.65
+18.41
+6.16
+KNN
+53.84
+292.77
+6.29
+2.10
+Persistence
+57.25
+294.76
+4.30
+1.44
+xLSTM
+49.01
+290.49
+8.57
+2.87
+LSTM
+49.79
+290.54
+8.52
+2.85
+Transformer
+48.58
+290.21
+8.85
+2.96
+2 Households
+Unoptimized
+495.71
+Perfect
+0.00
+456.94
+38.78
+7.82
+KNN
+39.04
+474.73
+20.98
+4.23
+Persistence
+44.98
+478.09
+17.62
+3.55
+xLSTM
+36.59
+472.10
+23.61
+4.76
+LSTM
+37.55
+473.06
+22.65
+4.57
+Transformer
+36.45
+472.20
+23.51
+4.74
+10 Households
+Unoptimized
+2218.93
+Perfect
+0.00
+2019.64
+199.28
+8.98
+KNN
+21.63
+2058.95
+159.97
+7.21
+Persistence
+24.86
+2070.55
+148.38
+6.69
+xLSTM
+21.12
+2059.71
+159.22
+7.18
+LSTM
+21.13
+2060.31
+158.62
+7.15
+Transformer
+21.20
+2061.00
+157.93
+7.12
+50 Households
+Unoptimized
+11601.29
+Perfect
+0.00
+10581.28
+1020.01
+8.79
+KNN
+11.24
+10671.82
+929.48
+8.01
+Persistence
+12.79
+10681.87
+919.43
+7.93
+xLSTM
+11.16
+10668.24
+933.05
+8.04
+LSTM
+10.84
+10666.32
+934.97
+8.06
+Transformer
+10.91
+10665.71
+935.58
+8.06
+100 Households
+Unoptimized
+22590.18
+Perfect
+0.00
+20562.84
+2027.33
+8.97
+KNN
+8.94
+20720.69
+1869.48
+8.28
+Persistence
+10.10
+20720.22
+1869.96
+8.28
+xLSTM
+8.45
+20699.30
+1890.88
+8.37
+LSTM
+8.33
+20701.29
+1888.89
+8.36
+Transformer
+8.40
+20694.27
+1895.91
+8.39
+27
+
+--- Sayfa 28 ---
+Table A.4: Case study optimization results for varying battery sizes in 10-household com-
+munities. Values are averaged over 20 distinct communities, with all unspecified parame-
+ters set to baseline and cost evaluations performed over Q4 of 2013.
+Battery Size
+Model
+nMAE (%)
+Costs (e)
+Savings (e)
+Savings (%)
+5 kWh
+Unoptimized
+2218.93
+Perfect
+0.00
+2208.29
+10.64
+0.48
+KNN
+21.63
+2208.29
+10.64
+0.48
+Persistence
+24.86
+2208.29
+10.64
+0.48
+xLSTM
+21.12
+2208.29
+10.64
+0.48
+LSTM
+21.13
+2208.29
+10.64
+0.48
+Transformer
+21.20
+2208.29
+10.63
+0.48
+50 kWh
+Unoptimized
+2218.93
+Perfect
+0.00
+2115.80
+103.13
+4.65
+KNN
+21.63
+2126.86
+92.07
+4.15
+Persistence
+24.86
+2128.54
+90.39
+4.07
+xLSTM
+21.12
+2126.89
+92.03
+4.15
+LSTM
+21.13
+2126.87
+92.06
+4.15
+Transformer
+21.20
+2127.52
+91.40
+4.12
+100 kWh
+Unoptimized
+2218.93
+Perfect
+0.00
+2041.77
+177.15
+7.98
+KNN
+21.63
+2074.64
+144.28
+6.50
+Persistence
+24.86
+2084.62
+134.31
+6.05
+xLSTM
+21.12
+2076.16
+142.77
+6.43
+LSTM
+21.13
+2076.56
+142.37
+6.42
+Transformer
+21.20
+2077.32
+141.61
+6.38
+150 kWh
+Unoptimized
+2218.93
+Perfect
+0.00
+1990.58
+228.35
+10.29
+KNN
+21.63
+2038.51
+180.42
+8.13
+Persistence
+24.86
+2051.17
+167.75
+7.56
+xLSTM
+21.12
+2038.71
+180.22
+8.12
+LSTM
+21.13
+2038.95
+179.98
+8.11
+Transformer
+21.20
+2039.73
+179.20
+8.08
+200 kWh
+Unoptimized
+2218.93
+Perfect
+0.00
+1949.39
+269.53
+12.15
+KNN
+21.63
+2010.08
+208.84
+9.41
+Persistence
+24.86
+2024.78
+194.15
+8.75
+xLSTM
+21.12
+2009.31
+209.62
+9.45
+LSTM
+21.13
+2009.07
+209.86
+9.46
+Transformer
+21.20
+2010.11
+208.82
+9.41
+28
+
+--- Sayfa 29 ---
+Appendix B. Impact of the Testing Quarter of the Year
+In practice, time series forecasting relies on historical training data to
+forecast future time horizons. Using future data as training data is considered
+unrealistic, as future knowledge might be leaked to the past. Unfortunately,
+based on the available training corpus, it is not feasible to maintain 12 months
+of training data prior to each potential test set period throughout the year.
+To address this, the year 2013 is divided into four quarters, with each quarter
+sequentially used as the test set while the remaining three quarters form the
+training set. This seasonal-data-split strategy maximizes the utility of the
+dataset and provides a robust framework for evaluating model performance
+across the entire year.
+The results of this experiment (presented in Tab. A.1) demonstrate that
+the load forecasting models employed in this study perform consistently well
+throughout the entire year. All quarters show consistent results with similar
+error ranges, confirming that Q4 2013 serves as a representative and balanced
+benchmark for evaluation.
+Appendix C. Model Configuration
+Table C.5 lists all the configurations of the deep learning models consid-
+ered.
+References
+[1] European Commission, Clean energy for all Europeans, Publications
+Office of the European Union, 2019. doi:10.2833/9937.
+[2] P. Ponnaganti, R. Sinha, J. R. Pillai, B. Bak-Jensen, Flexibility provi-
+sions through local energy communities: A review, Next Energy 1 (2)
+(2023) 100022. doi:10.1016/j.nxener.2023.100022.
+[3] S. Van Der Stelt, T. AlSkaif, W. Van Sark, Techno-economic analysis of
+household and community energy storage for residential prosumers with
+smart appliances, Applied Energy 209 (2018) 266–276. doi:10.1016/
+j.apenergy.2017.10.096.
+[4] D. Mariano-Hern´andez, L. Hern´andez-Callejo, A. Zorita-Lamadrid,
+O. Duque-P´erez, F. S. Garc´ıa, A review of strategies for building energy
+29
+
+--- Sayfa 30 ---
+Table C.5: Configuration of the xLSTM, LSTM, and Transformer of all model sizes. Note
+that the reported parameter counts are approximate, as slight variations arise due to
+architectural differences between models.
+Model Size
+xLSTM
+LSTM
+Transformer
+Input
+Input Shape = (Batchsize, 24 Hours, 20 Features)
+Projection
+Yes
+No
+Yes
+Positional
+Encoding
+Yes
+No
+Yes
+Sequence
+Model
+0.1k
+Blocks = 1
+Heads = 1
+Features = 1
+sLSTM at 0
+Layer 1 = 1 LSTM
+Layer 2 = 1 LSTM
+Layer 3 = Dense(4)
+Layer 4 = Dense(4)
+Layers = 1
+Heads = 2
+Feedforward Dim = 5
+Features = 2
+0.2k
+Blocks = 1
+Heads = 1
+Features = 1
+sLSTM at 0
+Layer 1 = 1 Bi-LSTM
+Layer 2 = 1 Bi-LSTM
+Layer 3 = Dense(4)
+Layer 4 = Dense(4)
+Layers = 1
+Heads = 2
+Feedforward Dim = 5
+Features = 4
+0.5k
+Blocks = 1
+Heads = 2
+Features = 2
+sLSTM at 0
+Layer 1 = 2 Bi-LSTM
+Layer 2 = 2 Bi-LSTM
+Layer 3 = Dense(5)
+Layer 4 = Dense(5)
+Layers = 1
+Heads = 2
+Feedforward Dim = 6
+Features = 6
+5k
+Blocks = 2
+Heads = 4
+Features = 8
+sLSTM at 1
+Layer 1 = 8 Bi-LSTM
+Layer 2 = 9 Bi-LSTM
+Layer 3 = Dense(30)
+Layer 4 = Dense(20)
+Layers = 1
+Heads = 4
+Feedforward Dim = 90
+Features = 20
+20k
+Blocks = 2
+Heads = 4
+Features = 32
+sLSTM at 1
+Layer 1 = 22 Bi-LSTM
+Layer 2 = 20 Bi-LSTM
+Layer 3 = Dense(30)
+Layer 4 = Dense(20)
+Layers = 1
+Heads = 4
+Feedforward Dim = 400
+Features = 20
+40k
+Blocks = 4
+Heads = 4
+Features = 32
+sLSTM at 1
+Layer 1 = 42 Bi-LSTM
+Layer 2 = 20 Bi-LSTM
+Layer 3 = Dense(30)
+Layer 4 = Dense(20)
+Layers = 1
+Heads = 4
+Feedforward Dim = 400
+Features = 40
+80k
+Blocks = 4
+Heads = 8
+Features = 40
+sLSTM at 1
+Layer 1 = 70 Bi-LSTM
+Layer 2 = 21 Bi-LSTM
+Layer 3 = Dense(30)
+Layer 4 = Dense(20)
+Layers = 2
+Heads = 8
+Feedforward Dim = 400
+Features = 40
+Output
+Layer
+1 Neuron, No Activation
+Output
+Output Shape = (Batchsize, 24 Hours, 1 Powervalue)
+30
+
+--- Sayfa 31 ---
+management system: Model predictive control, demand side manage-
+ment, optimization, and fault detect & diagnosis, Journal of Building
+Engineering 33 (2021) 101692. doi:10.1016/j.jobe.2020.101692.
+[5] C. Srithapon, D. M˚ansson, Predictive control and coordination for en-
+ergy community flexibility with electric vehicles, heat pumps and ther-
+mal energy storage, Applied Energy 347 (2023) 121500. doi:10.1016/
+j.apenergy.2023.121500.
+[6] P. Hua, H. Wang, Z. Xie, R. Lahdelma, District heating load patterns
+and short-term forecasting for buildings and city level, Energy 289 (2024)
+129866. doi:10.1016/j.energy.2023.129866.
+[7] K. M. Powell, A. Sriprasad, W. J. Cole, T. F. Edgar, Heating, cooling,
+and electrical load forecasting for a large-scale district energy system,
+Energy 74 (2014) 877–885. doi:10.1016/j.energy.2014.07.064.
+[8] H. Yu, F. Zhong, Y. Du, X. Xie, Y. Wang, X. Zhang, S. Huang, Short-
+term cooling and heating loads forecasting of building district energy
+system based on data-driven models, Energy and Buildings 298 (2023)
+113513. doi:10.1016/j.enbuild.2023.113513.
+[9] E. Royal, S. Bandyopadhyay, A. Newman, Q. Huang, P. C. Tabares-
+Velasco, A statistical framework for district energy long-term electric
+load forecasting, Applied Energy 384 (2025) 125445. doi:10.1016/j.
+apenergy.2025.125445.
+[10] F. Peterssen, M. Schlemminger, C. Lohr, R. Niepelt, R. Hanke-
+Rauschenbach, R. Brendel, Impact of forecasting on energy system
+optimization, Advances in Applied Energy 15 (2024) 100181.
+doi:
+10.1016/j.adapen.2024.100181.
+[11] R. Wazirali, E. Yaghoubi, M. S. S. Abujazar, R. Ahmad, A. H. Vak-
+ili, State-of-the-art review on energy and load forecasting in micro-
+grids using artificial neural networks, machine learning, and deep learn-
+ing techniques, Electric power systems research 225 (2023) 109792.
+doi:10.1016/j.epsr.2023.109792.
+[12] V. Seiler, L. Moosbrugger, G. Huber, P. Kepplinger, Assessing model
+predictive control for energy communities’ flexibilities, in:
+Intelli-
+31
+
+--- Sayfa 32 ---
+gente Energie-und Klimastrategien: Energie-Geb¨aude-Umwelt, no. 30,
+Holzhausen, 2024. doi:10.57739/978-3-903207-89-9.
+[13] W. Kong, Z. Y. Dong, Y. Jia, D. J. Hill, Y. Xu, Y. Zhang, Short-term
+residential load forecasting based on LSTM recurrent neural network,
+IEEE Transactions on Smart Grid 10 (1) (2019) 841–851. doi:10.1109/
+TSG.2017.2753802.
+[14] F. Pallonetto, C. Jin, E. Mangina, Forecast electricity demand in com-
+mercial building with machine learning models to enable demand re-
+sponse programs, Energy and AI 7 (2022) 100121.
+doi:10.1016/j.
+egyai.2021.100121.
+[15] L. Semmelmann, M. Hertel, K. J. Kircher, R. Mikut, V. Hagen-
+meyer, C. Weinhardt, The impact of heat pumps on day-ahead en-
+ergy community load forecasting, Applied Energy 368 (2024) 123364.
+doi:10.1016/j.apenergy.2024.123364.
+[16] P. Ran, K. Dong, X. Liu, J. Wang, Short-term load forecasting based on
+ceemdan and transformer, Electric Power Systems Research 214 (2023)
+108885. doi:10.1016/j.epsr.2022.108885.
+[17] Z. Zhao, C. Xia, L. Chi, X. Chang, W. Li, T. Yang, A. Y. Zomaya,
+Short-term load forecasting based on the transformer model, information
+12 (12) (2021) 516. doi:10.3390/info12120516.
+[18] B. Fang, L. Xu, Y. Luo, Z. Luo, W. Li, A method for short-term electric
+load forecasting based on the fmlp-itransformer model, Energy Reports
+12 (2024) 3405–3411. doi:10.1016/j.egyr.2024.09.023.
+[19] J. Gao, Y. Chen, W. Hu, D. Zhang, An adaptive deep-learning load
+forecasting framework by integrating transformer and domain knowl-
+edge, Advances in Applied Energy 10 (2023) 100142. doi:10.1016/j.
+adapen.2023.100142.
+[20] A. L’Heureux, K. Grolinger, M. A. Capretz, Transformer-based model
+for electrical load forecasting, Energies 15 (14) (2022) 4993. doi:10.
+3390/en15144993.
+[21] M. Beck, K. P¨oppel, M. Spanring, A. Auer, O. Prudnikova, M. Kopp,
+G. Klambauer, J. Brandstetter, S. Hochreiter, xLSTM: Extended Long
+32
+
+--- Sayfa 33 ---
+Short-Term Memory, in: Thirty-eighth Conference on Neural Informa-
+tion Processing Systems, 2024. doi:10.48550/arXiv.2405.04517.
+[22] M. Kraus, F. Divo, D. S. Dhami, K. Kersting, xlstm-mixer: Multivariate
+time series forecasting by mixing via scalar memories, arXiv preprint
+(2024). doi:10.48550/arXiv.2410.16928.
+[23] E. Lee, W. Rhee, Individualized short-term electric load forecasting with
+deep neural network based transfer learning and meta learning, IEEE
+Access 9 (2021) 15413–15425. doi:10.1109/ACCESS.2021.3053317.
+[24] M. Ribeiro, K. Grolinger, H. F. ElYamany, W. A. Higashino, M. A.
+Capretz, Transfer learning with seasonal and trend adjustment for cross-
+building energy forecasting, Energy and Buildings 165 (2018) 352–363.
+doi:10.1016/j.enbuild.2018.01.034.
+[25] L. Moosbrugger, V. Seiler, G. Huber, P. Kepplinger, Improve load fore-
+casting in energy communities through transfer learning using open-
+access synthetic profiles, in: 2024 IEEE 8th Forum on Research and
+Technologies for Society and Industry Innovation (RTSI), IEEE, 2024,
+pp. 31–35. doi:10.48550/arXiv.2407.08434.
+[26] M. G. Pinheiro, S. C. Madeira, A. P. Francisco, Short-term electric-
+ity load forecasting—a systematic approach from system level to sec-
+ondary substations, Applied Energy 332 (2023) 120493. doi:10.1016/
+j.apenergy.2022.120493.
+[27] Energy Research Centre, Vorarlberg University of Applied Sciences,
+Github repository for load forecasting, https://github.com/erc-fhv/
+loadforecasting/, accessed: 2024-12-10 (2024).
+[28] Y. Chen, D. Zhang, Theory-guided deep-learning for electrical load fore-
+casting (tgdlf) via ensemble long short-term memory, Advances in Ap-
+plied Energy 1 (2021) 100004. doi:10.1016/j.adapen.2020.100004.
+[29] UK Power Networks, Smartmeter energy consumption data in london
+households, accessed: 2024-11-20 (2015).
+URL
+https://data.london.gov.uk/dataset/
+smartmeter-energy-use-data-in-london-households
+33
+
+--- Sayfa 34 ---
+[30] A. Ceruti, B. Schachler, C. M¨oller, F. Maurer, F. Witte, G. Plessmann,
+H. Huyskens, J. Launer, P. Sch¨onfeldt, Pyosch, S. Wehkamp, S. Bosch,
+U. Krien, demandlib: Creating heat and power demand profiles from an-
+nual values, https://github.com/oemof/demandlib, accessed: 2025-
+04-25 (2016).
+[31] C. S. Lamprecht, Meteostat Python, accessed on 11 December 2024.
+URL https://github.com/meteostat/meteostat-python
+[32] F. Ziel, Modeling public holidays in load forecasting: a german case
+study, Journal of Modern Power Systems and Clean Energy 6 (2) (2018)
+191–207. doi:10.1007/s40565-018-0385-5.
+[33] Y. Nie, N. H. Nguyen, P. Sinthong, J. Kalagnanam, A time series
+is worth 64 words: Long-term forecasting with transformers, in: The
+Eleventh International Conference on Learning Representations, 2023.
+doi:10.48550/arXiv.2211.14730.
+URL https://openreview.net/forum?id=Jbdc0vTOcol
+[34] D. P. Kingma, J. Ba, Adam: A method for stochastic optimization, in:
+3rd International Conference on Learning Representations, ICLR 2015,
+San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings,
+2015. doi:10.48550/arXiv.1412.6980.
+[35] G. Van Rossum, F. L. Drake, Python 3 Reference Manual, CreateSpace,
+Scotts Valley, CA, 2009.
+[36] J. Ansel, E. Yang, H. He, N. Gimelshein, A. Jain, M. e. a. Voznesen-
+sky, PyTorch 2: Faster Machine Learning Through Dynamic Python
+Bytecode Transformation and Graph Compilation, in: 29th ACM In-
+ternational Conference on Architectural Support for Programming Lan-
+guages and Operating Systems, Volume 2 (ASPLOS ’24), ACM, 2024.
+doi:10.1145/3620665.3640366.
+URL https://pytorch.org/assets/pytorch2-2.pdf
+[37] A. Groß, A. Lenders, F. Schwenker, D. A. Braun, D. Fischer, Com-
+parison of short-term electrical load forecasting methods for differ-
+ent building types, Energy Informatics 4 (Suppl 3) (2021) 13.
+doi:
+10.1186/s42162-021-00172-6.
+34
+
+--- Sayfa 35 ---
+[38] Austrian Coordination Office for Energy Communities, Energy commu-
+nities map, https://energiegemeinschaften.gv.at/landkarte/, ac-
+cessed: 2024-12-10 (2024).
+[39] EXAA - Die Stromb¨orse mit f¨unf Auktionen in AT, DE und NL, accessed
+on 11 December 2024.
+URL https://www.exaa.at/
+[40] E. Barbour, D. Parra, Z. Awwad, M. C. Gonz´alez, Community energy
+storage: A smart choice for the smart grid?, Applied Energy 212 (2018)
+489–497. doi:10.1016/j.apenergy.2017.12.056.
+[41] W. Cole, A. W. Frazier, C. Augustine, Cost Projections for Utility-
+Scale Battery Storage: 2021 Update, Tech. Rep. NREL/TP-6A20-79236,
+National Renewable Energy Lab. (NREL), Golden, CO (United States)
+(2021). doi:10.2172/1786976.
+[42] P. Wohlgenannt, G. Huber, K. Rheinberger, M. Kolhe, P. Kepplinger,
+Comparison of demand response strategies using active and passive ther-
+mal energy storage in a food processing plant, Energy Reports 12 (2024)
+226–236. doi:10.1016/j.egyr.2024.06.022.
+35

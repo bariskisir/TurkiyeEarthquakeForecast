@@ -1,0 +1,1742 @@
+
+--- Sayfa 1 ---
+arXiv:2503.05000v2  [math.DG]  21 May 2025
+Butcher series for Hamiltonian Poisson integrators through
+symplectic groupoids
+Adrien Busnot Laurent1 and Oscar Cosserat2
+Abstract
+We exhibit a new pre-Lie algebra in the framework of symplectic groupoids and, in turn,
+introduce a pre-Lie formalism of Butcher trees for the approximation of Hamilton-Jacobi
+solutions on any symplectic groupoid G Ñ M. The impact of this new algebraic approach
+is twofold. On the geometric side, it yields algebraic operations to approximate Lagrangian
+bisections of G using the Butcher-Connes-Kreimer Hopf algebra and, in turn, aims at a better
+understanding of the group of Hamiltonian diﬀeomorphisms of M. On the computational side,
+we deﬁne a new class of Poisson integrators for Hamiltonian dynamics on Poisson manifolds.
+Keywords:
+Butcher series, Poisson geometry, mathematical physics, geometric numerical
+integration, symplectic groupoids, Hamilton-Jacobi equation, pre-Lie algebra, Hopf algebra.
+AMS subject classiﬁcation (2020): 16T05, 37J39, 41A58, 65L06, 70G45.
+1
+Introduction
+1.1
+Context
+A Poisson bracket on a smooth manifold M equips the space of smooth functions of this man-
+ifold C8pMq with a Lie algebra structure pC8pMq, t., .uq. Therefore, it is natural to ask about
+the existence of a Lie group integrating it. In the context of Poisson manifolds, there exists an
+extremely proﬁtable approach to this question: instead of looking for an inﬁnite-dimensional
+Lie group, one constructs a ﬁnite-dimensional Lie groupoid G over M. This Lie groupoid turns
+out to have a natural symplectic structure. Therefore, symplectic Lie groupoids are the global
+counterpart to Poisson structures. They encode in particular three diﬀerent aspects of Poisson
+geometry: foliation theory (the partition of any Poisson manifold into leaves), symplectic geome-
+try (the geometry along any leaf) and Lie theory. Concerning the question of integrating the Lie
+algebra of smooth functions, there exists a group object keeping track of this integration inside
+the symplectic groupoid: the group of Lagrangian bisections. A major interest of symplectic
+groupoids in mechanics is the deep relation between Lagrangian bisections of the Lie groupoid
+G and Hamiltonian dynamics on M.
+Another interest of Lagrangian bisections lies in mathematical physics purposes. In [20], a
+formal correspondence is spelled between symplectic groupoids and C˚-algebra theory, where
+Lagrangian submanifolds are the elements of the non-commutative algebra. The groupoid inverse
+corresponds to the conjugation and the product law corresponds to the tensor product. There,
+Lagrangian bisections are unitary elements. At about the same time, the works [36, 46] started
+a research program on deformation theory and the quantisation of Poisson manifold through
+symplectic groupoids. This brought in turn a considerable attention on the topic [45, 12, 35, 32].
+1Univ Rennes, INRIA (Research team MINGuS), IRMAR (CNRS UMR 6625) and ENS Rennes, France.
+Adrien.Busnot-Laurent@inria.fr.
+2Göttingen Mathematisches Institut, Georg-August-Universität Göttingen, Oﬃce 021, Hauptgebaüde, Bun-
+senstraße 3-5, 37073 Göttingen - Germany. Oscar.Cosserat@mathematik.uni-geottingen.de
+1
+
+--- Sayfa 2 ---
+Symplectic groupoids have also been used for computational purposes. Indeed, the relation
+between Hamiltonian dynamics on M and Lagrangian bisections has been applied to the nu-
+merical approximation of Hamiltonian ﬂows on Poisson manifolds [17]. The idea appears ﬁrst in
+[26], while the case of ﬁberwise linear Poisson structures has been studied in [24]. More precisely,
+given any Hamiltonian H P C8pMq, a Hamilton-Jacobi equation is used to relate its Hamiltonian
+ﬂow pφH
+t qt to a smooth family of Lagrangian bisections pLtqt, provided that t is small enough.
+A truncation at any order of the solution of this Hamilton-Jacobi equation allows to recover the
+initially considered Hamiltonian dynamics in an approximated way, and this approximation has
+been proved to be numerically satisfying compared to traditional methods [19]. The relation
+with previous paragraphs lies at the comparison between the time-step in numerical purposes
+and the parameter of deformation in the mathematical physics context. An analogy seems to
+hold in-between both situations, and we expect tools from one ﬁeld to become fruitful when
+applied to the other one.
+With that respect, a colossal algebraic formalism has been developed since the sixties in
+order to deal with the approximation of solutions of ordinary diﬀerential equations. Butcher-
+series were ﬁrst introduced in [6, 30] (see also [29, 42, 7]) for the study of order conditions for
+Runge-Kutta methods in numerical analysis. They were later applied successfully to a variety of
+diﬀerent ﬁelds such as geometric numerical integration [33, 29], quantum ﬁeld theory [16], rough
+paths [28, 31], or stochastic numerics [4, 37, 38, 5]. The modern approach to such algebraic
+formalism relies extensively on Hopf algebras [15, 41, 3, 2] that we shall identify in the context
+of Hamiltonian systems on Poisson manifolds.
+Let us also mention that Hopf algebras have been used already to approximate geometric
+objects in Poisson geometry. A relation between deformation of symplectic groupoids and high-
+order Runge-Kutta numerical methods has been explained in [13] and formulated in terms of
+operads in [14]. Symplectic realisations are constructed using the Butcher group in [10], while
+[8] gave a detailed construction of local symplectic groupoids using Butcher series of Hamilton-
+Jacobi generating functions.
+It is therefore natural to look for a proper algebraic formalism for the approximation of
+Hamiltonian dynamics on a Poisson manifold. This article answers this question and explores
+the algebraic, geometric, and computational consequences.
+1.2
+Content of the paper
+In Section 2, we recall how the Hamiltonian dynamics of H P C8pMq is recovered by Lagrangian
+bisections of a symplectic groupoid G of the Poisson manifold M through a Hamilton-Jacobi
+equation. Jets are used to introduce the involved groups and to deduce an approximation of
+the Hamiltonian dynamics at any arbitrary order.
+In Section 3, we provide a new pre-Lie
+combinatorial formalism to compute formal solutions of Hamilton-Jacobi equations. We give
+two applications of this pre-Lie algebra formalism.
+First, we use in Section 4 the Butcher-
+Connes-Kreimer Hopf algebra to provide a new injective group morphism from the characters
+of the Butcher-Connes-Kreimer Hopf algebra to the group of jets of bisections at the identity
+section (see Theorem 4.3). In Section 5, we explain how this new algebraic formalism applies
+to high order approximations of Lagrangian bisections using Runge-Kutta numerical methods,
+which delivers as a by-product new Hamiltonian Poisson integrators.
+2
+
+--- Sayfa 3 ---
+2
+Preliminaries
+2.1
+Reminders on Poisson geometry
+In this section, we give a concise summary of various notions of Poisson geometry. We do not
+intend to give any introduction of the topic. Instead, the reader may consult [40] about Hamil-
+tonian dynamics and symplectic geometry and [21, 22] about Poisson structures and symplectic
+groupoids.
+Let pM, t., .uq be a Poisson manifold. In this article, we are interested in Hamiltonian dy-
+namics on M : for any Hamiltonian H P C8pMq, we study the diﬀerential equation on M
+9xptq “ XH
+`
+xptq
+˘
+(2.1)
+where XH : f P C8pMq ÞÑ tH, fu P C8pMq is the Hamiltonian vector ﬁeld1 of H. Since one
+main motivation of the present work is the construction of new numerical methods, let us recall
+the notion of Hamiltonian Poisson integrator.
+Deﬁnition 2.1 ([19]). A Hamiltonian Poisson integrator for the Hamiltonian H P C8pMq at
+order k P N is a family of map ϕt : M Ñ M, t P I a small real parameter, with the following
+property: there exists a time-dependent Hamiltonian p ˜HtqtPI P C8pM ˆ Iq such that ϕ is the
+time-dependent Hamiltonian ﬂow of ˜H. The Hamiltonian Poisson integrator is said to be of
+order k if for any test function f P C8pMq,
+@ 0 ď i ď k, Bipf ˝ ϕtq
+Bti
+|t“0 “ Bipf ˝ φH
+t q
+Bti
+|t“0.
+(2.2)
+Symplectic methods are an important particular case of Hamiltonian Poisson integrators and
+are a major motivation for this work. Another remark is that p ˜HtqtPI is an approximation of
+the Hamiltonian H of the same order as the integrator: ˜Ht “ H ` o
+`
+tk˘
+. As we can see in the
+equation (2.2), Taylor series with respect to the time t play an important role in our context to
+count the order of approximation of a dynamics.
+We introduce now a geometric space used to construct Hamiltonian Poisson integrators. To
+any Poisson manifold pM, t., .uq is associated a local symplectic groupoid G Ñ M over M (see
+[20, 36]). We write α: G Ñ M and β : G Ñ M for the source and target maps respectively.
+The tubular neighborhood theorem of [44] provides a local model around the identity section of
+G Ñ M to realize G as a neighborhood of the zero section inside T ˚M. With a slight abuse of
+notation, we keep the same letters: the tubular neighborhood is called G and α and β denote
+again the resulting maps from G to M.
+Theorem 2.2 ([36]). There exists a tubular neighborhood G Ă T ˚M of the zero section of T ˚M
+and two surjective submersions α and β from G to M such that
+1. α ˝ 0 “ β ˝ 0 “ IdM, where 0: M Ñ T ˚M is the zero section of the vector bundle T ˚M,
+2. α is a Poisson morphism and β is an anti-Poisson morphism, where G is equipped with
+t., .uω the Poisson bracket of the canonical symplectic form on G Ă T ˚M,
+3. α and β have symplectically orthogonal ﬁbers: @ f, g P C8pMq, tα˚f, β˚guω “ 0.
+1We denote derivations of C8pMq and vector ﬁelds the same way.
+3
+
+--- Sayfa 4 ---
+This realisation of the local symplectic groupoid inside T ˚M was named birealisation in [17].
+The zero section is the identity for the groupoid product. We emphasize that the symplectic
+form of G Ñ M becomes the canonical symplectic form ω. G is therefore a Poisson manifold
+endowed with the Poisson bracket t., .uω. We also recall that the cotangent projection τ : G ։ M
+is in general diﬀerent from the structural maps α and β.
+Remark 2.3. A birealisation such that the groupoid inverse is the multiplication by ´1 on each
+cotangent ﬁber is said to be "symmetric" in [14, rk 2.19]. Following [36], [8] gave a construction
+of a symmetric birealisation. Nevertheless, there exist birealisations that are not symmetric.
+2.2
+Hamilton-Jacobi equation for Hamiltonian Poisson integrators
+In this section, we recall after [17] how a Hamilton-Jacobi equation allows to lift up Hamiltonian
+dynamics on M to a birealisation G by describing Hamiltonian ﬂows in terms of generating
+functions.
+First, let us consider a dynamics that is a bit more general than Hamiltonian dynamics. Let
+θ be a 1-form θ P Ω1pMq. Denoting by π P ΓpŹ2 TMq the bivector ﬁeld of the Poisson brackets
+t., .u, we write Xθ “ πpθ, ¨q P XpMq for the vector ﬁeld generated by θ and φθ
+t the ﬂow of Xθ at
+time t. In the sequel, we always assume ﬂows to be integrable. We recall the following standard
+properties [40, Chap. III].
+Proposition 2.4.
+1. For any x P M and for any time t, φθ
+tpxq belongs to the same symplectic
+leaf as x.
+2. Let us assume that θ is closed. Then, φθ
+t is a Poisson automorphism that admits any
+symplectic leaf as an invariant set and preserves θ. In equation, denoting Fx the symplectic
+leaf of x P M,
+@x P M, φθ
+tpxq P Fx and pφθ
+tq˚π “ π and pφθ
+t q˚θ “ θ.
+This classical result justiﬁes the notion of Hamiltonian Poisson integrator. Indeed, following
+the ﬂow of a time-dependent Hamiltonian guarantees to stay on a symplectic leaf and to preserve
+the Poisson structure.
+Let us leave the case of general 1-forms on M apart and from now on, we assume θ closed.
+We state now the main result of this section.
+Theorem 2.5 (Hamilton-Jacobi equation on a local symplectic groupoid, [17]). Let θ P Ω1
+0pMq,
+I be a small open interval containing 0 and pζtqtPI P Ω1pMqI. For any t P I, set
+Lt “ Graphpζtq
+(2.3)
+and
+ϕt “ β ˝ pα|Ltq´1.
+(2.4)
+Then, @t P I, ϕt “ φθ
+t if and only if
+ζ0 “ 0 and @t P I, Bζt
+Bt “ pζtq˚α˚θ.
+(2.5)
+4
+
+--- Sayfa 5 ---
+2.3
+Jets of Lagrangian bisections
+In this article, we will develop tools to approximate solutions of the Hamilton-Jacobi equation,
+e.g. (2.5), at high order with respect to the variable t. For this precise reason, we will need
+an appropriate notion of jets. In this section, we thus explain some geometry of the previous
+Hamilton-Jacobi equation using jets and Taylor series.
+It will be useful in the sequel to keep in mind two properties of the graph Lt of ζt for small
+t P I. First, since L0 is the zero section, Lt is transverse to the ﬁbers of α and turns the restriction
+of α to Lt into a diﬀeomeorphism α|Lt : Lt Ñ M. Lt is thus said to be a bisection2. The set
+of bisections of a groupoid forms a group [12, Sec. 15.2]. In our local groupoid context, let us
+introduce the analog objects.
+First, in our smooth setting, we need a notion of family of bisections, all being close to the
+identity section. They can be understood as smooth perturbation of the identity section.
+Deﬁnition 2.6 (Smooth family of bisections). We denote by smooth family of bisections of G
+the following data:
+• a real open interval I containing 0,
+• a family L “ pLtqtPI of bisections of G, where L0 “ 0 is the image of the identity section
+and the surjective map š
+tPI
+Lt ։ I is a submersion.
+Example 2.7. Since the ﬁbers of α are transverse to the zero section, a generic example of
+smooth family of bisections of G is provided by any smooth family of 1-forms pζtqtPI P Ω1pMq
+for some small interval I.
+Now, we introduce a notion of 8-jets for such objects. To achieve this, let f P C8pGq be a test
+function and L a smooth family of bisections. For any t P I, let us set Ψt “
+`
+α|Lt
+˘´1 : M
+„
+Ñ Lt.
+We consider the Taylor series at t “ 0 of f ˝ Ψt : M Ñ R. This provides a map
+J L : C8pGq
+Ñ
+C8pMq
+“
+rts
+‰
+f
+ÞÑ
+f ˝ Ψt
+where f ˝ Ψt P C8pMq
+“
+rts
+‰
+stands for its Taylor series
+8ř
+j“0
+tj
+j!
+Bjf˝Ψt
+Btj
+|t“0 at t “ 0.
+Deﬁnition 2.8 (8-jets of bisections of G). The map J L : C8pGq Ñ C8pMq
+“
+rts
+‰
+is said to be
+the 8-jet of the smooth family of bisections L. In the sequel, we denote by B the space of such
+maps:
+B “ tJ L : C8pGq Ñ C8pMq
+“
+rts
+‰
+, L smooth family of bisectionsu.
+Example 2.9. Following example 2.7, if L “ pGraphpζtqqtPI, the data of the 8-jet of the smooth
+family of bisections L is equivalent to the one of the Taylor series of pζtqtPI with respect to t at
+t “ 0. With a slight abuse of terminology, we will then write that the jet of L equals the Taylor
+series of pζtqtPI at t “ 0.
+B is a space of equivalence classes of smooth family of Lagrangian bisections. In the following,
+one deﬁnes naturally a product on B. Let L1 “ pL1
+t qtPI and L2 “ pL2
+t qtPJ two smooth families
+2In general, the target map β is also required to be invertible on the submanifold L Ă G for L to be a bisection.
+Here, since t is assumed suﬃciently small, this condition is automatically fulﬁlled.
+5
+
+--- Sayfa 6 ---
+of Lagrangian bisections. Locally on G, there exists t0 ą 0 such that for |t| ă t0, the product
+L1
+t ¨L2
+t is deﬁned in the local symplectic groupoid G. Then, we set the product to be the pointwise
+product with respect to the real inﬁnitesimal parameter t :
+J L1
+t ¨ J L2
+t :
+C8pGq
+Ñ
+C8pMq
+“
+rts
+‰
+f
+ÞÑ
+f ˝
+´
+α|L1
+t ¨L2
+t
+¯´1 .
+The following property is a straightforward consequence of Deﬁnition 2.8 and is left to the
+reader.
+Proposition 2.10. B is a group, with the neutral element being the jet constantly equal to the
+identity section:
+J Id : C8pGq
+Ñ
+C8pMq
+“
+rts
+‰
+f
+ÞÑ
+f ˝ 0
+.
+Let us now remark a second property of the bisection Lt by adding the symplectic geometry
+up. Since ζt is closed, its graph Lt is Lagrangian in G. This leads us to consider the space of
+jets of Lagrangian bisections. We denote it by L. Again, this set carries a natural structure.
+Proposition 2.11. L is a subgroup of the group B of 8-jets of bisections.
+Now, we recall from [20] that for any two L1 and L2 bisections of a groupoid, denoting L1¨L2
+the bisection being the product of L1 and L2, the induced diﬀeomorphisms on the base verify
+`
+β ˝ pα|L1q´1˘
+˝
+`
+β ˝ pα|L2q´1˘
+“ β ˝ pα|L1¨L2q´1.
+(2.6)
+In our context, the correspondence spelled by the Hamilton-Jacobi equation in Theorem 2.5
+interprets as the direct relation inbetween the group L and the dynamics generated by closed
+1-forms on the base. Let us be more precise. Since the bisections pLtqt are Lagrangian and
+close to the zero section of T ˚M, the induced Poisson diﬀeomorphisms on the base manifold M
+β ˝
+`
+α|Lt
+˘´1 are ﬂows of time-dependent closed forms. It follows from Proposition 2.4 that these
+Poisson diﬀeomorphisms stay on a leaf of the symplectic foliation. Furthermore, as explained in
+the following remark, these closed forms are exact if and only if the Lagrangian bisections are
+graphs of exact one-forms.
+Remark 2.12 (Generating functions). The closedness of θ is equivalent to the one of ζt for
+all t P I. The same equivalence holds of course about exactedness and leads us to Hamiltonian
+dynamics. Let us assume θ to be exact and H P C8pMq a Hamiltonian being a primitive of θ.
+As a consequence, there exists S P C8pM ˆ Iq such that dSt “ ζt. Equation (2.5) becomes
+#
+BSt
+Bt “
+pdStq˚α˚H ` χptq
+dS0 “
+0
+(2.7)
+where χ P C8pIq is an arbitrary time-dependent constant. In the following, we choose χ to be 0
+and S0 “ 0. Using equation (2.4), the graph of dS recovers the Hamiltonian dynamics generated
+by H. S is thus said to be a generating function for H.
+After a classical terminology for generating functions, let us call these Lagrangian bisections
+exact. Their jets form a group again.
+6
+
+--- Sayfa 7 ---
+Proposition 2.13. We set
+L “ tBL : C8pGq Ñ C8pMq
+“
+rts
+‰
+, L smooth family of exact Lagrangian bisectionsu.
+Then, L is a subgroup of L.
+Proof. Let J L1, J L2 : C8pGq Ñ C8pMq
+“
+rts
+‰
+two jets of exact Lagrangian bisections. We show
+that J L1¨L2 is a jet of exact Lagrangian bisections.
+Using Remark 2.12 and the Hamilton-
+Jacobi correspondence of Theorem 2.5, there exists two time-dependent Hamiltonians ˜H1, ˜H2 P
+C8pM ˆ Iq such that for any test function f P C8pGq, J L1pfq “ f ˝ φα˚ ˜
+H1
+t
+t
+˝ 0 and J L2pfq “
+f ˝ φα˚ ˜
+H2
+t
+t
+˝ 0. Now, the composition of two time-dependent Hamiltonian ﬂows is a Hamiltonian
+ﬂow.
+J L1¨L2pfq “ f ˝ φα˚ ˜
+H2
+t
+t
+˝ φα˚ ˜H1
+t
+t
+˝ 0
+“ f ˝ φα˚ ˜
+Ht
+t
+˝ 0,
+where ˜Ht “ ˜H2
+t ` ˜H1
+t ˝φ
+˜
+H2
+t
+t
+. The same computation proves the existence of an inverse. Its neutral
+element is clearly the jet coming from the smooth family being constantly equal to the identity
+section.
+As already mentioned, the importance of Lagrangian bisections in mechanics is due to their
+relation with Hamiltonian dynamics. We deﬁne the analog in our context of the Hamiltonian
+group of, e.g., [21, Def. 1.11.], and of the group of diﬀeomorphisms generated by closed 1-forms.
+Deﬁnition 2.14 (8-jets Hamiltonian group). We call H the group of 8-jets of pull-backs of
+time-dependent Hamiltonian ﬂows:
+H “
+␣
+F : C8pMq
+Ñ
+C8pMq
+“
+rts
+‰
+f
+ÞÑ
+f ˝ φ
+˜
+Ht
+t
+, ˜H P C8pM ˆ Iq
+(
+.
+and H the group of 8-jets of pull-backs of ﬂows generated by time-dependent closed 1-forms:
+H “
+␣
+F : C8pMq
+Ñ
+C8pMq
+“
+rts
+‰
+f
+ÞÑ
+f ˝ φ
+˜θt
+t
+, ˜θ P Ω1
+0pMqI(
+.
+where, as before, f ˝ φ
+˜
+Ht
+t
+and f ˝ φ
+˜θt
+t stand for their Taylor series with respect to t.
+By adding these deﬁnitions to the remark 2.12 on exact Lagrangian bisections, we obtain
+the following corollary of Theorem 2.5. The proof relies on the same interpolation technique as
+the one of Proposition 2.13 and is left as an exercise.
+Corollary 2.15. There is a surjective group morphism from the group L of 8-jets of exact
+Lagrangian bisections of G to the group H of 8-jets of Hamiltonian ﬂows of pM, t., .uq.
+This morphism restricts to a surjective group morphism from the group L of 8-jets of exact
+Lagrangian bisections of G to the group H of 8-jets of Hamiltonian ﬂows of pM, t., .uq.
+7
+
+--- Sayfa 8 ---
+2.4
+Approximations in the group of jets of Lagrangian bisections
+One other consequence of Theorem 2.5 is the following corollary, yielding the existence of approx-
+imations of φθ
+t at arbitrary order that preserve the Poisson geometry in the sense of Proposition
+2.4.
+Corollary 2.16. Let k P N and pζk
+t qtPI P Ω1pMqI. Set pLk
+t qtPI “
+`
+Graphpζk
+t q
+˘
+tPI and
+ϕk
+t “ β ˝ pα|Lk
+t q´1, t P I.
+If for all t P I,
+#
+Bζk
+t
+Bt “
+pζk
+t q˚α˚θ ` opkq
+ζ0 “
+0
+,
+then pϕk
+t qtPI is the ﬂow of a time-dependent closed 1-form pθk
+t qtPI P Ω1
+0pMq such that θk
+t “
+θ ` opkq . In particular, pϕk
+t qtPI is an approximation of pφθ
+tqtPI at order at least k such that
+• for any x P M, ϕk
+t pxq and x belong to the same symplectic leaf of pM, t., .uq,
+• ϕk
+t is a Poisson diﬀeomorphism for all t P I.
+The family of Lagrangian bisections Lk “ pLk
+t qtPI is an approximation at order k of the family
+of Lagrangian bisections L “ pLtqtPI given by equation (2.3). The jet formalism of Section 2.3
+provides a rigorous framework.
+Proposition 2.17. With the notations of Corollary 2.16:
+@f P C8pGq, J Lpfq “ J Lkpfq ` o
+´
+tk¯
+.
+Using Corollary 2.16, this Hamilton-Jacobi equation has been applied to computational
+mechanics in [19]: the purpose was to truncate solutions of this equation to approximate Hamil-
+tonian dynamics on the base. Indeed, if Sk
+t is a solution of equation (2.7) at order k, then the
+map
+φk
+∆t “ β ˝
+´
+α|GraphpdSk
+∆tq
+¯´1
+is a Hamiltonian Poisson integrator for H at order k and time-step ∆t. This article is devoted
+to explain an algebraic formalism for the construction of high order Hamiltonian dynamics
+approximations. We also hope this to be of interest for a better understanding of the group
+of Lagrangian bisections of a symplectic groupoid and, in turn, a better understanding of the
+group of Poisson diﬀeomorphisms of a Poisson manifold. For that reason, let us consider an
+equation being a bit more general that (2.5). Namely, we consider the same one with a generic
+initial condition ζ0 P Ω1
+0pMq such that its graph belongs to G :
+#
+Bζt
+Bt “
+pζtq˚α˚θ
+ζ0 P
+Ω1
+0pMq
+(2.8)
+Regarding equation (2.6), equation (2.8) is of interest while one looks at composition of Hamil-
+tonian ﬂows on M. We will come back to that in Section 4.
+Since we aim at understanding high order approximations of Hamiltonian dynamics on M,
+let us study truncated solutions of (2.8). For this, we introduce the Lie-algebroid bracket r., .s
+on Ω1pT ˚Mq deﬁned by
+rζ1, ζ2s “ LXζ1ζ2 ´ LXζ2ζ1 ´ dωpXζ1, Xζ2q
+8
+
+--- Sayfa 9 ---
+where Xζi, i “ 1, 2, are the vector ﬁelds on T ˚M generated by the canonical symplectic form
+out of the 1-forms ζi. Out of the following lemma, this Lie bracket allows us to compute ap-
+proximations at arbitrary order of Hamilton-Jacobi equation. In the following and all along this
+article, π: T ˚M ։ M denotes the cotangent projection.
+Lemma 2.18. Let pζtqtPI and pξtqtPI P Ω1pGqI such that the graph of ζt is in G for all t P I.
+Then,
+B
+Bt ppζtq˚ξtq “ pζtq˚
+ˆ
+rξt, π˚ Bζt
+Bt s ` Bξt
+Bt
+˙
+.
+(2.9)
+Similarly, for any pStqtPI P C8pM ˆ Iq and any pftqtPI P C8pT ˚M ˆ Iq,
+B
+Bt ppdStq˚ftq “ pdStq˚
+ˆ
+tft, π˚ BSt
+Bt uω ` Bft
+Bt
+˙
+.
+(2.10)
+Proof. We start by proving equation (2.10). Let x P M. It follows from classical symplectic
+geometry of the cotangent bundle that the curve γ : t P I ÞÑ dxSt P T ˚M is the ﬂow of the
+time-dependent Hamiltonian vector ﬁeld of π˚ BSt
+Bt starting at dxS0. Equation (2.10) is then a
+plain consequence of the chain rule. Since
+@f, g P C8pT ˚Mq, dtf, guω “ rdf, dgs,
+equation (2.9) is obtained by usual extension from smooth functions to exact 1-forms, and then
+from closed forms to generic 1-forms using the Leibniz rule.
+Let us illustrate Lemma 2.18. The algebroid bracket r., .s allows us to obtain iterated deriva-
+tions of the Hamilton-Jacobi equation (2.8). We spell out the order 2 :
+B2ζt
+Bt2 “ pζtq˚rα˚θ, π˚pζtq˚α˚θs.
+(2.11)
+After applying Lemma 2.18 a second time, we obtain an order 3 derivation:
+B3ζt
+Bt3 “ pζtq˚ prα˚θ, π˚pζtq˚rα˚θ, π˚pζtq˚α˚θss ` rrα˚θ, π˚pζtq˚α˚θs, π˚pζtq˚α˚θsq .
+(2.12)
+3
+A Pre-Lie approach to Hamiltonian Poisson integrators
+The bisections of the local symplectic groupoid G that are close to the identity section are
+described by graphs of time-dependent 1-forms, as G Ă T ˚M. We approximate them in the
+sense of jets by relating the notion of jets developed in the previous section to formal solutions
+of Hamilton-Jacobi equations. In order to approximate a given bisection by 1-forms, we now
+introduce an appropriate space J8
+ξ
+equipped with a pre-Lie algebra structure. We then explain
+how this pre-Lie algebra encodes expansions of solutions of the Hamilton-Jacobi equation (2.8)
+through the introduction of Butcher series. More precisely, Proposition 3.12 explains how J8
+ξ
+stands for the space of Taylor coeﬃcients of formal solutions of the Hamilton-Jacobi equation.
+In Section 3.3, we study particular cases of birealisations where some algebraic simpliﬁcations
+arise if the initial condition is chosen to be zero, that is, if we start from the identity section of
+G.
+9
+
+--- Sayfa 10 ---
+3.1
+Pre-Lie formalism for Hamilton-Jacobi ﬂows
+Let us consider the fully general case of our Hamilton-Jacobi equation. Let ξ P Ω1pGq and let
+us denote by Ω1,GpMq the subset tζ P Ω1pMq, Graphpζq Ă Gu of the set of 1-forms on M. We
+are interested in the expansion of the general Hamilton-Jacobi ﬂow
+Bζt
+Bt “ ζ˚
+t ξ,
+ζ0 P Ω1,GpMq.
+(3.1)
+We set E the vector space of maps deﬁned as follows:
+E “ Ω1pMqΩ1,GpMq
+Example 3.1. ξ deﬁnes an element of E, that we write again ξ, provided by the pull-back:
+ξ : Ω1,GpMq
+Ñ
+Ω1pMq
+ζ
+ÞÑ
+ζ˚ξ
+.
+Note that the map induced by ξ is of ﬁrst order in ζ: it only uses the value of ζ and its diﬀerential.
+Four our purpose, we need maps of higher order, and this is the reason why we work on E instead
+of only working with pull-backs of diﬀerential forms.
+We introduce the maps
+η0 : E
+Ñ
+E
+f
+ÞÑ
+f ,
+and for all k P N˚,
+ηk :
+Ebk
+Ñ
+E
+f1, . . . , fk
+ÞÑ
+”
+ζ P Ω1,GpMq ÞÑ ζ˚r. . . rξ, π˚fkpζqs, . . . , π˚f1pζqs P Ω1pMq
+ı .
+We consider the smallest real vector subspace J8
+ξ Ă E fulﬁlling the following conditions:
+1. ξ P J8
+ξ ,
+2. for all k P N˚, the image of the restriction of the map ηk to pJ8
+ξ qbk is a subset of J8
+ξ .
+Example 3.2. The space J8
+ξ
+admits in particular the elements Id, ξ, η1pξq, η2pξ, ξq, . . . , and
+real linear combinations of such elements. Note that with this indice notation, ηkpξ, . . . , ξq is
+k ` 1-linear in ξ.
+The space J8
+ξ
+is naturally equipped with the linear product Ź deﬁned as follows. For any
+h P J8
+ξ ,
+h Ź ξ “ η1phq
+and we extend Ź to an inner product on J8
+ξ
+by linearity and the Leibniz rule: for any k P N˚,
+h, f1, . . . , fk P J8
+ξ ,
+h Ź
+´
+ηkpf1, . . . , fkq
+¯
+“
+kÿ
+i“1
+ηkpf1, . . . , h Ź fi, . . . , fkq ` ηk`1ph, f1, . . . fkq.
+Let us ﬁrst observe the following.
+10
+
+--- Sayfa 11 ---
+Lemma 3.3. For all k P N˚, 1 ď i, j ď k and h1, . . . , hk P J8
+ξ ,
+ηkph1, . . . , hi, . . . , hj, . . . , hkq “ ηkph1, . . . , hj, . . . , hi, . . . , hkq
+Proof. The proof follows from the equality
+@γ1, γ2 P C8pGq, tπ˚ζ˚γ1, π˚ζ˚γ2uω “ 0,
+and the Jacobi identity.
+Now, we state a remarkable property of the product Ź. Namely, it endows J8
+ξ
+with the
+following algebraic structure.
+Proposition 3.4. The space pJ8
+ξ , Źq is a pre-Lie algebra, that is, for all f, g, h P J8
+ξ ,
+pf Ź gq Ź h ´ f Ź pg Ź hq “ pg Ź fq Ź h ´ g Ź pf Ź hq.
+(3.2)
+Proof. The proof is a direct computation using the construction of the space J8
+ξ . Let f, g P J8
+ξ .
+We obtain η2pf, gq “ η2pg, fq from Lemma 3.3, which yields equation (3.2) in the case h “ ξ P
+J8
+ξ . By induction, let k P N˚ and h1, . . . , hk such that for all 1 ď i ď k,
+pf Ź gq Ź hi ´ f Ź pg Ź hiq “ pg Ź fq Ź hi ´ g Ź pf Ź hiq.
+Let h “ ηkph1, . . . , hkq P J8
+ξ . Then, a calculation yields
+pf Ź gq Ź h ´ f Ź pg Ź hq “ ´ηk`2pf, g, h1, . . . , hkq
+´
+kÿ
+i“1
+pηk`1pg, h1, . . . , f Ź hi, . . . , hkq ` ηk`1pf, h1, . . . , g Ź hi, . . . , hkqq
+´
+ÿ
+1ďi,jďk
+i‰j
+ηkph1, . . . , f Ź hj, . . . , g Ź hi, . . . , hkq
+`
+kÿ
+i“1
+ηkph1, . . . , pf Ź gq Ź hi ´ f Ź pg Ź hiq, . . . , hkq
+The induction hypothesis and Lemma 3.3 yield the result.
+Remark 3.5 (J8
+ξ and jet spaces). The space J8
+ξ is analogous to the inﬁnite jet space [1, 43, 39]
+on XpMq used for the analysis of Runge-Kutta and Lie-group methods. In [33, 29], the accuracy
+of numerical integrators is studied via the use of Taylor expansions of ODE ﬂows. Given a
+vector ﬁeld f P XpMq, the associated ﬂow is expanded in terms of the partial derivatives of f
+at all order. The jet space over f is the vector space spanned by f, f 1, f 2, . . . . We follow
+here a similar approach by ﬁxing a one form ξ P Ω1pGq and considering the iterated derivatives
+appearing in the expansion of the ﬂow. As a result, we shall use ﬂows whose Taylor expansion is
+written with repeated compositions of the operator Ź on the space J8
+ξ . For ξ “ α˚θ, θ P Ω1pMq,
+we will use these ﬂows to construct jets of bisections.
+11
+
+--- Sayfa 12 ---
+Lemma 2.18 provides an interpretation of the product Ź as a variational derivation in the
+sense of [43]: for instance,
+`
+ξ Ź ξ
+˘
+pζq “ ζ˚rξ, π˚ζ˚ξs.
+In that framework, considering jet spaces to iterate derivatives is therefore a natural idea. Let
+us also notice that the deﬁnition of Ź – as well as its deﬁnition domain J8
+ξ – is tied to the choice
+of the form ξ P Ω1pGq. For instance, we raise the following remark.
+Remark 3.6. Given two spaces pJ8
+ξ1 , Ź1q and pJ8
+ξ2 , Ź2q and a map ϕ: J8
+ξ1 Ñ J8
+ξ2 satisfying
+@i P N, @pfjqiějě1 P pJ8
+ξ1 qi, ϕ
+´
+ηi`1
+`
+f1, . . . , fi
+˘¯
+“ ηi`1
+´
+ϕpf1q, . . . , ϕpfiq
+¯
+,
+one can show the following: ϕ is a morphism – that is ϕpf Ź1 gq “ ϕpfq Ź2 ϕpgq – if and only
+if ϕpξ1q “ ξ2.
+Remark 3.7. Following [23, 27], the product Ź can be thought of as a ﬂat connection on J8
+ξ
+(see also the previous remark 3.5). A relation is expected in between the geometric interpretation
+of Ź and our use of a Weinstein tubular neighborhood, see, e.g., [11]. Indeed, the very existence
+of Ź is a consequence of the embedding of the local symplectic groupoid G near its identity section
+inside T ˚M.
+As stated in Theorem 2.5, the Lagrangian bisections are represented by the solution of
+Hamilton-Jacobi equations of the general form provided by equation (2.8) and Hamiltonian
+Poisson integrators rely on eﬃcient discretisations of the exact Hamilton-Jacobi equation (2.7).
+The present pre-Lie formalism allows to conveniently give an explicit expression of the Taylor
+expansion of the solution of equation (2.8).
+Proposition 3.8. For ξ P Ω1pGq, the formal solution of the Hamilton-Jacobi equation (3.1)
+satisﬁes
+ζt “ expŹptξqpζ0q
+(3.3)
+“
+8
+ÿ
+n“0
+tn
+n!ξŹnpζ0q
+“
+´
+ζ0 ` tpζ0q˚ξ ` t2
+2
+´
+ξ Ź ξ
+¯
+pζ0q ` t3
+3!
+´
+ξ Ź pξ Ź ξq
+¯
+pζ0q ` t4
+4!
+´
+ξ Ź pξ Ź pξ Ź ξqq
+¯
+pζ0q ` . . .
+¯
+.
+Proof. The result is proven by induction, in the spirit of [41].
+3.2
+Butcher series expansion of a solution of Hamilton-Jacobi equation
+The expansion (3.3) is concise and simple as each order has only one Taylor term. However,
+we are left with the computation of the iterations of Ź. In this section, we further expand the
+Taylor expansion of (3.1), relying on a pre-Lie formalism of Butcher trees.
+A non-planar Butcher tree in T is a rooted tree deﬁned recursively by
+P T,
+pτn, . . . , τ1q P T,
+τ1, . . . , τn P T,
+where the root is graphically represented at the bottom. pτn, . . . , τ1q denotes the tree with the
+root
+and the n trees τn, . . . , τ1 plugged to the root. By non-planar, we mean that the order
+of the branches does not matter: for instance,
+“
+. We set T the set of non-planar tress
+12
+
+--- Sayfa 13 ---
+and T “ SpanRpTq the real vector space generated by T. The grafting of trees ñ is deﬁned as
+a product on T returning the sum of all possibilities (counted with multiplicity) of grafting the
+root of one tree on the nodes of another tree. For instance:
+ñ
+“
+` ,
+ñ
+“
+` 2
+,
+ñ
+“
+.
+By extending ñ linearly on T , this deﬁnes the pre-Lie algebra pT , ñq of Butcher trees.
+A
+natural grading on T is given by the number of nodes:
+ˇˇ
+ˇˇ “ 3.
+The translation between the geometric structure pJ8
+ξ , Źq and the algebraic structure pT , ñq
+is obtained through the elementary diﬀerential map.
+Deﬁnition 3.9 (Elementary diﬀerential map). Let ξ P Ω1pGq. The elementary diﬀerential map
+Fξ : T Ñ J8
+ξ
+associated to ξ is deﬁned by
+Fξp q “ ξ and for ζ P Ω1pMq, Fξ´
+pτn, . . . , τ1q
+¯
+pζq “ ζ˚rr. . . rξ, π˚Fξ`
+τ1
+˘
+pζqs, . . . s, π˚Fξ`
+τn
+˘
+pζqs.
+The following result is a straightforward consequence of the deﬁnition of the product Ź.
+Proposition 3.10. The elementary diﬀerential Fξ : J8
+ξ Ñ T is a pre-Lie algebra morphism:
+Fξpτ2 ñ τ1q “ Fξpτ2q Ź Fξpτ1q.
+This morphism allows to transport Proposition 3.8 and to rewrite it naturally in terms of
+trees.
+Let pζtqt be the solution of the Hamilton-Jacobi equation (3.1).
+Then, its expansion
+satisﬁes
+ζt “ Fξ´
+expñpt q
+¯
+pζ0q
+“
+8
+ÿ
+n“0
+tn
+n!Fξ´
+ñn¯
+pζ0q
+“ Fξ´
+id `t ` t2
+2
+ñ
+` t3
+3! ñ p ñ q ` t4
+4! ñ p ñ p ñ qq ` . . .
+¯
+pζ0q.
+Now, we use trees to encode explicitly the expansion expñ . The appropriate concept for
+such formal expansions is the one of Butcher series, often called B-series.
+Deﬁnition 3.11 ([7]). The B-series associated to ξ P Ω1pGq is the following formal power series
+indexed by a coeﬃcient map a P T ˚:
+Bξ :
+T ˚
+Ñ
+J8
+ξ
+a
+ÞÑ
+ř
+τPT
+apτq
+σpτqFξpτq
+where σpτq is the number of graph automorphisms of τ, also called the symmetry coeﬃcient.
+We refer to [29, Sec. III] for an explicit formula of the symmetry coeﬃcient. Note that for
+any a P T ˚, Btξpaq P J8
+ξ
+“
+rts
+‰
+. Then, the Butcher series of the solution of a Hamilton-Jacobi
+equation is the following.
+13
+
+--- Sayfa 14 ---
+Proposition 3.12. Let pζtqt P pΩ1pMqqI be the solution of the Hamilton-Jacobi equation (3.1).
+Then its Taylor expansion is given by
+ζ0 ` Btξ`
+e
+˘
+pζ0q P Ω1pMq
+“
+rts
+‰
+,
+(3.4)
+where e P T ˚ is given by
+ep q “ 1,
+epτq “ 1
+|τ|epτ1q . . . epτnq,
+τ “ pτn, . . . , τ1q .
+(3.5)
+Using Section 2.3, this proposition is interpreted in terms of jets. Let us assume that ξ “ α˚θ
+for some θ P Ω1pMq and pζtqtPI P Ω1pMqI the solution of the equation (2.8). Then, the jet of the
+smooth family of bisections pGraphpζtqtPIq is given by the series ζ0 ` Btξpeqpζ0q in Ω1pMq
+“
+rts
+‰
+.
+Since Btξpeq P J8
+ξ
+“
+rts
+‰
+. This proposition also tells us what J8
+ξ
+stands for. Namely, it is the
+space of Taylor coeﬃcients of a formal solution of the Hamilton-Jacobi equation.
+The representation of the Hamilton-Jacobi ﬂow with trees allows us to conveniently provide
+an explicit expansion of ζt at any order. These calculations are called Farmer series in [18],
+where Hamiltonian Poisson integrators were implemented. Our algebraic formalism simpliﬁes
+greatly the tedious calculations in [18].Using our construction of the appropriate Butcher series
+provided by Proposition 3.12, we ﬁnd directly
+ζt “ Fξ´
+id `t ` t2
+2 ` t3
+3!
+`
+`
+˘
+` t4
+4!
+`
+`
+` 3
+`
+˘
+` . . .
+¯
+pζ0q
+“ ζ0 ` ζ˚
+0
+´
+tξ ` t2
+2 rξ, π˚ζ˚
+0 ξs ` t3
+3!
+`
+rξ, π˚ζ˚
+0 rξ, π˚ζ˚
+0 ξss ` rrξ, π˚ζ˚
+0 ξs, π˚ζ˚
+0 ξs
+˘
+` t4
+4!
+`
+rξ, π˚ζ˚
+0 rξ, π˚ζ˚
+0 rξ, π˚ζ˚
+0 ξsss ` rξ, π˚ζ˚
+0 rrξ, π˚ζ˚
+0 ξs, π˚ζ˚
+0 ξss
+` 3rrξ, π˚ζ˚
+0 rξ, π˚ζ˚
+0 ξss, π˚ζ˚
+0 ξs ` rrrξ, π˚ζ˚
+0 ξs, π˚ζ˚
+0 ξs, π˚ζ˚
+0 ξs
+˘
+` . . .
+¯
+.
+Note that we recover in particular the equations (2.11) and (2.12).
+3.3
+Occurence of degeneracies
+As explicit formulas for birealisations are rarely available, numerical approximations often rely
+on approximate birealisation, such as the Karasev birealisation [36, 9]. Such construction brings
+degeneracies in our Taylor expansions, for which we provide a detailed description here.
+Following [18], let θ P Ω1pMq, ξ “ α˚θ and ζ0 “ 0. In this section, we assume further the
+following degeneracy for the source map α:
+0˚rα˚θ, π˚θs “ 0.
+(3.6)
+Remark 3.13. Let us pick cotangent coordinates pq, pq on T ˚M.
+Degeneracy (3.6) occurs,
+for instance, when the diﬀerential of α along ﬁbers of T ˚M at zero pBpjαipq, 0qq1ďi,jďn is anti-
+symmetric. In the Karasev birealisation, for all 1 ď i, j ď n, Bpjαipq, 0q “ tqi, qju. An interested
+reader might consult [10, eq. (3.6)] for more insights on this particular case.
+This degeneracy implies that the diﬀerential associated to some speciﬁc trees vanishes, in
+the spirit of superconvergence (see, e.g., [34]).
+14
+
+--- Sayfa 15 ---
+Theorem 3.14. Let T0 Ă T the subset of trees that do not have a descendant of the form .
+Let pζtqt P pΩ1pMqqI be the solution of the Hamilton-Jacobi equation (2.5) under the degeneracy
+condition (3.6), with initial condition ζ0 “ 0. Then, its Taylor expansion is given by the formal
+series with coeﬃcients being closed forms
+Btα˚θ`
+e0
+˘
+p0q “
+ÿ
+τPT0
+epτq
+σpτqFtα˚θpτqp0q P Ω1
+0pMq
+“
+rts
+‰
+,
+where e0 P T ˚ is given by e0pτq “ epτq1T0 and e satisﬁes (3.5).
+We illustrate Theorem 3.14 in the case θ “ dH.
+Indeed, we are now able to compute
+straightforwardly the Farmer series of [18] at high order. Let pStqt P C8pM ˆ Iq be a generating
+function of a Hamiltonian H P C8pMq provided by equation (2.7). Let us set ζt “ dSt for t P I.
+We write the expansion of ζ up to order 5 :
+ζt “ Fα˚dH´
+id `t ` t3
+3!
+` t4
+4!
+`
+`
+˘
+` t5
+5!
+`
+`
+` 4
+`
+˘
+` . . .
+¯
+p0q
+“ tdH ` t3
+3!0˚rrα˚dH, π˚dHs, π˚dHs
+` t4
+4!
+`
+0˚rα˚dH, π˚0˚rrα˚dH, π˚dHs, π˚dHss ` 0˚rrrα˚dH, π˚dHs, π˚dHs, π˚dHs
+˘
+(3.7)
+` t5
+5!
+`
+0˚rα˚dH, π˚0˚rα˚dH, π˚0˚rrα˚dH, π˚dHs, π˚dHsss
+` 0˚rα˚dH, π˚0˚rrrα˚dH, π˚dHs, π˚dHs, π˚dHss
+` 4 ¨ 0˚rrα˚dH, π˚0˚rrα˚dH, π˚dHs, π˚dHss, π˚dHs
+` 0˚rrrrα˚dH, π˚dHs, π˚dHs, π˚dHs, π˚dHs
+˘
+` . . .
+4
+Composition of Lagrangian bisections and B-series
+In this section, we use Butcher series theory to provide a combinatorial description of the group
+law of jets of bisections. More precisely, we prove that the product of jets of bisections is encoded
+by the composition of B-series and the Butcher-Connes-Kreimer Hopf algebra in the sense of
+Theorem 4.3. The occurence of this Hopf algebra in the framework of symplectic groupoids is
+new. Our analysis relies heavily on the various notions constructed in Section 2.3.
+Let us consider the symmetric tensor algebra pSpT q, ¨q over trees, that is the vector space
+spanned by forests, with its unit being the empty forest 1. Let the Butcher-Connes-Kreimer
+coproduct ∆BCK : T Ñ T b T be given by
+∆BCKpτq “
+ÿ
+sĂτ
+pτzsq b s,
+where the sum is indexed on all the subtrees of τ that contain the root (including the empty
+tree). One ﬁnds for instance
+∆BCKp q “ 1 b ` b ` b ` b 1
+∆BCKp
+q “ 1 b
+` b
+` b `
+b ` b `
+b `
+b 1.
+(4.1)
+15
+
+--- Sayfa 16 ---
+The coproduct is extended on SpT q by multiplicativity: for any τ1, τ2 P T , ∆BCKpτ1 ¨ τ2q “
+∆BCKpτ1q ¨ ∆BCKpτ2q. Then, it is well-known that pSpT q, 1, ¨, 1˚, ∆BCKq yields the BCK Hopf
+algebra [16, 25], used in particular to represent diﬀerential operators.
+We call character a linear form a P SpT q˚ that satisﬁes apτ1 ¨ τ2q “ apτ1qapτ2q and we denote
+the product µ: T b T Ñ T . Note that given a P T ˚, there is a unique way to extend a as a
+character on SpT q.
+The composition of two B-series is detailed by the BCK Hopf algebra [15]. Note that it
+applies for any Taylor expansion over J8
+ξ , not just for the exact Hamilton-Jacobi ﬂow.
+Proposition 4.1. For any a1, a2 P T ˚, we set
+a1 ˚ a2 “ µ ˝ pa1 b a2q ˝ ∆BCK.
+This turns the set GB “ ta P T ˚, ap q “ 1u, equipped with ˚, into a group, called the Butcher
+group, with unit δ .
+From the example (4.1), we ﬁnd, for instance,
+a1 ˚ a2p
+q “ a2p
+q ` a1p qa2p
+q ` a1p qa2p q ` a1p q2a2p q
+` a1p qa2p q ` a1p qa1p qa2p q ` a1p
+q
+The product on GB deﬁnes by duality a product on Butcher series: for any ξ P Ω1pGq and a1,
+a2 P T ˚, denoting by Bξpa1q and Bξpa2q their B-series respectively, their composition is deﬁned
+by
+Bξpa1q ˝ Bξpa2q :“ Bξpa1 ˚ a2q.
+(4.2)
+The following proposition is the analog of [15, Thm 3.1] in our context. We use the terminology
+introduced in the example 2.9, meaning that for any pζtqtPI P Ω1pMqI such that ζt P Ω1,GpMq for
+all t P I, we identify the jet of the smooth family of bisections
+´
+Graphpζtq
+¯
+tPI with the Taylor
+series of pζtqt with respect to t.
+Proposition 4.2. Let θ P Ω1pMq and a1, a2 P T ˚. We set J L1 P B and J L2 P B to be the jets
+of bisections corresponding to the graphs of Bt¨α˚θ`
+a1˘
+and Bt¨α˚θ`
+a2˘
+respectively. Then, the
+Butcher series, evaluated at 0 P Ω1,GpMq,
+´
+Bt¨α˚θpa1q ˝ Bt¨α˚θpa2q
+¯
+p0q is the jet of bisections
+J L1 ¨ J L2 P B.
+The following theorem relates this proposition with equation (2.6) and states that the Butcher
+group encodes the product of jets of bisections in a local symplectic groupoid.
+Theorem 4.3. Let ξ P Ω1pGq and the map Ψξ : GB Ñ Ω1pMq
+“
+rts
+‰
+be given by
+Ψξpaq “ Btξ`
+a
+˘
+p0q.
+Then:
+• For any θ P Ω1pMq, Ψα˚θ : pGB, ˚q ãÑ pB, ¨q is an injective group morphism.
+• For any θ P Ω1
+0pMq, Ψα˚θ : pGB, ˚q ãÑ pL, ¨q is an injective group morphism.
+• For any H P C8pMq, Ψα˚dH : pGB, ˚q ãÑ pL, ¨q is an injective group morphism.
+16
+
+--- Sayfa 17 ---
+Proof. The maps are well deﬁned thanks to Section 2.
+The group morphism properties are
+provided by Proposition 4.2 and their injectivity follows from the deﬁnition of a Butcher series.
+We considered for simplicity jet spaces generated by one form ξ (see also remark 3.6) and our
+Butcher series are devoted to the approximation of one chosen smooth family of bisections. It is
+worth mentioning that one can extend the previous formalism for ﬂows driven by a ﬁnite amount
+of forms ξ1,. . . , ξn P Ω1pGq by using decorated nodes. We sketch the construction and illustrate
+it here for n “ 2. The jet space of the section 3 becomes J8
+ξ1,...,ξn Ă E and is represented by the
+algebra of decorated trees spanned by
+1 , . . . ,
+n . The previously described algebra adapts in
+this setting, in the spirit of P-series for partitioned problems [29].
+For instance, let us consider J8
+ξ1,ξ2 P E and bi-coloured trees where
+stands for ξ1 P Ω1pGq
+and
+stands for ξ2 P Ω1pGq. Let us compose the B-series Btξ1pδ q P J8
+ξ1 and Btξ2pδ q P J8
+ξ2.
+The composition Btξ2pδ q ˝ Btξ1pδ q P J8
+ξ1,ξ2 is computed with the BCK Hopf algebra as in the
+equation (4.2) and we ﬁnd
+´
+Btξ2pδ q ˝ Btξ1pδ q
+¯
+pζ0q “ Btξ1,tξ2
+´
+δ ˚ δ
+¯
+pζ0q
+“ Ftξ1,tξ2
+´
+` ` ` 1
+2!
+` 1
+3!
+` 1
+4!
+` . . .
+¯
+pζ0q
+“ ζ˚
+0
+´
+tpξ1 ` ξ2q ` t2rξ1, π˚ζ˚
+0 ξ2s ` t3
+2!rrξ1, π˚ζ˚
+0 ξ2s, π˚ζ˚
+0 ξ2s ` . . .
+¯
+.
+5
+Numerical methods for Hamiltonian systems on Poisson man-
+ifolds
+Using the pre-Lie structure of Butcher trees, we present a new class of Hamiltonian Poisson
+integrators based on Taylor and Runge-Kutta discretisations. We discretize the dynamics of
+the equation (2.1) generated by a Hamiltonian H P C8pMq. Therefore, we are interested in this
+section in the previous constructions with ξ “ α˚dH P Ω1pGq, the initial condition ζ0 “ 0 P
+Ω1,GpMq, with and without the degeneracy condition (3.6).
+We emphasize that the framework of pre-Lie algebras and Butcher series is a central tool for
+the numerical integration of ODEs in Rd. The surprising eﬀect of the birealisations is that they
+translate a Poisson geometry into a simpler geometry on Ω1pMq, where one can apply numerical
+tools similar to the Euclidean context.
+5.1
+Hamiltonian Poisson integrators by truncation of Taylor series
+We want to obtain Hamiltonian Poisson integrators of arbitrary order N. Let us denote T N
+(resp. T N
+0 ) the subset of T (resp. T0) containing trees of order at most N. Let eNpτq “ epτq1τPT N
+and eN
+0 pτq “ epτq1τPT N
+0 be restrictions of the coeﬃcient maps of Proposition 3.12, that truncate
+the formal series of the previous sections into ﬁnite sums. For instance, for t small enough, the
+B-series of the equation (3.4) becomes a locally well-deﬁned 1-form3: Btα˚dH`
+eN˘
+p0q P Ω1pMq.
+Evaluating this 1-form at any x P M, we obtain a well-deﬁned point Btα˚dH
+x
+`
+eN˘
+p0q P G (and
+analogously for Btα˚dH
+x
+`
+eN
+0
+˘
+). Based on truncations of the expansion (3.7) of the Hamilton-
+Jacobi ﬂow (3.1), we construct numerical methods for this ﬂow and, in turn, approximate the
+3We can get rid of the issue of constructing a globally well-deﬁned 1-form by considering the time-step as an
+inﬁnitesimal parameter.
+17
+
+--- Sayfa 18 ---
+Hamiltonian dynamics on M. The following theorem is devoted to approximate the dynamics
+generated by a Hamiltonian H P C8pMq.
+Theorem 5.1. The following Taylor-Hamiltonian-Poisson integrator is of order N for solving
+equation (2.1):
+yn “ α
+´
+B∆t¨α˚dH
+xn
+`
+eN˘
+p0q
+¯
+,
+(5.1)
+yn`1 “ β
+´
+B∆t¨α˚dH
+xn
+`
+eN˘
+p0q
+¯
+,
+(5.2)
+where ∆t is the timestep of the method,
+B∆t¨α˚dH`
+eN˘
+p0q:
+M
+Ñ
+G
+x
+ÞÑ
+B∆t¨α˚dH
+x
+`
+eN˘
+p0q
+is the map provided by the Butcher series associated to α˚dH, and xn P M denotes an inter-
+mediary point implicitly deﬁned by equation (5.1). In addition, under the degeneracy condition
+(3.6), replacing eN by eN
+0 in (5.1)-(5.2) yields a method of order N.
+By their very constructions, these methods are Hamiltonian Poisson integrators: they follow
+the ﬂow of some time-dependent Hamiltonian. Therefore, they stay on a symplectic leaf and
+preserve any Casimir all along a trajectory. The following method has been benchmarked in [19,
+Sec. 5.2.] on a Lotka-Volterra system in a neighborhood of a singularity.
+Example 5.2 (Euler method). The simplest method is the Euler method, given by Theorem 5.1
+for N “ 1. It is of ﬁrst order and the associated iteration is
+yn “ αp∆t ¨ dxnHq,
+yn`1 “ βp∆t ¨ dxnHq.
+Under the degeneracy condition (3.6), this method is of order N “ 2.
+In [19], a Hamiltonian Poisson integrator of order 2 is benchmarked on the rigid body dy-
+namics. Theorem 5.1 provides a general framework for extending these methods to high order.
+5.2
+Runge-Kutta approach to Hamiltonian Poisson integrators
+The number of trees in T N and T N
+0
+blows up quickly as the order N gets larger, which makes the
+Taylor approach computationally expensive and often unstable. As a solution, we propose the
+following class of Runge-Kutta-Hamiltonian-Poisson (RKHP) approximations for the high-order
+approximation of equation (2.1).
+Zi “ ∆t
+ÿ
+1ďjăi
+aij ¨ pZ˚
+j α˚dHq,
+1 ď i ď s
+ψ∆t¨ξ “ ∆t
+sÿ
+i“1
+bi ¨ pZ˚
+i α˚dHq P dC8pMq,
+yn “ α
+´
+ψ∆t¨α˚dH
+xn
+¯
+P M
+(5.3)
+yn`1 “ β
+´
+ψ∆t¨α˚dH
+xn
+¯
+P M.
+The aij P R and bi P R, 1 ď i, j ď s, are the coeﬃcients of the method and shall be chosen in
+order to reach high order of accuracy with a small number of intermediate stages s P N. For
+18
+
+--- Sayfa 19 ---
+simplicity, we consider explicit integrators, i.e., aij “ 0 for j ě i. The pZiq1ďiďs P Ω1,GpMq are
+all exact 1-forms on M that are explicitly deﬁned by the ﬁrst equation line. For any ∆t small
+enough, note that the deﬁnition (5.3) relies on a map
+ψ∆t¨α˚dH : M
+Ñ
+G
+x
+ÞÑ
+ψ∆t¨α˚dH
+x
+: “ ∆t ¨ řs
+i“1 bi ¨
+`
+dxZ˚
+i α˚H
+˘
+The coeﬃcients are traditionally represented by their associated Butcher tableaux, with the
+notation ci “ řs
+j“1 aij:
+c
+A
+b
+Similarly to the order theory of Runge-Kutta methods for ODEs, the Taylor expansion of ψtξpζ0q
+in (5.3) writes as a Butcher series
+ψtξ “ Btξ`
+a
+˘
+p0q,
+with the same coeﬃcient map a P T ˚ than for standard Runge-Kutta methods. We refer to [29,
+Chap. III] for the exact expression of a and an example is
+ap
+i
+j
+k
+l
+m
+q “
+sÿ
+i,j,k,l,m“1
+biaijaikaklakm “
+sÿ
+i,k“1
+biciaikc2
+k.
+The algebraic reformulation of Section 3 allows us to take over the classical order theory of
+Runge-Kutta methods for ODEs [29] and to adapt it in the context of approximations of formal
+solutions to Hamilton-Jacobi equation.
+Theorem 5.3. Let us consider a RKHP method (5.3) with coeﬃcient map a P T ˚ and set
+e P T ˚ as in the equation (3.5). Then, if apτq “ epτq for all τ P T N, the method has order N
+for solving (2.1). Moreover, under the degeneracy condition (3.6), if apτq “ epτq for all τ P T N
+0 ,
+the method has order N for solving (2.1).
+The order conditions for the ﬁrst orders can be found in [29, Chap. III] in the general case
+and in Table 1 in the degenerate case (3.6).
+Order
+Butcher tree τ
+Order condition apτq “ epτq
+1
+řs
+i“1 bi “ 1
+3
+řs
+i“1 bic2
+i “ 1
+3
+4
+řs
+i,j“1 biaijc2
+j “ 1
+12
+řs
+i“1 bic3
+i “ 1
+4
+5
+řs
+i,j,k“1 biaijajkc2
+k “
+1
+60
+řs
+i,j“1 biaijc3
+j “ 1
+20
+řs
+i,j“1 biciaijc2
+j “ 1
+15
+řs
+i“1 bic4
+i “ 1
+5
+Table 1: Order conditions of RKHP integrators under the degeneracy condition (3.6).
+19
+
+--- Sayfa 20 ---
+Remark 5.4. The idea of approximating birealisations at high order has been explored by [9],
+where a procedure to asymptotically compute the source map α: G Ñ M is investigated. This
+relies on a long history research of deformation theory in order to construct the local symplectic
+groupoid of any Poisson manifold [13, 8]. We expect a relation between the order of the approx-
+imation of the birealisation and the one of the dynamics to provide robust numerical methods.
+In the case of a general birealisation, a collection of explicit RKHP integrators can be de-
+rived straightforwardly from the standard Runge-Kutta integrators from [29]. In the case of a
+birealisation satisfying (3.6), we propose a collection of new methods with minimal number of
+stages for ﬁxed order. We emphasize that there is no need to consider discretisations associated
+to symplectic methods (like the midpoint method) as the geometry has been taken care of by
+the birealisations.
+Euler method:
+The Euler method is a ﬁrst order RKHP method (resp. second order under
+(3.6)).
+yn
+“ αp∆t ¨ dxnHq
+yn`1
+“ βp∆t ¨ dxnHq
+0
+0
+1
+Third order method:
+Under (3.6), third order can be achieved with two stages.
+Z
+“
+1
+?
+3∆t ¨ dH
+yn
+“ αp∆t ¨ dxnZ˚α˚Hq
+yn`1
+“ βp∆t ¨ dxnZ˚α˚Hq
+0
+0
+0
+1
+?
+3
+1
+?
+3
+0
+0
+1
+Fourth order method:
+Under (3.6), fourth order can be achieved with three stages, that is
+one less stage than for the popular RK4 discretisation.
+Z1
+“ ´
+?
+3
+4 ∆t ¨ dH
+Z2
+“ 3
+4∆t ¨ dZ˚
+1 α˚H
+yn
+“ α
+`
+∆tp11
+27dxnH ` 16
+27dxnZ˚
+2 α˚Hq
+˘
+yn`1
+“ β
+`
+∆tp11
+27dxnH ` 16
+27dxnZ˚
+2 α˚Hq
+˘
+0
+0
+0
+0
+´
+?
+3
+4
+´
+?
+3
+4
+0
+0
+3
+4
+0
+3
+4
+0
+11
+27
+0
+16
+27
+Remark 5.5. If implicit implementations are computationally feasible and (3.6) is satisﬁed, a
+one-stage third order implicit method is
+Z
+“
+1
+?
+3∆t ¨ dZ˚α˚H
+yn
+“ αp∆t ¨ dxnZ˚α˚Hq
+yn`1
+“ βp∆t ¨ dxnZ˚α˚Hq
+1
+?
+3
+1
+?
+3
+1
+Remark 5.6. The Butcher-Connes-Kreimer Hopf algebra used in Section 4 is also relevant to
+approximations of bisections in G. Since they admit a group law, a computational consequence
+is the existence of composition methods. For instance, let ξ P Ω1pGq, ζ0 P Ω1,GpMq and let the
+ﬁrst order approximation of the Farmer series, analogous to the Euler method, be given by
+ψtξpζ0q :“ ζ0 ` tζ˚
+0 ξ “ ζ0 ` Btξ`
+δ
+˘
+pζ0q.
+Then the explicit midpoint method is the composition
+ˆψtξpζ0q :“ pψtξ ˝ ψtξ{2qpζ0q
+20
+
+--- Sayfa 21 ---
+“ ζ0 ` tξ
+´
+ζ0 ` t
+2 ¨ ζ˚
+0 ξ
+¯
+“ ζ0 ` Btξ´
+δ ˚ pδ {2q
+¯
+pζ0q
+“ ζ0 ` tζ˚
+0 ξ ` t2
+2 ζ˚
+0 rξ, π˚ζ˚
+0 ξs ` t3
+8 ζ˚
+0 rrξ, π˚ζ˚
+0 ξs, π˚ζ˚
+0 ξs ` . . .
+We observe in particular that ˆψ provides a second order approximation for a general ξ P Ω1pGq,
+similarly to the context of ODEs.
+6
+Conclusion
+The algebraic tools of geometric integration extend for the study of Poisson geometry. In the
+framework of symplectic groupoids, they bring new insights, from both geometric and computa-
+tional viewpoints. Some possible extensions of the present work could include the creation of a
+stability analysis in the context of Hamiltonian Poisson integrators. For instance, steep dynam-
+ical systems of conservative mechanics may beneﬁt from the formalism we introduced. We also
+plan to implement implicit methods and benchmark their orders in order to provide numerical
+illustrations of our algebraic results. This will deserve a more mechanics oriented article. On
+the algebraic side, we expect this work to open many perspectives. A natural extension could
+adapt the Hopf algebra of substitution for the backward error analysis in this context. At last,
+a more general geometric context could yield post-Lie algebras. This is matter for future work.
+Acknowledgements.
+The authors would like to thank Anton Fehnker, Camille Laurent-
+Gengoux, Jean-David Jacques, Chenchang Zhu, the AGATA seminar of Montpellier and the
+Oberseminar on algebraic topology of Göttingen for helpful discussions. The authors acknowl-
+edge the support of the French program ANR-11-LABX-0020-0 (Labex Lebesgue) and the
+Deutsche Forschungsgemeinschaft RTG 2491.
+References
+[1] I. M. Anderson. The variational bicomplex. Unpublished, 1989.
+[2] E. Bronasco, A. Busnot Laurent, and B. Huguet.
+High order integration of stochastic
+dynamics on Riemannian manifolds with frozen-ﬂow methods. arXiv:2503.21855, 2025.
+[3] E. Bronasco and A. Laurent. Hopf algebra structures for the backward error analysis of
+ergodic stochastic diﬀerential equations. arXiv:2407.07451, 2024.
+[4] K. Burrage and P. M. Burrage. High strong order explicit Runge-Kutta methods for stochas-
+tic ordinary diﬀerential equations. Appl. Numer. Math., 22(1-3):81–101, 1996. Special issue
+celebrating the centenary of Runge-Kutta methods.
+[5] A. Busnot Laurent, K. Debrabant, and A. Kværnø. Optimal stochastic Runge-Kutta meth-
+ods for the weak integration of stochastic dynamics. Preprint, 2025.
+[6] J. C. Butcher. An algebraic theory of integration methods. Math. Comp., 26:79–106, 1972.
+[7] J. C. Butcher. B-series: algebraic analysis of numerical methods. Springer, 2021.
+21
+
+--- Sayfa 22 ---
+[8] A. Cabrera.
+Generating functions for local symplectic groupoids and non-perturbative
+semiclassical quantization. Communications in Mathematical Physics, 2022.
+[9] A. Cabrera, D. M. de Diego, and M. Vaquero. Approximating symplectic realizations: A
+general framework for the construction of Poisson integrators, 2024.
+[10] A. Cabrera and B. Dherin. Formal symplectic realizations. International Mathematical
+Research Notices, 7:1925–1950, 2016.
+[11] A. Cabrera, I. Mărcuţ, and M. A. Salazar. On local integration of lie brackets. Journal für
+die reine und angewandte Mathematik (Crelles Journal), 2020(760):267–293, 2020.
+[12] A. Cannas da Silva and A. Weinstein.
+Geometric models for noncommutative algebras,
+volume 10 of Berkeley Mathematics Lecture Notes. American Mathematical Society, Prov-
+idence, RI; Berkeley Center for Pure and Applied Mathematics, Berkeley, CA, 1999.
+[13] A. S. Cattaneo, B. Dherin, and G. Felder. Formal symplectic groupoid. Communications
+in Mathematical Physics, 253:645–674, 2005.
+[14] A. S. Cattaneo, B. Dherin, and G. Felder. Formal Lagrangian operad. International Journal
+of Mathematics and Mathematical Sciences, 2010(1):643605, 2010.
+[15] P. Chartier, E. Hairer, and G. Vilmart. Algebraic structures of B-series. Found. Comput.
+Math., 10(4):407–427, 2010.
+[16] A. Connes and D. Kreimer. Hopf algebras, renormalization and noncommutative geometry.
+Comm. Math. Phys., 199(1):203–242, 1998.
+[17] O. Cosserat.
+Symplectic groupoids for Poisson integrators.
+Journal of Geometry and
+Physics, 2023.
+[18] O. Cosserat. Theory and construction of structure preserving integrators in Poisson geom-
+etry. PhD thesis, La Rochelle Université, 2023.
+[19] O. Cosserat, C. Laurent-Gengoux, and V. Salnikov. Numerical methods in Poisson geometry
+and their application to mechanics. Mathematics and Mechanics of Solids, 2024.
+[20] A. Coste, P. Dazord, and A. Weinstein. Groupoïdes symplectiques. Publications du Dé-
+partement de Mathématiques de Lyon, 1987.
+[21] M. Crainic, R. Loja Fernandes, and I. Mărcuţ. Lectures on Poisson geometry. American
+Mathematical Society, 2021.
+[22] J.-P. Dufour and N. Tien Zung. Poisson Structures and their Normal Forms. Birkhäuser
+Verlag, 2005.
+[23] K. Ebrahimi-Fard, A. Lundervold, and H. Z. Munthe-Kaas. On the Lie enveloping algebra
+of a post-Lie algebra. J. Lie Theory, 25(4):1139–1165, 2015.
+[24] S. Ferraro, M. de León, J. C. Marrero, D. M. de Diego, and M. Vaquero. On the geometry
+of the Hamilton–Jacobi equation and generating functions. Archive for Rational Mechanics
+and Analysis, 2017.
+[25] L. Foissy. Introduction to Hopf algebra of rooted trees. Preprint.
+22
+
+--- Sayfa 23 ---
+[26] Z. Ge. Generating functions, Hamilton-Jacobi equations and symplectic groupoids on Pois-
+son manifolds. Indiana University Mathematics Journal, 1990.
+[27] E. Grong, H. Z. Munthe-Kaas, and J. Stava. Post-Lie algebra structure of manifolds with
+constant curvature and torsion. arXiv preprint arXiv:2305.02688, 2023.
+[28] M. Gubinelli. Ramiﬁcation of rough paths. J. Diﬀerential Equations, 248(4):693–721, 2010.
+[29] E. Hairer, C. Lubich, and G. Wanner.
+Geometric numerical integration, volume 31 of
+Springer Series in Computational Mathematics. Springer-Verlag, Berlin, second edition,
+2006. Structure-preserving algorithms for ordinary diﬀerential equations.
+[30] E. Hairer and G. Wanner. On the Butcher group and general multi-value methods. Com-
+puting (Arch. Elektron. Rechnen), 13(1):1–15, 1974.
+[31] M. Hairer and D. Kelly. Geometric versus non-geometric rough paths. Ann. Inst. Henri
+Poincaré Probab. Stat., 51(1):207–251, 2015.
+[32] E. Hawkins. A groupoid approach to quantization. Journal of Symplectic Geometry, 6(1):61
+– 125, 2008.
+[33] A. Iserles, H. Z. Munthe-Kaas, S. P. Nørsett, and A. Zanna.
+Lie-group methods.
+In
+Acta numerica, 2000, volume 9 of Acta Numer., pages 215–365. Cambridge Univ. Press,
+Cambridge, 2000.
+[34] L. Jay. Symplectic partitioned Runge-Kutta methods for constrained Hamiltonian systems.
+SIAM Journal on Numerical Analysis, 33(1):368–387, 1996.
+[35] A. V. Karabegov. Formal symplectic groupoid of a deformation quantization. Communi-
+cations in Mathematical Physics, 258:223–256, 2005.
+[36] M. V. Karaseﬀ. Analogues of the objects of Lie group theory for nonlinear Poisson brackets.
+Mathematics of the USSR-Izvestiya, 1987.
+[37] A. Laurent and G. Vilmart. Exotic aromatic B-series for the study of long time integrators
+for a class of ergodic SDEs. Math. Comp., 89(321):169–202, 2020.
+[38] A. Laurent and G. Vilmart. Order conditions for sampling the invariant measure of ergodic
+stochastic diﬀerential equations on manifolds. Found. Comput. Math., 22(3):649–695, 2022.
+[39] J. M. Lee. Introduction to smooth manifolds, volume 218 of Graduate Texts in Mathematics.
+Springer, New York, second edition, 2013.
+[40] P. Libermann and C.-M. Marle. Symplectic Geometry and Analytical Mechanics. Kluwer
+Academic Publishers, 1987.
+[41] A. Lundervold and H. Munthe-Kaas. Hopf algebras of formal diﬀeomorphisms and numeri-
+cal integration on manifolds. In Combinatorics and physics, volume 539 of Contemp. Math.,
+pages 295–324. Amer. Math. Soc., Providence, RI, 2011.
+[42] R. I. McLachlan, K. Modin, H. Munthe-Kaas, and O. Verdier.
+Butcher series: a story
+of rooted trees and numerical methods for evolution equations. Asia Pac. Math. Newsl.,
+7(1):1–11, 2017.
+23
+
+--- Sayfa 24 ---
+[43] P. J. Olver. Applications of Lie groups to diﬀerential equations, volume 107 of Graduate
+Texts in Mathematics. Springer-Verlag, New York, second edition, 1993.
+[44] A. Weinstein. Symplectic manifolds and their Lagrangian submanifolds. Advances in Math-
+ematics, 1971.
+[45] A. Weinstein and P. Xu. Extensions of symplectic groupoids and quantization. Journal für
+die reine und angewandte Mathematik, 417:159–190, 1991.
+[46] S. Zakrzewski. Quantum and classical pseudogroups. part i. union pseudogroups and their
+quantization. Communications in Mathematical Physics, 134(2):347–370, 1990.
+24

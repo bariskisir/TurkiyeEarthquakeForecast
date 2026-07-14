@@ -1,0 +1,3557 @@
+
+--- Sayfa 1 ---
+PACIFIC EARTHQUAKE ENGINEERING
+RESEARCH CENTER
+
+PEER 2025/01
+January 2025
+
+--- Sayfa 2 ---
+Towards Deep Learning-Based Structural Response
+Prediction and Ground Motion Reconstruction
+Khalid M. Mosalam
+Issac K.T. Pang
+Selim G¨unay
+Department of Civil and Environmental Engineering
+University of California, Berkeley
+PEER Report No. 2025/01
+Pacific Earthquake Engineering Research Center 
+Headquarters, University of California, Berkeley  
+January 2025
+
+--- Sayfa 3 ---
+ii
+
+--- Sayfa 4 ---
+ABSTRACT
+This research presents a novel methodology that uses Temporal Convolutional Networks (TCNs),
+a state-of-the-art deep learning architecture, for predicting the time history of structural responses
+to seismic events. By leveraging accelerometer data from instrumented buildings, the proposed
+approach complements traditional structural analysis models, offering a computationally efficient
+alternative to nonlinear time history analysis.
+The methodology is validated across a broad spectrum of structural scenarios, including buildings
+with pronounced higher-mode effects and those exhibiting both linear and nonlinear dynamic be-
+haviors. Applications demonstrate high prediction accuracy across diverse building types, using
+datasets from the California Strong Motion Instrumentation Program (CSMIP). Training dataset
+development is grounded in core principles of structural dynamics, with results interpreted through
+the lens of earthquake engineering. Additionally, a pilot study is presented to reconstruct ground
+motions using the measured responses of a building.
+Despite recognizing limitations such as dataset size and model generalizability, the study highlights
+the transformative potential of advanced Artificial Intelligence (AI) techniques in seismic response
+prediction. Future research will investigate complementary strategies, including physics-informed
+AI, transformer architectures, and neural operators, to further enhance prediction accuracy. These
+advancements pave the way for improved Structural Health Monitoring (SHM) and support the
+evolution of Performance-Based Earthquake Engineering (PBEE) methodologies.
+Keywords: Deep Learning; Ground Motion Reconstruction; Structural Health Monitoring; Struc-
+tural Response Prediction; Temporal Convolutional Networks.
+iii
+
+--- Sayfa 5 ---
+iv
+
+--- Sayfa 6 ---
+ACKNOWLEDGMENTS
+The authors sincerely acknowledge California Strong Motion Instrumentation Program (CSMIP)
+for providing the accelerometer data used in this study. Their invaluable contributions have signif-
+icantly advanced research in structural response analysis and ground motion prediction.
+Special thanks are extended to the staff of the Pacific Earthquake Engineering Research (PEER)
+Center at the University of California, Berkeley, for their continued guidance and support. The
+facilities and resources provided by the PEER Labs were instrumental in conducting laboratory
+experiments and validating the developed models.
+The authors gratefully recognize the funding agencies that made this research possible. This study
+was initially supported by the California Department of Conservation, California Geological Sur-
+vey, through Strong Motion Instrumentation Program Agreement No. 1022-002 for the project
+entitled “Structural Response Prediction Using Deep Neural Networks,” which provided critical fi-
+nancial resources to launch this work. Additional support following the conclusion of this funding
+was provided by the Taisei Chair in Civil Engineering at the University of California, Berkeley, a
+contribution that is deeply appreciated.
+The opinions, findings, conclusions, and recommendations expressed in this publication are those
+of the authors and do not necessarily reflect the view of California Department of Conservation,
+California Geological Survey, Pacific Earthquake Engineering Research (PEER) Center, or the
+Regents of the University of California.
+v
+
+--- Sayfa 7 ---
+vi
+
+--- Sayfa 8 ---
+CONTENTS
+ABSTRACT . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+iii
+ACKNOWLEDGMENTS
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+v
+TABLE OF CONTENTS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+vii
+LIST OF TABLES . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+xi
+LIST OF FIGURES
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+xiii
+1
+INTRODUCTION
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1
+1.1
+Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1
+1.2
+Objectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2
+1.3
+Scope . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2
+1.4
+Organization of the Report . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3
+2
+METHODOLOGY . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5
+2.1
+Deep Learning in Structural Response Prediction
+. . . . . . . . . . . . . . . . . .
+6
+2.1.1
+Problem Formulation . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6
+2.1.2
+Deep Learning Framework . . . . . . . . . . . . . . . . . . . . . . . . . .
+7
+2.1.3
+Key Components of Deep Learning Models . . . . . . . . . . . . . . . . .
+7
+2.1.4
+Training and Optimization . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+2.1.5
+Evaluation Metrics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+2.1.6
+Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+9
+2.2
+Recurrent Neural Network . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+9
+2.3
+Long Short Term Memory
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+2.4
+Convolutional Neural Network . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+12
+2.5
+Temporal Convolutional Network
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+14
+3
+LINEAR ELASTIC RESPONSE PREDICTION . . . . . . . . . . . . . . . . . . .
+17
+3.1
+Single-Degree-of-Freedom (SDOF) Systems . . . . . . . . . . . . . . . . . . . . .
+17
+3.1.1
+Verification of TCN for SDOF Systems . . . . . . . . . . . . . . . . . . .
+17
+3.2
+Low-Rise and Mid-Rise Buildings . . . . . . . . . . . . . . . . . . . . . . . . . .
+19
+3.2.1
+San Bernardino 6-Story RC Hotel Building . . . . . . . . . . . . . . . . .
+19
+vii
+
+--- Sayfa 9 ---
+3.2.2
+Hemet 4-Story RC Hospital Building
+. . . . . . . . . . . . . . . . . . . .
+26
+3.3
+Tall Buildings with Higher Modes . . . . . . . . . . . . . . . . . . . . . . . . . .
+27
+4
+INELASTIC RESPONSE PREDICTION . . . . . . . . . . . . . . . . . . . . . . .
+33
+4.1
+San Bernardino 6-Story RC Hotel Building (NS Direction) . . . . . . . . . . . . .
+33
+4.2
+Laboratory Testing of a 3-Story REPEAT Frame . . . . . . . . . . . . . . . . . . .
+35
+4.3
+SDOF Inelastic Numerical Model
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+37
+5
+GROUND MOTION RECONSTRUCTION
+. . . . . . . . . . . . . . . . . . . . .
+51
+5.1
+6-Story RC Hotel Building in San Bernardino EW Direction . . . . . . . . . . . .
+51
+5.2
+Tall Building with Higher Modes . . . . . . . . . . . . . . . . . . . . . . . . . . .
+52
+6
+RESULTS AND DISCUSSION
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+55
+6.1
+Interpretation of Results in Earthquake Engineering Context
+. . . . . . . . . . . .
+55
+6.1.1
+Linear Elastic Response
+. . . . . . . . . . . . . . . . . . . . . . . . . . .
+56
+6.1.2
+Nonlinear Response and Inelastic Behavior . . . . . . . . . . . . . . . . .
+56
+6.1.3
+Ground Motion Predictions
+. . . . . . . . . . . . . . . . . . . . . . . . .
+57
+6.1.4
+Implications for Earthquake Engineering Practice . . . . . . . . . . . . . .
+57
+6.2
+Comparative Analysis Across Case Studies
+. . . . . . . . . . . . . . . . . . . . .
+57
+6.2.1
+Low-Rise and Mid-Rise Buildings . . . . . . . . . . . . . . . . . . . . . .
+58
+6.2.2
+Tall Buildings with Higher Modes . . . . . . . . . . . . . . . . . . . . . .
+58
+6.2.3
+Nonlinear Responses and Inelastic Behavior . . . . . . . . . . . . . . . . .
+58
+6.2.4
+Observations and Insights
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+59
+7
+CONCLUSIONS, LIMITATIONS, AND FUTURE WORK . . . . . . . . . . . . .
+61
+7.1
+Conclusions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+61
+7.2
+Limitations: Data Constraints . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+62
+7.2.1
+Scarcity of Inelastic Response Data . . . . . . . . . . . . . . . . . . . . .
+62
+7.2.2
+Imbalance in Dataset Representation . . . . . . . . . . . . . . . . . . . . .
+62
+7.2.3
+Sparse Instrumentation in Key Regions
+. . . . . . . . . . . . . . . . . . .
+62
+7.2.4
+Implications and Future Directions . . . . . . . . . . . . . . . . . . . . . .
+63
+7.3
+Future Work: PINNs
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+63
+7.3.1
+Advantages of PINNs in Structural Response Prediction
+. . . . . . . . . .
+63
+7.3.2
+Potential Applications in Earthquake Engineering . . . . . . . . . . . . . .
+64
+viii
+
+--- Sayfa 10 ---
+7.3.3
+Challenges and Future Directions
+. . . . . . . . . . . . . . . . . . . . . .
+64
+7.3.4
+Implications for Earthquake Engineering
+. . . . . . . . . . . . . . . . . .
+64
+7.3.5
+Application to Lifeline Infrastructure
+. . . . . . . . . . . . . . . . . . . .
+65
+7.3.6
+Global Applications in Data-Scarce Regions
+. . . . . . . . . . . . . . . .
+65
+7.3.7
+Beyond Earthquake Engineering . . . . . . . . . . . . . . . . . . . . . . .
+65
+REFERENCES . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+67
+ix
+
+--- Sayfa 11 ---
+x
+
+--- Sayfa 12 ---
+LIST OF TABLES
+1.1
+Features characterizing the earthquake response of different structural systems.
+. .
+3
+3.1
+San Bernardino 6-story hotel training and testing records. . . . . . . . . . . . . . .
+20
+3.2
+Accuracy of San Bernardino 6-story building acceleration predictions in E-W di-
+rection.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+21
+3.3
+Hemet 4-story building training and testing earthquake records. . . . . . . . . . . .
+26
+3.4
+Accuracy of the Hemet 4-story building acceleration predictions. . . . . . . . . . .
+27
+4.1
+Training and testing earthquake records with PGA and PFA values. . . . . . . . . .
+34
+4.2
+Test matrix used in the shaking table tests. . . . . . . . . . . . . . . . . . . . . . .
+36
+4.3
+Training ground motions for the inelastic SDOF system.
+. . . . . . . . . . . . . .
+38
+4.4
+Testing ground motions for the inelastic SDOF system. . . . . . . . . . . . . . . .
+40
+6.1
+Features characterizing the earthquake response of different structural systems.
+. .
+55
+xi
+
+--- Sayfa 13 ---
+xii
+
+--- Sayfa 14 ---
+LIST OF FIGURES
+2.1
+Simple RNN architecture. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+2.2
+A typical LSTM cell configuration. . . . . . . . . . . . . . . . . . . . . . . . . . .
+11
+2.3
+A typical convolutional operation [16]. . . . . . . . . . . . . . . . . . . . . . . . .
+13
+2.4
+Schematic of TCN architecture applied to a two-story frame. . . . . . . . . . . . .
+15
+3.1
+Numerical model of an SDOF system. . . . . . . . . . . . . . . . . . . . . . . . .
+18
+3.2
+Comparison of (a) predicted and recorded acceleration time history and (b) the
+corresponding frequency contents of the linear elastic SDOF system in Fontana
+Earthquake of 25 July 2015.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+18
+3.3
+(a) Sensor locations and (b) photograph of the 6-story building in San Bernardino. .
+20
+3.4
+Narrow probability distributions of the normalized prediction errors in the EW
+direction at the 3rd and 6th (roof) floors of the San Bernardino 6-story building. . .
+21
+3.5
+The training and testing sets used for San Bernardino 6-story building EW direction. 21
+3.6
+Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the EW direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Chino Hills Earthquake of 29 July 2008). . .
+22
+3.7
+Identified features (natural periods and damping ratios) for San Bernardino 6-story
+building. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+23
+3.8
+Identified features (natural periods and damping ratios) for San Bernardino 6-story
+building. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+24
+3.9
+Fragility function for a cooling tower assumed to be located at the 6th floor (roof)
+of San Bernardino 6-story building.
+. . . . . . . . . . . . . . . . . . . . . . . . .
+25
+3.10 CAV of the true and predicted PFA at the (a) 3rd and (b) 6th floors of San
+Bernardino 6-story building (Chino Hills Earthquake of 07 Aug. 2012).
+. . . . . .
+25
+3.11 (a) Sensor locations and (b) photograph of the 4-story building in Hemet.
+. . . . .
+26
+3.12 The training and testing sets used for Hemet 4-story building (a) EW, (b) NS di-
+rections. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+27
+3.13 Narrow probability distributions of the normalized prediction errors at the 3rd and
+roof floors of the Helmet 4-story building: (a) EW, and (b) NS directions.
+. . . . .
+28
+3.14 Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the (a, b) EW and (c, d) NS directions of Hemet
+4-story building (Banning Earthquake of 06 Jan 2016). . . . . . . . . . . . . . . .
+30
+xiii
+
+--- Sayfa 15 ---
+3.15 (a) Sensor locations and (b) photograph of the 54-story building in Los Angeles. . .
+31
+3.16 Training and testing sets used for LA 54 story building (a) EW, and (b) NS directions. 31
+3.17 The 46th story acceleration predictions for the 56-story building in LA: (a) EW,
+and (b) NS directions (Chino Hills Earthquake of 29 July 2008). . . . . . . . . . .
+32
+3.18 Normalized amplification functions for the 56-story building in LA: (a) EW, and
+(b) NS directions. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+32
+4.1
+Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes. . . . . . . . . . . . . . . . . . . . . . . . . . .
+35
+4.2
+Training and testing sets for San Bernardino 6-story building NS direction. . . . . .
+36
+4.3
+Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Cabazon Earthquake of 08 May 2018). . . . .
+42
+4.4
+Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Redlands Area Earthquake of 13 Feb. 2010).
+43
+4.5
+Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Banning Earthquake of 06 Jan. 2016). . . . .
+44
+4.6
+Structure tested on the shaking table: (a) overall setup, (b) two views of a column
+base, (c) end beam connection, and (d) inelastic response in the form of coupon
+buckling.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+45
+4.7
+(a) First and (b) second training and testing sets used to predict the acceleration
+responses of the structure tested on the shaking table. . . . . . . . . . . . . . . . .
+45
+4.8
+Comparison of (a) time history, (b) frequency content of predicted and recorded
+accelerations at 3rd floor of tested REPEAT frame (Run 17) [training set with 13
+motions].
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+46
+4.9
+Comparison of (a) time history, (b) frequency content of predicted and recorded
+accelerations at 3rd floor of tested REPEAT frame (Run 17) [training set with 16
+motions].
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+46
+4.10 Fragility functions for the three damage states of a suspended ceiling.
+. . . . . . .
+47
+4.11 (a) Inelastic SDOF, (b) ductility demands of the motions in training and testing sets. 47
+4.12 Comparison of predicted and computed accelerations of the inelastic SDOF for
+GM93: (a) entire response, (b) elastic response, (c) inelastic response, (d) fre-
+quency domain, (e) computed force-displacement relationship. . . . . . . . . . . .
+48
+4.13 Normalized CAV time histories of four test motions with high ductility.
+. . . . . .
+49
+xiv
+
+--- Sayfa 16 ---
+5.1
+Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes. . . . . . . . . . . . . . . . . . . . . . . . . . .
+52
+5.2
+Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes. . . . . . . . . . . . . . . . . . . . . . . . . . .
+53
+5.3
+Comparison of predicted and recorded ground motion (a, b, c) acceleration time
+histories, (d) PGA, (e) 5% damped acceleration response spectra for the event in
+the testing set. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+54
+xv
+
+--- Sayfa 17 ---
+xvi
+
+--- Sayfa 18 ---
+1
+Introduction
+Earthquakes pose a significant risk to the built environment, making accurate prediction of struc-
+tural responses an essential aspect of earthquake engineering. Over the years, researchers and
+engineers have developed various methodologies to assess the seismic performance of structures,
+ranging from physical experimentation to computational modeling. These methods aim to un-
+derstand how structures respond to seismic loads, detect potential vulnerabilities, and ultimately
+enhance the resilience of the built environment. However, traditional approaches often face limita-
+tions related to cost, scalability, or computational intensity, necessitating innovative solutions.
+This study introduces a novel approach that combines advanced deep learning techniques
+with principles of structural dynamics to address these challenges. Specifically, it leverages Tem-
+poral Convolutional Networks (TCNs), a state-of-the-art deep learning architecture, to predict the
+time history of structural responses caused by earthquakes. By integrating data-driven method-
+ologies with engineering knowledge, the study aims to enhance predictive accuracy and provide
+practical tools for seismic performance assessment. The following sections of this chapter out-
+line the motivation for the research, define its objectives, and describe the scope of the study. A
+summary of the organization of the report is also provided.
+1.1
+MOTIVATION
+Structural response prediction is a cornerstone of earthquake engineering. It allows engineers to
+evaluate how structures will perform under seismic loads, enabling safety and reliability. Histori-
+cally, three primary methods have been used to determine the dynamic structural responses:
+1. Field Instrumentation: Installing sensors on real structures provides direct and realistic
+measurements of their behavior. However, this approach is limited by the relatively small
+number of instrumented buildings worldwide.
+2. Laboratory Testing: Physical models, such as those tested on shaking tables or in quasi-
+static setups, offer detailed insights into the dynamic response. While valuable, these tests
+are often constrained by high cost, time requirements, and limited scalability.
+3. Numerical Modeling: Computational simulations are widely accessible and flexible, mak-
+ing them the most common approach. However, they rely heavily on assumptions about
+1
+
+--- Sayfa 19 ---
+material behavior, boundary conditions, and loading, which can reduce their accuracy com-
+pared to real-world observations.
+Recent advancements in Artificial Intelligence (AI) and deep learning offer an opportunity
+to address these limitations. TCNs are particularly promising, as they can analyze sequential data
+to learn temporal patterns, providing a computationally efficient alternative to traditional nonlin-
+ear time history analysis. This study builds on these developments, applying TCN to predict the
+structural responses across a variety of scenarios, including both linear and nonlinear behavior.
+1.2
+OBJECTIVES
+This research aims to bridge the gap between data-driven methodologies and structural engineering
+principles, improving the accuracy and applicability of AI techniques in earthquake engineering.
+The specific objectives are:
+1. Develop a Methodology: Create a robust framework for predicting the time history of struc-
+tural responses during seismic events using TCNs.
+2. Test Across Diverse Scenarios: Apply the methodology to a wide range of cases, including
+buildings with higher mode effects and both linear and nonlinear responses, to evaluate the
+accuracy of TCN predictions.
+3. Solve an Inverse Problem: Investigate the potential of TCNs to address the inverse problem
+of predicting ground motion from structural response data.
+4. Integrate Structural Dynamics: Combine AI techniques with fundamental principles of
+structural dynamics and earthquake engineering to enhance the interpretability and physical
+validity of predictions.
+By achieving these objectives, this research seeks to provide a computationally efficient comple-
+ment –or even alternative– to traditional nonlinear time history analysis.
+1.3
+SCOPE
+There has been limited research on using deep learning techniques to predict the complete time
+history of structural responses. While some studies focus on predicting peak response [24], the
+entire response history offers a more comprehensive understanding of the structural behavior. This
+is particularly important for applications like Structural Health Monitoring (SHM), where the peak
+response is often insufficient for identifying the existence, severity, and location of damage [17,
+18, 19].
+Existing studies have explored machine learning approaches to predict the structural re-
+sponses [4, 23, 12, 14]. However, they typically focus on specific structural components or indi-
+vidual instrumented buildings or bridges. These studies often lack detailed physical interpretations
+2
+
+--- Sayfa 20 ---
+of the predictions. This research addresses these gaps by applying TCNs to predict the time history
+of the structural responses across a variety of systems. The characteristics of these systems, out-
+lined in Table 1.1, include elastic and inelastic behaviors, single-mode and higher-modes effects,
+and varying damping ratios. Inverse problem solutions are also explored to predict ground motions
+from structural response data.
+Table 1.1: Features characterizing the earthquake response of different structural systems.
+Response
+System
+Feature 1
+Feature 2
+Feature 3
+Linear elastic
+SDOF
+Natural period
+Damping ratio
+Ground motion
+Low- & Mid-rise
+Buildings
+First mode period
+Varying first mode
+damping ratios
+Tall Buildings
+Periods for
+multiple modes
+Damping ratios of
+multiple modes
+Inelastic
+SDOF
+Natural period
+damping ratio
+Force capacity
+Ground motion
+Low & Mid-rise
+Buildings
+Elongation of
+first mode period
+Varying first mode
+damping ratio
+1.4
+ORGANIZATION OF THE REPORT
+The report structure ensures a logical flow, guiding the reader through the methodology, applica-
+tions, and implications of the research. It is organized into seven chapters:
+1. Chapter 1 introduces the motivation, objectives, and scope of the study, providing the foun-
+dation for the research.
+2. Chapter 2 details the development of the TCN methodology, including its theoretical frame-
+work and architecture. It also discusses related foundational architectures like Recurrent
+Neural Networks (RNN), Long Short-Term Memory (LSTM) networks, and Convolutional
+Neural Networks (CNNs).
+3. Chapters 3, 4 & 5 focus on specific applications of the TCN method, addressing linear
+elastic response predictions, inelastic response modeling, and ground motion predictions,
+respectively.
+4. Chapter 6 provides a comprehensive summary of the results, draws conclusions, and dis-
+cusses their significance.
+5. Chapter 7 concludes the report by highlighting limitations and suggesting potential direc-
+tions for future research.
+3
+
+--- Sayfa 21 ---
+4
+
+--- Sayfa 22 ---
+2
+Methodology
+Analyzing structural responses as time series at various locations is crucial for understanding the
+impacts of severe earthquakes. Traditionally, nonlinear structural responses under seismic events
+have been evaluated using computational models such as the Finite Element Method (FEM) based
+on mechanics and physics principles. However, these methods are computationally intensive, re-
+quiring step-by-step time integration using numerical techniques (e.g., via the Newmark β method)
+and nonlinear iterative solutions (e.g., the Newton-Raphson method) at each time step. This com-
+putational demand becomes particularly challenging when dealing with large-scale analyses, such
+as regional seismic damage assessments, or when rapid results are needed for critical decision-
+making. Consequently, there is a pressing need for faster, more efficient approaches to predict
+structural responses at key locations.
+In recent years, Long Short-Term Memory (LSTM) networks have gained significant at-
+tention for their ability to predict structural responses [23]. Most studies have relied on standard
+or “vanilla” LSTM networks configured to handle sequential data. However, recent advancements
+have explored integrating LSTM networks with additional components, such as convolution layers
+and attention mechanisms, to improve task-specific performance and prediction accuracy. These
+enhanced architectures provide better modeling of nonlinear and complex dependencies in time-
+series data.
+Another promising approach is the transformer architecture, which has demonstrated ex-
+ceptional performance in modeling global dependencies across sequential data in domains like
+Natural Language Processing (NLP) [22]. Despite its success in other fields, the application of
+transformers to structural dynamics remains limited. The quadratic computational complexity
+of Transformers with respect to sequence length poses a significant challenge, particularly for
+high-resolution ground motion and corresponding structural response data, which is common in
+earthquake engineering. This complexity can lead to prohibitive computational costs, making
+transformers less practical for real-time decision-making or large-scale analyses where efficiency
+is paramount.
+For this study, we have adopted the Temporal Convolutional Network (TCN) as the primary
+model for predicting structural responses. TCNs have shown superior accuracy and computational
+efficiency compared to other models, particularly for time-series data. They are well-suited for
+capturing long-term dependencies and offer significant advantages in training and prediction speed.
+These features make TCN an ideal choice for the objectives of the study.
+To provide a comprehensive understanding of the TCN model, this chapter also reviews
+5
+
+--- Sayfa 23 ---
+the following foundational methods traditionally used for sequential data processing:
+1. Recurrent Neural Networks (RNN): Introduced as one of the earliest neural network ar-
+chitectures for sequential data, RNNs are designed to process sequences by maintaining a
+hidden state that evolves with each time step. However, RNNs suffer from vanishing gradi-
+ent problems, which limit their effectiveness for long sequences.
+2. Long Short-Term Memory (LSTM) Networks: LSTMs address the limitations of RNNs
+by introducing memory cells and gating mechanisms that enable better handling of long-term
+dependencies in data. These features made LSTMs a popular choice for structural response
+prediction.
+3. Convolutional Neural Networks (CNNs): Originally developed for image processing [16],
+CNNs have been adapted for temporal data. By applying convolutional operations, CNNs
+efficiently capture local patterns in data, but they struggle with long-term dependencies with-
+out significant adaptation.
+TCN builds upon the principles of CNNs, adapting them for temporal data using causal and
+dilated convolutions1. These adaptations allow TCN to model sequential dependencies effectively,
+offering faster computation and scalability compared to RNNs and transformers. By leveraging
+the strengths of TCN, this study aims to advance predictive capabilities for structural response
+analysis, providing an efficient and scalable alternative to traditional computational methods.
+2.1
+DEEP LEARNING IN STRUCTURAL RESPONSE PREDICTION
+Deep Learning (DL) has become a powerful tool for predicting structural response to dynamic
+loading, such as earthquakes. By leveraging its capacity to model complex, nonlinear relationships,
+DL provides a robust framework to establish the connection between input ground motion data
+and output structural responses. This section outlines the theoretical framework and mathematical
+foundations of using DL in this context.
+2.1.1
+Problem Formulation
+Predicting the structural responses involves mapping the input ground motion data:
+X = {x1, x2, . . . , xi, . . . , xN}
+1 A causal convolution ensures that the output at a given time step depends only on the current and previous input
+time steps, preventing any “future” information from influencing the prediction. This is crucial for time-series
+tasks where the prediction at a specific time must not have access to future values in the sequence. A dilated
+convolution is also known as “atrous convolution”, where the word atrous is derived from Latin and French to
+mean hole. It is a convolutional operation where the filter is applied to the input with gaps (dilations) between
+the sampled input points. This allows the convolution to capture a larger receptive (i.e., more context) without
+increasing the number of parameters or computational cost significantly.
+6
+
+--- Sayfa 24 ---
+to the output structural response data:
+Y = {y1, y2, . . . , yi, . . . , yN},
+where N denotes the total number of time steps. The input features may include ground motion
+acceleration or velocity at a specific point in time, and the structural responses, may represent
+quantities such as floor accelerations or displacements, or story drifts. It is to be noted that the
+index i represents the component of the vector.
+The goal is to find a function fθ that minimizes the discrepancy between the predicted
+responses ˆY = fθ(X) and the actual responses Y. This is formulated as an optimization problem:
+θ∗= arg min
+θ L (fθ(X), Y) ,
+(2.1)
+where L is a loss function that quantifies prediction errors. Common loss functions include:
+• Mean Squared Error (MSE):
+LMSE = 1
+N
+N
+X
+i=1
+(yi −ˆyi)2,
+(2.2)
+• Mean Absolute Error (MAE):
+LMAE = 1
+N
+N
+X
+i=1
+|yi −ˆyi|.
+(2.3)
+2.1.2
+Deep Learning Framework
+DL models are composed of multiple layers that sequentially transform the input data into predic-
+tions. The relationship between inputs and outputs is expressed as2:
+ˆyi = fθ (xi) = f (L)  f (L−1)  . . . f (1) (xi)
+
+,
+(2.4)
+where f (l) represents the operation of the l-th layer, such as a linear transformation or an activation
+function, where l ∈{1, 2, . . . , L −1}.
+2.1.3
+Key Components of Deep Learning Models
+1. Linear Transformation
+where each layer computes a weighted sum of its inputs as follows:
+z(l) = W(l)a(l−1) + b(l),
+(2.5)
+where W(l) and b(l) are the weights and biases of the l-th layer, and a(l−1) represents the outputs
+of the previous layer. This equation is a general description applicable to all intermediate layers of
+the network.
+2 Eq. 2.4 is a general representation of the deep learning framework. The time-dependence nature of some specific
+deep learning architecture is explained in a Section 2.5.
+7
+
+--- Sayfa 25 ---
+2. Nonlinear Activation Function
+where nonlinearity is introduced through activation func-
+tions, enabling the model to capture complex relationships:
+a(l) = ϕ(z(l)),
+(2.6)
+where ϕ is the activation function, e.g., ReLU(z) = max(0, z), or other nonlinear functions.
+3. Output Layer
+where the final layer L is distinct from the preceding layers in its purpose—it
+produces the model’s predictions. For a regression task, the prediction is computed as:
+ˆyi = W(L)a(L−1) + b(L),
+(2.7)
+where W(L) and b(L) are the weights and biases of the output layer, and a(L−1) represents the
+outputs of the last hidden layer. Unlike earlier layers, which primarily extract and transform fea-
+tures, the output layer is specifically tailored to generate task-specific outputs, such as predictions
+in regression or probabilities in classification.
+2.1.4
+Training and Optimization
+Training a DL model involves optimizing its parameters, θ = {W(l), b(l)}L
+l=1, to minimize the loss
+L. This is typically performed through gradient-based methods such as stochastic gradient descent
+(SGD):
+θ(l+1) = θ(l) −α∇θL,
+(2.8)
+where α is the learning rate, and ∇θL represents the gradient of the loss function with respect to
+the model parameters.
+2.1.5
+Evaluation Metrics
+To assess the performance of the trained model, several quantitative and qualitative metrics are
+used. These metrics are discussed in the following paragraphs:
+1. Correlation Coefficient: Measures the linear correlation between predicted and actual re-
+sponses:
+R =
+PN
+i=1(yi −y)(ˆyi −ˆy)
+qPN
+i=1(yi −y)2 PN
+i=1(ˆyi −ˆy)2
+,
+(2.9)
+where y and ˆy are the mean values of yi and ˆyi, respectively. It is to be noted that the index
+i represents the component of yi.
+2. Error Distribution: The relative error at each time step is calculated as:
+ei =
+yi −ˆyi
+maxi (yi),
+(2.10)
+where the normalization with maxi(yi) ensures comparability across different response types
+and levels.
+8
+
+--- Sayfa 26 ---
+3. Visualization: To ensure the model’s practical utility and interpretability, its predictions,
+i.e., how well the model reproduces the underlying patterns and structural behavior, are also
+evaluated using visual overlays. This is conducted for:
+• Time Domain: The predicted responses are plotted against the actual responses over
+time to check for alignment and consistency in capturing dynamic trends.
+• Frequency Domain: The Fourier amplitude spectra of the predicted and actual re-
+sponses are compared to ensure that the model captures key frequency components,
+such as the natural frequencies.
+2.1.6
+Summary
+By combining DL’s capacity to model complex relationships with comprehensive evaluation meth-
+ods, e.g., quantitative metrics with qualitative visualizations, this approach offers a computation-
+ally efficient alternative to traditional methods. It allows for accurate prediction of structural re-
+sponses under dynamic loads, paving the way for advancements in Structural Health Monitoring
+(SHM) and Earthquake Engineering.
+2.2
+RECURRENT NEURAL NETWORK
+A Recurrent Neural Network (RNN) is a DL architecture designed for modeling sequential data.
+Unlike standard neural networks, RNN incorporates not only the current input but also information
+from previous steps, making it ideal for capturing temporal dependencies within data sequences.
+The core component of an RNN is the hidden state vector ht, which maintains information about
+all prior steps. This state enables RNN to understand context over time, such as words in a sentence
+or trends in time-series data.
+The architecture of a basic RNN is depicted in Figure 2.1, where xt, ht, and yt represent
+the input vector, hidden state vector, and output vector at time step t, respectively. The relationships
+governing RNN computations are:
+ht = f(Whhht−1 + Whxxt + bh),
+(2.11)
+yt = f(Wyhht + by),
+(2.12)
+where f is the activation function, Whh, Whx, and Wyh are weight matrices, and bh and by are
+bias vectors.
+While RNN is powerful, it suffers from a critical limitation: the vanishing gradient prob-
+lem.
+This issue arises during training when backpropagated gradients diminish exponentially
+through time, making it challenging for the model to learn long-term dependencies. To address
+this, specialized RNN architectures such as Long Short-Term Memory (LSTM) were developed.
+These architectures use gating mechanisms to regulate the flow of information, enabling them to
+retain long-term dependencies effectively.
+9
+
+--- Sayfa 27 ---
+...
+h₁
+x₁
+y₁
+h₂
+x₂
+y₂
+hi-1
+xi-1
+yi-1
+hi
+xi
+yi
+...
+hn-1
+xn-1
+yn-1
+hn
+xn
+yn
+Figure 2.1: Simple RNN architecture.
+RNN is designed to handle sequential data by maintaining a hidden state that evolves over
+time. The output at the final time step n can be expressed recursively, showcasing the dependency
+on all previous hidden states and inputs:
+yn = g(Wyhf(Whh . . . f(Whhh1 + Whxx2 + bh) · · · + Whxxn + bh) + by).
+(2.13)
+The RNN is trained by minimizing a loss function L, which measures the discrepancy
+between the predicted outputs ˆY = {ˆy1, ˆy2, . . . , ˆyN} and the ground truth Y = {y1, y2, . . . , yN}.
+Gradients are computed using Backpropagation Through Time (BPTT). The gradient of the loss
+with respect to the weights W is:
+∂L
+∂W = ∂L
+∂yn
+· ∂yn
+∂hn
+n
+Y
+t=2
+∂ht
+∂ht−1
+· ∂h1
+∂W.
+(2.14)
+A key challenge in training RNN is the vanishing gradient problem. The derivative of the
+hidden state at time t with respect to the previous hidden state ht−1 is:
+∂ht
+∂ht−1
+= f ′(Whhht−1 + Whxxt + bh) · Whh.
+(2.15)
+When the eigenvalues of Whh or the derivative of the activation function f ′ are small, repeated
+multiplication causes the gradients to diminish exponentially. Conversely, large eigenvalues can
+lead to the exploding gradient problem. The mathematical model of RNN highlights their ability
+to capture temporal dependencies via recursive hidden state updates. However, challenges like
+vanishing and exploding gradients motivate the development of advanced architectures such as
+LSTM.
+2.3
+LONG SHORT TERM MEMORY
+LSTM [10], Figure 2.2, is a type of RNN designed to address the vanishing gradient problem.
+By incorporating a memory cell and gating mechanisms, LSTM is capable of learning long-term
+dependencies in sequential data. The architecture of an LSTM includes three primary gates: the
+forget gate, which determines what information to discard; the input gate, which decides what new
+10
+
+--- Sayfa 28 ---
+×
++
+σ
+σ
+tanh
+Input Gate
+Output Gate
+Forget Gate
+×
+σ
+tanh
+×
+hi
+i-1
+xi-1
+hi-1
+i+1
+xi+1
+hi+1
+xi
+Figure 2.2: A typical LSTM cell configuration.
+information to add; and the output gate, which controls what information is passed as the hidden
+state.
+The defining feature of an LSTM is its cell state, denoted as ct, which acts as a conveyor
+belt to preserve information across time steps. The gating mechanisms ensure selective reten-
+tion or forgetting of information, enabling the model to overcome the gradient vanishing problem
+effectively. The LSTM cell operations at time step t are described by the following equations.
+The forget gate, responsible for deciding which information from the previous cell state should be
+discarded, is given by:
+ft = σ(Wfxxt + Wfhht−1 + bf).
+(2.16)
+The input gate, which determines what new information to add to the cell state, is computed as:
+it = σ(Wixxt + Wihht−1 + bi),
+(2.17)
+The candidate cell state is:
+˜ct = tanh(Wcxxt + Wchht−1 + bc).
+(2.18)
+The cell state is updated by combining the previous cell state ct−1, modulated by the forget gate,
+and the candidate cell state, scaled by the input gate:
+ct = ft ⊙ct−1 + it ⊙˜ct,
+(2.19)
+where ⊙denotes element-wise multiplication.
+The output gate determines which part of the cell state contributes to the hidden state:
+ot = σ(Woxxt + Wohht−1 + bo),
+(2.20)
+The hidden state is calculated as:
+ht = ot ⊙tanh(ct).
+(2.21)
+Here, ft, it, ot, and ˜ct represent the forget gate, input gate, output gate, and candidate cell state,
+respectively. The terms Wfx, Wfh, Wix, Wih, Wcx, Wch, Wox, Woh are weight matrices, and
+bf, bi, bc, bo are bias vectors. The activation functions σ (sigmoid) and tanh (hyperbolic tangent)
+provide nonlinearity.
+11
+
+--- Sayfa 29 ---
+LSTMs excel in capturing long-term dependencies in sequential data while mitigating the
+vanishing and exploding gradient problems. The memory cell allows information to flow un-
+changed across many time steps unless explicitly modified, making LSTMs particularly effective
+for tasks involving long sequences. LSTMs are widely used in various domains, including time
+series forecasting, anomaly detection, natural language processing (e.g., machine translation, text
+generation), speech recognition, and video analysis. These applications benefit from the LSTM’s
+ability to model temporal and sequential dependencies effectively. By introducing memory cells
+and gating mechanisms, LSTMs provide a robust framework for handling sequential data. Their
+ability to selectively retain relevant information and mitigate the vanishing gradient problem makes
+them a foundational tool in modern deep learning. However, one significant drawback of LSTMs
+is their slow training process, which led us to adopt TCN as an alternative in this project. Since
+TCN is primarily built upon the principles of CNN, it is important to first introduce CNN.
+2.4
+CONVOLUTIONAL NEURAL NETWORK
+Convolutional Neural Network (CNN) is a class of deep learning models designed to process data
+with spatial or sequential structure. While CNNs are widely known for their application in com-
+puter vision, their underlying principles —particularly convolutional operations (Figure 2.3)—
+make them highly versatile and applicable to other domains, including structural response predic-
+tion. In structural applications, sequential data such as ground motion time histories or vibration
+signals can be represented as one-dimensional arrays. CNNs can process this data by applying
+filters to capture local and global patterns, making them a powerful tool for time-series modeling.
+The convolutional layers in CNN apply learnable filters to input data, extracting hierarchi-
+cal features that progressively capture more complex patterns. For structural response prediction,
+this hierarchical feature extraction can be used to identify critical temporal patterns in seismic in-
+put data and structural responses, such as acceleration, velocity, or displacement. Additionally,
+CNN’s ability to handle multi-channel input, such as data from multiple accelerometers, makes it
+particularly suitable for analyzing structural systems with multiple degrees of freedom.
+Although CNNs were originally designed for spatial data, their principles have been ex-
+tended to sequential data processing, as demonstrated in Temporal Convolutional Networks (TCN).
+TCN leverages CNN’s convolutional capabilities while introducing causal and dilated convolutions
+to handle long-term dependencies and maintain temporal fidelity. These adaptations make CNN
+a foundational component in the development of TCN and its application to structural response
+prediction.
+CNN introduces key improvements over traditional fully connected neural networks:
+• Local Connections: Units in a CNN layer are connected to local patches of the previous
+layer through a set of weights called a filter or kernel. This contrasts with fully connected
+layers, where every neuron is connected to every neuron in the previous layer.
+• Shared Weights: Filters are shared across all spatial locations in a layer, making CNNs
+computationally efficient and invariant to local translations in the input.
+12
+
+--- Sayfa 30 ---
+Figure 2.3: A typical convolutional operation [16].
+• Pooling: Pooling layers downsample feature maps by summarizing the presence of features
+in a local patch. Max-pooling, for instance, retains the maximum value in a patch, reducing
+spatial dimensions and increasing robustness to small translations and distortions.
+• Multi-Layer Feature Extraction: Lower layers in CNNs capture basic features like edges,
+while higher layers learn complex features like shapes and objects. This hierarchical feature
+extraction allows CNNs to identify patterns across multiple levels of abstraction.
+The operation of a CNN layer involves a convolution between the input feature map and a
+filter, followed by the application of a non-linear activation function. Mathematically, the convo-
+lution operation for a single output feature map can be expressed as:
+yi,j = f
+ M
+X
+m=1
+N
+X
+n=1
+xi+m,j+n · wm,n + b
+!
+,
+(2.22)
+where yi,j is the output feature map at position (i, j), xi+m,j+n is the input value at position (i +
+m, j + n), wm,n is the filter weight at position (m, n), b is the bias term, and f is the activation
+function (e.g., ReLU).
+Pooling layers further reduce the spatial dimensions of the feature map. For max-pooling,
+the output is given by:
+pi,j =
+max
+(m,n)∈patch xi+m,j+n,
+(2.23)
+where patch refers to the local region over which pooling is applied.
+13
+
+--- Sayfa 31 ---
+Despite its success in vision-based tasks, the use of CNN for time-series modeling in SHM
+remains limited. However, the underlying principles of convolution and pooling make CNN a
+valuable component for sequential data analysis, which is further extended in models like the
+Temporal Convolutional Network (TCN).
+2.5
+TEMPORAL CONVOLUTIONAL NETWORK
+The TCN [13] is a deep learning architecture designed for sequence modeling and time-series
+prediction. By leveraging convolutional layers, TCN provides an efficient alternative to recurrent
+architectures such as Long Short-Term Memory (LSTM) networks, while maintaining the capa-
+bility to model long-term dependencies. TCN is closely related to Convolutional Neural Network
+(CNN), adapting its convolutional principles to sequential data.
+Temporal Convolutional Network (TCN) combines the strengths of convolutional and re-
+current architectures by introducing several key characteristics. It employs causal convolutions,
+which ensure that predictions at time t depend only on data from time t and earlier, thereby pre-
+serving the temporal order of the sequence. Additionally, TCN utilizes dilated convolutions to
+extend the receptive field exponentially without increasing the depth of the network, enabling the
+efficient capture of long-term dependencies in the data. Unlike LSTM networks, TCN processes
+the entire input sequence in parallel, significantly improving training and inference times.
+The core operation in TCN is the convolution applied to sequential data. For a 1D convo-
+lution, the output at time t for a single filter is:
+yt =
+K−1
+X
+k=0
+wk · xt−k + b,
+(2.24)
+where yt is the output at time t, xt−k is the input at time t−k, wk is the weight for the k-th position
+of the filter, K is the filter size (kernel size), and b is the bias term.
+In TCN, this basic convolution is extended with dilations to capture dependencies across
+larger temporal ranges. Causal convolutions ensure that no future information is used when pre-
+dicting the output at time t. This is achieved by zero-padding the input such that the convolutional
+operation respects the temporal order. The causality constraint is crucial for time-series tasks where
+predictions must depend only on past data.
+TCN is built upon the principles of CNN by utilizing convolutional layers to extract hierar-
+chical features. However, while CNN is typically used for spatial data like images, TCN modifies it
+for sequential data using causal and dilated convolutions. This makes TCN an efficient alternative
+to recurrent architectures like LSTM. Unlike LSTM, which processes data sequentially through
+time, TCN processes the entire input sequence in parallel, leveraging convolutional operations.
+This parallelism results in faster training and inference times. Additionally, while LSTM uses
+gates to control information flow, TCN employs the receptive field and stacked dilated convolu-
+tions to achieve similar capabilities.
+Temporal Convolutional Network combines the strengths of CNN and LSTM, providing a
+powerful framework for sequential data modeling. By leveraging causal and dilated convolutions,
+14
+
+--- Sayfa 32 ---
+Figure 2.4: Schematic of TCN architecture applied to a two-story frame.
+TCN achieves efficient parallel processing and robust long-term dependency modeling, making it
+a strong candidate for time-series prediction and other sequential tasks.
+The architecture of Temporal Convolutional Networks (TCN) (Figure 2.4) makes it par-
+ticularly well-suited for predicting structural responses under seismic events. Given input ground
+motion data, TCN predicts time-history responses such as acceleration, velocity, or displacement.
+For example, a TCN maps the input ground motion x(t) to the structural response y(t) as:
+y(t) = F(x(t)),
+(2.25)
+where F represents the learned mapping function.
+In TCN, the input is processed to generate predictions for the structural response as output.
+The input and output structures are defined as:
+Input = (nevents, nsteps, featuresx)
+&
+Output = (nevents, nsteps, featuresy) ,
+(2.26)
+where nevents represents the number of earthquake events, and nsteps is the maximum number of
+time steps across all events. Zero padding is applied to events with fewer time steps than nsteps
+to ensure consistency in input size. The terms featuresx and featuresy denote the input features
+(e.g., accelerometer data) and the predicted variables (e.g., acceleration, velocity, displacement),
+respectively. The timestep size is consistent across all events.
+The fundamental operation of TCN is the causal convolution, which ensures that the output
+at time t depends only on inputs from the current and previous time steps, preserving temporal
+causality. The causal convolution is mathematically defined as:
+y(l)
+t
+=
+k−1
+X
+i=0
+w(l)
+i
+· xt−i·d,
+(2.27)
+15
+
+--- Sayfa 33 ---
+where K is the kernel size, defining the number of input values considered, d is the dilation fac-
+tor that spaces the kernel elements to cover long-range dependencies, w(l)
+i
+are the weights of the
+convolutional filter at layer l, and xt−i·d is the input at time t −i · d.
+The dilation factor d is adjusted to exponentially expand the receptive field with each layer,
+enabling TCN to efficiently capture dependencies over extended sequences without excessive com-
+putational cost. After the convolutional layers, the temporal information is aggregated through a
+fully connected layer to generate the final output. This operation is expressed as:
+ˆy = W · ynsteps + b,
+(2.28)
+where ˆy is the final output prediction (a vector), W is the weight matrix of the fully connected
+layer, b is the bias vector, and ynsteps is the output of the last timestep from the TCN. In this study,
+the configuration settings for the TCN are as follows:
+• Kernel size: : 10
+• Number of filters: 20
+• Number of epochs: 200
+• Minimum learning rate: 10−5
+• Maximum dilation factor: 512
+TCNs offer several advantages for structural response prediction. One key advantage is
+their temporal fidelity, as causal convolutions preserve temporal causality, ensuring that predictions
+rely solely on past information. Additionally, dilated convolutions allow TCNs to efficiently model
+long-range dependencies without significantly increasing computational complexity, making the
+architecture computationally efficient. Furthermore, TCNs are highly scalable, capable of handling
+large-scale datasets effectively, which is essential for practical applications in structural response
+prediction.
+TCNs face several challenges. A major limitation is their dependency on extensive labeled
+datasets, which are often required for accurate training and generalization across diverse scenarios.
+Another challenge lies in their interpretability; purely data-driven models such as TCNs may lack
+physical interpretability, which is critical for applications in structural engineering. This limitation
+can be addressed by integrating physics-informed neural networks (PINNs) to enhance the model’s
+ability to incorporate domain knowledge and improve its physical consistency. Despite these lim-
+itations, TCNs provide a powerful framework for modeling complex temporal relationships in
+structural response prediction. Their unique combination of efficiency, scalability, and temporal
+accuracy makes them a promising tool for advancing Performance-Based Earthquake Engineering
+(PBEE) and SHM.
+In the following chapters, we will leverage TCN to predict both linear and nonlinear struc-
+tural responses, explore ground recovery dynamics, and address other critical tasks in structural
+response modeling. By applying TCN to these diverse challenges, we aim to demonstrate its ver-
+satility and effectiveness in solving real-world engineering problems. The used source codes will
+be made publicly available on GitHub at: https://github.com/STAIRlab/dyntrace.
+16
+
+--- Sayfa 34 ---
+3
+Linear Elastic Response Prediction
+Linear elastic response of systems with various characteristics, namely a Single-Degree-of-Freedom
+(SDOF) numerical model, instrumented low-rise buildings and instrumented tall buildings, are pre-
+sented in this chapter. As shown in Table 1.1, the features that define the responses of these systems
+depend on different and varying number of dynamic characteristics (features), therefore the accu-
+racy of the predictions are discussed and interpreted in relation to these features.
+3.1
+SINGLE-DEGREE-OF-FREEDOM (SDOF) SYSTEMS
+Single-Degree-of-Freedom (SDOF) systems form the foundation of structural dynamics, represent-
+ing the most basic concept of dynamic response analysis. A linear elastic SDOF system consists
+of a mass, spring, and damper, and its dynamic behavior is governed by the equation of motion:
+m¨u(t) + c ˙u(t) + ku(t) = f(t),
+(3.1)
+where m is the mass of the system, c is the damping coefficient, k is the stiffness of the system,
+u(t) is the displacement response, ˙u(t) is the velocity response, ¨u(t) is the acceleration response,
+and f(t) is the external force. In an earthquake excitation, f(t) is equal to −m¨ug(t), where ¨ug(t)
+is the ground acceleration.
+For an elastic SDOF system, the response depends on three key features: (1) the natural
+period, (2) the damping ratio, and (3) the ground motion. These features characterize the system’s
+dynamic response under seismic loading.
+3.1.1
+Verification of TCN for SDOF Systems
+To verify the Temporal Convolutional Network (TCN) and its implementation for structural re-
+sponse prediction, the first step was to apply TCN to the numerical model of an SDOF system
+(Figure 3.1) with a natural period of 0.41 seconds and a damping ratio of 2.35%. This configu-
+ration matches the dynamic characteristics of San Bernardino 6-story hotel in the NS direction,
+which is discussed in later sections. A dataset consisting of 10 motions for training1 and 7 motions
+1 The validation of the training set is a fundamental step in machine learning applications. The training sets used in
+this study are validated using the discussed metrics, including correlation coefficient, probability distribution of
+normalized prediction errors and others, refer to Table 3.2 for validation of the used training set for E-W direction
+response of the San Bernardino 6-story building.
+17
+
+--- Sayfa 35 ---
+for testing was used, with both recorded ground and total response accelerations (total response
+acceleration is the sum of ground acceleration and relative response acceleration) of the same
+building.
+Figure 3.1: Numerical model of an SDOF system.
+The TCN predictions showed high accuracy, with a correlation coefficient of 99.99% for
+the tested motions. The predicted acceleration and displacement time histories matched the com-
+puted results with very high accuracy. The predicted and computed (referred to as real) acceleration
+results are shown in (Figure 3.2) for one of the test motions, the Fontana Earthquake of 25 July
+2015. The accuracy of the results are clearly visible in the frequency contents as well.
+Figure 3.2: Comparison of (a) predicted and recorded acceleration time history and (b) the
+corresponding frequency contents of the linear elastic SDOF system in Fontana
+Earthquake of 25 July 2015.
+The response of an elastic SDOF system subjected to ground motions is determined solely
+by its natural period, damping ratio, and the applied ground motion (Table 1.1). The high accuracy
+of the TCN predictions indicates that the model effectively learned these features. Moreover,
+these results demonstrate that the training dataset contained sufficient diversity in ground motion
+characteristics, enabling the TCN to generalize its predictions across various excitations.
+The results underline the ability of the TCN model to serve as a reliable and compu-
+tationally efficient alternative to conventional numerical simulations for predicting linear elastic
+18
+
+--- Sayfa 36 ---
+responses. This basic application developed confidence about the application of TCN on instru-
+mented buildings, experimentally tested structures, and numerical models with more complicated
+behavior, discussed in the later sections.
+3.2
+LOW-RISE AND MID-RISE BUILDINGS
+Low-rise and mid-rise buildings constitute a significant portion of the built environment and typi-
+cally exhibit dynamic responses dominated by their fundamental modes of vibration. These struc-
+tures are well-suited for response prediction using TCN, as their dynamic behavior can be effi-
+ciently captured with minimal computational complexity. This section discusses the application of
+the TCN model to predict linear elastic responses in these building types.
+3.2.1
+San Bernardino 6-Story RC Hotel Building
+Predictions are performed for the linear elastic response of two instrumented CSMIP buildings.
+The first of these buildings is the 6-story RC Shear Wall (RCSW) hotel building in San Bernardino,
+California, designed in 1970 (Figure 3.3). This building is instrumented with 9 accelerometers,
+three on each of the 1st, 3rd, and 6th (roof) floors, and has recorded multiple seismic events from
+1987 to 2018. The EW and NS direction responses of this building are studied respectively in
+this section for the linear response and in a later section for the inelastic response. In the EW
+direction, Channel 1 on the 1st floor is used as input, and Channels 4 and 7, on the 3rd floor and
+roof, respectively, are used as outputs. It is noted that the 1st floor boundary conditions are fixed.
+Therefore, Channel 1 directly represents the ground motion input to the structure. There are a total
+of 26 events recorded by this station, and 11 and 7 of these records (Table 3.1) are respectively
+used for training and testing. As shown in Figure 3.5, the motions used in the training set cover
+the entire range of shaking levels recorded on this building. It is possible to use another Intensity
+Measure (IM) to define the horizontal axis of this figure. However, the Peak Ground Acceleration
+(PGA) is used for simplicity as the objective is not to use the IM for quantitative damage detection,
+but it is rather used to graphically characterize the training and testing set motions as a function of
+the experienced shaking levels. Eleven motions were sufficient for predicting accurate results for
+the linear elastic response in the EW direction, and a larger number of motions were utilized for
+capturing the nonlinear response in the NS direction.
+It is noted that unprocessed accelerations are used for all studied instrumented buildings.
+This is because the processed output is not necessarily the direct result of the processed ground
+motion input. Therefore, the relationship between the input and output deviates slightly from the
+true behavior when processed data is used for input and output. This explanation was also sup-
+ported by the slightly higher accuracy of predictions with unprocessed accelerations as compared
+to processed accelerations (91% versus 88% in Table 3.2). It is noted that the training accuracy of
+0.97 for both the unprocessed and processed data in this table shows that there are no outliers in
+the set. This high accuracy indicated by the correlation coefficient is also supported by the nar-
+row probability distribution of the normalized error (Equation 2.10) with the mean close to zero
+(Figure 3.4).
+19
+
+--- Sayfa 37 ---
+Table 3.1: San Bernardino 6-story hotel training and testing records.
+#
+Earthquake Name
+PGA NS (g)
+PFA NS (g)
+PGA EW (g)
+PFA EW (g)
+1
+Borrego Springs Area Earthquake of 07 Jul 2010
+0.053
+0.200
+0.024
+0.045
+2
+Devore Earthquake of 29 Dec 2015
+0.049
+0.106
+0.054
+0.121
+3
+Fontana Earthquake of 15 Jan 2014
+0.040
+0.089
+0.034
+0.044
+4
+Inglewood Area Earthquake of 17 May 2009
+0.008
+0.027
+0.008
+0.016
+5
+Ocotillo Area Earthquake of 14 Jun 2010
+0.006
+0.022
+0.006
+0.014
+6
+San Bernardino Earthquake of 08 Jan 2009
+0.058
+0.168
+0.094
+0.219
+7
+Beaumont Earthquake of 14 Sep 2011
+0.020
+0.041
+0.027
+0.064
+8
+La Habra Earthquake of 28 Mar 2014
+0.021
+0.033
+0.024
+0.077
+9
+Loma Linda Earthquake of 13 Mar 2017
+0.022
+0.050
+0.025
+0.038
+10
+Ontario Earthquake of 20 Dec 2011
+0.004
+0.009
+0.004
+0.014
+11
+Yorba Linda Earthquake of 07 Aug 2012
+0.009
+0.016
+0.003
+0.010
+12
+Beaumont Area Earthquake of 16 Jan 2010
+0.006
+0.013
+0.005
+0.013
+13
+Big Bear Lake Earthquake of 05 Jul 2014
+0.010
+0.030
+0.011
+0.029
+14
+Fontana Earthquake of 25 Jul 2015
+0.011
+0.025
+0.010
+0.021
+15
+Loma Linda Earthquake of 08 Oct 2016
+0.010
+0.017
+0.008
+0.012
+16
+Devore Earthquake of 28 Apr 2012
+0.017
+0.043
+0.010
+0.029
+17
+Loma Linda Earthquake of 04 Mar 2013
+0.007
+0.017
+0.012
+0.032
+18
+Chino Hills Earthquake of 29 Jul 2008
+0.050
+0.113
+0.036
+0.117
+Figure 3.3: (a) Sensor locations and (b) photograph of the 6-story building in San
+Bernardino.
+The predicted acceleration time histories at the 3rd and 6th (roof) floors are compared with
+the recorded time histories for one of the test motions (Chino Hills Earthquake of 29 July 2008)
+in Figure 3.6. This is presented along with the comparison of the frequency contents, showing a
+close match at both floors in the time and frequency domains.
+From a structural dynamics perspective, the linear elastic response of a Multi-Degree of
+Freedom (MDOF) system depends on the natural periods, damping ratios, and mode shapes. The
+response of low and mid-rise buildings is generally governed by the first mode, which is also the
+case for San Bernardino 6-story hotel building. Therefore, similar to the previously discussed
+SDOF system, the response features are the period and damping ratio of the first mode as well as
+the ground motion (Table 1.1). The response also depends on the mode shape. However, the first
+20
+
+--- Sayfa 38 ---
+Table 3.2: Accuracy of San Bernardino 6-story building acceleration predictions in E-W di-
+rection.
+Data
+Correlation Coefficient
+Training Set
+Testing Set
+Unprocessed
+0.97
+0.91
+Processed
+0.97
+0.88
+Figure 3.4: Narrow probability distributions of the normalized prediction errors in the EW
+direction at the 3rd and 6th (roof) floors of the San Bernardino 6-story building.
+Figure 3.5: The training and testing sets used for San Bernardino 6-story building EW direc-
+tion.
+mode shape amplitude and modal participation factor can be considered as a constant scale factor
+for all motions. Therefore, the mode shape is not listed as a feature in Table 1.1 for this system.
+Although all motions are in the linear elastic range as observed by the natural periods (iden-
+tified as the period that corresponds to the peak value of the Fourier Amplitude spectra), damping
+21
+
+--- Sayfa 39 ---
+Figure 3.6: Comparison of predicted and recorded acceleration time history and the cor-
+responding frequency contents in the EW direction of San Bernardino 6-story
+building at (a, b) 3rd floor, (c, d) 6th floor (Chino Hills Earthquake of 29 July
+2008).
+ratios (identified using the Half-power bandwidth method [5]) vary because of the contribution
+and complexity of different mechanisms to damping at different intensities (Figure 3.7). The phe-
+nomenon of varying damping levels in the linear elastic response is well-known [5, 7]. Even for
+the same motion in forced vibrations or ambient conditions, the damping ratio varies from segment
+to segment of the motion [3].
+For proper training, the number of motions in the training set should be sufficient and
+the motions should include a range of intensities to capture different levels of damping ratios.
+Therefore, a few motions are not sufficient for learning the damping ratio feature as opposed to the
+case for the period feature, and more motions are needed in the training set to accurately predict
+the damping. The results of this case study indicated that 10 ground motions were sufficient to
+learn the period and damping features for consequent accurate predictions.
+The success of these predictions highlights the effectiveness of the TCN model in learning
+key structural features, such as the first mode period and damping ratio, which govern the linear
+22
+
+--- Sayfa 40 ---
+elastic response of low- and mid-rise buildings. This capability underscores the potential of the
+TCN as a computationally efficient alternative to traditional dynamic analysis methods.
+Figure 3.7: Identified features (natural periods and damping ratios) for San Bernardino 6-
+story building.
+Performance-based Earthquake Engineering (PBEE) and Damage Assessment
+The TCN predictions can be interpreted from the following three perspectives related to their use
+in PBEE and damage assessment.
+1. Epistemic uncertainty is due to errors in mathematical modeling, where the errors due to
+the TCN model is an example. Due to the presence of epistemic and aleatory uncertainties,
+the results of a single ground motion are not used in design and assessment of buildings.
+For example, [1] requires 11 motions for nonlinear dynamic analysis and a varying number
+of motions (e.g., 20) is essential for probabilistic PBEE [9]. Accordingly, in addition to
+the individual motion results, comparison of the probability distributions of the true and
+predicted responses are helpful for evaluating the accuracy of the predictions. The Peak Floor
+Acceleration (PFA) at the 3rd and 6th floors are assumed to follow a lognormal probability
+distribution2 , which are computed using the peak values of all test motions. The resulting
+probability distributions of true and predicted PFA are plotted in Figure 3.8. It is observed
+that the resulting probability distributions are close to each other at both floors, illustrating
+the accuracy of the predictions from this perspective.
+2. One of the ways to quantify damage is the use of Engineering Demand Parameter (EDP)
+based fragility functions, which commonly provide the relationship between peak response
+2 The lognormal probability distribution is developed as a smooth function using its parameters, median and the
+coefficient of variation. Both parameters for the predicted and real cases are obtained from the peak values in the
+test motions.
+23
+
+--- Sayfa 41 ---
+and the probability of damage. The accuracy of TCN predictions can be evaluated using
+fragility functions and the corresponding damage estimations. As an example, the fragility
+function of a cooling tower (representing damage to the cooling tower and attached piping),
+assumed to be located at the roof of San Bernardino 6-story hotel building, is shown in
+Figure 3.9. This fragility function is defined by a mean of 0.5g and a dispersion of 0.4. The
+Probability Of Exceedance (POE) of this damage state, using the predicted and true 6th floor
+PFA for the Chino Hills Earthquake of 07 Aug. 2012, are 5.9% and 6.8%, respectively. In
+addition to the damage prediction for this single event, the POE in the fragility function,
+POE(DM|PFA), Figure 3.9, can be integrated with the probability of true and predicted
+PFA, p(PFA), Figure 3.8b, using the total probability theorem, resulting in the POE of
+the damage state considering all the test motions, POE(DM), Equation 3.2. It is noted that
+the probability of the damage state is equal to POE because only one damage state is used
+herein. Therefore, the resulting probability of damage to a cooling tower located at the roof
+of the 6-story San Bernardino hotel building, considering all 7 test motions, is 0.33% and
+0.30%, respectively, when the true and predicted peaks are used.
+3. The above two points discuss the results from a probabilistic PBEE perspective based on
+peak predictions. However using only the peak response in performance and damage as-
+sessment has limitations and the entire response history is important to characterize the full
+structural behavior. In this context, the Cumulative Absolute Velocity (CAV , Equation 3.3)
+is a parameter that is closely related to damage and is a suitable metric to evaluate the damage
+estimation potential of the TCN predictions. Figure 3.10 shows the CAV of the predicted
+and true accelerations for one of the test motions (Chino Hills Earthquake of 07 Aug. 2012).
+It is observed from this figure that the CAV time histories of the predicted and true floor
+accelerations are very close to each other, showing that the predicted response can be used
+reliably to characterize damage.
+Figure 3.8: Identified features (natural periods and damping ratios) for San Bernardino 6-
+story building.
+24
+
+--- Sayfa 42 ---
+Figure 3.9: Fragility function for a cooling tower assumed to be located at the 6th floor (roof)
+of San Bernardino 6-story building.
+Figure 3.10: CAV of the true and predicted PFA at the (a) 3rd and (b) 6th floors of San
+Bernardino 6-story building (Chino Hills Earthquake of 07 Aug. 2012).
+POE(DM) =
+X
+PFA
+POE(DM|PFA)p(PFA).
+(3.2)
+CAV (T) =
+Z T
+t=0
+|¨u(t)| dt,
+(3.3)
+where T is the current time at which CAV is computed and ¨u(t) is the response acceleration at a
+given time t.
+25
+
+--- Sayfa 43 ---
+Table 3.3: Hemet 4-story building training and testing earthquake records.
+#
+Earthquake Name
+PGA NS (g)
+PFA NS (g)
+PGA EW (g)
+PFA EW (g)
+1
+Aguanga Earthquake of 14 Aug 2018
+0.012
+0.031
+0.018
+0.057
+2
+Aguanga Earthquake of 19 May 2018
+0.007
+0.012
+0.009
+0.024
+3
+Anza Earthquake of 11 mar 2013
+0.011
+0.021
+0.009
+0.013
+4
+Borrego Springs Earthquake of 10 Jun 2016
+0.031
+0.071
+0.028
+0.033
+5
+Calexico Earthquake of 04 Apr 2010
+0.027
+0.066
+0.037
+0.043
+6
+Valle Vista Earthquake of 10 Feb 2019
+0.038
+0.049
+0.016
+0.019
+7
+Aguanga Earthquake of 20 Dec 2018
+0.007
+0.018
+0.012
+0.042
+8
+Anza Earthquake of 03 Apr 2020
+0.017
+0.027
+0.018
+0.042
+9
+Palomar Observatory Earthquake of 31 Mar 2023
+0.009
+0.024
+0.007
+0.010
+10
+Idyllwild Earthquake of 28 oct 2012
+0.045
+0.040
+0.020
+0.025
+11
+Banning Earthquake of 06 Jan 2016
+0.017
+0.029
+0.015
+0.034
+12
+Cabazon Earthquake of 08 May 2018
+0.023
+0.058
+0.010
+0.031
+13
+San Jacinto Earthquake of 17 Oct 2018
+0.017
+0.028
+0.014
+0.023
+3.2.2
+Hemet 4-Story RC Hospital Building
+To demonstrate that accurate predictions are obtained for similar buildings with similar number of
+records in the training set, a 4-story hospital building with RCSW structural system (similar to San
+Bernadino Hotel) is tested using the TCN model. This building was designed and constructed in
+1965 and instrumented with 10 accelerometers on three levels in 1976 (Figure 3.11). Channel 1 at
+the basement and Channels 9 (2nd floor) & 6 (4th floor, i.e., roof) are respectively used as input
+and output in the EW direction. In the NS direction, Channel 3 at the basement and Channels 8
+(2nd floor) & 5 (4th floor, i.e., roof) are respectively used as input and output. All these sensors
+are at the floor centers. From the recorded 13 events, refer to Figure 3.12, 10 are used for training
+(same number as San Bernardino 6-story building linear elastic response in the EW direction) and
+3 are used for testing (Table 3.3). As observed in Figure 3.12, the motions used in the training set
+cover the entire range of shaking levels recorded on this building and the 3 tested motions are those
+that lie at the middle of this range.
+Figure 3.11: (a) Sensor locations and (b) photograph of the 4-story building in Hemet.
+26
+
+--- Sayfa 44 ---
+Figure 3.12: The training and testing sets used for Hemet 4-story building (a) EW, (b) NS
+directions.
+Table 3.4: Accuracy of the Hemet 4-story building acceleration predictions.
+Data
+Training Set EW
+Testing Set EW
+Training Set NS
+Testing Set NS
+Unprocessed
+97.0%
+91.0%
+97.0%
+90.0%
+Processed
+97.5%
+90.0%
+97.5%
+90.0%
+Similar to San Bernardino building, high correlation coefficients (Table 3.4) and the narrow
+probability distribution of the normalized error (Figure 3.13)( are obtained for the training and
+testing sets and unprocessed data provided slightly more accurate predictions. Sample predictions
+are shown for one of the motions in Figure 3.14, showing the accuracy of the predictions in the NS
+and EW directions. Similar to San Bernardino building, the TCN model was successful in learning
+the entire time history of the response of the building, including its natural period and the varying
+damping ratios, using 10 motions in the training set.
+3.3
+TALL BUILDINGS WITH HIGHER MODES
+Different from low-rise and mid-rise buildings, a tall building seismic response includes higher
+mode effects. The response of tall buildings involves multiple natural periods, mode shapes, and
+damping ratios. TCN provides a suitable framework for modeling such systems due to their ability
+to capture intricate temporal dependencies across multiple modes.
+From a structural dynamics perspective, the features that should be accurately character-
+ized for a tall building are the periods and the damping ratios of several modes contributing to
+the response (Table 1.1). The response also depends on the mode shapes, however, as discussed
+earlier, the mode shape and the modal participation factor can be considered as a constant scale
+factor in the linear elastic dynamic response of each mode for each motion and accordingly is not
+27
+
+--- Sayfa 45 ---
+Figure 3.13: Narrow probability distributions of the normalized prediction errors at the 3rd
+and roof floors of the Helmet 4-story building: (a) EW, and (b) NS directions.
+considered as an explicit factor that the response depends on. Considering the increased number
+of features, the presence of multiple modes in the response may introduce additional challenges
+to the process of learning, impacting the accuracy of the predictions. Therefore, a 54-story in-
+strumented building is selected to explore the TCN predictions for a case where higher modes are
+clearly present in the response. This 54-story building is a Steel Moment Resisting Frame (SMRF)
+building with composite slabs of 2.5 inches thick concrete over 3 inches steel deck located in Los
+Angeles (LA), Figure 3.15. From this figure, it is observed that the building is instrumented with
+20 accelerometers at the basement (4 levels below ground), ground level, and the 20th, 36th, 46th
+and the penthouse floors. There are Vierendeel trusses and 48-inch-deep transfer girders at the
+36th and 46th floors where vertical setbacks occur. Because there is a sudden change of stiffness
+at these locations, increased accelerations are expected, and sensors are placed at these floors for
+monitoring this expected increase of accelerations.
+In this case study building, which has 11 recorded motions, 10 motions are used for train-
+ing and the remaining one motion is used for testing (Figure 3.16). The testing motion in the EW
+direction is particularly interesting as the Peak Floor Acceleration (PFA) is smaller than the corre-
+sponding PGA. This is attributed to: (a) the shape of the response spectrum for this motion, where
+the response acceleration at the first mode period of the building is smaller than the PGA, and (b)
+multiple modes counteracting and reducing the accelerations. The successful predictions in the
+EW and NS3 directions at the 46th floor for the considered test motion are shown in Figure 3.17.
+This figure demonstrates that the trained TCN model is successful in learning more complex re-
+sponses obtained as a superposition of multiple modes and the 10-motion training set results in
+3 As observed in the floor plans and building photograph, Figure 3.15, this building is fairly symmetric about its
+orthogonal axes. Coupling between these two orthogonal directions could be due to mass center eccentricity,
+which is also expected to be minimal given the floor plans without area expansions. Therefore, the coupling
+between the responses in the two horizontal directions is expected to be minimal and the EW and NS responses
+are governed by the respective motions in these directions. However, there are instrumented buildings in the
+CSMIP database, such as buildings with L-shaped plans, where the response in one horizontal direction would
+depend not only on the ground motion component in that direction, but also on the one in the orthogonal direction,
+through coupling from the stiffness matrix. Such response requires adapting the TCN for multiple input vectors.
+This is also true for multi-support excitation as in long-span bridges. This is a planned topic for future studies.
+28
+
+--- Sayfa 46 ---
+accurate responses as in the cases of San Bernardino and Hemet buildings.
+The TCN predictions showed high accuracy, as demonstrated by the time-history and
+frequency-domain comparisons for the test motion. The model successfully captured the com-
+plex response resulting from (i) the superposition of multiple modes, (ii) sudden stiffness change,
+validating its capability to handle higher mode effects.
+The response of a tall building is influenced by contributions from multiple modes, how-
+ever the contribution of these modes to the response varies from motion to motion. To enable the
+TCN model to learn about the contributions of higher modes effectively, it is needed to include
+motions in the training set that sufficiently excite these modes. Figure 3.18 shows the normalized
+amplification function in the EW and NS directions for the training and testing motions. Amplifica-
+tion function is computed as the Fourier amplitude of the 46th story response acceleration divided
+by the Fourier amplitude of the input ground acceleration. The resulting amplification function is
+normalized by the maximum value of this amplification function. It is observed from Figure 3.18
+that the second and third modes of vibration are excited to varying levels in the training motions,
+with amplification function values at these modes approaching and exceeding that of the first mode
+in several motions. The presence of these higher modes in that training set enables the TCN model
+to learn the contributions of these modes, resulting in accurate predictions. The presence of the
+2nd mode contribution in the NS direction of the test motion is clearly visible, and the accurate
+predictions in this direction highlight that the TCN model with the motions in the training set was
+successful in capturing the contribution of this mode.
+The accurate predictions for tall buildings highlight the potential of TCN to model complex
+dynamic responses involving higher modes. Unlike conventional dynamic analysis methods, which
+often require a detailed structural analysis model, TCN provides a more efficient alternative while
+maintaining high accuracy. This efficiency makes TCN particularly valuable for applications such
+as performance-based earthquake engineering and structural health monitoring of tall buildings.
+29
+
+--- Sayfa 47 ---
+Figure 3.14: Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the (a, b) EW and (c, d) NS directions of Hemet
+4-story building (Banning Earthquake of 06 Jan 2016).
+30
+
+--- Sayfa 48 ---
+Figure 3.15: (a) Sensor locations and (b) photograph of the 54-story building in Los Angeles.
+Figure 3.16: Training and testing sets used for LA 54 story building (a) EW, and (b) NS
+directions.
+31
+
+--- Sayfa 49 ---
+Figure 3.17: The 46th story acceleration predictions for the 56-story building in LA: (a) EW,
+and (b) NS directions (Chino Hills Earthquake of 29 July 2008).
+Figure 3.18: Normalized amplification functions for the 56-story building in LA: (a) EW, and
+(b) NS directions.
+32
+
+--- Sayfa 50 ---
+4
+Inelastic Response Prediction
+Instrumented structures provide valuable data for understanding the inelastic behavior of buildings
+under seismic loading. The nonlinear response involves phenomena such as cracking, yielding,
+buckling, fracture, and period elongation, the modeling of which introduces challenges to the nu-
+merical integration methods used to solve the equations of motions in nonlinear dynamic analysis.
+This section discusses the inelastic response predictions conducted using TCN for three case stud-
+ies: a mid-rise building subjected to real earthquakes, a low-rise structure tested in a laboratory
+setting, and an inelastic SDOF numerical model.
+4.1
+SAN BERNARDINO 6-STORY RC HOTEL BUILDING (NS DIRECTION)
+The identified periods of this building in the EW direction are almost constant in the tight range of
+0.21 to 0.24 sec, independent of the level of shaking, which is indicative of linear elastic response
+(Figure 4.1). On the other hand, the periods in the NS direction clearly increase with the level of
+shaking, indicating inelastic response (Figure 4.1). Although it is not entirely clear why this period
+elongation occurred since the set of training ground motions include low-level motions, possible
+reasons can be minor cracking, foundation rocking, disengagement of partition walls providing
+stiffness, or loss of contributions from other nonstructural components.
+Although the inelastic response of this case study is not extensive, it presents a more chal-
+lenging case for prediction compared to the linear elastic response. To predict the inelastic response
+in the NS direction, the same 10 motions used in the EW direction were not sufficient. As observed
+in Table 1.1, the features that need to be characterized for predicting the linear elastic and inelastic
+responses of a low- or mid-rise building is the first mode period and the first mode period elon-
+gation, respectively. The accurate characterization of period elongation requires not only a larger
+number of motions, but also the use of motions that span the entire range of period elongation. As
+mentioned earlier, the total number of events recorded for this building is 32 (Table 4.1.) Out of
+these 32 motions, 29 covering the entire range of shaking levels were used for training as shown
+in Figure 4.2 and three events in the middle of the intensity range of these motions are used for
+testing. The results show the increased accuracy of the predictions as demonstrated in Figures 4.3,
+4.4, and 4.5 for the motions in the testing set. Particularly, the time history, the peaks, and the fre-
+quency contents are well matched, indicating that increasing the number of motions in the training
+set from 11 to 23 led to successful characterization of the increase of the period elongation with
+increased shaking intensity.
+33
+
+--- Sayfa 51 ---
+Table 4.1: Training and testing earthquake records with PGA and PFA values.
+#
+Earthquake Name
+PGA (g)
+PFA (g)
+1
+Big Bear Lake Earthquake of 05 Jul 2014
+0.010
+0.030
+2
+Inglewood Area Earthquake of 17 May 2009
+0.008
+0.027
+3
+Fontana Earthquake of 25 Jul 2015
+0.011
+0.025
+4
+La Verne Earthquake of 28 Aug 2018
+0.008
+0.025
+5
+Anza Earthquake of 03 Apr 2020
+0.007
+0.023
+6
+Ocotillo Area Earthquake of 14 Jun 2010
+0.006
+0.022
+7
+Little Lake Earthquake of 05 Jul 2019
+0.004
+0.021
+8
+Loma Linda Earthquake of 30 Jan 2019
+0.008
+0.019
+9
+Trabuco Canyon Earthquake of 25 Jan 2018
+0.010
+0.019
+10
+Searles Valley Earthquake of 03 Jun 2020
+0.004
+0.018
+11
+Loma Linda Earthquake of 04 Mar 2013
+0.007
+0.017
+12
+Loma Linda Earthquake of 08 Oct 2016
+0.010
+0.017
+13
+Yorba Linda Earthquake of 07 Aug 2012
+0.009
+0.016
+14
+Loma Linda Earthquake of 23 Jun 2008
+0.013
+0.016
+15
+Beaumont Area Earthquake of 16 Jan 2010
+0.013
+0.013
+16
+Banning Area Earthquake of 11 Jan 2010
+0.005
+0.011
+17
+Ontario Earthquake of 20 Dec 2011
+0.004
+0.009
+18
+Borrego Springs Area Earthquake of 07 Jul 2010
+0.053
+0.200
+19
+Borrego Springs Earthquake of 10 Jun 2016
+0.042
+0.188
+20
+San Bernardino Earthquake of 08 Jan 2009
+0.058
+0.168
+21
+Ridgecrest Earthquake of 05 Jul 2019
+0.029
+0.120
+22
+Chino Hills Earthquake of 29 Jul 2008
+0.050
+0.113
+23
+Devore Earthquake of 29 Dec 2015
+0.049
+0.106
+24
+Calexico Earthquake of 04 Apr 2010
+0.019
+0.105
+25
+Fontana Earthquake of 15 Jan 2014
+0.040
+0.089
+26
+Loma Linda Earthquake of 13 Mar 2017
+0.022
+0.050
+27
+Devore Earthquake of 28 Apr 2012
+0.017
+0.043
+28
+Beaumont Earthquake of 14 Sep 2011
+0.020
+0.041
+29
+La Habra Earthquake of 28 Mar 2014
+0.024
+0.038
+30
+Cabazon Earthquake of 08 May 2018
+0.027
+0.048
+31
+Redlands Area Earthquake of 13 Feb 2010
+0.082
+0.074
+32
+Banning Earthquake of 06 Jan 2016
+0.021
+0.069
+These successful predictions highlight an important and unique characteristic of obtaining
+the response using a deep learning approach. Several reasons cause the observed period elongation
+with increased intensity of shaking (e.g., concrete cracking, foundation rocking, and disengage-
+ment of partition walls, or loss of contributions from other nonstructural components). In common
+practice, none of these aspects are considered explicitly in the computational models developed
+for structural dynamic analysis. Even if they are modeled, there are many sources of increased
+epistemic uncertainties associated with this type of modeling. Therefore, the obtained data-driven
+TCN results show that the adopted deep learning approach fills this gap and results in accurate
+structural response prediction that would not be possible using conventional dynamic analysis.
+This case study also highlights two important aspects worthy of future investigation, namely, the
+34
+
+--- Sayfa 52 ---
+Figure 4.1: Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes.
+effect of increased size of the training dataset (justifying need for more instrumented systems) and
+a hybrid use of physics-based and data-driven models where the data-driven model improves the
+predictions in cases where the physics-based modeling capabilities are insufficient.
+4.2
+LABORATORY TESTING OF A 3-STORY REPEAT FRAME
+Some instrumented buildings exist in the Center for Engineering Strong Motion Data (CESMD)
+database which experienced damage in previous earthquakes, e.g., the 7-story hotel in Van Nuys
+damaged in the 1994 Northridge earthquake. However, the number of earthquakes with inelastic
+response in these buildings is limited for meaningful training. Therefore, the results from a shaking
+table test are used as another system to predict its inelastic response.
+The tested structure is a 3-story SMRF and was tested on the 6 Degree-of-Freedom (DOF)
+PEER (Pacific Earthquake Engineering Research) Center shaking table at UC-Berkeley. The pho-
+tographs of the tested structure are shown in Figure 4.6. The frame is assembled using steel beam-
+column elements, cross-joints, and clevises. The beams and columns are 65 in long, 5 in × 5 in
+× 3/8 in Hollow Square Section (HSS) members. There are 1 in thick plates at each end of the
+members to attach them to the beam-column connections. The cross-joints at the connections are
+composed of the same HSS profile and plates.
+The structure is tested along the Y-direction only by applying ground motions to the ta-
+ble. Along this direction, beams are connected to the cross-joints using clevises and coupons
+(Figure 4.6c), resulting in semi-rigid connections. The flexural stiffness of these connections is
+provided by a couple moment developed by the coupons. Following the principles of capacity de-
+sign, the sizes and number of coupons are selected such that the capacity of this couple moment is
+smaller than the yield moment of the beam HSS section to protect the beams from yielding. Thus,
+the damage occurs only at the coupons (Figure 4.6d), which can be easily replaced, and the frame
+35
+
+--- Sayfa 53 ---
+Figure 4.2: Training and testing sets for San Bernardino 6-story building NS direction.
+reconstructed conveniently each time after destructive testing (thus, the name REPEAT stands for
+REconfigurable Platform for EArthquake Testing). The columns are directly connected to the
+cross-joints resulting in rigid connections. Following principles of earthquake design, columns
+are designed to be stronger than beams, preventing the yielding of columns. There are two 3/4 in
+diameter threaded bars on the outside of each column clevis at the base (Figure 4.6b). Each beam-
+column joint has four of these threaded bars, two on each side of the clevis (Figure 4.6c).
+The test matrix is shown in Table 4.2. Three ground motions are applied incrementally
+leading to linear elastic and inelastic response of the structure. Two of these motions are the ground
+motions recorded during the 1989 Loma Prieta earthquake. The third is a simulated ground motion
+obtained from physics-based simulations of San Francisco Bay Area. In such simulations, a nu-
+merical model of the geologic and local soil layers is developed in a large area (e.g., the entire San
+Francisco Bay Area) and the ground motions at the earth’s surface and subsurface are computed at
+closely spaced grid points. This is obtained from the numerical solution of the viscoelastic wave
+equation in both space and time initiated by a fault rupture model [15]. These simulated ground
+motions are validated against recorded ground motions in real earthquakes, and they are part of
+the PEER Center effort to develop a Simulated Ground Motion Database (SGMD), to be publicly
+available during Fall of 2025.
+Table 4.2: Test matrix used in the shaking table tests.
+Run #
+Ground Motion
+Scale Factor
+Run #
+Ground Motion
+Scale Factor
+1
+Simulated motion
+0.25
+10
+Simulated motion
+1.00
+2
+Loma Prieta Sunnyvale Station
+0.25
+11
+Loma Prieta Sunnyvale Station
+1.00
+3
+Loma Prieta Palo Alto Station
+0.25
+12
+Loma Prieta Palo Alto Station
+1.00
+4
+Simulated motion
+0.50
+13
+Simulated motion
+1.25
+5
+Loma Prieta Sunnyvale Station
+0.50
+14
+Loma Prieta Sunnyvale Station
+1.25
+6
+Loma Prieta Palo Alto Station
+0.50
+15
+Loma Prieta Palo Alto Station
+1.25
+7
+Simulated motion
+0.75
+16
+Loma Prieta Palo Alto Station
+1.50
+8
+Loma Prieta Sunnyvale Station
+0.75
+17
+Loma Prieta Palo Alto Station
+1.75
+9
+Loma Prieta Palo Alto Station
+0.75
+36
+
+--- Sayfa 54 ---
+In all tests, the applied ground motions were recorded on the table, along with the response
+accelerations at the center of each of the three floors. Inelastic response was experienced in runs
+10-17 as observed by the period elongation in Figure 4.7, and the buckled coupons in Figure 4.6d.
+Predictions were conducted using two training sets. First training set included runs 1-13, with
+a mix of linear elastic and inelastic responses and predicted the inelastic responses in runs 14-
+17. The predicted acceleration response at the third floor in run 17 is compared with the recorded
+response in Figure 4.8. The prediction is reasonable in the time domain; however, it fails to capture
+the period elongation in the frequency domain. Although the training set covers the entire range
+of response, this is an indication that the number of motions in the training set is not sufficient.
+Accordingly, the number of motions in the second training set was increased to 16 (runs 1-16),
+while only run 17 was used for testing. Figure 4.9 shows the improved predictions, where the
+time history of the predicted acceleration response is close to the true acceleration response and
+the period elongation is captured. It is also observed that the predicted acceleration response
+includes the 2nd and 3rd mode natural frequencies in the frequency content, similar to the recorded
+response.
+The fragility functions for the three damage states of a suspended ceiling is shown in
+Figure 4.10. The considered suspended ceiling is a Suspended Lay-in Acoustic Tile Ceiling, with
+supports comprising vertical hanging wire, diagonal wires, and compression posts. The damage
+states are defined as 5% (DS1), 30% (DS2), and 50% (DS3) of ceiling grid and tile damage. The
+fragility functions for these damage states are cumulative lognormal and are defined as a function
+of PFA. The median PFA for DS1, DS2, and DS3 are 1.92g, 2.34g, and 2.48g, with a Coefficient
+of Variation (COV) of 0.3 in all damage states. It is assumed that such suspended ceiling is placed
+at the 3rd floor of the tested structure and the probabilities of the three damage states are computed
+using the predicted and recorded accelerations. Probabilities of DS1, DS2,and DS3 are 5%, 3%,
+and 91% using the predicted PFA of 3.32g, while they are 9%, 4%, and 84% using the recorded
+PFA of 3.69g. Similar to the good match between computed and measured accelerations, there is
+a good match between the corresponding probabilities of nonstructural damage.
+4.3
+SDOF INELASTIC NUMERICAL MODEL
+The characteristics of the SDOF system used for prediction of inelastic response is shown in Fig-
+ure 4.11a. This SDOF system is developed to be representative of low- and mid-rise buildings and
+has a period of 0.5 s and damping ratio of 5%. Considering a location with design acceleration of
+1.0g, Response Modification Factor (R) of 8, and overstrength of 1.6, the yield base shear (Fy) is
+20% of the weight W. The force-deformation relationship is bilinear with a strain hardening ratio of
+1.0% of initial stiffness. Ninety-three motions with varying intensity levels were selected from the
+PEER Ground Motion (GM) database, and nonlinear time history analyses were conducted using
+these 93 motions. From these input – output (i.e., ground motion – computed response accelera-
+tion), 83 and 10 time-histories (Tables 4.3 and 4.4) were used for training and testing, respectively.
+Note that in Tables 4.3 and 4.4, Mw and RSN indicate moment magnitude and Record Sequence
+Number, respectively. To predict the inelastic response, the training set covers the entire range of
+linear elastic and inelastic responses, while the testing set includes the analyses with moderate to
+very high levels of inelastic response, i.e., ductility demands between 6 and 14. (Figure 4.11b).
+37
+
+--- Sayfa 55 ---
+Table 4.3: Training ground motions for the inelastic SDOF system.
+#
+RSN
+Earthquake
+Station
+Component
+PGA (g)
+Name
+Year
+Mw
+1
+120
+Oroville-03
+1975
+4.7
+Up & Down Cafe (OR1)
+000
+0.11
+2
+195
+Imperial Valley-07
+1979
+5.0
+Calexico Fire Station
+225
+0.09
+3
+197
+Imperial Valley-07
+1979
+5.0
+El Centro Array #1
+140
+0.06
+4
+199
+Imperial Valley-07
+1979
+5.0
+El Centro Array #11
+140
+0.19
+5
+200
+Imperial Valley-07
+1979
+5.0
+El Centro Array #2
+140
+0.13
+6
+201
+Imperial Valley-07
+1979
+5.0
+El Centro Array #3
+140
+0.13
+7
+193
+Imperial Valley-07
+1979
+5.0
+Bonds Corner
+140
+0.10
+8
+194
+Imperial Valley-07
+1979
+5.0
+Brawley Airport
+225
+0.05
+9
+195
+Imperial Valley-07
+1979
+5.0
+Calexico Fire Station
+225
+0.09
+10
+101
+Northern Calif-07
+1975
+5.2
+Cape Mendocino
+030
+0.16
+11
+103
+Northern Calif-07
+1975
+5.2
+Petrolia, General Store
+075
+0.15
+12
+42
+Lytle Creek
+1970
+5.3
+Cedar Springs Pumphouse
+126
+0.07
+13
+45
+Lytle Creek
+1970
+5.3
+Devil’s Canyon
+090
+0.17
+14
+50
+Lytle Creek
+1970
+5.3
+Wrightwood - 6074 Park Dr
+115
+0.17
+15
+21
+Imperial Valley-05
+1955
+5.4
+El Centro Array #9
+000
+0.04
+16
+217
+Livermore-02
+1980
+5.4
+APEEL 3E Hayward CSUH
+146
+0.04
+17
+218
+Livermore-02
+1980
+5.4
+Antioch - 510 G St
+270
+0.08
+18
+219
+Livermore-02
+1980
+5.4
+Del Valle Dam (Toe)
+156
+0.04
+19
+223
+Livermore-02
+1980
+5.4
+San Ramon - Eastman Kodak
+180
+0.20
+20
+27
+Hollister-02
+1961
+5.5
+Hollister City Hall
+181
+0.06
+21
+125
+Friuli, Italy-01
+1976
+6.5
+Tolmezzo
+000
+0.32
+22
+161
+Imperial Valley-06
+1979
+6.5
+Brawley Airport
+225
+0.18
+23
+162
+Imperial Valley-06
+1979
+6.5
+Calexico Fire Station
+225
+0.24
+24
+165
+Imperial Valley-06
+1979
+6.5
+Chihuahua
+012
+0.27
+25
+167
+Imperial Valley-06
+1979
+6.5
+Compuertas
+015
+0.15
+26
+170
+Imperial Valley-06
+1979
+6.5
+EC County Center FF
+002
+0.22
+27
+173
+Imperial Valley-06
+1979
+6.5
+El Centro Array #10
+050
+0.20
+28
+174
+Imperial Valley-06
+1979
+6.5
+El Centro Array #11
+140
+0.37
+29
+178
+Imperial Valley-06
+1979
+6.5
+El Centro Array #3
+140
+0.26
+30
+184
+Imperial Valley-06
+1979
+6.5
+El Centro Differential Array
+270
+0.44
+31
+185
+Imperial Valley-06
+1979
+6.5
+Holtville Post Office
+225
+0.24
+32
+187
+Imperial Valley-06
+1979
+6.5
+Parachute Test Site
+225
+0.17
+33
+192
+Imperial Valley-06
+1979
+6.5
+Westmorland Fire Sta
+090
+0.08
+34
+71
+San Fernando
+1971
+6.6
+Lake Hughes #12
+021
+0.32
+35
+952
+Northridge-01
+1994
+6.7
+Beverly Hills - 12520 Mulhol
+035
+0.54
+36
+960
+Northridge-01
+1994
+6.7
+Canyon Country - W Lost Cany
+000
+0.40
+37
+986
+Northridge-01
+1994
+6.7
+LA - Brentwood VA Hospital
+285
+0.18
+38
+989
+Northridge-01
+1994
+6.7
+LA - Chalon Rd
+160
+0.20
+39
+996
+Northridge-01
+1994
+6.7
+LA - N Faring Rd
+090
+0.27
+40
+1006
+Northridge-01
+1994
+6.7
+LA - UCLA Grounds
+360
+0.39
+41
+1012
+Northridge-01
+1994
+6.7
+LA 00
+270
+0.34
+42
+1042
+Northridge-01
+1994
+6.7
+N Hollywood - Coldwater Can
+270
+0.27
+38
+
+--- Sayfa 56 ---
+Table 4.3: Training ground motions for the inelastic SDOF system, continued.
+#
+RSN
+Earthquake
+Station
+Component
+PGA (g)
+Name
+Year
+Mw
+43
+1049
+Northridge-01
+1994
+6.7
+Pacific Palisades - Sunset
+280
+0.34
+44
+1052
+Northridge-01
+1994
+6.7
+Pacoima Kagel Canyon
+360
+0.37
+45
+1054
+Northridge-01
+1994
+6.7
+Pardee - SCE
+–T
+0.42
+46
+1082
+Northridge-01
+1994
+6.7
+Sun Valley - Roscoe Blvd
+090
+0.35
+47
+1083
+Northridge-01
+1994
+6.7
+Sunland - Mt Gleason Ave
+260
+0.15
+48
+1089
+Northridge-01
+1994
+6.7
+Topanga - Fire Sta
+270
+0.26
+49
+1111
+Kobe, Japan
+1995
+6.9
+Nishi-Akashi
+090
+0.47
+50
+763
+Loma Prieta
+1989
+6.9
+Gilroy - Gavilan Coll.
+067
+0.34
+51
+764
+Loma Prieta
+1989
+6.9
+Gilroy - Historic Bldg.
+160
+0.28
+52
+767
+Loma Prieta
+1989
+6.9
+Gilroy Array #3
+000
+0.50
+53
+768
+Loma Prieta
+1989
+6.9
+Gilroy Array #4
+000
+0.31
+54
+803
+Loma Prieta
+1989
+6.9
+Saratoga - W Valley Coll.
+000
+0.30
+55
+809
+Loma Prieta
+1989
+6.9
+UCSC
+000
+0.37
+56
+810
+Loma Prieta
+1989
+6.9
+UCSC Lick Observatory
+000
+0.46
+57
+6
+Imperial Valley-02
+1940
+7.0
+El Centro Array #9
+180
+0.23
+58
+864
+Landers
+1992
+7.3
+Joshua Tree
+000
+0.27
+59
+1148
+Kocaeli, Turkey
+1999
+7.5
+Arcelik
+090
+0.17
+60
+1161
+Kocaeli, Turkey
+1999
+7.5
+Gebze
+270
+0.19
+61
+1193
+Chi-Chi, Taiwan
+1999
+7.6
+CHY024
+000
+0.23
+62
+1198
+Chi-Chi, Taiwan
+1999
+7.6
+CHY029
+000
+0.27
+63
+1201
+Chi-Chi, Taiwan
+1999
+7.6
+CHY034
+270
+0.30
+64
+1202
+Chi-Chi, Taiwan
+1999
+7.6
+CHY035
+000
+0.26
+65
+1244
+Chi-Chi, Taiwan
+1999
+7.6
+CHY101
+000
+0.38
+66
+1488
+Chi-Chi, Taiwan
+1999
+7.6
+TCU048
+000
+0.13
+67
+1490
+Chi-Chi, Taiwan
+1999
+7.6
+TCU050
+000
+0.14
+68
+1491
+Chi-Chi, Taiwan
+1999
+7.6
+TCU051
+000
+0.19
+69
+1493
+Chi-Chi, Taiwan
+1999
+7.6
+TCU053
+000
+0.19
+70
+1494
+Chi-Chi, Taiwan
+1999
+7.6
+TCU054
+000
+0.17
+71
+1495
+Chi-Chi, Taiwan
+1999
+7.6
+TCU055
+000
+0.22
+72
+1496
+Chi-Chi, Taiwan
+1999
+7.6
+TCU056
+000
+0.16
+73
+1497
+Chi-Chi, Taiwan
+1999
+7.6
+TCU057
+000
+0.11
+74
+1499
+Chi-Chi, Taiwan
+1999
+7.6
+TCU060
+000
+0.15
+75
+1501
+Chi-Chi, Taiwan
+1999
+7.6
+TCU063
+000
+0.16
+76
+1515
+Chi-Chi, Taiwan
+1999
+7.6
+TCU082
+000
+0.20
+77
+1519
+Chi-Chi, Taiwan
+1999
+7.6
+TCU087
+000
+0.12
+78
+1527
+Chi-Chi, Taiwan
+1999
+7.6
+TCU100
+000
+0.11
+79
+1530
+Chi-Chi, Taiwan
+1999
+7.6
+TCU103
+000
+0.16
+80
+1531
+Chi-Chi, Taiwan
+1999
+7.6
+TCU104
+000
+0.10
+81
+1533
+Chi-Chi, Taiwan
+1999
+7.6
+TCU106
+000
+0.15
+82
+1535
+Chi-Chi, Taiwan
+1999
+7.6
+TCU109
+000
+0.16
+83
+1536
+Chi-Chi, Taiwan
+1999
+7.6
+TCU110
+000
+0.18
+39
+
+--- Sayfa 57 ---
+Table 4.4: Testing ground motions for the inelastic SDOF system.
+#
+RSN
+Earthquake
+Station
+Component
+PGA (g)
+Name
+Year
+Mw
+84
+752
+Loma Prieta
+1989
+6.9
+Capitola
+000
+0.47
+85
+765
+Loma Prieta
+1989
+6.9
+Gilroy Array #1
+000
+0.43
+86
+766
+Loma Prieta
+1989
+6.9
+Gilroy Array #2
+000
+0.36
+87
+801
+Loma Prieta
+1989
+6.9
+San Jose - Santa Teresa Hills
+225
+0.28
+88
+802
+Loma Prieta
+1989
+6.9
+Saratoga - Aloha Ave
+000
+0.37
+89
+811
+Loma Prieta
+1989
+6.9
+WAHO
+000
+0.54
+90
+953
+Northridge-01
+1994
+6.7
+Beverly Hills - 14145 Mulhol
+009
+0.44
+91
+1101
+Kobe, Japan
+1995
+6.9
+Amagasaki
+090
+0.31
+92
+1158
+Kocaeli, Turkey
+1999
+7.5
+Duzce
+270
+0.32
+93
+1182
+Chi-Chi, Taiwan
+1999
+7.6
+CHY006
+6-W
+0.36
+The prediction results from ground motion GM93 (Figure 4.12) are shown in Figure 4.12.
+The force-displacement relationship in Figure 4.12e represents a highly inelastic response. The
+pattern of the predicted acceleration matches the true response well, both in the linear elastic and
+inelastic response ranges. The frequency content and the period elongation are well-captured. The
+main issue is the overestimated accelerations in the inelastic response range, where the computed
+acceleration response was capped around 0.25g, which is explained using the following equation
+of motion of an inelastic SDOF system:
+m¨u + c ˙u + fr = 0,
+(4.1)
+where m is the mass, c is the damping coefficient, and fr is the restoring force of the SDOF system.
+Because ζ = 5%, the damping force can be ignored, and the maximum acceleration that the SDOF
+can experience (amax) is expressed as follows:
+amax = fr,max
+m ,
+(4.2)
+where fr,max is the maximum restoring force. For the highest experienced ductility of 14 (Fig-
+ure 4.12) and strain hardening of 1%,
+fr,max = Fy + Fy
+δy
+× 0.01 × (14δy −δy) = 1.13Fy = 0.23W,
+(4.3)
+resulting in amax = 0.23g, which may further slightly increase because of the damping force.
+The TCN model was not able to capture this cap with 83 motions in the training set. Instead
+of increasing the number of motions in the training set, e.g., by an order of magnitude, one possible
+solution to overcome this limitation is the use of Physics-informed Neural Networks (PINNs) [20,
+8], which received increased attention in recent years. A PINN-based architecture can be thought
+of as a hybrid modeling approach, which combines the advantages of physics-based and data-
+driven approaches. The main advantage of a PINN is the ability to use physics-based information
+to complement the data-driven Artificial Intelligence (AI) model. This information is generally an
+40
+
+--- Sayfa 58 ---
+important local information, e.g., the acceleration cap of the SDOF system, that requires a much
+larger number of training data compared to that needed for the AI model to learn global underlying
+physics. Using PINN, this acceleration cap can be introduced to the TCN model as a constraint,
+instead of expecting the TCN to learn the presence of this cap using a very large training data set.
+The integration of PINN into the TCN model is especially important considering that the amount of
+data with inelastic behavior from instrumented structures is limited. The incorporation of PINNs
+to the TCN model for overcoming the issue of the acceleration cap is worth exploring in future
+studies.
+In terms of damage assessment, CAV of response, particularly the changes in the slope of
+CAV time history, is one of the good indicators of damage, as discussed earlier. Because of the
+differences in the predicted and computed response, predicted and computed CAV time history
+did not match, however there is an almost perfect match between the predicted and computed
+CAV histories normalized by the maximum CAV for four of the test motions with high ductility
+(Figure 4.13). This is consistent with the observations that the pattern of the predicted acceleration
+matches the true response and the predicted acceleration captures the elongated period due to
+inelastic response.
+41
+
+--- Sayfa 59 ---
+Figure 4.3: Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Cabazon Earthquake of 08 May 2018).
+42
+
+--- Sayfa 60 ---
+Figure 4.4: Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Redlands Area Earthquake of 13 Feb. 2010).
+43
+
+--- Sayfa 61 ---
+Figure 4.5: Comparison of predicted and recorded acceleration time history and the corre-
+sponding frequency contents in the NS direction of San Bernardino 6-story build-
+ing at (a, b) 3rd floor, (c, d) 6th floor (Banning Earthquake of 06 Jan. 2016).
+44
+
+--- Sayfa 62 ---
+Figure 4.6: Structure tested on the shaking table: (a) overall setup, (b) two views of a column
+base, (c) end beam connection, and (d) inelastic response in the form of coupon
+buckling.
+Figure 4.7: (a) First and (b) second training and testing sets used to predict the acceleration
+responses of the structure tested on the shaking table.
+45
+
+--- Sayfa 63 ---
+Figure 4.8: Comparison of (a) time history, (b) frequency content of predicted and recorded
+accelerations at 3rd floor of tested REPEAT frame (Run 17) [training set with 13
+motions].
+Figure 4.9: Comparison of (a) time history, (b) frequency content of predicted and recorded
+accelerations at 3rd floor of tested REPEAT frame (Run 17) [training set with 16
+motions].
+46
+
+--- Sayfa 64 ---
+Figure 4.10: Fragility functions for the three damage states of a suspended ceiling.
+Figure 4.11: (a) Inelastic SDOF, (b) ductility demands of the motions in training and testing
+sets.
+47
+
+--- Sayfa 65 ---
+Figure 4.12: Comparison of predicted and computed accelerations of the inelastic SDOF for
+GM93: (a) entire response, (b) elastic response, (c) inelastic response, (d) fre-
+quency domain, (e) computed force-displacement relationship.
+48
+
+--- Sayfa 66 ---
+Figure 4.13: Normalized CAV time histories of four test motions with high ductility.
+49
+
+--- Sayfa 67 ---
+50
+
+--- Sayfa 68 ---
+5
+Ground Motion Reconstruction
+The successful response predictions discussed in the earlier sections show that the TCN model
+can effectively capture the amplification function between the input ground motion and the output
+acceleration response. Because the ground motion can be calculated using the output acceleration
+response and the inverse of the amplification function, the TCN model is expected to perform well
+in reverse predictions using the inverse of the amplification function, given the accurate predictions
+in the forward case. With this expectation, ground motions are reconstructed from the recorded re-
+sponse accelerations using the TCN model in this section. The computation of the ground motion
+from the response is valuable in scenarios where ground motions are unavailable. It can facili-
+tate the use of measured responses to obtain the ground motion and characterize the intensity of
+shaking in regions with scarce ground motion recording stations. In such locations, the number of
+conventionally instrumented buildings (e.g., those instrumented as part of CSMIP) is even lower.
+However, alternative instrumentation, such as the Community Seismic Network (CSN) [6] or apps
+like MyShake [11], which employ smartphone accelerometers and crowdsourcing, can be used.
+These alternative instruments at floor levels can predict ground motions at locations where ground
+motions are otherwise unavailable. Predicting ground motions also enables other benefits, such as
+facilitating the use of input-output methods for system identification, which are superior to output-
+only methods. Ground motions are reconstructed for the mid-rise and tall buildings discussed in
+earlier sections, and these predictions are detailed below.
+5.1
+6-STORY RC HOTEL BUILDING IN SAN BERNARDINO EW DIRECTION
+In the earlier section focused on the prediction of floor accelerations of San Bernardino building
+in the EW direction, Channel 1 on the 1st floor was used as input, and Channel 4 on the 3rd
+floor was output. In the reverse case, to predict the ground motion, Channels 4 and 1 are used
+as input and output, respectively. The same 10 motions used for response predictions are used in
+the training set for ground motion predictions. Figure 5.1 compares the predicted and recorded
+ground motion acceleration history and the corresponding acceleration response spectra for two
+events in the testing set. It is observed that the time history and response spectra of the predicted
+accelerations match those of the recorded ones very well.
+Ground motions are commonly characterized with several intensity measures (IMs) for
+various purposes, such as the development of ShakeMaps [21] and formulating the IM-based
+fragility functions for use in Performance-Based Earthquake Engineering (PBEE) [9]. Therefore,
+51
+
+--- Sayfa 69 ---
+Figure 5.1: Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes.
+the various IMs of predicted and recorded ground motions, including Peak Ground Acceleration
+(PGA), spectral acceleration (Sa) at the 1st mode period, Arias Intensity (Ia), Peak Ground Veloc-
+ity (PGV ), and Cumulative Absolute Velocity (CAV ), are compared for all motions in the testing
+set (Figure 5.2). The predicted values are very close to the recorded ones, showing that the de-
+veloped TCN model is capable of predicting ground motions using the response accelerations of a
+mid-rise building.
+5.2
+TALL BUILDING WITH HIGHER MODES
+The difficulty of predicting responses that include higher modes also applies to the ground motion
+reconstruction. Therefore, ground motions are predicted for the tall building in this section to
+evaluate the accuracy of the predictions. The same training and testing sets used for the response
+predictions are utilized for reconstructing the ground motions by changing the input and output
+52
+
+--- Sayfa 70 ---
+Figure 5.2: Identified periods of San Bernardino 6-story hotel building in (a) EW, and (b) NS
+directions in different earthquakes.
+data. Three different ground motion predictions were performed using three training sets, where
+in all the sets, the output is the motion at the ground level, while the input in sets 1, 2, and 3 are
+the response accelerations at levels 46, 36, and 20, respectively. The presence of higher modes
+was expected in all three sets, but with different levels because of the mode shapes and the varying
+contribution of higher modes at different floors. As observed in Figure 5.3, the predicted ground
+motion time histories are close to the recorded ones, but not as close as the predictions for San
+Bernardino building with the first mode-dominated building response. These differences between
+the predictions and recorded ground motions are more clearly observed in the acceleration response
+spectra. Using observations from San Bernardino building and the tall building, it is concluded
+that ground motion predictions are accurate when the response is governed by the first mode, and
+more training data is needed for successful predictions involving higher modes or inelastic effects.
+However, it was not possible to explore how many more motions are needed in the training set
+for accurate predictions, because all the events recorded for this building are already used, and no
+additional data is available. This highlights the need for increased instrumentation of buildings and
+bridges.
+53
+
+--- Sayfa 71 ---
+Figure 5.3: Comparison of predicted and recorded ground motion (a, b, c) acceleration time
+histories, (d) PGA, (e) 5% damped acceleration response spectra for the event in
+the testing set.
+54
+
+--- Sayfa 72 ---
+6
+Results and Discussion
+This chapter provides a summary of the results and conclusions and discusses them from different
+perspectives. To guide this discussion, Table 6.1 lists a summary of the TCN predictions for the
+studied structural systems.
+Table 6.1: Features characterizing the earthquake response of different structural systems.
+Prediction Type
+System
+NMtraining⋆
+Quality of Predictions
+Linear elastic response
+SDOF
+10
+Successful
+Low- & Mid-rise buildings
+10
+Successful
+Tall building
+10
+Successful
+Inelastic response
+Bilinear SDOF
+83
+Partially successful†
+Tested 3-story SMRF
+13
+Needs improvement
+Tested 3-story SMRF
+16
+Successful
+Mid-rise building
+10
+Needs improvement
+Mid-rise building
+23
+Successful
+Ground motion
+Mid-rise building
+10
+Successful
+Tall building
+10
+Successful‡
+⋆NMtraining = # of motions in the training set
+† PINNs is needed to improve peak response.
+‡ More data improves predictions.
+6.1
+INTERPRETATION OF RESULTS IN EARTHQUAKE ENGINEERING CONTEXT
+The results of this study, achieved through the application of TCN, offer significant insights into
+structural response prediction and ground motion modeling in the context of earthquake engineer-
+ing. The ability to predict both linear-elastic and inelastic responses with high accuracy provides
+a robust foundation for advancing performance-based earthquake engineering (PBEE) methodolo-
+gies and enhancing structural health monitoring (SHM) practices.
+55
+
+--- Sayfa 73 ---
+6.1.1
+Linear Elastic Response
+The successful prediction of linear elastic responses across various building types highlights the
+effectiveness of TCN in capturing fundamental structural dynamics. For low-rise and mid-rise
+buildings, the TCN demonstrated its ability to model responses dominated by the first mode of
+vibration, accurately capturing the natural period and the varying damping ratio. Similarly, for
+tall buildings with higher modes, the TCN captured the influence of multiple modal frequencies
+and stiffness irregularities, such as those caused by transfer girders. Therefore, the TCN model
+was successful for systems that are characterized by not only relatively simple features, such as a
+numerical SDOF system characterized by a single natural period and damping ratio, but also those
+with more complex response such as a tall building with multiple modes of vibration contributing
+to the overall response. For these different systems, a training set size of 10 motions was sufficient
+for predicting the response. These results demonstrate the effectiveness of the TCN model even for
+structures with limited amount of data and underscore the potential of TCNs as a computationally
+efficient alternative to conventional numerical methods, reducing the reliance on time-intensive
+simulations while maintaining accuracy.
+The predicted and true responses from multiple test motions, along with relevant fragility
+functions, were used to compute the probability of damage of a cooling tower assumed to be
+located at the roof of the 6 story San Bernardino building. The resulting probability of damage was
+very close using the true and precited responses. This preliminary exercise provided confidence in
+the model predicted responses to detect nonstructural (and structural) damage. To demonstrate the
+importance of predicting the entire time history, Cumulative Absolute Velocity (CAV), a parameter
+closely correlated to damage, was computed using the predicted and true responses of the same
+building and the resulting CAV time histories were very close to each other.
+6.1.2
+Nonlinear Response and Inelastic Behavior
+The inelastic response predictions demonstrated that accurate predictions of inelastic response are
+possible with increased number of data in the training data set. The predictions in the NS direction
+of the 6-story building in San Bernardino demonstrated that the TCN model can capture response
+that cannot be conveniently obtained using state of the practice numerical models and dynamic
+analyses. Results of the 3-story structure tested on the shaking table highlighted that the developed
+TCN model can successfully predict the inelastic response beyond the inelastic response range
+employed in the training data set. For these two cases, the number of motions in the training set
+for accurate predictions was greater than those needed for the linear elastic response, however it
+was still a manageable number and less than 25 in both cases. The TCN model was successful in
+capturing the pattern of highly inelastic response in the case of the inelastic SDOF system, as well
+as the frequency contents of the response and the period elongation, however it could not capture
+the peak acceleration limited by the force capacity despite the use of a large number of motions in
+the training set. This highlighted the need to incorporate physical constrains in the methodology
+to increase accuracy and effectiveness. Overall, these three case studies demonstrated the efficacy
+and unique benefits of the TCN model in predicting different levels of inelastic response.
+56
+
+--- Sayfa 74 ---
+6.1.3
+Ground Motion Predictions
+In regions with sparse ground motion recording stations but structural response data widely avail-
+able with alternative instrumentation, the ability of TCN to predict ground motions using structural
+response has significant implications for seismic hazard assessment. This capability enhances the
+accuracy of regional hazard maps and supports the development of site-specific ground motion
+models, particularly in the near-fault regions, where ground motion data from large magnitude
+earthquakes are lacking .
+6.1.4
+Implications for Earthquake Engineering Practice
+The interpretation of results in the context of earthquake engineering highlights the transformative
+potential of TCN. A major broader impact of the developed TCN model is the ability to facilitate
+the prediction of the response of an instrumented building in future earthquakes without a structural
+analysis model. This ability provides a major advantage that maximizes accuracy and efficiency,
+compared to a conventional seismic assessment and performance prediction that is based on (i)
+developing the structural analysis model, and (ii) obtaining the structural response from either
+detailed but computationally extensive and demanding nonlinear time history analysis or compu-
+tationally manageable but approximate linear dynamic or nonlinear static methods, as described in
+standards like [2].
+As another impact, the accuracy and efficiency of TCN-based predictions can reduce un-
+certainties associated with traditional modeling approaches and improve the reliability of structural
+performance evaluations. The ability to model both elastic and inelastic responses across diverse
+structures provides engineers with a versatile tool for assessing seismic risk and designing resilient
+structures. Finally, the integration of ground motion and structural response predictions within a
+unified TCN framework streamlines the workflow for seismic hazard analysis and performance-
+based design.
+Despite these advancements, the study also reveals the importance of comprehensive train-
+ing datasets and the need for integrating physical constraints into data-driven models. Future re-
+search should focus on hybrid approaches, such as combining TCN with Physics-Informed Neural
+Networks (PINNs), to achieve accurate predictions with reasonable training data sizes and further
+enhance model interpretability and generalizability. By addressing these challenges, the applica-
+tion of TCN in earthquake engineering can be expanded.
+6.2
+COMPARATIVE ANALYSIS ACROSS CASE STUDIES
+The application of TCN to various structural systems and scenarios in this study demonstrates their
+versatility and accuracy in predicting both linear and nonlinear responses. This section provides a
+comparative analysis of key findings across the case studies, highlighting the model’s performance
+and limitations in different contexts.
+57
+
+--- Sayfa 75 ---
+6.2.1
+Low-Rise and Mid-Rise Buildings
+For low-rise and mid-rise buildings, such as San Bernardino 6-story RC hotel and Hemet 4-story
+RC hospital, the TCN successfully captured the dominant first-mode behavior of these structures.
+In the east-west (EW) direction of San Bernardino building, where the response remained lin-
+ear elastic, the TCN achieved high correlation coefficients (0.91) between predicted and recorded
+responses. Similarly, for Hemet hospital building, predictions were accurate across a range of
+motions, demonstrating the model’s ability to generalize within this building category.
+The consistent accuracy in these cases indicates that TCN is well-suited for predicting re-
+sponses dominated by single-mode behavior, with minimal complexity introduced by higher modes
+or inelastic effects. This makes the TCN a computationally efficient alternative to conventional
+methods for low- to mid-rise structures.
+6.2.2
+Tall Buildings with Higher Modes
+The prediction of responses in tall buildings, such as the 54-story SMRF in Los Angeles, high-
+lighted the TCN’s ability to handle higher-mode effects and stiffness irregularities. For motions
+recorded in the north-south (NS) direction, the TCN successfully replicated the localized accelera-
+tion peaks observed at floors with transfer girders. While the model demonstrated strong agreement
+with recorded responses in both time and frequency domains, the complexity introduced by higher
+modes generally requires a more extensive training dataset to achieve comparable accuracy.
+The comparison with low- and mid-rise buildings reveals that while TCNs perform ro-
+bustly in these cases, the presence of higher modes in tall buildings necessitates careful dataset
+preparation. This includes ensuring sufficient representation of motions that excite multiple modes
+and any additional response introduced by structural irregularities.
+6.2.3
+Nonlinear Responses and Inelastic Behavior
+In nonlinear response scenarios, such as San Bernardino building’s north-south (NS) direction and
+the laboratory-tested REPEAT frame, the TCN captured critical phenomena like period elongation.
+For San Bernardino building, the TCN accurately predicted progressive period elongation due
+to stiffness degradation, aligning with physical observations of cracking and foundation rocking.
+Similarly, for the REPEAT frame, the model replicated both time-history responses and frequency-
+domain effects for tests with moderate inelasticity.
+When compared to linear elastic cases, the nonlinear response predictions highlight the
+importance of diverse and representative training datasets. Inelastic responses are more challeng-
+ing to predict due to their dependence on damage mechanisms and material properties, requiring
+comprehensive data to train the model effectively.
+58
+
+--- Sayfa 76 ---
+6.2.4
+Observations and Insights
+The comparative analysis across these case studies provides several key insights. The TCN frame-
+work consistently demonstrates high accuracy for linear elastic responses across various building
+types, particularly for low-rise and mid-rise structures. For tall buildings and nonlinear responses,
+the model’s accuracy is significantly influenced by the diversity and representativeness of the train-
+ing dataset, underscoring the importance of comprehensive data preparation. Additionally, the
+ability of the TCN to predict ground motions in sparsely instrumented regions highlights its po-
+tential to extend beyond structural response analysis, offering a valuable tool for seismic hazard
+assessment.
+These findings highlight the flexibility and precision of the TCN framework across a range
+of applications. They also underscore areas for improvement, such as integrating hybrid modeling
+approaches and expanding datasets, to further enhance its performance. The adaptability of TCNs
+positions them as a promising tool for advancing earthquake engineering practices and strengthen-
+ing the resilience of the built environment.
+59
+
+--- Sayfa 77 ---
+60
+
+--- Sayfa 78 ---
+7
+Conclusions, Limitations, and Future Work
+The advancements presented in this study demonstrate the transformative potential of Temporal
+Convolutional Networks (TCNs) in efficiently and accurately predicting structural responses and
+ground motions. However, like any emerging methodology, the TCN framework has its constraints
+and areas for further enhancement. A critical assessment of the challenges encountered during the
+development and application of TCNs provides a roadmap for future research and underscores op-
+portunities for integrating complementary approaches, such as Physics-Informed Neural Networks
+(PINNs), to address these limitations.
+This chapter highlights the conclusions, primary limitations encountered, focusing on data
+constraints, model generalizability, and computational challenges. It also explores potential av-
+enues for advancing the presented framework using PINNS, emphasizing interdisciplinary strate-
+gies to expand its applicability in earthquake engineering and beyond.
+7.1
+CONCLUSIONS
+This study demonstrated the efficacy of TCN in predicting structural responses and ground mo-
+tions, offering a robust and computationally efficient alternative to traditional modeling techniques.
+The TCN framework successfully captured both linear elastic and nonlinear inelastic behaviors
+across a diverse set of case studies, including low-rise, mid-rise, and tall buildings, as well as
+laboratory-tested frames. Additionally, the model effectively reconstructed ground motions in
+sparsely instrumented regions, addressing key challenges in seismic hazard assessment. Key con-
+tributions of this work include:
+• A validated methodology for using TCN to predict time-history responses with high accu-
+racy.
+• Demonstration of the model’s capability to handle complex phenomena, such as period elon-
+gation and higher-mode effects.
+• Expansion of ground motion prediction techniques to under-instrumented areas, leveraging
+data from structural response.
+While the results underscore the strengths of TCN, they also highlight limitations such as
+data constraints and the need for improved interpretability. Addressing these challenges through
+61
+
+--- Sayfa 79 ---
+the integration of PINNs and enhanced training datasets could further advance the model’s appli-
+cability.
+In summary, the TCN framework represents a significant step forward in the application
+of machine learning to earthquake engineering. By combining computational efficiency with pre-
+dictive accuracy, TCN holds the potential to transform performance-based earthquake engineering
+and structural health monitoring practices, ultimately contributing to safer and more resilient in-
+frastructure in seismic regions.
+7.2
+LIMITATIONS: DATA CONSTRAINTS
+The performance of TCN in predicting structural responses and ground motions is inherently tied
+to the quality and quantity of data used for training and validation. Despite the promising results
+demonstrated in this study, several data-related constraints were encountered, which highlight lim-
+itations in the current methodology and opportunities for improvement.
+7.2.1
+Scarcity of Inelastic Response Data
+A significant constraint was the limited availability of inelastic response data from instrumented
+structures. Most existing datasets, such as those from CSMIP, primarily capture linear elastic re-
+sponses during moderate seismic events. High-quality data for nonlinear responses, which involve
+phenomena such as period elongation, cracking, and stiffness degradation, are sparse due to the
+rarity of severe ground motions and the limited number of instrumented structures that experience
+such events.
+To address this limitation, synthetic datasets generated from numerical simulations and
+laboratory tests were used to supplement real-world data. However, synthetic data often lack the
+complexity and variability of real-world conditions, which can introduce biases and reduce the
+generalizability of the TCN model.
+7.2.2
+Imbalance in Dataset Representation
+Another key constraint was the imbalance in the dataset, with a disproportionate number of mo-
+tions resulting in linear elastic response compared to those with nonlinear response. This imbal-
+ance affects the model’s ability to generalize across different seismic intensity levels and structural
+behaviors. Although the TCN performed well for linear responses, its performance for nonlin-
+ear responses depended heavily on the inclusion of representative inelastic events in the training
+dataset.
+7.2.3
+Sparse Instrumentation in Key Regions
+Sparse seismic instrumentation in certain geographic regions poses an additional challenge, par-
+ticularly for ground motion prediction. While densely instrumented areas like urban California
+62
+
+--- Sayfa 80 ---
+provide rich datasets, rural and underdeveloped regions often lack sufficient sensor coverage. This
+spatial disparity limits the applicability of the TCN model to regions with adequate data and high-
+lights the need for extrapolation techniques to predict ground motions in sparsely instrumented
+areas.
+7.2.4
+Implications and Future Directions
+Addressing these data constraints is critical for advancing the application of TCN in earthquake
+engineering. Future work should focus on expanding the availability of high-quality inelastic re-
+sponse data through enhanced instrumentation of structures in seismically active regions and the
+development of advanced numerical models that better replicate real-world conditions. Addition-
+ally, balancing datasets to include a wider range of seismic intensities and structural behaviors will
+improve the generalizability of the TCN framework. Integrating physics-informed constraints into
+the model could also help mitigate the impact of limited data by embedding domain knowledge
+directly into the learning process.
+7.3
+FUTURE WORK: PINNS
+PINNs are an emerging class of machine learning models that integrate physical principles directly
+into the training process, ensuring that predictions adhere to established governing equations. By
+embedding domain knowledge, such as the equations of motion, into the loss function, PINNs
+can bridge the gap between purely data-driven models like TCN and traditional physics-based
+approaches. This integration offers a promising pathway to address some of the key limitations
+identified in this study.
+7.3.1
+Advantages of PINNs in Structural Response Prediction
+The integration of PINNs into structural response prediction frameworks offers significant advan-
+tages over purely data-driven models. These advantages can be summarized as follows:
+Reduced Data Dependency
+where PINNs utilize embedded physical constraints to guide the
+learning process, which reduces their reliance on extensive labeled datasets. This feature is par-
+ticularly advantageous in situations where high-quality inelastic response data is limited, enabling
+PINNs to perform effectively even with constrained datasets.
+Improved Generalization
+by integrating physical principles into the learning process where
+PINNs can generalize better to previously unseen scenarios, such as extreme ground motions or
+novel structural configurations. This ability to extrapolate beyond the training data makes PINNs
+more robust than purely data-driven models in handling diverse and challenging cases.
+63
+
+--- Sayfa 81 ---
+7.3.2
+Potential Applications in Earthquake Engineering
+The integration of PINNs into the TCN framework opens several avenues for advancing structural
+response and ground motion predictions:
+Modeling Nonlinear Dynamics
+where PINNs can improve the modeling of inelastic responses
+by directly incorporating damage mechanics and material nonlinearities into the loss function.
+This capability allows for more accurate predictions of structural behaviors under extreme seismic
+events.
+Ground Motion Prediction
+where in regions with sparse instrumentation, PINNs can combine
+physical models of wave propagation with limited observed data to enhance the accuracy of ground
+motion extrapolations. This approach provides a viable solution for seismic hazard assessment in
+under-monitored areas.
+Multi-Scale Modeling
+where PINNs offer a unified framework for integrating both local phe-
+nomena, such as site-specific soil behavior, and global phenomena, such as structural responses.
+This multi-scale capability allows for comprehensive predictions that account for the complex in-
+teractions between soil-structure systems.
+7.3.3
+Challenges and Future Directions
+Despite their advantages, the adoption of PINNs in earthquake engineering faces several chal-
+lenges.
+Training PINNs often requires solving complex partial differential equations (PDEs),
+which can significantly increase computational costs compared to traditional neural networks.
+Additionally, ensuring numerical stability and convergence during training can be challenging,
+particularly for highly nonlinear systems.
+Future research should explore hybrid models that combine the strengths of TCNs and
+PINNs. For example, a TCN could first predict an approximate response, which a PINN could
+refine by enforcing physical constraints. Developing efficient training algorithms for PINNs and
+integrating them into existing seismic analysis workflows will also be crucial for their widespread
+adoption.
+7.3.4
+Implications for Earthquake Engineering
+The integration of PINNs into structural response prediction frameworks has the potential to rev-
+olutionize earthquake engineering. By combining the strengths of data-driven and physics-based
+approaches, PINNs offer a robust and interpretable solution for modeling complex nonlinear phe-
+nomena. This hybrid methodology aligns with the goals of performance-based earthquake engi-
+neering (PBEE) by improving the accuracy and reliability of structural assessments, even in data-
+64
+
+--- Sayfa 82 ---
+scarce environments. As the field progresses, PINNs are likely to play a central role in advancing
+computational tools for seismic hazard analysis and structural health monitoring.
+7.3.5
+Application to Lifeline Infrastructure
+The TCN framework can be adapted for critical lifeline systems such as bridges, pipelines, and
+electrical grids, which exhibit complex dynamic behavior during earthquakes. Predicting the re-
+sponse of these systems requires modeling interactions between multiple components and materi-
+als, an area where TCN can excel due to their ability to capture temporal dependencies.
+7.3.6
+Global Applications in Data-Scarce Regions
+While this study focused on buildings in California, the TCN methodology can be extended to
+data-scarce regions worldwide. By leveraging global datasets and transfer learning techniques,
+TCNs can provide valuable predictions for regions with limited instrumentation, contributing to
+improved seismic resilience in underserved areas.
+7.3.7
+Beyond Earthquake Engineering
+Beyond structural dynamics, TCN has potential applications in other domains where time-series
+analysis is critical. For example, they could be employed in wind engineering to predict aerody-
+namic responses of tall structures or in hydrology to model the dynamic effects of flooding on
+dams and levees. These extensions could benefit from the foundational developments made in this
+study.
+65
+
+--- Sayfa 83 ---
+66
+
+--- Sayfa 84 ---
+REFERENCES
+[1] ASCE. Minimum design loads and associated criteria for buildings and other structures.
+Technical Report ASCE/SEI 7-22, American Society of Civil Engineers, 2022.
+[2] ASCE. Seismic evaluation and retrofit of existing buildings. Technical Report ASCE/SEI
+41-23, American Society of Civil Engineers, 2023.
+[3] J.M.W. Brownjohn, S.K. Au, Y. Zhu, Z. Sun, B. Li, J. Bassitt, E. Hudson, and H. Sun.
+Bayesian operational modal analysis of jiangyin yangtze river bridge.
+Mechanical Sys-
+tems and Signal Processing, 110:210–230, 2018.
+URL: https://doi.org/10.1016/
+j.ymssp.2018.03.027.
+[4] Y. Chen, Z. Sun, R. Zhang, L. Yao, and G. Wu. Attention mechanism based neural networks
+for structural post-earthquake damage state prediction and rapid fragility analysis. Comput-
+ers & Structures, 281:107038, 2023. URL: https://doi.org/10.1016/j.compstruc.
+2023.107038.
+[5] A.K. Chopra. Dynamics of Structures, Theory and Applications to Earthquake Engineering.
+Pearson Education, Hoboken, NJ, 5th edition, 2017.
+[6] R.W. Clayton, T. Heaton, M. Kohler, M. Chandy, R. Guy, and J. Bunn. Community seismic
+network: A dense array to sense earthquake strong motion. Seismological Research Letters,
+86(5):1354–1363, 2015. URL: https://doi.org/10.1785/0220150094.
+[7] C. Cruz and E. Miranda.
+Evaluation of damping ratios for the seismic analysis of tall
+buildings.
+Journal of Structural Engineering, 143(1):04016144, 2017.
+URL: https:
+//doi.org/10.1061/(ASCE)ST.1943-541X.0001628.
+[8] S.S. Eshkevari, M. Tak´aˇc, S.N. Pakzad, and M. Jahani.
+Dynnet: Physics-based neural
+architecture design for nonlinear structural response modeling and prediction.
+Engineer-
+ing Structures, 229:111582, 2021. URL: https://doi.org/10.1016/j.engstruct.
+2020.111582.
+[9] S. G¨unay and K.M. Mosalam. Peer performance-based earthquake engineering methodology,
+revisited. Journal of Earthquake Engineering, 17(6):829–858, 2013. URL: https://doi.
+org/10.1080/13632469.2013.787377.
+[10] Sepp Hochreiter and J¨urgen Schmidhuber.
+Long short-term memory.
+Neural Comput.,
+9(8):1735–1780, 1997. URL: 10.1162/neco.1997.9.8.1735.
+[11] Q. Kong, R.M. Allen, L. Schreier, and Y.W. Kwon. Myshake: A smartphone seismic network
+for earthquake early warning and beyond. Science Advances, 2(2):e150105, 2016. URL:
+DOI:10.1126/sciadv.1501055.
+67
+
+--- Sayfa 85 ---
+[12] A. Kundu and S. Chakraborty. Deep learning-based metamodeling technique for nonlinear
+seismic response quantification, volume 936, page 012042. IOP Publishing, September 2020.
+[13] C. Lea, M.D. Flynn, R. Vidal, A. Reiter, and G.D. Hager. Temporal convolutional networks
+for action segmentation and detection. In Proceedings of the IEEE Conference on Computer
+Vision and Pattern Recognition, pages 156–165, 2017. URL: 10.1088/1757-899X/936/
+1/012042.
+[14] B. Li and S.M. Spence. Metamodeling through deep learning of high-dimensional dynamic
+nonlinear systems driven by general stochastic excitation. Journal of Structural Engineering,
+148(11):04022186, 2022. URL: https://doi.org/10.1061/(ASCE)ST.1943-541X.
+0003499.
+[15] D. McCallen, A. Pitarka, H. Tang, K.M. Mosalam, F. Petrone, S. G¨unay, and C. Perez. An
+open access simulated earthquake ground motion database for a m7 hayward fault earthquake
+in the san francisco bay region. Earthquake Spectra, In publication, 2025.
+[16] Khalid M Mosalam and Yuqing Gao. Artificial Intelligence in Vision-Based Structural Health
+Monitoring. Springer Nature, Switzerland, 2024. URL: https://doi.org/10.1007/
+978-3-031-52407-3.
+[17] S. Muin and K.M. Mosalam. Cumulative absolute velocity as a local damage indicator of
+instrumented structures. Earthquake Spectra, 33(2):641–664, 2017. URL: https://doi.
+org/10.1193/090416EQS142M.
+[18] S. Muin and K.M. Mosalam. Localized damage detection of csmip instrumented buildings
+using cumulative absolute velocity: A machine learning approach. In Proceedings of the
+SMIP18 Seminar on Utilization of Strong-Motion Data, volume 25, Sacramento, CA, USA,
+2018.
+[19] Y.J. Park and A.H.S. Ang.
+Mechanistic seismic damage model for reinforced concrete.
+Journal of Structural Engineering, 111(4):722–739, 1985. URL: https://doi.org/10.
+1061/(ASCE)0733-9445(1985)111:4(722).
+[20] M. Raissi, P. Perdikaris, and G.E. Karniadakis. Physics-informed neural networks: A deep
+learning framework for solving forward and inverse problems involving nonlinear partial
+differential equations. Journal of Computational Physics, 378:686–707, 2019. URL: https:
+//doi.org/10.1016/j.jcp.2018.10.045.
+[21] C.B. Worden, M. Hearne, and E.M. Thompson. Shakemap v4 software, 2018.
+[22] Qingyu Zhang, Maozu Guo, Lingling Zhao, Yang Li, Xinxin Zhang, and Miao Han.
+Transformer-based structural seismic response prediction.
+Structures, 61:105929, 2024.
+URL: https://doi.org/10.1016/j.istruc.2024.105929.
+[23] R. Zhang, Z. Chen, S. Chen, J. Zheng, O. B¨uy¨uk¨ozt¨urk, and H. Sun.
+Deep long short-
+term memory networks for nonlinear structural seismic response prediction. Computers &
+Structures, 220:55–68, 2019.
+68
+
+--- Sayfa 86 ---
+[24] K. Zhong, J.G. Navarro, S. Govindjee, and G.G. Deierlein. Surrogate modeling of structural
+seismic response using probabilistic learning on manifolds. Earthquake Engineering & Struc-
+tural Dynamics, 52(8):2407–2428, 2023. URL: https://doi.org/10.1002/eqe.3839.
+69
+
+--- Sayfa 87 ---
+Disclaimer
+The opinions, findings, and conclusions or recommendations 
+expressed in this publication are those of the author(s) 
+and do not necessarily reflect the views of the study 
+sponsor(s), 
+the 
+Pacific 
+Earthquake 
+Engineering 
+Research 
+Center, or the Regents of the University of California.
+
+--- Sayfa 88 ---
+The Pacific Earthquake Engineering Research Center (PEER) is a multi-institutional research and education center 
+with headquarters at the University of California, Berkeley. Investigators from over 20 universities, several consulting 
+companies, and researchers at various state and federal government agencies contribute to research programs 
+focused on performance-based earthquake engineering.
+These research programs aim to identify and reduce the risks from major earthquakes to life safety and to the economy 
+by including research in a wide variety of disciplines including structural and geotechnical engineering, geology/
+seismology, lifelines, transportation, architecture, economics, risk management, and public policy.  
+PEER is supported by federal, state, local, and regional agencies, together with industry partners.
+PEER Core Institutions
+University of California, Berkeley (Lead Institution)
+California Institute of Technology
+Oregon State University
+Stanford University
+University of California, Davis
+University of California, Irvine
+University of California, Los Angeles
+University of California, San Diego
+University of Nevada, Reno
+University of Southern California
+University of Washington
+Pacific Earthquake Engineering Research Center
+University of California, Berkeley
+325 Davis Hall, Mail Code 1792
+Berkeley, CA 94720-1792
+Tel: 510-642-3437
+Email: peer_center@berkeley.edu
+ISSN 2770-8314
+https://doi.org/10.55461/IPOS1888 

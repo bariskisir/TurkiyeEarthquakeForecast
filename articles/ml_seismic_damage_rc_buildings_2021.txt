@@ -1,0 +1,1602 @@
+
+--- Sayfa 1 ---
+Glass-box model representation of seismic failure
+mode prediction for conventional RC shear walls
+Zeynep Tuna Deger, Ph.D. and Gulsen Taskin Kaya, Ph.D.
+Istanbul Technical University
+{zeynep.tuna@itu.edu.tr, gulsen.taskin@itu.edu.tr}
+Abstract
+The recent surge in earthquake engineering is the use of machine learning methods to develop
+predictive models for structural behavior. Complex black-box models are typically used
+for decision making to achieve high accuracy; however, as important as high accuracy, it
+is essential for engineers to understand how the model makes the decision and verify that
+the model is physically meaningful. With this motivation, this study proposes a glass-
+box (interpretable) classiﬁcation model to predict the seismic failure mode of conventional
+reinforced concrete shear (structural) walls. Reported experimental damage information of
+176 conventional shear walls tested under reverse cyclic loading were designated as class-types,
+whereas key design properties (e.g. compressive strength of concrete, axial load ratio, and
+web reinforcement ratio) of shear walls were used as the basic classiﬁcation features. The
+trade-oﬀbetween model complexity and model interpretability was discussed using eight
+Machine Learning (ML) methods. The results showed that the Decision Tree method was
+a more convenient classiﬁer with higher interpretability with a high classiﬁcation accuracy
+than its counterparts. Also, to enhance the practicality of the model, a feature reduction
+was conducted to reduce the complexity of the proposed classiﬁer with higher classiﬁcation
+performance, and the most relevant features were identiﬁed, namely: compressive strength
+of concrete, wall aspect ratio, transverse boundary, and web reinforcement ratio. The ability
+of the ﬁnal DT model to predict the failure modes was validated with a classiﬁcation rate of
+around 90%. The proposed model aims to provide engineers interpretable, robust, and rapid
+prediction in seismic performance assessment.
+Keywords reinforced concrete shear walls, failure mode, classiﬁcation, predictive modeling, machine
+learning, decision tree
+1
+Introduction
+Reinforced concrete buildings constitute the majority of the existing stock in earthquake-prone countries
+and include piers, walls, and/or columns to resist lateral loads due to earthquake ground shaking [1, 2].
+Seismic behavior (strength and ductility) and failure mechanism of such vertical structural elements are
+inﬂuenced by geometry and support conditions of the section, mechanical properties of structural materials
+(i.e., concrete and steel), amount and detailing of transverse and longitudinal reinforcement, as well as the
+loading pattern. Failure mechanisms of shear walls and columns are analogous and are typically classiﬁed as
+shear-controlled and ﬂexure-controlled, identiﬁed by reaching shear strength prior to yielding of longitudinal
+arXiv:2111.13580v1  [physics.geo-ph]  12 Nov 2021
+
+--- Sayfa 2 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Figure 1: Conceptual shear strength model [3, 4]
+reinforcement, and yielding in ﬂexure prior to reaching the shear strength, respectively. Structural elements
+showing shear-ﬂexure interaction yield in ﬂexure before reaching the shear strength with a reduction in
+nonlinear deformation capacity due to the presence of shear.
+Shear-controlled walls and columns exhibit rapid strength loss with little-to-no nonlinear deformation capacity
+(or ductility), i.e., brittle behavior, whereas ﬂexure-controlled members are able to attain large inelastic
+ﬂexural deformations, i.e., ductile behavior. Shear failure, ﬂexure failure, and shear-ﬂexure interaction can be
+clearly observed when shear and ﬂexural behaviors are assessed together, as made by Priestley et al. [3] and
+Zhu et al. [4] for reinforced concrete columns based on a conceptual shear strength model (Fig. 1). Fig.1
+indicates that the shear strength degradation is assumed linear, whereas failure is identiﬁed by comparing
+ﬂexural strength to shear strength. Brittle shear failure is expected if ﬂexural strength is greater than shear
+strength, whereas ductile ﬂexure failure is ensured if ﬂexural strength is smaller than the residual shear
+strength. For columns with shear-ﬂexure interaction, failure is assumed where ﬂexural strength intersects
+with the shear strength envelope.
+Accurate prediction of the failure modes of structural elements is essential to achieve a realistic assessment of
+inelastic response and accurate risk assessment of existing buildings. ASCE 41-17 [5] (in accordance with
+ACI Committee 369 [6]) provides classiﬁcation criteria for columns based on the ratio of lateral load capacity
+(shear strength) to the shear demand associated with reaching the nominal ﬂexural capacity along with the
+transverse reinforcement detailing. The classiﬁcation of failure modes in columns was investigated by several
+researchers (e.g.[7], [8], and [4]). Alcantara and Imai [7] classiﬁed column failure modes in three categories,
+namely: shear, bond splitting, and ﬂexure, based on strain distributions in the longitudinal reinforcement.
+Yoshikawa and Miyagi [8] suggested the use of the ratio of shear strength to ﬂexural strength to classify
+columns in three failure modes (shear, shear-ﬂexure, and ﬂexure). Zhu et al.[4] classiﬁed columns in two
+2
+
+--- Sayfa 3 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+failure modes (shear and ﬂexure) using the following three wall properties: transverse reinforcement ratio,
+aspect ratio, and the ratio of plastic shear demand to shear strength.
+The shear walls are typically designed to show ductile behavior with adequate reinforcement and proper
+detailing.
+However, experimental results demonstrated that shear wall behavior depends on the wall
+characteristics such that squat (short) wall responses are governed by shear, and taller (slender) wall responses
+are dominated by ﬂexural behavior [9, 10]. The squat walls, typically deﬁned as the walls with an aspect
+ratio (hw/lw) less than 1.5, are classiﬁed as the shear-controlled, whereas the slender walls, with an aspect
+the ratio greater than 3.0, are identiﬁed as the ﬂexure-controlled (ASCE 41-17). It is worth noting that
+the squat walls may show the ﬂexure-controlled behavior with the adequate design and the reinforcement
+detailing [11], whereas the slender walls may have shear (web crushing) failure [12] with poor reinforcement
+and conﬁnement.
+The classiﬁcation of the shear walls has been studied by various researchers based on experimental data.
+Wood [13] classiﬁed wall failure modes as either the ﬂexure or the shear based on the experimental evidence of
+27 wall specimens, and classiﬁcation was predicated on the wall shear stress level (4√fc). Fang [14] classiﬁed
+the failure modes based on 45 relatively tall specimens in four categories, namely: the shear failure, the
+ﬂexure failure, the ﬂexural-shear, the failure, and the out-of-plane failure. The predicted failure mode was
+identiﬁed based on the shear span ratio, the ratio of shear strength to the ﬂexural strength, the shear demand,
+and the wall detailing. Greifenhagen [15] suggested a classiﬁcation criterion for low-rise shear walls (shear
+span ratio ≤1.0) based on shear demand-to-capacity ratio, and the shear span ratio; where failure was
+identiﬁed as elastic shear, low-ductile to moderate-ductile response, and brittle shear. Abbasnia [16] suggested
+a decision tree procedure based on 105 specimens to classify the shear, the ﬂexure, and the ﬂexural-shear
+failure, including web crushing and sliding failure. More recently, Grammatikou [17] proposed a predictive
+model to determine failure modes in the following categories: ﬂexure, diagonal tension, diagonal compression,
+and sliding shear using 866 shear wall specimens.
+As prediction of the failure modes is essentially a classiﬁcation problem, the use of machine learning methods
+was considered in this study. Recently, the ML methods have received a lot of attention in the ﬁeld of
+structural earthquake engineering due to their easy implementation and capability to model the input-output
+relations via clustering, classiﬁcation, or regression [18, 19]. For example, Bourinet addressed the estimation
+of small failure probabilities, which is a very challenging task in structural reliability, by subset simulation
+and SVM classiﬁer in combined with active learning [20]. Salazar assessed the potential of some state-of-art
+machine learning methods for dam modeling in terms of displacements and leakage as an alternative to
+deterministic models [21], whereas Zhang proposed a ML-based framework to assess post-earthquake structural
+safety by introducing the concept of response and damage patterns for any damaged building [22]. More
+recently, the utility of the ML methods has been investigated to predict earthquake-induced building damage
+[23], classiﬁcation of failure modes for reinforced masonry shear walls [24], frame structures with masonry
+inﬁll panels [25], reinforced concrete beam-column joints, and shear walls [26, 27]. The proposed models in
+literature are generally highly nonlinear complex models.
+Literature review shows that ML methods are very convenient tools on many diﬀerent applications related to
+earthquake engineering and seismic risk assessment as they demonstrate promising and encouraging results.
+The proposed ML classiﬁcation models in the literature are reasonably accurate but are not transparent
+from the point of complete understanding by users, i.e., they are black-box models. In machine learning, a
+black-box model is a system that does not reveal its internal mechanisms [28]. From the engineering point of
+view, the main concern on the black-box models is that the model might fail in unexpected cases due to some
+possible inconsistency between the physical model and its machine learning representation while providing
+very good performance [29]. The literature of the interpretation of machine learning algorithms, also known
+as Explainable Artiﬁcial Intelligence (xAI) in Computer Science, is quite extensive even though this concept
+is more recently exploited. The interpretation is addressed with two main branches: transparent models
+and post-hoc explainability [30]. The former refers to a machine learning model which is understandable
+for a human [31], and the latter includes the post-hoc type methods that are speciﬁcally designed for
+explaining internal structure of the black-box type learning models [32]. Transparency and interpretability
+3
+
+--- Sayfa 4 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+are two concepts that are strongly tied to each other. The examples of the transparent models are Logistic
+Regression, Decision Trees (DT), k-Nearest Neighbors, Rule-base Learners, General Additive Models, and
+Bayesian methods.
+Among them, the DT easily fulﬁl most of the constraints for the transparency in
+terms of providing a decomposable and algorithmic transparent model at the expense of low generalization
+capability [33]. Therefore, the trade-oﬀbetween the performance of a model and its transparency should
+be properly established by means of feature relevance techniques [34]. Besides, it is important for engineers
+to understand how the model makes the decision and verify that the model is physically meaningful. The
+technical challenge of explaining decisions made by the models is referred to as the interpretability problem.
+Therefore, explanatory models, known as glass-boxes, are more useful than the black-box algorithms since
+they provide necessary and suﬃcient information to assess how the input variables of a system depend
+on the system output [35]. The disadvantages of black-box models and the importance of interpretability
+in machine learning have been pointed out by various researchers [36, 37, 38, 39], yet, not in the ﬁeld of
+earthquake engineering. As summarized in the literature review, the trade-oﬀbetween model complexity and
+model interpretability is typically disregarded in the earthquake engineering ﬁeld despite the importance
+of the explanatory models. This study aims to ﬁll this gap and assess the ML methods to provide an
+interpretable (glass-box) model for failure mode classiﬁcation of conventional reinforced concrete shear walls
+while ensuring reliability and high accuracy. To achieve this, eight ML methods are utilized to classify three
+wall failure modes based on the experimental evidence such that the highest possible accuracy is achieved
+by ensuring physical signiﬁcance along with a high interpretable model having the least number of features
+possible. To ensure such a model, the dimensionality of the problem is reduced with a feature selection
+algorithm. Features that are not physically meaningful are removed from the learning model even though
+they improve the classiﬁcation performance. The class-wise and overall classiﬁcation accuracy of the failure
+modes were compared for the considered ML classiﬁcation methods along with the ASCE 41-17 classiﬁcation
+criteria. Novel aspects of this study are i) investigating the state-of-the-art machine learning methods from
+the Explainable Artiﬁcial Intelligence (xAI) point of view, ii) establishing a convenient trade-oﬀbetween
+interpretability and classiﬁcation performance, and iii) obtaining a robust, interpretable, and physically
+meaningful classiﬁcation model without renouncing the high accuracy accuracy for predicting failure mode
+for conventional reinforced concrete shear walls. The proposed classiﬁcation model is aimed to provide a
+preliminary prediction for the shear wall to achieve better nonlinear modeling for a detailed performance
+assessment.
+2
+Shear Wall Test Database
+A total of 176 shear wall specimens from 19 diﬀerent experimental studies conducted worldwide were collected
+based on a review of available research. The database consists of conventional reinforced concrete shear walls
+that would typify the existing building stock. It is noted that similar databases are available in the literature,
+[17, 40, 27, 41], consisting of a much wider range of data; however, they were not suitable for the use of this
+study directly as the following walls do not represent conventional walls in the existing building stock: (i)
+specimens that were constructed using high strength material (>40 MPa and >500 MPa for concrete and
+reinforcing steel, respectively), (ii) those that were constructed with diagonal web reinforcement or with no
+vertical and/or horizontal web reinforcement, (iii) walls with openings or hollow sections, (iv) walls that
+were constructed using composite materials, (v) specimens tested under monotonic loading (as the focus is
+earthquake-induced damage), (vi) repaired or strengthened walls.
+Failure modes of shear wall specimens can be categorized based on two approaches. One approach is theoretical
+and depends on the shear and the ﬂexural strength values of the shear wall, i.e. the ratio of the shear
+force developed to the shear force associated with reaching the wall nominal ﬂexural capacity (V/V @Mn),
+similar to the recommendations of ASCE 41. Another approach is to assign failure modes with respect to
+the experimental evidence (reported failure modes), based on the criteria summarized in Table 1. In this
+study, failure mode class assignments were made based on the latter approach as they represent ground truth
+(actual class labels). The ASCE 41 classiﬁcation criteria are also discussed in detail in the following sections.
+The failure types for shear-controlled walls include diagonal tension, web crushing, and sliding; whereas those
+4
+
+--- Sayfa 5 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Figure 2: (a) Diagonal web crushing [42], (b) Sliding shear failure [43], (c) Buckling of longitudinal boundary
+reinforcement [15]
+for ﬂexure-controlled walls include concrete crushing and reinforcement buckling at the wall boundary. The
+failure types observed in the shear-ﬂexure walls commonly consist of shear failure followed by concrete spalling
+and crushing at wall boundaries or sliding shear failure after yielding of longitudinal boundary reinforcement.
+Three of the most common damage occurred during the tests, including web crushing, sliding shear after
+yielding of boundary reinforcement, and buckling of longitudinal boundary reinforcement, are depicted in Fig.
+2. The database includes 50 specimens for the shear-controlled walls, 57 specimens for the ﬂexure-shear walls,
+and 69 specimens for the ﬂexure-controlled walls.
+Table 1: Reported failure modes of the walls.
+Shear
+failure
+Flexure-shear failure
+Flexure failure
+Expected
+failure
+types
+diagonal
+tension
+failure
+web
+crushing
+shear failure followed
+by concrete spalling and
+crushing at wall boundaries
+sliding shear failure after
+yielding of longitudinal
+boundary reinforcement
+concrete spalling
+and crushing
+rebar buckling and
+lateral instabilities
+at boundary elements
+Key wall properties include specimen geometry (rectangular, barbell, and ﬂanged), wall aspect ratio (hw/lw)
+and shear span ratio (M/V lw), mechanical properties of concrete and steel (f ′
+c and fyt/f ′
+c), transverse
+and longitudinal boundary reinforcement ratios (ρsh and ρb, respectively), transverse and longitudinal web
+reinforcement ratios (ρt and ρl, respectively), as well as axial load ratio (P/Agf ′
+c) and shear strength-to-shear
+at ﬂexural strength ratio (Vn/V @Mn). The distribution of key wall design properties are presented in Fig. 3
+for each failure mode. Further details on the database can be obtained elsewhere. [44].
+The classiﬁcation criteria provided by ASCE 41-17 were assessed using the experimental database. For this
+purpose, classiﬁcation criteria suggested for shear walls (ASCE-W), as well as that recommended for columns
+(ASCE-C) were applied to the shear walls in the database. When the ASCE-C is used, the column transverse
+reinforcement details are assumed to be associated with the wall boundary elements. As required by the ASCE
+41-17, boundary reinforcement was veriﬁed to satisfy the following conditions to qualify for ﬂexure-controlled
+category: Av/bws ≥0.002 and s/do ≤0.5. Table 2 summarizes the ASCE 41-17 classiﬁcation criteria, whereas
+Table 3 tabulates the associated predictions of the three failure modes.
+5
+
+--- Sayfa 6 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+0
+0.5
+1
+1.5
+2
+2.5
+3
+3.5
+4
+4.5
+0
+0.5
+1
+1.5
+2
+2.5
+3
+3.5
+4
+4.5
+0
+0.1
+0.2
+0.3
+0.4
+0.5
+10
+20
+30
+40
+50
+60
+0
+0.2
+0.4
+0.6
+0.8
+1
+1.2
+1.4
+1.6
+1.8
+0
+0.5
+1
+1.5
+2
+2.5
+0
+0.2
+0.4
+0.6
+0.8
+1
+1.2
+1.4
+1.6
+1.8
+5
+10
+15
+20
+25
+30
+0
+0.5
+1
+1.5
+2
+2.5
+3
+3.5
+0
+1
+2
+3
+4
+5
+6
+1
+1.5
+2
+2.5
+3
+S
+SF
+F
+M/V Iw
+hw/lw
+P/Agf 0
+c
+⇢b(%)
+⇢sh(%)
+⇢t(%)
+⇢l(%)
+Vn/V @Mn
+f 0
+c (MPa)
+Cross Section
+fyt/f 0
+c
+Figure 3: Distribution of key wall properties (176 specimens)
+Table 2: Classiﬁcation of failure modes based on ASCE 41-17.
+Wall criteria
+Column criteria adapted to walls
+Aspect
+Ratio
+Failure
+Mode
+Shear
+Capacity
+Ratio
+ACI
+conforming
+hoops with
+135-degree
+hooks
+Non-conforming
+hoops with
+135-degree
+hooks
+Closed
+hoops with
+90-degree
+hooks
+Other
+hw
+lw < 1.5
+S
+Vn
+V @Mn ≥1.67
+F
+SF
+SF
+SF
+1.5 ≤hw
+lw ≤3.0
+SF
+1.0 ≤
+Vn
+V @Mn < 1.67
+SF
+SF
+SF
+S
+hw
+lw > 3.0
+F
+Vn
+V @Mn > 1.0
+S
+S
+S
+S
+6
+
+--- Sayfa 7 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Table 3: Overview of the experimental database.
+#
+M/V lw
+hw/lw
+P/Agf′
+c
+f′
+c (MPa)
+ρb (%)
+ρsh (%)
+ρt (%)
+ρl (%)
+fyt/f′
+c
+X-sec*
+Failure**
+2
+2.78
+2.78
+0.0
+47.4
+0.44 - 1.5
+0.84 - 1.01
+0.50
+0.37
+10.2
+R
+F
+1
+3.04
+2.92
+0.1
+34.5
+0.48
+0.48
+0.27
+0.27
+16.3
+B
+F
+3
+2.50
+2.29
+0.15 - 0.35
+27.4
+0.45
+0.00
+0.44
+0.74
+22.2
+R
+SF
+1
+1.50
+1.50
+0.0
+20.2
+1.21
+0.00
+0.14
+0.23
+16.1
+R
+S
+4
+0.25 - 1.0
+0.25 - 1.0
+0.0
+21.2 - 27
+0.85
+0.91
+0.50
+0.25 - 0.51
+19.0 - 23.4
+F
+S, SF
+6
+2.26-2.28
+2.26-2.28
+0.05 - 0.13
+38.3-45.6
+0.1 - 0.23
+0 - 1.51
+0.25
+0.27-0.54
+11.4 - 13.5
+R
+F
+2
+0.69
+0.69
+0.0
+51
+0.00
+0.00
+0.30
+0.30
+9.9
+R
+SF
+14
+0.35 - 1
+0.71 - 2.0
+0.0
+15.7 - 19.6
+0.44 - 1.08
+0.00
+0.13 - 0.38
+0.13 - 0.26
+17.8 - 30
+R
+S
+6
+1.9 - 2.5
+1.69 - 2.29
+0.2
+27.4
+0 - 0.48
+0 - 0.44
+0.44 - 0.46
+0.74 - 1.34
+19.1 - 22.2
+R
+SF
+2
+3.00
+3.00
+0.2 - 0.25
+15.4
+0.91 - 1.13
+0.7 - 1.4
+0.42
+0.42
+29.4
+R,B
+F
+2
+2.80
+2.80
+0.1
+24.1 - 24.9
+0.31
+0.53
+1.11
+1.11
+R
+F
+19
+0.35 - 0.93
+0.35
+0.0
+13.8 - 26.5
+0.15 - 0.45
+0.07
+0.34 - 0.71
+0.34 - 0.71
+13.5 - 28.3
+F
+S
+6
+1.00
+1.00
+0.1
+28 - 37.1
+0 - 0.26
+0 - 2.1
+1.05
+0.87
+14 - 18.6
+R
+SF
+2
+2.00
+2.00
+0.0
+29.2 - 39.2
+0.71
+0.34
+0.36
+1.55
+15.5 - 20.8
+R
+SF, F
+1
+1.10
+1.90
+0.0
+45.5
+1.08
+0.93
+0.93
+0.56
+10.6
+R
+SF
+4
+1.87 - 2.79
+3.94
+0.1 - 0.13
+36 - 40.3
+0.38 - 0.57
+0.82 - 0.93
+0.27
+0.27 - 1.54
+13.0 - 17.8
+R
+SF
+1
+2.43
+2.32
+0.3
+44.7
+0.44
+0.72
+0.72
+0.60
+9.8
+R
+F
+6
+0.44
+0.89
+0.0 - 0.1
+28.3 - 32
+0.13
+0.00
+0.29
+0.26
+13.3 - 15.0
+R
+S
+1
+2.33
+2.33
+0.1
+39.2
+0.07
+0.63
+0.63
+0.21
+11.9
+R
+SF
+13
+2.39
+2.39
+0.0 - 0.13
+21.9 - 53.6
+0.15 - 1.07
+0.16 - 1.63
+0.27 - 1.37
+0.21 - 0.24
+9.8 - 23.4
+R, B, F
+SF
+8
+1.50
+1.50
+0.08 - 0.22
+27.6
+0.18 - 0.3
+0.1 - 0.79
+0.31
+0.24 - 0.39
+12.4
+R,B,F
+F
+2
+2.71 - 3.13
+2.71 - 3.13
+0.07 - 0.1
+25.9 - 33.4
+0.28
+0.00
+0.15
+0.15
+9.6 - 12.4
+R
+SF
+1
+0.50
+0.50
+0.0
+27.2
+0.15
+1.13
+1.67
+0.81
+14.0
+R
+S
+6
+2.00
+2.00
+0.0
+31.8 - 45.8
+1.26 - 1.31
+0.35 - 0.79
+0.35 - 0.6
+0.79
+8.8 - 17.2
+R
+S, SF, F
+1
+0.91
+0.91
+0.0
+17.2
+0.14
+0.00
+0.28
+0.28
+28.3
+R
+F
+3
+1.50
+1.50
+0.0
+24.1 - 26.2
+0.25 - 0.33
+0.66
+0.28 - 0.56
+0.28 - 0.56
+21.9 - 23.9
+R
+F
+4
+1 - 1.5
+1 - 1.5
+0.0 - 0.07
+21.6 - 27.5
+0.25 - 0.35
+1.03
+0.28 - 0.56
+0.28 - 0.56
+20.9 - 28.2
+R
+SF, F
+1
+2.89
+2.89
+0.0
+23.3
+0.78
+0.41
+0.36
+0.24
+20.3
+R
+SF
+2
+1.43
+1.43
+0.0
+35.8 - 36.6
+0.64
+0.23
+0.52 - 0.79
+0.39 - 0.52
+12.3 - 12.6
+B
+S
+3
+4.10
+4.10
+0.25 - 0.50
+41.8 - 50.2
+0.63
+0.00
+0.36
+1.33
+5.2 - 6.3
+R
+SF, F
+4
+3.00
+3.00
+0.0
+21.6 - 23.5
+0.45
+0.00
+0.28
+0.28
+9.2 - 10
+R
+SF
+2
+3.00
+3.00
+0.1
+31.6 - 34
+0.46
+0.47 - 0.7
+0.33
+0.33
+12.7 - 13.7
+R
+F
+4
+2.75
+2.75
+0.1
+41.7 - 43.6
+0.46 - 0.55
+0.14 - 2.04
+0.33 - 0.44
+0.326 - 0.4
+9.9 - 10.4
+F
+F
+2
+1.2 - 1.42
+1.2 - 1.42
+0.0
+16.5 - 37
+0.00
+0.00
+0.26 - 0.73
+0.33 - 3.29
+27.9
+R
+S
+6
+2.79
+1.69
+0.4
+32 - 35.7
+0 - 1.04
+0.63 - 1.26
+1.16
+2.91
+10.4 - 11.6
+R
+SF
+5
+1.5-2.0
+1.5-2.0
+0.02 - 0.08
+47.1 - 57.5
+0.57 - 1.22
+0.82
+0.27 - 0.73
+0.27 - 0.73
+7.7 - 9.6
+R
+SF
+2
+1.59 - 1.84
+1.59 - 1.84
+0.06 - 0.07
+35
+0.65 - 0.71
+0.38 - 1.68
+0.54 - 0.82
+0.54 - 0.82
+14.3 - 14.6
+R,B
+SF
+13
+1.5 - 2.0
+2.00
+0.1 - 0.4
+20.7 - 30.8
+0.24 - 0.59
+0.67
+0.43
+0.43
+12.7 - 18.9
+R
+S, SF, F
+6
+1.88 - 2.0
+1.88 - 2.0
+0.16 - 0.30
+26.5 - 30.8
+0.11 - 0.36
+0 - 0.9
+0.36 - 0.43
+0.36 - 0.43
+12.7 - 14.8
+R
+F
+3
+1.80
+2.14
+0.24 - 0.35
+24.7 - 29.4
+0.88 - 1.79
+0.75 - 1.13
+1.00
+0.67
+12.3
+R
+S, F
+2
+2.50
+2.50
+0.10 - 0.20
+30.1
+0.74
+1.12
+0.84
+0.84
+11.5
+R
+F
+* Wall cross sections: R = rectangular, B = barbelled, F = ﬂanged; **Failure types: S = shear-controlled, SF = shear-ﬂexure, F = ﬂexure-controlled
+7
+
+--- Sayfa 8 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+V @Mn is the shear force in the wall associated with reaching the wall nominal moment capacity (Mn) for the
+given distribution of lateral forces used in the test. Wall nominal shear strength can be obtained as shown in
+Eq. (1) by using expected (or tested) material properties,
+Vn = Acv(αcλ
+p
+f ′c + ρtfyt)
+(1)
+where Acv is the wall web length multiplied by the web thickness in the direction of the applied shear force;
+αc is a coeﬃcient to account for aspect ratio, calculated by 2 ≤(αc = 6 −2hw/lw) ≤3, where hw and lw
+are wall height and length, respectively. f ′
+c is the speciﬁed concrete strength; whereas ρt and fyt are the
+reinforcement ratio and yield strength of the web horizontal reinforcement, respectively.
+3
+Implementation of Machine Learning Techniques and Results
+The key shear wall properties (Fig.3) and the reported failure modes (S, SF, and F) were designated as input
+variables (features) and output variables (class labels), respectively. The classiﬁcations were conducted using
+all available (total of 11) features. In all implementations, training and test datasets were randomly drawn by
+10-fold cross validation and are formed as 90% and 10% of the entire database, respectively. The performance
+of the methods were evaluated based on overall classiﬁcation accuracy (median and mean) over ten trials
+along with sensitivity and precision calculated based on the confusion matrix associated with the classiﬁcation
+method. In tuning the parameters of the machine learning methods, 5-fold cross validation approach was
+used. For SVM, the potential parameter combinations of the RBF kernel parameters and polynomial kernel
+parameters were tested in a user deﬁned range, and the combinations providing the highest classiﬁcation
+accuracy on the validation set were used in generating the learning model of corresponding SVM classiﬁer.
+Since SVM is originally designed as a binary classiﬁer, the one-against-all strategy was considered for the
+multi-class case. The number of trees and the number of features for the best splitting when growing the
+trees for Random Forest were set to 200 and to the square root of the number of input features, respectively,
+as usually recommended in the literature [45]. The GP classiﬁer enables an automatic way of tuning the
+kernel parameters by using gradient-based optimization routines to maximize the marginal likelihood. All of
+the experiments were implemented in Matlab and run on a personal computer with Dual Core Intel Core i7
+CPU (3.50GHz), 16GB RAM and MacOS operating system.
+The class-wise, overall classiﬁcation accuracy, and Kappa coeﬃcients [46] of the failure modes using eight
+classiﬁcation methods along with the ASCE 41-17 classiﬁcation criteria are summarized in Fig. 4 and Table
+4. According to the Cohen’s Kappa statistic interpretation, slight to moderate agreement is achieved with
+ASCE-C and ASCE-W, whereas moderate to substantial agreement is achieved with ML methods, meaning
+that ML methods perform better than classical approaches. The classiﬁcation accuracies achieved by the
+eight ML methods varied between 80% and 90% for the shear failure mode (S), whereas the highest accuracy
+was achieved by the ASCE-C classiﬁcation criteria. The ML methods made predictions with relatively more
+disperse accuracies (varied from 60% to 92%) for the SF and the F failure modes, all of which were able to
+predict with higher accuracy than the ASCE-C and ASCE-W criteria. It should be noted that the ASCE 41
+is a seismic evaluation and assessment standard; therefore, the predictions are rather on the brittle side to
+ensure conservative assessment. This is the reason why the prediction accuracy of ASCE criteria is lower for
+the SF and the F failure modes despite the high accuracy obtained for the S failure mode.
+The results indicate that the classiﬁcation methods implemented in this study provide better performances
+than the classical approaches. However, not all of them yield explicit equations. The easy-to-use and
+physically meaningful equations are generally desirable for engineering practice, which was prioritized in
+the method selection in this study even though the higher prediction accuracies were achieved using other
+classiﬁcation methods. The strengths and weaknesses of all the ML methods are summarized in Table 5.
+Among the ML methods that yield an explicit formulation for classiﬁcation (e.g. the SVM with linear and
+polynomial kernel, and the DT), the DT is selected as it is able to provide a single ﬂow chart to identify all
+three failure modes, unlike the SVM. It is worth noting that higher prediction accuracy is achieved using the
+RF and the GPC, both of which provide black-box algorithms to predict the wall failure modes.
+8
+
+--- Sayfa 9 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+L-SVM
+Poly-SVM RBF-SVM
+GPC
+QDA
+KNN
+DT
+RF
+ASCE-C
+ASCE-W
+0
+50
+100
+shear-controlled accuracy
+L-SVM
+Poly-SVM RBF-SVM
+GPC
+QDA
+KNN
+DT
+RF
+ASCE-C
+ASCE-W
+0
+50
+100
+shear-flexure accuracy
+L-SVM
+Poly-SVM RBF-SVM
+GPC
+QDA
+KNN
+DT
+RF
+ASCE-C
+ASCE-W
+0
+50
+100
+flexure-controlled accuracy  
+L-SVM
+Poly-SVM RBF-SVM
+GPC
+QDA
+KNN
+DT
+RF
+ASCE-C
+ASCE-W
+0
+50
+100
+overall accuracy
+Figure 4: Classiﬁcation accuracy plots of all the methods with 11 features on 10-fold cross validation. The
+red diamond shows the mean accuracy.
+Table 4: Class-wise mean accuracies along with the overall accuracies based on 10-fold cross validation
+experiments.
+L-
+SVM
+Poly-
+SVM
+RBF-
+SVM
+GPC
+QDA
+KNN
+DT
+RF
+ASCE-
+C
+ASCE-
+W
+S
+79.5
+81.0
+84.3
+81.0
+81.0
+84.3
+78.7
+88.6
+88.8
+85.0
+SF
+69.7
+69.1
+80.4
+89.3
+76.8
+82.5
+66.5
+92.7
+62.7
+65.5
+F
+61.2
+59.2
+81.6
+91.8
+79.8
+81.4
+78.4
+86.7
+19.4
+8.7
+OA
+70.3
+68.8
+82.3
+88.1
+79.4
+82.8
+73.7
+89.8
+56.1
+51.8
+Kappa 0.60
+0.57
+0.72
+0.81
+0.68
+0.73
+0.61
+0.84
+0.45
+0.39
+9
+
+--- Sayfa 10 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Table 5: Overview of the ML methods used in this study.
+Methods
+Strengths
+Weaknesses
+SVM with
+linear kernel and
+polynomial kernel
+•
+high interpretability
+•
+yielding an analytical equation
+•
+fast to implement
+•
+requires less parameters to tune
+•
+works well with less number of samples
+•
+low accuracy for nonlinearly distributed data
+•
+each class will have an equation, and
+ﬁnal class label is determined based on the majority
+voting of the predictive equations.
+SVM with RBF ker-
+nel
+•
+superior to SVM with linear and polynomial kernel
+in terms of classiﬁcation performance, due to its ability
+to deal with nonlinearly distributed data via
+nonlinear kernel function
+•
+requires more parameter to tune than linear SVM, and
+sensitivity of the parameters has high eﬀect on classiﬁcation
+accuracy
+•
+does not provide an explicit but an implicit
+equation associated with a kernel matrix,
+therefore, resulting in a low interpretability
+•
+training dataset need to be retained for labeling
+a new sample
+•
+a diﬀerent equation is needed for each class
+which requires majority voting for class labeling
+Decision Tree
+•
+high interpretability
+•
+provide only a single decision graph for all the classes
+•
+probability of the class for each sample is available
+•
+can handle nonlinearly distributed dataset with a high
+performance
+•
+very fast for labeling the new samples
+•
+not a unique decision graph is proposed
+•
+requires a high computation during training
+•
+a parameter tuning is needed
+KNN
+•
+tackles with nonlinearity of dataset
+•
+very easy to use for labeling of a new sample
+•
+not robust to noise and dimensionality
+of the dataset
+•
+does not provide an equation
+•
+low interpretability
+training set need to be retained for labeling
+of a new sample
+GPR
+•
+provides high classiﬁcation accuracy
+•
+robust to noise on the dataset
+•
+class conditional probability is available
+•
+dataset is assumed to follow Gaussian distribution
+•
+training dataset need to be retained
+for kernel matrix calculation for labeling of a new sample
+•
+very low interpretability due to the type of equation
+QDA
+•
+easy to implement
+•
+can handle nonlinearity of the dataset
+•
+low interpretability due to dependency on mean
+vector and covariance matrix for each class
+•
+mean vector and covariance matrix need to be retained
+Random Forest
+•
+same as the DT except that it provides higher
+performance than the DT
+•
+not easy to use for labeling since many trees are
+provided, therefore, it has low interpretability
+Another critical issue was to design a classiﬁer with as few features as possible to reduce the engineering
+eﬀorts in preparing dataset. Therefore, a feature selection was conducted to lower the complexity of the
+classiﬁer with the same or higher classiﬁcation accuracy. Preliminary feature selection, based on Fisher
+Score [47] and the SVM-RFE [48], indicated that aspect ratio (or shear span ratio) was the most signiﬁcant
+feature to make a distinction between the failure modes, in accordance with the ﬁndings in previous research
+in literature [9, 10, 5]. The importance of other features in classiﬁcation varied from one feature selection
+method to another. Therefore, a brute-force feature subset selection was conducted, that is, all physically
+meaningful combinations of three and four features were exhaustively evaluated and the best combination
+was determined based on the overall accuracy. The combinations of four features achieved considerably higher
+accuracy than that of three features. Therefore, feature subsets consisting of four features, one of which was
+either aspect ratio or shear span ratio, were considered. The most challenging drawback of the brute-force
+feature selection method is high computational cost, which was insigniﬁcant for this study as the number of
+input features was limited and data were not too extensive.
+Table 6 summarizes example feature combinations along with their overall classiﬁcation accuracies and Fisher
+Scores. Out of all possible feature combinations, the one having a high Fisher Score and high accuracy were
+simultaneously was selected. It is noted that Fisher Score does not necessarily guarantee high accuracy, as
+observed in Table 6. The selected feature combination included aspect ratio (hw/lw), concrete compressive
+strength (f ′
+c), transverse web reinforcement (ρt), and boundary conﬁnement ratio (ρb). The DT method was
+then retrained using the selected four features based on 10-fold cross validation, and a proposed decision tree
+was ﬁnalized by evaluating 10 possible models considering their common pattern (versus picking one directly),
+which is presented in Fig. (5). It is noted that decision tree models were pruned to ensure physical integrity,
+10
+
+--- Sayfa 11 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Table 6: Example combinations of four input features.
+Combo
+Selected Features
+Fisher
+Score
+DT Overall
+Accuracy (%)
+1
+M/V lw, P/Agf ′
+c, ρsh, ρt
+0.635
+77
+2
+M/V lw, P/Agf ′
+c, ρb, ρt
+0.625
+79.6
+3
+M/V lw, P/Agf ′
+c, ρb, ρsh
+0.596
+77.19
+4
+M/V lw, ρb, ρsh, ρt
+0.554
+77.81
+5
+M/V lw, P/Agf ′
+c, ρt , Vn/V @Mn
+0.543
+69.64
+6
+M/V lw, P/Agf ′
+c, ρsh, Vn/V @Mn
+0.532
+73.66
+7
+M/V lw, ρsh, ρt , Vn/V @Mn
+0.508
+76.50
+8
+M/V lw, ρb, ρsh, Vn/V @Mn
+0.489
+78.92
+9
+hw/lw, P/Agf ′
+c, f ′
+c, ρsh
+0.437
+77.45
+10
+hw/lw, P/Agf ′
+c, f ′
+c, ρsh
+0.437
+80.26
+11
+hw/lw, f ′
+c, ρsh, ρt
+0.437
+85.29
+12
+hw/lw, f ′
+c, ρb, ρsh
+0.437
+82.39
+13
+hw/lw, fyt / f ′
+c, Vn/V @Mn, X-sec
+0.185
+81.67
+14
+hw/lw, P/Agf ′
+c, ρsh, fyt / f ′
+c
+0.184
+82.94
+Table 7: Confusion matrices for the ASCE-Wall, the ASCE-Column, and the proposed DT classiﬁcation
+model, respectively.
+ASCE-W
+Estimated
+ASCE-C
+Estimated
+DT
+Estimated
+S
+SF
+FC
+Total Se
+S
+SF
+FC
+Total Se
+S
+SF
+FC
+Total Se
+True
+S
+42
+14
+2
+58
+72
+True
+S
+45
+20
+9
+74
+60
+True
+S
+45
+1
+1
+47
+95
+SF
+7
+44
+50
+101
+43
+SF
+4
+43
+37
+84
+52
+SF
+3
+62
+8
+73
+85
+FC
+1
+11
+5
+17
+30
+FC
+1
+6
+11
+18
+61
+FC
+2
+6
+48
+56
+86
+Total
+50
+69
+57
+176
+Total 50
+69
+57
+176
+Total 50
+69
+57
+176
+Pr
+84
+63
+9
+OA
+52
+Pr
+90
+62
+19
+OA
+56
+Pr
+90
+90
+84
+OA
+88
+where some decision tree models were disregarded if they are not physically correct even though they achieve
+higher accuracy. The pruned decision tree is eventually proposed in Fig. (5), along with the associated
+probabilities (P) of making accurate predictions. For example, if a shear wall sample has an aspect ratio
+smaller than 1.5, includes boundary conﬁnement ratio less than 0.8, and has concrete compressive strength
+smaller than 37 MPa, then the probability of this wall to be shear-controlled is 95%. It is noted that the P
+value provided with the proposed decision tree being close to 1.0 implies that the predicted failure mode is
+most likely.
+The proposed decision tree in Fig.4 was applied to the entire database to obtain class-wise and overall accuracy.
+Note that the proposed decision tree is not obtained over the entire database, but is manually modiﬁed to
+meet the physical integrity of the problem as mentioned before. The mean classiﬁcation accuracy values are
+obtained as 88%, 90%, and 85% for the S, the SF, and the F failure modes, respectively, with an overall
+accuracy of 88%. The results revealed that prediction accuracies were improved using four features versus
+using all eleven features, potentially because some features were noisy for the DT analysis. The comparisons
+with the ASCE 41 predictions (Table 4) indicate that for the S failure mode, the proposed DT model and
+ASCE 41 were able to make comparable predictions, whereas much higher accuracies were obtained using the
+proposed DT model for the remaining failure modes.
+To observe the performances of the proposed DT model and the ASCE 41 criteria, the confusion matrices were
+provided in Table 7. The precision (Pr) was performed by dividing the total number of correctly predicted
+specimens by the total number of specimens that were actually associated with that failure mode, whereas
+11
+
+--- Sayfa 12 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+Figure 5: Proposed decision tree for seismic failure mode prediction.
+the sensitivity (Se) was calculated by dividing the total number of correctly predicted specimens by the total
+number of specimens claimed to be associated with that failure mode. For example, based on the proposed
+DT model for the shear failure mode, the Pr is 45/50 = 90%, whereas the Se is 45/47 = 95%.
+Precision and sensitivity for each failure mode were calculated based on the confusion matrix for each method.
+When only the precision for the shear failure mode is considered, one can say that the DT and the ASCE-C
+are the best classiﬁers. However, the sensitivity of the shear failure mode obtained using the ASCE-C criteria
+was 60%, implying that even though 90% of the shear-dominant specimens were correctly identiﬁed by
+ASCE-C criteria, only 60% of them were actually true. The reason for this discrepancy is that ASCE 41
+makes predictions in favor of brittle failure modes for the sake of conservatism, as discussed earlier. The
+ASCE 41 criteria were assessed in this paper as they are well accepted in literature; however, it should be
+noted that the ASCE-W and the ASCE-C need the use of only one feature and two features, respectively,
+whereas the proposed DT model requires four features to carry out the predictions. Therefore, from the
+machine learning point of view, they are not necessarily equivalent.
+4
+Summary and Conclusions
+Failure modes of 176 conventional reinforced concrete shear walls tested under reverse cyclic loading were
+classiﬁed into three types based on experimental evidence, namely: shear (S), shear-ﬂexure (SF), and ﬂexural
+(F) failure. A physically meaningful and fully transparent machine learning-based glass-box (versus black-box)
+classiﬁcation model was explored without compromising high accuracy. The proposed classiﬁcation model
+ensured four important aspects, namely: high accuracy, interpretability, practicality, and physical integrity.
+Although, these four aspects are of similar importance in engineering, interpretability and physical integrity are
+12
+
+--- Sayfa 13 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+commonly disregarded in ML applications in the earthquake engineering ﬁeld as an increase in interpretability
+typically results in a decrease in model performance. This study is novel in that the trade-oﬀbetween
+the performance and interpretability was ensured by particularly considering practicality and the physical
+integrity resulted in higher classiﬁcation performance.
+The trade-oﬀbetween the interpretability and the accuracy was investigated using eight state-of-the-art
+machine learning methods. To provide an accurate estimate of generalization capacity of the ML methods,
+ten-fold cross validation was considered in all the implementations. The proposed classiﬁcation model was
+obtained using the Decision Tree (DT) method, which was selected due to the ability of the method to provide
+a single, interpretable, and robust prediction model.
+As the target users are engineers, another eﬀort was to obtain a practical and easy-to-use model that utilizes
+as few features (wall design parameters) as possible. Therefore, a brute-force feature selection was performed
+by only considering the DT, based on Fisher score, SVM-RFE, as well as engineering judgment, which
+reduced the original features to 4 features. The compressive strength of concrete (f ′
+c), wall aspect ratio
+(hw/lw), transverse boundary (ρb), and web reinforcement (ρt) ratio were found to be the most signiﬁcant
+features in failure mode classiﬁcation. The ability of the proposed DT model to predict the failure modes was
+validated with actual failure modes. Although the DT achieved high prediction accuracy (above 85%) for
+all three failure modes, even higher accuracies were obtained using other methods which provide black-box
+type classiﬁcation algorithms (tools). The reason for speciﬁcally selecting the DT is that it provides a more
+interpretable classiﬁcation model than the others (e.g. the SVM with RBF kernel, the GPC, and the RF),
+each of which produces impenetrable black-box type classiﬁcation models.
+Accurate predictions of wall failure modes will enable reliable and eﬃcient seismic risk assessment in reinforced
+concrete shear wall buildings. The current ﬁnite element modeling approaches (e.g. Modiﬁed Compression
+Theory, Fixed-Strut- Angle Finite Element model) are cumbersome and require certain modeling assumptions,
+yet are commonly used to predict response and failure of reinforced concrete structural elements; however, the
+proposed classiﬁcation model will be advantageous as it by-passes modeling uncertainties and computational
+costs of the analytical FEM models. The outcomes of the proposed classiﬁcation model may also be used as
+preliminary predictions to achieve more accurate modeling in a detailed risk/performance assessment. For
+example, modeling of shear behavior can be elaborated in the FEM model of a shear wall if the proposed
+classiﬁer revealed that the wall is shear-controlled. It is also worth noting that the proposed classiﬁcation
+model is data-driven, meaning that the outcomes depend on the dataset used in this study although the
+physical behavior of the shear walls is strongly considered.
+In the context of the type of ML methods, the linear methods have always been very popular than the
+nonlinear methods because of their high interpretability. However, it should be noted that the ability of the
+linear methods is limited when the dataset follow a nonlinear distribution, hence, yielding a poor classiﬁcation
+performance. Therefore, there is a trade-oﬀbetween the classiﬁcation performance and the interpretability of
+the decision functions. The aim of this paper is to explore the feasibility of the machine learning algorithms
+in wall failure mode classiﬁcation in terms of both the performance and the practicality.
+13
+
+--- Sayfa 14 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+References
+[1] S.T. Wasti, O. Guney, (Eds.), Advances in earthquake engineering for urban risk reduction, vol. 66
+(Springer, 2006)
+[2] G.M. Verderame, L. Lunio, M. Gaetano, Eurocode (2009) 8 (2009)
+[3] B.M.J.N. Priestley, R. Verma, Y. Xiao, Journal of Structural Engineering, ASCE 120(8), 2310 (1994)
+[4] L. Zhu, K.J. Elwood, T. Haukaas, Journal of Structural Engineering, ASCE 133, 1316 (2007)
+[5] ASCE, ASCE Standard, ASCE/SEI, 41-17, Seismic Evaluation and Retroﬁt of Existing Buildings.
+ASCE.: Standard (American Society of Civil Engineers, 2017)
+[6] ACI, Standard Requirements for Seismic Evaluation and Retroﬁt of Existing Concrete Buildings (ACI
+369.1M-17) and Commentary (American Concrete Institute, 2017)
+[7] P. Alcantara, H. Imai, in Proceedings of the 12th World Conference on Earthquake Engineering, Auckland,
+NZ (2000)
+[8] H. Yoshikawa, T. Miyagi, Modeling of Inelastic Behavior of RC Structures Under Seismic Loads pp.
+35–368 (2001)
+[9] L.M. Massone, J.W. Wallace, ACI Structural Journal 101(1), 103 (2004)
+[10] K. Orakcal, L.M. Massone, J.W. Wallace, ACI Structural Journal 106(4), 455 (2009)
+[11] T.N. Salonikios, A.J. Kappos, ACI Structural Journal 96(4) (1999)
+[12] C. Sittipunt, S.L. Wood, P. Lukkunaprasit, P. Pattararattanakul, Structural Journal 98(4), 554 (2001)
+[13] S. Wood, Inelastic Response and Design of Earthquake-Resistant Concrete Structures pp. 334–344 (1991)
+[14] E. Fang, Concrete Shear in Earthquake pp. 125–133 (1992)
+[15] C. Greifenhagen, D. Papas, P. Lestuzzi, Gen Inf pp. 1–113 (2005)
+[16] R. Abbasnia, M. Bagheri, in Journal of Physics: Conference Series (IOP Publishing, 2011), p. 012127
+[17] S. Grammatikou, D. Biskinis, M.N. Fardis, Bulletin of Earthquake Engineering 13(11), 3277 (2015)
+[18] B. Sudret, C. Mai, K. Konakli, Earthquake Engineering & Structural Dynamics 43(May), 2075 (2014)
+[19] Y. Jiang, J. Luo, G. Liao, Y. Zhao, Structural Safety 54, 1 (2015)
+[20] J.M. Bourinet, F. Deheeger, M. Lemaire, Structural Safety 33(6), 343 (2011)
+[21] F. Salazar, M.A. Toledo, E. Oñate, R. Morán, Structural Safety 56, 9 (2015)
+[22] Y. Zhang, H.V. Burton, H. Sun, M. Shokrabadi, Structural Safety 72, 1 (2018)
+[23] S. Mangalathu, H. Sun, C.C. Nweke, Z. Yi, H.V. Burton, Earthquake Spectra 36(1), 183 (2020)
+[24] A. Siam, M. Ezzeldin, W. El-Dakhakhni, in Structures, vol. 22 (Elsevier, 2019), vol. 22, pp. 252–265
+[25] H. Huang, H.V. Burton, Journal of Building Engineering 25, 100767 (2019)
+[26] S. Mangalathu, J.s. Jeon, Engineering Structures 160(November 2017), 85 (2018)
+[27] S. Mangalathu, H. Jang, S.H. Hwang, J.S. Jeon, Engineering Structures 208, 110331 (2020)
+[28] C. Molnar, Interpretable machine learning (Lulu. com, 2019)
+[29] M.T. Ribeiro, S. Singh, C. Guestrin, CoRR abs/1602.04938 (2016). URL http://arxiv.org/abs/
+1602.04938
+[30] A. Barredo Arrieta, N. Díaz-Rodríguez, J. Del Ser, A. Bennetot, S. Tabik, A. Barbado, S. Garcia,
+S. Gil-Lopez, D. Molina, R. Benjamins, R. Chatila, F. Herrera, Information Fusion 58(October 2019),
+82 (2020). DOI 10.1016/j.inﬀus.2019.12.012
+[31] Z.C. Lipton, Queue 16(3), 31–57 (2018). DOI 10.1145/3236386.3241340. URL https://doi.org/10.
+1145/3236386.3241340
+14
+
+--- Sayfa 15 ---
+Deger ZT, Kaya GT. Glass-box Model Representation of Seismic Failure Mode Prediction For Conventional
+RC Shear Walls, Preprint.
+[32] M. Robnik-Šikonja,
+I. Kononenko,
+IEEE Transactions on Knowledge and Data Engineering
+20(5), 589 (2008).
+DOI 10.1109/TKDE.2007.190734.
+URL https://www.scopus.com/inward/
+record.uri?eid=2-s2.0-52949101606&doi=10.1109%2fTKDE.2007.190734&partnerID=40&md5=
+86ce78e66c0edd23df4fd5bfbf32a2a3. Cited By 101
+[33] J. Quinlan, International Journal of Man-Machine Studies 27(3), 221 (1987).
+DOI https://doi.
+org/10.1016/S0020-7373(87)80053-6. URL http://www.sciencedirect.com/science/article/pii/
+S0020737387800536
+[34] R. Zhang, F. Nie, X. Li, X. Wei, Information Fusion 50, 158 (2019). DOI https://doi.org/10.1016/j.inﬀus.
+2018.11.019. URL http://www.sciencedirect.com/science/article/pii/S1566253518303841
+[35] C.D. Bastian, H. Rabitz, arXiv preprint arXiv:1807.10320 (2018)
+[36] F.C. Pena, J. Guerra-Gomez, in Proceedings of the Machine Learning from User Interaction for Visual-
+ization and Analytics Workshop at IEEE VIS (2018)
+[37] L.H. Gilpin, D. Bau, B.Z. Yuan, A. Bajwa, M. Specter, L. Kagal, in 2018 IEEE 5th International
+Conference on Data Science and Advanced Analytics (DSAA) (2018), pp. 80–89
+[38] W.J. Murdoch, C. Singh, K. Kumbier, R. Abbasi-Asl, B. Yu, arXiv preprint arXiv:1901.04592 (2019)
+[39] J. Schmidt, M.R. Marques, S. Botti, M.A. Marques, npj Computational Materials 5(1) (2019). DOI
+10.1038/s41524-019-0221-0. URL http://dx.doi.org/10.1038/s41524-019-0221-0
+[40] C.K. Gulec, A.S. Whittaker, ACI Structural Journal 108(1) (2011)
+[41] NEES. Nees: Shear wall database (2017). URL https://datacenterhub.org/resources/260. Accessed:
+2020-04-11
+[42] L. Massone, J. Wallace, Rc wall shear–ﬂexure interaction: analytical and experimental responses. Ph.D.
+thesis, PhD Dissertation (2006)
+[43] T.N. Salonikios, Journal of structural engineering 133(6), 844 (2007)
+[44] Z.T. Deger, C. Basdogan, ACI Structural Journal 116(6), 53 (2019)
+[45] A.J. Izenman, Modern Multivariate Statistical Techniques Regression, Classiﬁcation, and Manifold
+Learning (Springer Texts in Statistics, 2008)
+[46] J.
+Cohen,
+Educational
+and
+Psychological
+Measurement
+20(1),
+37
+(1960).
+DOI
+10.1177/
+001316446002000104. URL https://doi.org/10.1177/001316446002000104
+[47] R. Duda, P. Hart, D. Stork, Pattern Classiﬁcation, 2nd edn. (John Wiley & Sons, New York, 2001)
+[48] I. Guyon, J. Weston, S. Barnhill, V. Vapnik, Machine Learning 46(1-3), 389 (2002)
+15

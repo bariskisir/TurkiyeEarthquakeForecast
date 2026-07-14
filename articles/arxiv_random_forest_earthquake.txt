@@ -1,0 +1,938 @@
+
+--- Sayfa 1 ---
+On a new statistical technique for the real-time recognition of ultra-low multiplicity
+astrophysical neutrino burst
+Marco Mattiazzi, Mathieu Lamoureux, and Gianmaria Collazuol
+Dipartimento di Fisica, INFN Sezione di Padova and Universit`a di Padova, I-35131, Padova, Italy
+(Dated: June 24, 2021)
+The real-time recognition of neutrino signals from astrophysical objects with very-low false alarm
+rate and short-latency, is crucial to perform multi-messenger detection, especially in the case of
+distant core-collapse supernovae accessible with the next generation of large-scale neutrino tele-
+scopes.
+The current time-based selection algorithms implemented in operating online monitors
+depend mainly on the number of events (multiplicity) detected in a ﬁxed time window, under the
+hypothesis of Poisson-distributed background. However, these methods are not capable of exploiting
+the time proﬁle discrepancies between the expected supernova neutrino burst and the stationary
+background.
+In this paper we propose a new general and ﬂexible technique (beta ﬁlter method) which provides
+speciﬁc decision boundaries on the cluster multiplicity-duration plane, guaranteeing the desired
+false alarm rate in an analytical way. The performance is evaluated using the injection of a general
+purpose SN-like signal on top of realistic background rates in current detectors. An absolute gain in
+eﬃciency of up to ∼80% is achieved compared with the standard techniques, and a new ultra-low
+multiplicity region is unveiled.
+Keywords: Neutrinos; Supernovae; Statistical analysis; Real-time detection
+I.
+INTRODUCTION
+The deﬁnition of the neutrino burst recognition algo-
+rithm is the key aspect for any real-time astrophysical
+neutrino monitor e.g., the one looking for prompt signals
+from core-collapse supernovae (CCSNe).
+Several search
+strategies have been implemented and proposed by diﬀerent
+large-scale experiments along the years [1, 3, 9]. Neverthe-
+less, all of them need the deﬁnition of a clustering procedure
+before making the signal-to-noise discrimination.
+Let w and T be, respectively, the time window size and
+the total observation time, three possible online data clus-
+tering are displayed in the Figure 1 and are henceforth re-
+ferred to as:
+• static clustering: the time interval T is divided into
+N sliding time-windows (size w);
+• shifted clustering: a ﬁrst scan is performed as the
+static case, but, with an additional scan, starting
+from the middle (w/2) of the previous time window;
+• dynamic clustering: each event is considered as the
+starting point of the time window.
+The dynamic clustering preserves the entire timing infor-
+mation of the signal within the time window w although
+the computational complexity grows with increasing back-
+ground rates.
+Instead, the substantial bias of the static
+case is circumvented in the shifted clustering without intro-
+ducing signiﬁcant latency, albeit some information is still
+missed.
+Hence, we shall consider both the dynamic and
+shifted cases in this paper.
+The typical time window size w is set to 20 s, as this is the
+expected time scale of the CCSN neutrino emission during
+the cooling phase, consistent with the only experimental
+data [5, 7, 10] available so far.
+In general, the basic features of a real-time cluster are:
+• the multiplicity, i.e. the number of events within the
+time window;
+FIG. 1. Schematic of the dynamic, shifted and static clustering.
+The red bars indicate the candidate signals, whereas the uncor-
+related background is in blue. In the shifted case the ﬁrst and
+second scans are shown.
+• the time diﬀerence between the ﬁrst and the last event
+in the cluster.
+The standard method to evaluate online the statisti-
+cal signiﬁcance of a candidate cluster is based on the so-
+called imitation frequency [3, 6, 8]. Assuming a Poisson-
+distributed background with constant rate r, the imitation
+frequency Fim, for a cluster with multiplicity m, is
+Fim(m | r, w) = Nwindows ×
+∞
+X
+k=m
+(rw)ke−rw
+k!
+,
+(1)
+where Nwindows is the number of time windows with ﬁxed
+size w in a given false alarm time (tF AT ), which number,
+in turn, depends on the clustering algorithm. In the ﬁrst
+iteration of SNEWS [6], the false alarm rate has been set to
+one false positive per century for a stand-alone operating
+monitor, but it could be greatly reduced if it belongs to a
+network of large-scale neutrino telescopes as stressed in [4].
+In this method, once the time window size is established,
+the signal-to-noise discrimination depends only on the clus-
+ter multiplicity threshold ( ˆ
+M). As pointed out in [8, 11, 12]
+the timing information of the burst is not fully exploited.
+Such ineﬃciency is illustrated in Figure 2, where the
+Poisson-distributed background events have been simulated
+for ten centuries with a constant rate r = 3 × 10−2 Hz and
+performing the dynamic clustering. As a matter of fact,
+the potential low-multiplicity signal clusters, falling into the
+background-free zone, are below the ﬁxed threshold deﬁned
+arXiv:2106.12345v1  [astro-ph.IM]  23 Jun 2021
+
+--- Sayfa 2 ---
+2
+by the imitation frequency (assuming tF AT = 1 century),
+even though it does not contain any background events over
+ten times the required false alarm time.
+Exploiting the duration information is thus clearly
+promising to improve the selection of low-multiplicity signal
+clusters.
+1
+−
+10
+1
+10
+ t [s]
+∆
+      
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+Multiplicity
+1
+10
+2
+10
+3
+10
+4
+10
+5
+10
+6
+10
+ < 1/century  
+im
+F
+Background free zone
+FIG. 2.
+Simulated bi-variate distribution with respect to
+multiplicity (m) and duration (∆t) of the Poisson-based (rate
+r = 3 × 10−2 Hz) background clusters performing the dynamic
+clustering. The simulation time is 10 times larger than the re-
+quired false alarm time (tF AT = 1 century). The dashed red
+line represents the standard imitation frequency threshold as
+reported in [8, 9, 12] and the violet arrow indicates the back-
+ground free region beneath it, which can be exploited with the
+new methods described in section II.
+II.
+BETA FILTER METHOD
+The probability to observe at least m events in a given
+time interval [0, t], under the hypothesis of stationary Pois-
+son process with constant rate r, is provided by the survival
+function of the Poisson distribution, also known as the cu-
+mulative of the Erlang distribution:
+Fγ(m | r, t) = 1 −
+m−1
+X
+k=0
+(rt)k e−rt
+k!
+=
+∞
+X
+k=m
+Pois (k, rt).
+(2)
+However, in a ﬁxed sliding time window W = [0, w], the
+m events are uniformly distributed within W according to
+0 < t1 < t2 < . . . < tm < w. Hence, after normalizing to
+[0,1] by deﬁning xk := tk/w, the normalized time of the k-
+th event follows the k-th order statistics from the uniform
+distribution:
+fβ(xk | m) = Beta(xk; k, m + 1 −k),
+(3)
+and transforming back in the time domain, we get:
+fβ(tk | m, w) = 1
+w × Beta
+tk
+w ; k, m + 1 −k
+
+.
+(4)
+A.
+Dynamic clustering
+Now, in the dynamic clustering, t1 = 0 by deﬁnition, and
+therefore the distribution of ∆t = tm −t1 = tm is
+fD(∆t | m, w) = fβ(tm | m −1, w)
+= 1
+w × Beta
+∆t
+w ; m −1, 1
+
+= m −1
+wm−1 × ∆tm−2.
+(5)
+Hence, ﬁxing the multiplicity m, the conditional probabil-
+ity of observing a cluster with t ≤∆t is the cumulative
+distribution of the Equation 5, i.e.
+FD(∆t | m) = Prob(t ≤∆t | m, w)
+=
+Z ∆t
+0
+dt fD(t|m, w)
+= 1
+mBeta
+∆t
+w ; m, 1
+
+=
+∆t
+w
+m−1
+.
+(6)
+The discrete multiplicity distribution is provided instead
+by the truncated Poisson distribution
+gD(m | r, w) = Pois(m −1, µ = rw)
+1 −e−rw
+,
+(7)
+as the cluster contains at least one event by construction of
+the time window. The joint probability density distribution
+is then
+jD(m, ∆t | r, w) = fD(∆t | m, w) × gD(m| r, w)
+=
+re−rw
+1 −e−rw
+(r∆t)m−2
+(m −2)! .
+(8)
+Now, as illustrated in the Figure 3, we can construct
+a decision boundary on the m −∆t plane such that the
+required false alarm rate is satisﬁed. It can be deﬁned as a
+set of values {∆tk} for k ≥2.
+The expected number of clusters with multiplicity k over
+tF AT is
+Nk = rtF AT × Pois (k −1, µ = rw),
+(9)
+and the decision boundary must then satisfy the constraint
+∞
+X
+k=2
+αk ≤1 with αk := Nk × FD(∆tk | k).
+(10)
+Recalling Equation 2, if we ﬁnd ˆ
+M such that
+σ ˆ
+M :=
+∞
+X
+k= ˆ
+M
+Nk = rtF AT × Fγ( ˆ
+M −1 | r, w) < 1,
+(11)
+where a possible choice is the usual multiplicity threshold
+from the standard imitation frequency method.
+
+--- Sayfa 3 ---
+3
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+Cluster duration [s]
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+Multiplicity
+ 
+M
+t)
+∆
+(
+dynamic
+2f
+t)
+∆
+(
+dynamic
+3f
+2t
+∆
+3t
+∆
+ = w
+11
+t
+∆
+decision boundary
+Dynamic Clustering
+11
+−
+10
+10
+−
+10
+9
+−
+10
+8
+−
+10
+7
+−
+10
+6
+−
+10
+5
+−
+10
+4
+−
+10
+3
+−
+10
+2
+−
+10
+1
+−
+10
+Truncated Poisson PDF
+=rw)
+µ
+ Pois(1, 
+×
+ 
+FAT
+ = r t
+2
+N
+)
+µ
+ Pois(2, 
+×
+ 
+FAT
+ = r t
+3
+N
+FIG. 3. Schematic of the joint probability density distribution as a function of multiplicity m and cluster duration ∆t for the dynamic
+clustering. The red dashed line illustrates the decision boundary {∆t}∞
+k=2 deﬁned by the new method, ensuring the required false
+alarm rate. The green region corresponds to clusters selected with the standard method.
+Setting ∆tj = w for j ≥ˆ
+M, we can rearrange the con-
+straint in Equation 10 as
+ˆ
+M−1
+X
+k=2
+αk +
+∞
+X
+j= ˆ
+M
+αj ≤1
+(12)
+ˆ
+M−1
+X
+k=2
+αk ≤1 −σ ˆ
+M
+(13)
+ˆ
+M−1
+X
+k=2
+Pois (k −1, µ) ×
+∆tk
+w
+k−1
+≤1 −σ ˆ
+M
+rtF AT
+.
+(14)
+Hence, considering the equality, this provides a set of
+equations that can be exploited to explore the region
+m < ˆ
+M. In particular, if we introduce the {βk}
+ˆ
+M−1
+k=2
+dis-
+crete ﬁlter such that
+Pois (k −1, µ) ×
+∆tk
+w
+k−1
+= βk × 1 −σ ˆ
+M
+rtF AT
+(15)
+ˆ
+M−1
+X
+k=2
+βk = 1.
+(16)
+The ﬁnal decision boundary is
+∆tk =
+
+
+
+
+
+w
+"
+βk ·
+1 −P∞
+j= ˆ
+M Nj
+Nk
+#1/(k−1)
+if k < ˆ
+M
+w
+if k ≥ˆ
+M
+(17)
+where the expected number of clusters with multiplicity k
+Nk is given in Equation 9.
+Two possible implementations are described in the next
+paragraphs and illustrated in Figure 4. Nevertheless it is
+worth emphasizing that the ﬂexibility of this method en-
+ables us to set additional application-speciﬁc constraints,
+e.g. discard the multiplicities with associated ∆tk below
+the timing resolution of the detector, or penalize the region
+where non-Poisson background may intervene.
+
+--- Sayfa 4 ---
+4
+2 3 4 5 6 7 8 9 10 1112 1314
+Multiplicity
+0
+500
+1000
+1500
+2000
+2500
+3000
+False Alarms
+ 
+Multiplicities
+ method
+β
+Ultra-low with 
+ method
+im
+Standard with F
+FAT
+ t
+×
+ 
+4
+# simulations = 10
+total number of false alarms = 9951
+ = 1 day
+FAT
+t
+2 3 4 5 6 7 8 9 10 1112 1314
+Multiplicity
+0
+500
+1000
+1500
+2000
+2500
+3000
+False Alarms
+Multiplicities
+ method
+β
+Ultra-low with 
+ method
+im
+Standard with F
+FAT
+ t
+×
+ 
+4
+# simulations = 10
+total number of false alarms = 9996
+ = 1 day
+FAT
+t
+FIG. 4. (Top) Uniform (Bottom) Ramp. Distributions of false
+alarms as function of the multiplicity applying the uniform
+(ramp) beta ﬁlter, injecting the Poisson-based background at
+rate 0.1 Hz with dynamic clustering and performing 104 simula-
+tions lasting as long as the false alarm time under the hypothesis
+of tF AT = 1 day.
+1.
+Uniform ﬁlter
+If one wants all multiplicities m <
+ˆ
+M to contribute
+equally, we can use
+βk = β,
+k ∈[2, ˆ
+M −1]
+(18)
+ˆ
+M−1
+X
+k=2
+β = 1 −→β =
+1
+ˆ
+M −2
+.
+(19)
+2.
+Ramp ﬁlter
+If the relative weights scale linearly, the ﬁlter is
+βk = (k −2) × β,
+k ∈[2, ˆ
+M −1]
+(20)
+ˆ
+M−1
+X
+k=2
+βk = 1 −→β =
+2
+( ˆ
+M −2)( ˆ
+M −3)
+.
+(21)
+B.
+Shifted clustering
+Conversely, in the shifted clustering, the probability den-
+sity function of ∆t = tm −t1 is the sample range of order
+statistics from the uniform distribution, which, after the
+speciﬁc transformation, is
+fS(∆t|m, w) = 1
+w × Beta
+∆t
+w ; m −1, 2
+
+.
+(22)
+Such distributions have been simulated as reported in Fig-
+ure 5 and a good agreement is shown. The related cumu-
+lative functions (also illustrated in the same ﬁgure) are:
+FS(∆t | m) = Prob(t ≤∆t|m, w)
+(23)
+=
+Z ∆t
+0
+dt fS(t|m, w)
+= 1
+wm (m −1)
+Z ∆t
+0
+dt
+ t
+w
+m−2 
+1 −t
+w
+
+= Beta
+∆t
+w ; m, 1
+ 
+1 −
+m −1
+m
+ ∆t
+w
+
+.
+The discrete multiplicity distribution is again the trun-
+cated Poisson distribution, and the joint probability density
+distribution is
+jS(m, ∆t | r, w) = r2e−rw × (w −∆t)
+1 −e−rw(1 + rw) × (r∆t)m−2
+(m −2)! . (24)
+The expected number of cluster with multiplicity k over
+tF AT is
+Nk = NW × Pois (k, µ = rw),
+(25)
+where NW = (2tF AT )/w−1 is the number of time windows.
+Now, the same reasoning as for the dynamic case can be
+applied accordingly:
+Nk × FS(∆tk | k) = βk × [1 −σ ˆ
+M]
+for
+k < ˆ
+M,
+(26)
+which can be solved for {∆tk}
+ˆ
+M−1
+k=2 ﬁnding the root between
+[0, w] of the associated k-th degree polynomials.
+III.
+PERFORMANCE TESTING
+The next step consists in the evaluation of the signal ef-
+ﬁciency with the new beta ﬁlter method. It is computed
+as the fraction of simulated SN clusters that pass the new
+selection as a function of the injected signal multiplicity.
+
+--- Sayfa 5 ---
+5
+ 
+0.05
+0.1
+0.15
+0.2
+ 
+PDF
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+ t [s]
+∆
+1
+−
+10
+1
+ 
+M = 2
+M = 3
+M = 4
+M = 5
+M = 6
+M = 7
+M = 8
+M = 9
+CDF
+FIG. 5. Probability density functions (top) and related cumu-
+lative functions (bottom) of the time interval between the ﬁrst
+and last events in the shifted clustering, provided by numerical
+simulations and superimposed (colored lines) with the theoreti-
+cal curves (equation 22).
+However, such eﬃciency depends on the temporal struc-
+ture of the signal, which in turn is model-dependent. As
+suggested in [8], we will use a general-purpose time evolu-
+tion parametrized as
+fsignal(t) = e
+−
+t
+τlong (1 −e−
+t
+τshort ),
+(27)
+where τshort is between 10 ms and 100 ms, and τlong is ≥1 s.
+This parametrization enables us to ﬁt not only the SN1987
+spectrum (with τlong ≈1 s) but it can also approximately
+capture the structure of most of the low-energy neutrino
+bursts ejected from similar explosions.
+The signal eﬃciency for the new beta method has there-
+fore been estimated ﬁxing the multiplicity msig, generat-
+ing msig signal neutrinos, according to fsignal(t) distribu-
+tion with a random oﬀset t0 ∈[0, w/2] (aiming to avoid
+the introduction of a systematic error in the shifted case),
+along with the background events mbkg in the time window
+[0, w+w/2]. Afterwards, the dynamic or the shifted cluster-
+ing has been applied and one signal injection is considered
+as “detected” if at least one cluster has passed the speciﬁc
+thresholds determined by the decision boundary {∆tk}
+ˆ
+M−1
+k=2
+described in the previous section section II.
+The procedure has been iterated 107 times, setting
+τshort = 10 ms and τlong = 1 s, and injecting the Poisson-
+based noise using LVD-like [3], SK-like [1], BOREXINO-
+like [8], BAKSAN-like [13] online background rates. The
+eﬃciency of the standard method are also evaluated using
+the same procedure.
+The results are summarized in Figure 6 for the dynamic
+clustering, where the performances of both methods are
+compared using the beta uniform ﬁlter in the new approach
+(the discrepancies with the ramp ﬁlter are small in these
+cases).
+First, the clusters with multiplicity msig + mbkg = m ≥
+ˆ
+M are selected in the new method as well as in the standard
+approach. Secondly, the intermediate multiplicities m ≲ˆ
+M
+are detected with a much high eﬃciency, e.g. ∼17 →93%
+for m = 9 in the LVD-like scenario.
+Lastly, the lowest
+values of m can be reached with the new beta ﬁlter method,
+whereas they were rejected if only multiplicity is exploited.
+The two last points could be reformulated in terms of an
+expansion of the search horizon for SN-like events for all the
+conﬁgurations that have been considered, as it was done
+in [8] with a diﬀerent method.
+In Figure 7, an example for the shifted clustering with
+the LVD-like rate, is illustrated, instead.
+IV.
+CONCLUSIONS
+Since the standard imitation frequency method is un-
+able to properly exploit the divergent time proﬁles of the
+stationary Poisson background with respect to the SN-like
+signal, we have developed and investigated new beta ﬁlter
+methods which use the interval of arrival time between the
+ﬁrst and last events of the cluster as well as the default
+multiplicity threshold.
+The performance was evaluated with the injection of
+general-purpose SN-like signals along with several rates of
+Poisson background and the new method has shown im-
+portant enhancements with respect to standard methods,
+in particular in the ultra-low multiplicity regime, enabling
+the extension of the horizon that can be probed in real-time,
+without a signiﬁcant upgrade of the monitoring system.
+The new beta technique is independent on the nature of
+the neutrino clusters, therefore it could be suitable for the
+recognition of other transient astrophysical objects emit-
+ting low-energy neutrino bursts, and, more broadly, it could
+be applied to a wide class of real-time signal-to-noise dis-
+crimination processes where sliding-time windows are in-
+volved and ﬁxed false discovery rate is required. The only
+condition for its application concerns the proper identiﬁ-
+cation of correlated backgrounds that are not following a
+simple Poisson distribution, e.g. spallation events in Super-
+Kamiokande that are rejected with additional dimension
+cuts (see [1]).
+In practice, the designed methods could be employed by
+current low-mass detectors to extend their horizons within
+the local group, while the planned SN monitor system of the
+future Hyper-Kamiokande experiment [2] could also beneﬁt
+from it: with its 220 kt ﬁducial volume, such new method
+may indeed allow probing distances up to ∼1 Mpc, cover-
+ing an unexplored region and increasing greatly the rate of
+
+--- Sayfa 6 ---
+6
+2
+3
+4
+5
+6
+7
+8
+9 10 11 12 13 14 15 16 17 18
+Injected Signal Multiplicity
+0.0121 Hz
+SK-like
+      0.0207 Hz
+BAKSAN-like
+  0.03 Hz
+LVD-like
+             0.05 Hz
+BOREXINO-like
+         0.1 Hz
+HIGH RATE
+0
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50
+55
+60
+65
+70
+75
+80
+1.8 
+33.0 86.7 100.0 
+1.5 
+19.1 67.7 99.1 
+0.2 
+3.2 
+25.1 61.7 80.6 92.7 100.0 
+0.6 
+5.9 
+25.1 49.0 65.9 80.6 93.3 100.0 
+0.5 
+2.9 
+9.8 
+20.3 31.7 44.1 58.8 74.5 88.2 97.0 100.0 
+0.3 
+3.6 
+26.2 
+0.2 
+1.4 
+9.3 
+40.5 
+0.6 
+3.7 
+16.9 52.8 
+0.1 
+0.7 
+3.3 
+12.2 34.6 71.2 
+0.3 
+1.0 
+3.2 
+9.0 
+21.6 43.1 69.8 91.5 
+ε
+∆
+STANDARD METHOD
+-METHOD
+β
+NEW 
+[%]
+ filter
+β
+Uniform 
+100 %
+< 0.1 % 
+FIG. 6. Signal eﬃciencies of the standard and the new beta uniform ﬁlter methods as a function of injected signal multiplicity,
+performing the dynamic clustering, and injecting SN-like signal shape provided by Equation 27 with τshort = 10 ms and τlong = 1 s.
+The SK-like (1.2 × 10−2 Hz), BAKSAN-like (2.0 × 10−2 Hz), low LVD-like (3.0 × 10−2 Hz), BOREXINO-like (5.0 × 10−2 Hz) and
+high-rate (1.0 × 10−1 Hz) background rates, have been simulated 107 times according to the procedure described in section III. The
+bins are colored according to the diﬀerence (∆ε) between the signal eﬃciencies of the standard (with blue text) and the beta uniform
+ﬁlter (with black text) methods. Instead, the boxes without the values, have a diﬀerential signal eﬃciency less than 10−3 or both
+of them equal to 100%, according to the related colored arrows.
+detectable CCSNe.
+Furthermore, the ongoing SNEWS upgrade (version 2.0)
+[4] may also be an interesting ground to develop such low-
+multiplicity techniques, as the strength of the network, orig-
+inated from its capacity to combine observations from dif-
+ferent experiments, reduces the impact from local back-
+ground sources.
+In conclusion, the gain in sensitivity provided by the new
+methods would increase the chance to detect a supernova in
+the coming years and thus probe explosion models (includ-
+ing exotic ones), opening a new window to the exploration
+of the Universe.
+[1] Abe, K., et al. 2016, Astropart. Phys., 81, 39, doi: 10.1016/j.astropartphys.2016.04.003
+[2] —. 2018, arXiv e-prints. https://arxiv.org/abs/1805.04163
+[3] Agafonova, N. Y., et al. 2008, Astroparticle Physics, 28, 516, doi: 10.1016/j.astropartphys.2007.09.005
+[4] Al Kharusi, S., et al. 2021, New J. Phys., 23, 031201, doi: 10.1088/1367-2630/abde33
+[5] Alekseev, E., Alekseeva, L., Krivosheina, I., & Volchenko, V. 1988, Phys. Lett. B, 205, 209, doi: 10.1016/0370-2693(88)91651-6
+[6] Antonioli, P., et al. 2004, New J. Phys., 6, 114, doi: 10.1088/1367-2630/6/1/114
+[7] Bionta, R., et al. 1987, Phys. Rev. Lett., 58, 1494, doi: 10.1103/PhysRevLett.58.1494
+[8] Casentini, C., Pagliaroli, G., Vigorito, C., & Fafone, V. 2018, JCAP, 08, 10, doi: 10.1088/1475-7516/2018/08/010
+[9] Fulgione, W. 1996, Nucl. Instrum. Meth. A, 368, 512, doi: 10.1016/0168-9002(95)00672-9
+[10] Haines, T., et al. 1988, Nucl. Instrum. Meth. A, 264, 28, doi: 10.1016/0168-9002(88)91097-2
+[11] Halim, O., Vigorito, C., Casentini, C., et al. 2020, J. Phys. Conf. Ser., 1468, 012154, doi: 10.1088/1742-6596/1468/1/012154
+[12] Lamoureux, M. 2021, arXiv e-prints. https://arxiv.org/abs/2103.09733
+[13] Novoseltsev, Y. F., Boliev, M. M., Dzaparova, I. M., et al. 2020, Astropart. Phys., 117, 102404, doi: 10.1016/j.astropartphys.
+2019.102404
+
+--- Sayfa 7 ---
+7
+2
+3
+4
+5
+6
+7
+8
+9
+10 11 12
+Injected Signal Multiplicity
+0
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50
+55
+60
+65
+70
+75
+80
+85
+90
+95
+100
+Signal Efficiency [%]
+Shifted clustering
+LVD-like
+ = 10 ms
+short
+τ
+ =  1 s, 
+long
+τ
+ uniform method 
+β
+Standard method
+FIG. 7.
+Signal eﬃciencies of the standard and the new beta
+uniform ﬁlter methods, for all the relevant low-multiplicities,
+performing the shifted clustering, and injecting SN-like signal
+shape provided by Equation 27 with τshort = 10 ms and τlong =
+1 s, along with the LVD-like Poisson-based background rate [3].

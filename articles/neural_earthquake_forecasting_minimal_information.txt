@@ -1,0 +1,2043 @@
+
+--- Sayfa 1 ---
+Neural Earthquake Forecasting with Minimal
+Information: Limits, Interpretability, and the Role
+of Markov Structure
+Jonas K¨ohler1, 2, Nishtha Srivastava1,2*†, Kai Zhou3†,
+Claudia Quinteros1†, Johannes Faber1,4†, F. Alejandro Nava5†
+1*Frankfurt Institute of Advanced Studies, Ruth-Moufang-Str. 1,
+Frankfurt am Main, 60438, Hesse, Germany.
+2Institute of Geosciences, Goethe-University Frankfurt, Altenh¨oferallee
+1, Frankfurt am Main, 60438, Hesse, Germany.
+3Department, The Chinese University of Hong Kong, Shenzhen,
+Shenzhen, 518172, Guangdong, China.
+4Institute for Theoretical Physics, Goethe-University Frankfurt,
+Max-von-Laue-Str. 1, Frankfurt am Main, 60438, Hesse, Germany.
+5Divisi´on de Ciencias de la Tierra , Centro de Investigaci´on Cient´ıfica y
+de Educaci´on Superior de Ensenada, Carretera Ensenada, Tijuana,
+22860, Baja California, Mexico.
+*Corresponding author(s). E-mail(s): N.Srivastava@em.uni-frankfurt.de;
+Contributing authors: jkoehler@fias.uni-frankfurt.de;
+zhoukai@cuhk.edu.cn; quinteros@fias.uni-frankfurt.de;
+FAIS.research@proton.me; fnava@cicese.mx;
+†These authors contributed equally to this work.
+Abstract
+Forecasting earthquake sequences remains a central challenge in seismology,
+particularly under non-stationary conditions. While deep learning models have
+shown promise, their ability to generalize across time remains poorly under-
+stood. We evaluate neural and hybrid (NN + Markov) models for short-term
+earthquake forecasting on a regional catalog using temporally stratified cross-
+validation. Models are trained on earlier portions of the catalog and evaluated
+on future unseen events, enabling realistic assessment of temporal generalization.
+1
+arXiv:2509.14661v1  [physics.geo-ph]  18 Sep 2025
+
+--- Sayfa 2 ---
+We find that while these models outperform a purely Markovian model on val-
+idation data, their test performance degrades substantially in the most recent
+quintile. A detailed attribution analysis reveals a shift in feature relevance over
+time, with later data exhibiting simpler, more Markov-consistent behavior. To
+support interpretability, we apply Integrated Gradients, a type of explainable
+AI (XAI) to analyze how models rely on different input features. These results
+highlight the risks of overfitting to early patterns in seismicity and underscore
+the importance of temporally realistic benchmarks. We conclude that forecasting
+skill is inherently time-dependent and benefits from combining physical priors
+with data-driven methods.
+Keywords: Earthquake forecasting, Markov Chain, explainable AI, Neural Networks
+Introduction
+Earthquake forecasting remains a great challenge because seismicity exhibits com-
+plex, clustered patterns that change over time. Traditional point-process models like
+the Epidemic-Type Aftershock Sequence (ETAS, Kagan and Knopoff (1981, 1987);
+Ogata (1988, 1998)) model assume a (mostly) homogeneous background rate with
+parameterized aftershock kernels, and have become a cornerstone of short-term seis-
+micity modeling. These self-exciting models can capture the physics of aftershock
+sequences, but they rest on strong assumptions. For example, if the true background
+rate varies spatially or temporally, a homogeneous ETAS may misclassify earth-
+quakes (mainshocks vs. aftershocks) and misestimate decay rates Stindl and Chen
+(2022). In practice, real earthquake catalogs often do not conform to these assump-
+tions through nonstationary behavior (e.g., changing completeness, evolving stress).
+Similarly, simple first-order Markov chain models which predict each earthquake’s
+region based only on the previous event provide an interpretable baseline Nava,
+Herrera, Frez, and Glowacka (2005), but they assume stationary transition proba-
+bilities that may not hold in a changing seismic regime. In short, both ETAS and
+Markov forecasts rely on statistical/physical assumptions that can break down as seis-
+mic processes evolve. Despite these limitations, researchers have extended classical
+models to improve realism. For instance, Spatially Variable ETAS (SVETAS) allows
+ETAS parameters (like background rate) to vary across space, yielding consistently
+better forecasts than homogeneous ETAS Nandan, Ouillon, Sornette, and Wiemer
+(2019). They found, that in controlled experiments on California data, accounting
+for spatial heterogeneity leads to “strong and statistically significant improvements
+in forecasting performance”Nandan et al. (2019). Likewise, Markovian approaches
+have shown promise: Nava et al. (2005) modeled regional seismicity transitions as a
+Markov chain and reported high success rates in retrospective forecasts. More recent
+work even suggests that large earthquakes behave more “Markovian”: Gutierrez Pe˜na,
+Nava Pichardo, Glowacka, Castro Escamilla, and M´arquez Ram´ırez (2021) showed
+that only the largest-magnitude events tend to follow memoryless (Markov) transi-
+tions between regions. These findings suggest that, under some conditions, simpler
+2
+
+--- Sayfa 3 ---
+memory-based models can capture a useful part of the seismic process. In paral-
+lel, machine learning (ML) and deep learning have surged in seismology, driven by
+ever-growing data sets and computing power Kubo, Naoi, and Kano (2024). Recent
+reviews highlight a broad range of ML applications, from enhanced earthquake
+catalogs to ground-motion prediction, demonstrating great success in many areas.
+Spatio-temporal earthquake forecasting is a particularly active frontier. For example,
+Dascher-Cousineau, Shchur, Brodsky, and G¨unnemann (2023) introduced RECAST, a
+neural temporal point-process model based on gated recurrent units (GRUs). RECAST
+can ingest full earthquake catalogs and achieved forecast accuracy comparable to or
+better than ETAS, in tests on Southern California data, once the training catalog
+is large enough. Similarly, Stockman, Lawson, and Werner (2023) developed a neu-
+ral point process for the 2016–2017 Central Apennines sequence. Their model learns
+flexible intensity functions and was able to outperform ETAS when the catalog was
+highly complete: notably, the neural model remained robust with respect to missing
+small events, whereas ETAS performance degraded with more complete data. These
+studies demonstrate that ML models can capture meaningful temporal dependencies
+in seismicity that traditional models might miss. Other data-driven efforts integrate
+physics-based features with ML. Koehler et al. (2023), for instance, used spatiotem-
+poral maps of Gutenberg-Richter b-values as input to a deep convolutional network.
+Training on Japanese subduction-zone data, they achieved a binary forecasting accu-
+racy of
+72% (well above baseline) for predicting whether a large (MW > 5) quake
+would followKoehler, Li, Faber, Ruempker, and Srivastava (2023). Likewise, Saad et
+al. (2023) proposed a multi-modal forecasting scheme for China that combines electro-
+magnetic (EM) and geoacoustic (GA) precursors: they extracted dozens of statistical
+features (via PCA and other transforms) and fed them into a machine-learning clas-
+sifier. In real-time experiments they correctly predicted next-week large earthquakes
+about 70% of the time. These hybrid approaches combining diverse geophysical signals
+with ML underscore the growing interest in physics-informed forecasting. At the same
+time, cautionary studies remind us that more complex models are not automatically
+better. Mignan and Broccardo (2020) surveyed neural network efforts from 1994–2019
+and found that simpler, more transparent models often match or exceed deep networks
+on seismic problems, given the limited and highly structured nature of earthquake cat-
+alogs. In other words, when data are scarce and features few, the apparent superiority
+of “deep” models can evaporate; ground-truth physical insight often remains crucial.
+Research gap: Crucially, most prior work has evaluated forecast models under
+stationary or pseudo-stationary conditions. Models are usually trained and tested on
+shuffled catalogs or random splits of events, effectively assuming that future seismicity
+follows the same patterns as the past. This ignores the reality that seismic processes
+evolve: tectonic loading, stress redistribution, and catalog completeness can change
+over time. Few studies rigorously test whether a model trained on early data can
+generalize to future unseen periods. As a result, high validation scores (e.g. in cross-
+validation on old data) may give false confidence in a model’s ability to forecast the
+actual next earthquake sequence.
+Goals of this study: We address this gap by focusing explicitly on temporal gener-
+alization and interpretability of neural and hybrid forecasting models. We ask: If we
+3
+
+--- Sayfa 4 ---
+train on the first part of a seismic catalog, can the model accurately forecast events in
+later parts? To explore this, we develop a hybrid architecture that embeds a first-order
+Markov structure into a neural network, allowing the model to learn both statistical
+transitions and complex patterns. We then perform temporal cross-validation by split-
+ting catalogs into quintiles in time: models are trained on the earlier four quintiles
+and tested on the subsequent fifth, simulating a realistic prospective forecast. Finally,
+to peer inside the “black box”, we apply the explainable AI (XAI) tool of integrated
+gradients to identify which inputs and learned features drive the model’s predictions.
+Similar efforts were done by Jena, Pradhan, Gite, Alamri, and Park (2023), who
+use shapley additive explanation (SHAP) to asses feature importance for earthquake
+forecasts.
+Key contributions: (1) We propose a novel neural-Markov hybrid model for
+earthquake sequences. (2) We establish a quintile-based temporal cross-validation
+framework to measure forecasting performance on truly out-of-sample future data.
+(3) We introduce XAI analyses, showing how to use feature importance and gradient
+methods to interpret what a neural model learns about past seismicity. (4) We conduct
+comprehensive experiments on real catalogs to rigorously compare ETAS, Markov,
+neural, and hybrid models under these realistic conditions.
+Main findings: On random or within-sample splits, our hybrid model modestly
+outperforms the Markov Baseline measures with the Brier Skill Score (BSS, Brier
+(1950)). However, when evaluated on the most recent quintile of the catalog (the
+“future” window), all models degrade sharply. Strikingly, we find a pronounced tem-
+poral asymmetry: the final quintile of seismicity behaves in a much more memoryless,
+Markov-consistent1 fashion than the earlier data (See Figure 11). In other words,
+the latest period can be well predicted by a simple state-transition model, whereas
+the earlier period contained richer temporal dependencies. This suggests a significant
+non-stationarity in the catalog. The learned patterns from older earthquakes do not
+carry over unchanged into the new regime. This phenomenon is consistent with previ-
+ous observations that only the largest earthquakes act MarkovianNava and Guti´errez
+(2024), even though there are not significantly more large earthquakes in the last quin-
+tile. Importantly, this behavioral shift likely underlies the generalization gap: models
+trained on earlier dynamics fail to capture the changed rules of the most recent period.
+Broader relevance: Our results underscore that when and how we test earthquake
+forecasting models is as important as what models we use. High validation scores on
+randomized splits can be misleading if the underlying process is nonstationary. Seis-
+mologists and data scientists should therefore favor temporally realistic evaluation
+(e.g. pseudo-prospective tests on held-out future intervals). More generally, our work
+provides a framework for blending domain knowledge (first-order Markov structure)
+with deep learning and for interrogating neural forecasts with XAI. The temporal
+asymmetry we uncover also invites further geophysical inquiry: why does seismic-
+ity appear to “simplify” in the recent period, or what made the earlier periods less
+Markov-consistent? Answering that could lead to better physical understanding of
+stress evolution and catalog completeness. For now, our study emphasizes caution:
+1We use Markov-consistent to denote, that the transition matrix for a given segment of the data corre-
+sponds well to the transition matrix calculated from the rest of the data. If this is the case, a Markov model
+is more likely to be a better fit than if the difference in transition matrices is larger.
+4
+
+--- Sayfa 5 ---
+“beware of over-optimistic forecasts” and shows how careful experimental design can
+reveal both the potentials and pitfalls of ML in seismology.
+5
+
+--- Sayfa 6 ---
+Data and Methods
+Earthquake Catalog and State Definition
+In this work we use the dataset which was previously used in Gutierrez Pe˜na et al.
+(2021); Nava and Guti´errez (2024) for the approach which we use as our baseline.
+The catalog contains large (MW ≥6.5), shallow earthquakes from 1900 to 2015 in
+the region surrounding the Japanese subduction zones. It is assumed to be complete
+above the chosen magnitude threshold.
+Following their prior work, the region is divided into four tectonically defined
+regions, each representing a major subduction interface involving the Pacific, Philip-
+pine Sea, Okhotsk, and Amur plates (See Figure 1). These zones reflect persistent
+spatial clustering of large events and are designed to represent distinct seismogenic
+domains, each with a high potential for generating large earthquakes. At any point in
+time, the state of the system corresponds to the region in which the most recent large
+earthquake occurred, resulting in a Markov Matrix to estimate the probability of a
+large earthquake occurring in any of the four regions.
+Fig. 1 Map of the study region showing all earthquakes in the catalog, color-coded by region assign-
+ment. The number of events per region is: Region 1 (120), Region 2 (152), Region 3 (85), and Region
+4 (93).
+Since we will use not only the state but also other information related to the last
+event in each region, the first six events are excluded to ensure all state definitions
+are valid, and four more are removed at the end to allow even splitting when using a
+quintile base approach, resulting in 440 when using quintiles or 444 events otherwise.
+These are divided into five sequential, partially overlapping quintiles of 88 events each,
+where the final state of one quintile is used as the initial state for the next. Full
+independence between splits is not enforced, as sequential dependencies are intrinsic
+to the modeling setup and also apply to the reference Markov model.
+6
+
+--- Sayfa 7 ---
+Input Features and Normalization
+Three sets of input features are considered:
+• Last event magnitude: The magnitude of the most recent event in each region
+(4 features).
+• Time since last event: Elapsed time since the last event in each region, in years
+(4 features).
+• State encoding: One-hot encoding of the current state (4 features).
+Magnitudes are normalized linearly between 6.5 and 10 to yield values between
+0 and ≈0.75 (to account for potentially bigger earthquakes). The time-since-last-
+event (in years) features are scaled by dividing by 10; with this rescaling, most of the
+values fall between 0 and 1. However, normalization had negligible impact on model
+performance.
+For the pure neural network models, configurations both with and without state
+encoding were tested. For the hybrid model, based on the best performing pure neural
+network model, the state encoding is included anyways, as it was included for that
+model, but it is also required to extract the Markov prior.
+7
+
+--- Sayfa 8 ---
+Reference Model: Markov Chain
+The baseline used throughout this work is based on Gutierrez Pe˜na et al. (2021);
+Herrera, Nava, and Lomnitz (2006); Nava and Guti´errez (2024); Nava et al. (2005).
+While these works do not employ the exact same approach, it is similar enough: For
+our baseline, we use the 4 state →4 state approach first used in Herrera et al. (2006)
+with the borders from Gutierrez Pe˜na et al. (2021). The Markov matrix is simply
+calculated by counting the transitions between states, using the same set of transitions
+as the model this approach is compared to. Then, the resulting transition count matrix
+is normalized to give a transition probability matrix. This is simpler than the model
+brought forth in Nava and Guti´errez (2024), but since neural networks seem to fail at
+outperforming even this baseline, it is sufficient.
+In all cases, the transition matrix is estimated directly from the training data in
+that instance, ensuring that the Markov model always uses identical training data as
+the neural network models.2
+Neural and Hybrid Model Architectures
+We compare a compact feedforward neural network model with a hybrid variant that
+integrates a Markov prior into the forecasting pipeline. The architectures for both
+models are illustrated in Figure 2.
+The pure neural network consists of a fully connected input layer (with 4 to 12
+input features), a hidden layer with LeakyReLU activation, a dropout layer, and a fully
+connected output layer with four neurons, one for each target region, followed by a
+softmax activation to produce probabilistic forecasts. The model is trained to minimize
+the mean squared error (MSE) between predicted and observed probabilities.3 The
+models use the ADAM optimizer and a exponential learning rate scheduler with a γ
+of 0.99 (multiplied on the learning rate each epoch).
+A broad hyperparameter search using early stopping with a patience of 25 epochs,
+based on validation BSS (Equation 4), was performed over the following ranges:
+• Hidden layer size: [4, 8, 16, 32, 64]
+• Dropout rate: [0.0, 0.1, 0.3, 0.5]
+• Batch size: [4, 8, 16, 32, 64]
+• Learning rate: [1 × 10−3, 3 × 10−4, 1 × 10−4, 3 × 10−5]
+• Weight decay factor:4 [0.02, 0.5, 0.14, 0.20]
+• Feature sets: all combinations including with/without one-hot state encoding for
+the neural network
+2For validation, the Markov matrix is estimated for the training data. For Testing, the Markov Matrix is
+estimated from the training and validation data. If a model does not use validation data (while retraining
+a model with a fixed number of epochs), the Markov matrix is calculated only from the training data.
+3While cross-entropy loss is standard for classification, it leads to overconfident predictions here. MSE,
+as used in the BSS, promotes calibrated probabilistic outputs, making it more appropriate for this task.
+4This value is multiplied with the learning rate and then used as the weight decay in the Optimizer.
+8
+
+--- Sayfa 9 ---
+The hybrid model augments the neural forecast with a learned combination of the
+neural network prediction rML and a first-order Markov model rMarkov based on the
+current state:
+rML = softmax(NN(x))
+(1)
+α = sigmoid(α)
+(2)
+rfinal = α · rMarkov + (1 −α) · rML
+(3)
+The Markov prior rMarkov is retrieved dynamically based on the current state. The
+α parameter is a learnable scalar. Weight regularization was applied to all network
+weights except α, which typically converged to (rather high, and therefore potentially
+punished by weight decay) values between 2 and 3, corresponding to α ≈0.88 to 0.95.
+To ensure fair evaluation, the Markov transition matrix used at inference time in
+the test set is computed on the same training + validation data available to the hybrid
+model. For validation, the Markov model is computed only on training data, aligning
+with the neural network setup.
+Neural Network Model
+Input Features
+nF = [4 −12]
+Fully Connected Layer
+[nF →nHidden]
+LeakyReLU Activation
+Dropout
+Fully Connected Layer
+[nHidden →4]
+Sigmoid Activation
+State Probabilities
+Input Features
+nF = [4 −12]
+Fully Connected Layer
+[nF →nHidden]
+LeakyReLU Activation
+Dropout
+Fully Connected Layer
+[nHidden →4]
+Sigmoid Activation
+NN State Probabilities
+Markov matrix
+(4 × 4)
+Prior State Probabilities
+State Probabilities
+(1 −α) · rML
+α · rMarkov
+State Features
+Hybrid Model
+Fig. 2 Architectures of the two forecasting models. Left: Pure neural network model. Right: Hybrid
+model combining the neural forecast with a Markov prior via a learned convex weighting.
+9
+
+--- Sayfa 10 ---
+The performances of the models are evaluated using BSS Brier (1950), defined as:
+BSS = 1 −BSML
+BSMC
+(4)
+BS = 1
+N
+N
+X
+i=1
+4
+X
+c=1
+(fic −ric)2
+(5)
+where fic is the predicted probability for event i belonging to class c, and ric is the
+one-hot encoded true class, and BSML and BSMC are the brier scores of the machine
+learning model and the Markov chain respectively. Positive BSS values indicate that
+the machine learning model outperforms the Markov baseline.
+Data Splitting and Training Strategy
+Fifths Experiment (Full Crossed Combinations)
+The main experiment used a fully crossed combination of the five quintiles:
+• 3 quintiles for training
+• 1 quintile for validation
+• 1 quintile for testing
+For the parameter search, the testing quintile is fixed as the last quintile, while for
+the temporal stability analysis, we use all possible combinations: This yields
+ 5
+3
+
+×
+ 2
+1
+
+=
+20 unique train-validation-test splits. Each combination was repeated 10 times to
+account for stochasticity, resulting in 200 total model runs. This experiment allows
+evaluation of model sensitivity to the choice of training and testing intervals.
+We also tested an ensemble variant restricted to using the final quintile of the
+data as the test set. In this approach, four models were trained, each using a different
+combination of three training quintiles and one validation quintile drawn from the first
+four quintiles of the dataset. Ensemble predictions were then formed by averaging the
+outputs of these four trained models.
+Sliding Window Event-Level Performance Evaluation
+To further investigate potential local variations in model performance across the full
+catalog, we also implemented a sliding-window evaluation procedure. The complete
+catalog of 444 earthquakes was used. For each evaluation, a hold-out window of size
+w ∈{5, 10, 15, 20} events was selected as test data. The remaining events preceding5
+the test window were used for training, excluding an additional 15% of the training
+data (67 events) set aside for validation and early stopping. This results in variable
+training set sizes depending on the test window length wtrain ∈{372, 367, 362, 357}.
+The hold-out window was then advanced event by event across the catalog in a
+rolling fashion, with wrap-around applied at the end of the catalog to preserve
+5We use the data in a loop here. If the test data consists of the first 5-20 events of the catalog, the
+validation set will consist of the last events of the catalog.
+10
+
+--- Sayfa 11 ---
+continuity. Each unique hold-out window was evaluated five times with indepen-
+dent model initializations to account for stochastic training variability, resulting in
+5 × (5 + 10 + 15 + 20) = 250 test evaluations per catalog position.
+Due to the overlap of test windows, each individual event contributes to multiple
+BSS estimates. To obtain a smoothed estimate of event-level predictive skill, we aggre-
+gate the BSS values by summing the weighted contributions of all test windows that
+include a given event into an array indexed by event. After processing all windows,
+each element of the array is divided by the number of contributions received, yielding
+the average BSS attributable to each event. This averaging inherently smooths the
+event-level skill estimates, and thus no additional smoothing is applied.
+Results
+Plain Neural Network
+We begin by testing whether the neural network can recover the Markov transition
+probabilities when provided only with state input, before proceeding to more complex
+configurations and trying to outperform the baseline.
+Reproducing the Markov Chain Approach
+As a first step, we verify that our shallow feedforward neural network can effec-
+tively replicate the behavior of the baseline Markov state model when given identical
+input information. To this end, we train models using only the one-hot encoded
+state information, with no magnitude or temporal inputs. Each model consists of a
+simple architecture trained for 2000 epochs without early stopping, to avoid validation-
+induced bias.6 This procedure is repeated 100 times with different random seeds to
+vary the initialization of values in the ML model.
+After training, we evaluate each model by providing the four possible one-hot
+input vectors (corresponding to the four discrete states) and recording the output
+probabilities. These form a 4 × 4 transition matrix, which we compare to the original
+Markov model.
+Note that the model parameters are different from those derived from the param-
+eter search. To allow the network to directly replicate the structure of a Markov
+transition matrix, weight decay is turned off, the learning rate is set to 2 × 10−3 and
+no dropout is used.
+Figure 3 (left) shows the results as a deviation heatmap: the baseline Markov
+matrix is shown, and overlaid violin plots visualize the distribution of deviations across
+the 100 trained neural networks. All entries are centered close to zero, confirming that
+the networks successfully reproduce the Markov transition behavior. The implied y-
+axis goes from −0.05 to 0.05 in each colored bin, corresponding to a 5% change for a
+value that falls on the bin edge.
+The right panel of Figure 3 shows a histogram of the BSS achieved by the models on
+the training set. Definitionally, this cannot be larger than 0, as this would outperform
+6There is no validation or test set in this case. The goal here is just to show, that when using the same
+data, the transition probabilities from a neural network will converge to the Markov matrix.
+11
+
+--- Sayfa 12 ---
+an optimal Markov model on a Markovian problem. The narrow spread and near-
+zero scores further confirm that the networks learn a behavior nearly identical to
+the original model under equivalent input conditions. Note that the BSS here was
+calculated on the training data after training, as we do not want random fluctuations
+of the neural network to create outperformance, which could happen as the validation
+or testing sets will have slightly different transition ratios.
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+Input State
+0.004
+0.002
+0.000
+BSS Score
+0
+20
+40
+60
+80
+Count
+0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40
+Markov Matrix Value
+Fig. 3 Reproduction of the Markov model with a shallow neural network. Left: Heatmap of the
+Markov transition matrix. Within each cell, violin plots show the distribution of deviations from the
+Markov value across 100 trained networks (centered at 0). A deviation up to a cell border corresponds
+to a difference of ±0.05 = ±5%. Right: Histogram of BSS achieved on the validation set by each
+trained network. The architecture reliably recovers the transition structure of the Markov model.
+12
+
+--- Sayfa 13 ---
+Hyperparameter Tuning
+To identify the best-performing configuration for the plain neural network model, a
+comprehensive hyperparameter search was performed across six dimensions, as seen
+in Table 1
+Table 1 Hyperparameter settings for the parameter search. The one-hot encoded state
+is not allowed as the only Input feature, as this defaults to the Markov Baseline.
+Hyperparameter
+Values
+Batch size
+4, 8, 16, 32, 64
+Learning rate
+1 × 10−3, 3 × 10−4, 1 × 10−4, 3 × 10−5
+Weight decay factor
+0.2, 0.14, 0.05, 0.017
+Dropout rate
+0.0, 0.1, 0.3, 0.5
+Hidden layer size
+4, 8, 16, 32
+(1) time since last earthquake,
+Input feature sets
+(2) magnitude of last earthquake,
+(3) one-hot encoded state; used in all six allowed combinations
+This yields a total of 5 × 4 × 4 × 4 × 4 × 6 = 7680 unique hyperparameter con-
+figurations. Each configuration was trained and evaluated 10 times with different
+random seeds to account for stochasticity due to random weight initialization and data
+shuffling.
+Model training used the Adam optimizer, MSE loss, and an exponential learning
+rate decay schedule with γ = 0.99. A maximum of 2,000 epochs was allowed per run,
+with early stopping (patience of 25 epochs) applied based on validation loss.8 The
+target output was the probability distribution over the next state.
+Evaluation used a fixed test set (last quintile), while the remaining four quintiles
+were cycled through as training and validation data using a 3:1 split. This resulted in 4
+validation configurations per hyperparameter setting, and thus 7680×4×10 = 307, 200
+individual model runs. For each configuration, the mean validation BSS across the 10
+runs and across the 4 training/validation folds was used to rank performance.
+This experiment enables identification of generalizable hyperparameter combina-
+tions that are not biased to any particular temporal segment of the first 80% of
+data. The best-performing configuration is reported in Table 3, and performance
+distributions can be seen in Figures 4 and 5.
+7The
+reported
+weight
+decay
+values
+are
+scaled
+relative
+to
+the
+learning
+rate
+via
+weight decay =
+weight decay factor × lr.. This formulation ensures that the regularization strength is proportional to the
+learning rate, making the hyperparameter search more interpretable.
+8While 2000 epochs is technically possible, most models stop after 100 to 200 or between 600 to 800
+epochs.
+13
+
+--- Sayfa 14 ---
+MTS
+MT
+MS
+TS
+M
+T
+Input Configuration
+4
+8
+16
+32
+Hidden Size
+Dropout
+0.0
+0.1
+0.3
+0.5
+Batchsize
+4
+8 16 32 64
+Learning Rate
+1 10
+3
+3 10
+4
+1 10
+4
+3 10
+5
+Weight Decay Factor
+0.02
+0.05
+0.14
+0.20
+-0.090
+0
+0.090
+BSS
+Fig. 4 Mean BSS from the full hyperparameter search, visualized as a nested heatmap. The figure
+is organized into 6×4 large blocks: columns correspond to input feature combinations ( Magnitude,
+Time and State represented with M, T and S on the X axis), and rows correspond to hidden layer sizes.
+Within each block, sub-rows and sub-columns represent dropout rate and batch size, respectively.
+Each cell inside these blocks shows a 4×4 mini-grid, where rows indicate learning rate and columns
+indicate weight decay. The values shown are the mean BSS across 10 runs per configuration. All axes
+are labeled to guide interpretation, allowing comparison across hierarchical levels of the parameter
+space.
+14
+
+--- Sayfa 15 ---
+0
+Relative Occurrence
+Batchsize
+0.008
+0.018
+BSS
+4
+8
+16
+32
+64
+0
+Learning Rate
+0.008
+0.018
+BSS
+1 10
+3
+3 10
+4
+1 10
+4
+3 10
+5
+0
+Weight Decay Factor
+0.008
+0.018
+BSS
+0.2
+0.14
+0.05
+0.01
+0.05
+0.00
+0.05
+BSS
+0
+Relative Occurrence
+Dropout
+0.008
+0.018
+BSS
+0
+0.1
+0.3
+0.5
+0.05
+0.00
+0.05
+BSS
+0
+Hidden Size
+0.008
+0.018
+BSS
+4
+8
+16
+32
+0.05
+0.00
+0.05
+BSS
+0
+Input Features
+0.008
+0.018
+BSS
+MTS
+MT
+MS
+TS
+M
+T
+Fig. 5 Histograms of BSS for each of the six hyperparameters explored: batchsize, learning rate,
+weight decay factor, dropout, hidden size, input features. Each subplot displays the distribution of BSS
+values for that parameter, aggregated over all other settings. Inset axes show a zoomed-in view of the
+mean (colored dot) and median (black mark) BSS to highlight central tendencies. This visualization
+helps assess the relative impact and stability of each parameter choice on model performance.
+To provide a thorough evaluation, three approaches for computing the final BSS
+against the test set are used: (1) reporting the mean validation BSS across the four
+train-validation splits used during hyperparameter tuning, (2) computing the BSS of
+an ensemble model formed by averaging the outputs of the models from each fold,
+and (3) retraining the best-performing architecture on the combined training and
+validation data (first four quintiles) and evaluating it on the held-out test quintile.
+For the latter, fixed-epoch training is used, with the epoch count determined by the
+average early stopping point of the top-performing models during tuning. These results
+are shown in Table 2.
+15
+
+--- Sayfa 16 ---
+Table 2 BSS of the best plain neural network model under different evaluation strategies on the test
+set. Each value is determined as the mean of 10 repetitions.
+Evaluation Strategy
+Description
+BSS
+(1) Cross-Validation Average
+Mean BSS across 4 validation folds
+−0.01689 ± 0.00070
+(2) Ensemble Model
+Average prediction 4-fold models
+−0.01884 ± 0.00074
+(3) Retrained Model
+Trained on the first 4 quintiles, fixed epochs
+−0.05306 ± 0.00853
+Table 3 Best-performing hyperparameter configuration based on average
+validation BSS across 4 folds. The Table shows the results for both, plain
+neural network and hybrid model, where the daggered quantities were not
+included in the second parameter search, they remain the same as from the
+plain NN case.
+Hyperparameter
+Plain NN Value
+Hybrid Model Value
+Batch size
+32
+32†
+Learning rate
+3 · 10−4
+1 · 10−4
+Weight decay factor
+0.05
+0.2
+Dropout
+0.0
+0.0†
+Hidden layer size
+4
+4†
+Input features
+Magnitudes + States
+Magnitudes + States†
+Mean validation BSS
+0.02369 ± 0.00214
+0.00426 ± 0.00043
+Hybrid Approach
+To assess whether incorporating domain knowledge improves generalization, we eval-
+uated the hybrid model, which linearly blends the output of the neural network with
+the Markov transition probabilities using a learnable mixing coefficient α.
+Given that the hybrid model builds directly on the architecture optimized for the
+plain neural network, we performed a restricted hyperparameter search, varying only
+the learning rate and weight decay, with the same options as for the plain model. All
+other hyperparameters were fixed to the best configuration found for the plain model.
+Each configuration was trained 10 times using early stopping (patience 25, max 2000
+epochs), using the first four quintiles for training and validation, and testing on the
+last remaining quintile.
+The learned α parameter, which controls the strength of the prior, typically con-
+verged to values between 0.88 and 0.95 (corresponding to α between approximately
+2 and 3), indicating a strong but not dominant reliance on the Markov prior. Tests
+with a wide range of initial values for α (0.0 to 7.5) consistently converged toward this
+range (but did not always get there), and we used an initial value of 2.5 for the final
+experiments.
+Despite strong validation performance, test performance consistently degraded
+across splits (Table 4). A summary of validation performance across hyperparameter
+configurations is shown in Figure 6. This suggests that the hybrid model, although
+regularized by the prior, still overfits patterns in the training and validation data
+that do not hold in temporally distant test data. The hybrid model also consistently
+outperforms the plain neural network (see Table 5) by all three measuring standards.
+16
+
+--- Sayfa 17 ---
+These results show that even with the inclusion of an explicit prior, model per-
+formance on the last quintile is limited. This motivates the next section, where
+we investigate temporal inconsistencies in the dataset and their effect on model
+generalization.
+Table 4 Hybrid model BSS results on validation and test
+sets across different data splits. The number of the split
+indicates which quintile was used for validation. The
+results shown are for 10 repetitions.
+Data Split
+Validation BSS
+Test BSS
+Total
+0.00450 ± 0.00050
+−0.00591 ± 0.00096
+Split 1
+0.00324 ± 0.00094
+−0.00317 ± 0.00014
+Split 2
+0.00347 ± 0.00110
+−0.00281 ± 0.00024
+Split 3
+0.00611 ± 0.00050
+−0.01610 ± 0.00034
+Split 4
+0.00519 ± 0.00097
+−0.00158 ± 0.00056
+Table 5 BSS Comparison on the test set comparing the Markov baseline, the plain
+neural network and the hybrid model against one another. The first named model in the
+first column is considered the baseline (to interpret the sign of the BSS). The three
+comparison models are equivalent to those in Table 2, however we used 100 plain and
+hybrid models for improved statistical stability.
+Models
+Validation
+Ensemble
+Retrained
+Markov vs NN
+−0.02596 ± 0.00044
+−0.02031 ± 0.00039
+−0.01748 ± 0.00060
+Markov vs Hybrid
+−0.00639 ± 0.00006
+−0.00004 ± 0.00005
+−0.00013 ± 0.00010
+NN vs Hybrid
++0.01901 ± 0.00043
++0.01984 ± 0.00038
++0.01702 ± 0.00059
+0.20
+0.14
+0.05
+0.02
+0.20
+0.14
+0.05
+0.02
+Weight decay
+1 10
+3
+3 10
+4
+1 10
+4
+3 10
+5
+1 10
+3
+3 10
+4
+1 10
+4
+3 10
+5
+Learning Rate
+Validation Set
+0.20
+0.14
+0.05
+0.02
+0.20
+0.14
+0.05
+0.02
+Weight decay
+Test Set
+-0.017
+0
+0.017
+BSS
+Fig. 6 Mean BSS for the hybrid model across learning rate (y-axis) and weight decay (x-axis),
+shown for each of the first four quintiles used as validation (the fifth is held out for testing). Each
+panel corresponds to a different validation split:
+  1 2
+3 4
+
+. Scores are averaged over 10 random seeds
+per configuration. The best validation performance was achieved with a learning rate of 1×10−4 and
+a weight decay of 0.20. It is noteworthy, that the results are strongly and negatively correlated with
+a Pearson correlation coefficient of −0.7043.
+17
+
+--- Sayfa 18 ---
+Temporal Sensitivity and Stability
+Both the plain and hybrid neural network models consistently failed to outperform
+the Markov baseline on the final (fifth) quintile of the dataset, regardless of validation
+strategy or model configuration. This underperformance is understood to stem from
+a shift in the underlying dynamics: the final portion of the catalog exhibits markedly
+more Markov-consistent behavior than earlier periods (see Section 5 and Figure 11).
+To investigate the general effects of this, we conducted two complementary analyses.
+First, we evaluated all combinations of training, validation, and test quintiles to assess
+how generalization depends on temporal location. Second, we performed a fine-grained
+sliding window analysis to estimate how predictive skill varies across individual events
+throughout the catalog. These analyses help clarify the extent and structure of tem-
+poral non-stationarity in the dataset and explain the systematic challenges faced by
+more flexible models in extrapolating to the final quintile.
+Quintiles Approach
+We re-evaluated the best-performing hybrid architecture across all 20 unique train-
+validation-test splits permitted by the five-quintile partitioning. Each configuration
+was run 10 times to account for stochasticity. The results, visualized in Figure 7, show
+that while individual runs within each configuration were generally stable, multiple
+runs were necessary to resolve variability in the BSS. Table 6 summarizes BSS outcome
+counts and further highlights the anomalous behavior of Quintile 5 across validation
+and testing configurations. Importantly, test performance showed strong dependence
+on the specific temporal location of the test quintile. For each of the first four quintiles,
+at least two corresponding validation quintiles yielded a positive mean BSS relative to
+the Markov baseline (while two yielded a negative one). In contrast, the final quintile
+consistently underperformed regardless of validation set choice. Conversely, when the
+last quintile is used for validation, the BSS test scores of all other quintiles are also
+negative, likely from early stopping in non-generalizable configurations. This asymme-
+try highlights a pronounced temporal shift in the data distribution or dynamics near
+the end of the catalog that impairs generalization.
+18
+
+--- Sayfa 19 ---
+1
+2
+3
+4
+5
+Testset
+1
+2
+3
+4
+5
+Validset
+BSS Test
+BSS Valid
+BSS Grid for a Division in Fifths
+0.02
+0.01
+0.00
+0.01
+0.02
+BSS
+Fig. 7 BSS for all combinations of training, validation, and test quintiles. Each block corresponds
+to a unique configuration, with the upper half showing validation BSS and the lower half showing
+test BSS, each repeated 10 times to account for stochastic variability. For test quintiles 1 through
+4, there are always two validation splits that yield a positive mean test BSS. In contrast, Quintile 5
+consistently results in negative BSS across all validation configurations, indicating poor generalization
+to the most recent portion of the catalog.
+Table 6 Summary of negative BSS across the 20 train-validation-test combinations for
+each quintile. The first column counts how often the validation BSS was negative when
+a given quintile was used for validation. The second and third columns report how often
+the test BSS was negative when the quintile was used as the test or validation set,
+respectively. Quintile 5 shows a markedly higher number of negative outcomes, both
+when used as a test set and as a validation set, indicating a significant shift in the data
+distribution near the end of the catalog.
+Quintile
+BSSVal < 0
+BSSTest < 0 (as test set)
+BSSTest < 0 (as validation set)
+1
+10
+20
+20
+2
+8
+19
+20
+3
+0
+20
+20
+4
+1
+19
+20
+5
+13
+40
+38
+Event-by-event Approach
+To better understand the temporal structure of model performance, we also applied the
+sliding-window evaluation procedure described in Section 5 and estimated the event-
+level contribution to forecast skill using backpropagation, a method which inherently
+includes some smoothing. Figure 8 shows the resulting BSS series for both validation
+and test subsets.
+The validation BSS remains predominantly positive throughout the catalog, with
+92% of events contributing positively to validation skill. This suggests that the model
+consistently fits the training data and generalizes well to held-out validation segments
+drawn from earlier portions of the catalog. In contrast, the test BSS series exhibits
+19
+
+--- Sayfa 20 ---
+0
+50
+100
+150
+200
+250
+300
+350
+400
+Event number
+0.015
+0.010
+0.005
+0.000
+0.005
+0.010
+Mean Influence on BSS Score
+Validation
+Test
+Fig. 8 Smoothed event-level BSS estimates for the validation (blue) and test (green) subsets,
+obtained via a sliding-window evaluation with deconvolution and subsequent smoothing. Horizontal
+lines indicate the mean BSS for each of the five temporal quintiles. While validation BSS remains
+mostly positive throughout (92% of events), test BSS displays larger variability (also due to less
+smoothing stemming from the smaller calculation window). The average test BSS in the last quintile
+is negative, in contrast to the positive quintile means elsewhere, indicating a failure of the model to
+generalize to the most recent events.
+significantly more fluctuation, including extended regions of negative skill. On average,
+only about 60% of events contribute positively to test BSS. Notably, a sequence of
+approximately 30 events in the final fifth of the catalog shows strongly negative skill
+(event when in the validation set), highlighting a breakdown in model generalization
+to the most recent portion of the data. When comparing the two lines, one should note
+that the validation data uses 67 events per location (repeated 20 times), while the test
+data uses 5-20 events per location (in steps of 5, each repeated 5 times), leading to a
+more smoothed validation line.
+We further aggregate the BSS values across each of the five temporal quintiles. All
+quintiles exhibit positive mean validation BSS, while the test BSS is positive for the
+first four quintiles but becomes negative in the final one. This confirms the temporal
+asymmetry observed previously and reinforces the idea that the model struggles to
+extrapolate its learned representation to the most recent seismic activity.
+Lastly, the Pearson correlation coefficient between the two series is approximately
+0.35, suggesting a modest correspondence between the influence events have in the
+validation and test sets.
+20
+
+--- Sayfa 21 ---
+Explainable AI
+To better understand what the neural network learns from less Markov-consistent
+subsets of the data, we performed a focused interpretability analysis using integrated
+gradients (IG, Sundararajan, Taly, and Yan (2017)). While these results do not directly
+explain the model’s failure to generalize to Quintile 5, they shed light on the internal
+structure captured during training on earlier, more predictable portions of the catalog.
+IG provides a path-integrated attribution of each input feature to an output target
+relative to a baseline, allowing us to quantify how each input contributes to individ-
+ual predictions. This offers a more fine-grained view of model behavior than global
+perturbation-based methods. The data configuration used for this analysis consists of
+the first 3 quintiles for training, the fourth quintile for validation and the last quintile
+for testing.
+We provide these results for both, the plain neural network (Figure 9) and the
+hybrid model (Figure 10), although the results are very similar. The models use
+their respective best parameters from the parameter search and are therefore trained
+with eight input features: normalized magnitudes of the most recent events in each
+of the four regions (features 1–4), and the one-hot encoded current state (features
+5–8). Magnitudes are scaled using Mnorm = (MW −6.5)/3.5, and state features are
+binary. Integrated gradients are computed for both validation and test set predictions,
+enabling a direct comparison of feature usage across time. These results feed into the
+following analysis of temporal sensitivity and model adaptation. The values discussed
+in this section are the mean (and standard deviation) of 100 models trained with
+different initial seeds.
+It is generally noticeable, that the fourth target behaves differently from the others.
+This is likely due to its changed occurrence between the fourth and fifth quintile, which
+is shown in Table 7.
+Table 7 Counts of states in the validation (fourth) and test (fifth) quintile,
+as input and output states. Note that state 4 appears twice as often in the
+test set.
+Validation set
+Test set
+Input States
+Output States
+Input States
+Output States
+State 1
+29
+29
+23
+23
+State 2
+27
+28
+28
+28
+State 3
+24
+23
+21
+21
+State 4
+8
+8
+16
+16
+Global Feature Importance. We first compute the global importance of each input
+feature by averaging the absolute value of its IG attribution across all samples in the
+validation and test sets. The resulting bar plots (Figures 9 and 10, left column) are
+quite similar along targets and show that the one-hot encoded state features (5–8) are
+generally more important across all targets. Even though the feature importance of
+21
+
+--- Sayfa 22 ---
+the state features is not the same as a bar chart of these features, they match their
+counts closely (compare Table 7).
+Attribution Shift Between Validation and Test Sets. To assess temporal
+changes in feature usage, we calculate the difference in global attributions between
+validation and test sets (Figures 9 and 10, middle column). In all cases, the magnitude
+features gain in importance, while the state features behave according to their preva-
+lence (compare Table 7). These patterns suggest a temporal redistribution of feature
+reliance, consistent with non-stationarity or adaptation to different regimes. While
+higher reliance on state features (or conversely a lower reliance on magnitude features)
+would likely improve performance given increased Markov-consistency of the test set,
+the model does not recognize this and fails outperforming the baseline on the test set.
+Feature Attribution Heatmaps. A summary of mean absolute IG attributions
+across all features and datasets is shown in the right-hand heatmaps of Figures 9
+and 10. It shows, how strongly each feature contribute to the logit for that target,
+on average. So while almost all features have a negative attribution for target 3 in
+Figure 9, this does not mean, that target 3 becomes less likely with an increase in each
+feature; other targets might decrease more, leading to a increased probability for target
+3 after the final softmax function. The dominant structure remains consistent: state
+features receive the highest absolute attribution, (upper half of the heatmaps). While
+attribution shifts between validation and test sets are noticeable, they are moderate
+in scale, suggesting that the model retains broadly similar behavior over time, at least
+in aggregate.
+22
+
+--- Sayfa 23 ---
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.000
+0.001
+0.002
+0.003
+0.004
+0.005
+0.006
+0.007
+Feature Importance
+Attribution to State 1
+Feature Importance
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0005
+0.0000
+0.0005
+0.0010
+0.0015
+0.0020
+Importance Shift
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+Mean Attributions
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.000
+0.001
+0.002
+0.003
+0.004
+0.005
+0.006
+0.007
+Feature Importance
+Attribution to State 2
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0005
+0.0000
+0.0005
+0.0010
+0.0015
+0.0020
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.000
+0.001
+0.002
+0.003
+0.004
+0.005
+0.006
+0.007
+Feature Importance
+Attribution to State 3
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0005
+0.0000
+0.0005
+0.0010
+0.0015
+0.0020
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.000
+0.001
+0.002
+0.003
+0.004
+0.005
+0.006
+0.007
+Feature Importance
+Attribution to State 4
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0005
+0.0000
+0.0005
+0.0010
+0.0015
+0.0020
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+-6.2 × 10
+4
+0
++6.2 × 10
+4
+Attribution
+-6.2 × 10
+4
+0
++6.2 × 10
+4
+Attribution
+-6.2 × 10
+4
+0
++6.2 × 10
+4
+Attribution
+-6.2 × 10
+4
+0
++6.2 × 10
+4
+Attribution
+Fig. 9
+Global feature attribution for the plain neural network model using Integrated Gradients.
+Rows correspond to targets 1–4 from top to bottom. Left: Mean absolute IG values per feature for
+each output target, computed on the validation set (blue) and test set (orange). State features (5–8)
+dominate overall, while magnitude features (1–4) become more relevant in the test set. Middle:
+Difference in global attribution between test and validation sets. Features 5 and 7 show decreased
+importance on the test set, while feature 8 and the magnitude features increase. Right: Heatmaps
+of mean absolute IG values per feature and target, for validation and test sets. Rows correspond
+to input features 1–8, columns to validation (left) and test set (right). The dominant role of state
+features persists across both datasets, with moderate shifts in attribution strength.
+23
+
+--- Sayfa 24 ---
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0000
+0.0001
+0.0002
+0.0003
+0.0004
+0.0005
+Feature Importance
+Attribution to State 1
+Feature Importance
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.00005
+0.00000
+0.00005
+0.00010
+0.00015
+Importance Shift
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+Mean Attributions
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0000
+0.0001
+0.0002
+0.0003
+0.0004
+0.0005
+Feature Importance
+Attribution to State 2
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.00005
+0.00000
+0.00005
+0.00010
+0.00015
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0000
+0.0001
+0.0002
+0.0003
+0.0004
+0.0005
+Feature Importance
+Attribution to State 3
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.00005
+0.00000
+0.00005
+0.00010
+0.00015
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.0000
+0.0001
+0.0002
+0.0003
+0.0004
+0.0005
+Feature Importance
+Attribution to State 4
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+0.00005
+0.00000
+0.00005
+0.00010
+0.00015
+Importance Shift
+V
+T
+1
+2
+3
+4
+5
+6
+7
+8
+Feature
+-1.9 × 10
+5
+0
++1.9 × 10
+5
+Attribution
+-1.9 × 10
+5
+0
++1.9 × 10
+5
+Attribution
+-1.9 × 10
+5
+0
++1.9 × 10
+5
+Attribution
+-1.9 × 10
+5
+0
++1.9 × 10
+5
+Attribution
+Fig. 10 Integrated Gradients feature attribution for the hybrid model, analogous to Figure 9 but
+for the hybrid model. Left: Global feature importance for validation (blue) and test (orange) sets.
+Middle: Attribution shifts between validation and test sets. Right: Heatmaps of mean absolute IG
+values per feature and target.
+24
+
+--- Sayfa 25 ---
+Discussion
+While both, the plain neural network and the hybrid model outperform the Markov
+Chain baseline in validation, neither approach succeeds in delivering robust general-
+ization that yields positive results on the most recent quintile of the catalog. This
+raises important questions about the limits of machine learning in sparse input seismic
+forecasting. In the following, we explore the probable cause of this failure to general-
+ize, implications for the design and evaluation of forecasting models, and the broader
+value of reporting negative results in this field.
+Why Did Generalization Fail?
+Although none of the models generalized successfully to the final test quintile, they
+consistently achieved improved forecasting skill on validation data chosen from the
+first four quintiles of the data. In the full cross-validation analysis, every test quintile
+except the last had at least two validation splits that yielded a positive BSS. This
+suggests that the models did learn meaningful structure from the data, but that this
+structure failed to remain predictive for the most recent events.
+A plausible explanation is that the statistical properties of the data changed over
+time. Patterns learned from earlier data may no longer apply later in the catalog or may
+even become misleading (this can be seen in the negative correlation for BSS between
+validation and testsets in Figure 6). In this view, generalization fails not because of
+overfitting in the usual sense, but because the target distribution itself shifts.
+Regarding overfitting more generally: while the models are relatively small and the
+amount of training data is much larger than the number of parameters, this does not
+preclude the model from locking onto patterns that are only transiently predictive;
+it could be that there are no recognizable patterns besides Markovianity. Even with
+simple architectures, over-specialization to earlier regimes can occur in non-stationary
+settings. These findings point to the importance of explicitly evaluating temporal
+robustness in forecasting models.
+To better understand the persistent degradation in test set performance, we exam-
+ined the statistical structure of the data over time by analyzing changes in the Markov
+transition matrices across the catalog. An analysis revealed that the final quintile is
+substantially more consistent with the long-term Markov behavior than the earlier
+parts of the catalog, and a rolling-window calculation shows this even more. When
+comparing the transition matrix of each quintile with the matrix estimated from all
+other data, the fifth quintile showed the lowest deviation, both in absolute and rel-
+ative terms. This suggests that the hybrid model, trained on earlier segments where
+deviation from the prior was larger, incorrectly learns that it can reliably depart
+more from the Markov baseline (the plain model which only has implicit knowledge
+of the Markovian nature of the problem fairs even worse, see Table 5). However, in
+the final quintile, where the Markov structure is stronger, such deviations become
+harmful. This dynamic contributes to the poor generalization observed and reveals a
+broader challenge: models may not only face distribution shift, but also be systemat-
+ically misled about the usefulness of their inductive biases. A representation of this
+Markov-consistency analysis is shown in Figure 11.
+25
+
+--- Sayfa 26 ---
+0
+50
+100
+150
+200
+250
+300
+350
+Start of "Test" Window
+1.0
+1.5
+2.0
+Absolute Error
+4
+6
+8
+10
+Relative Error
+1
+2
+3
+4
+1
+2
+3
+4
+Input State
+1.86
+1
+2
+3
+4
+1
+2
+3
+4
+1.80
+1
+2
+3
+4
+1
+2
+3
+4
+1.55
+1
+2
+3
+4
+1
+2
+3
+4
+1.89
+1
+2
+3
+4
+1
+2
+3
+4
+1.21
+1
+2
+3
+4
+1
+2
+3
+4
+Input State
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+Input State
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+1
+2
+3
+4
+Output State
+1
+2
+3
+4
+0.10
+0.20
+0.30
+0.40
+0.50
+Markov Matrix Value
+-0.20
+-0.10
+0.00
+0.10
+0.20
+Deviation
+|MMQ
+MMnQ| = 
+MMnQ
+MMQ
+MMQ
+MMnQ
+Fig. 11 Comparison of Markov transition matrices across time. Each column corresponds to one of
+the five quintiles. The top row shows the Markov matrix computed from all other quintiles (excluding
+the one in the column), the middle row shows the matrix for the respective quintile, and the bottom
+row visualizes the absolute difference between the two. The sum of absolute differences is reported
+above each column. The bottom panel tracks this error in a rolling-window fashion, with a one-
+event step size. Both absolute and relative errors are shown. The final quintile exhibits the smallest
+deviation from the long-term Markov structure, suggesting that it is more Markov-consistent than
+the preceding data. This helps explain why models trained on earlier quintiles, which allowed greater
+deviation from the prior, fail to generalize when the prior becomes more predictive.
+26
+
+--- Sayfa 27 ---
+Implications for Machine Learning in Sparse Forecasting
+Settings
+The results underscore a key risk in applying machine learning to temporally struc-
+tured problems: strong performance on held-out validation data does not guarantee
+future generalization. In our case, models often performed well when validated on data
+close in time to the training set but failed when tested on more recent events. If only
+the data from the first four quintiles were available, the result of this paper would
+have been very different.
+The hybrid model, which incorporated a probabilistic prior from a Markov pro-
+cess, helped stabilize learning and often improved validation scores compared to a
+plain neural network (Table 5). Yet even this model failed to generalize to the final
+test quintile, indicating that while priors can provide useful inductive bias, they are
+insufficient in the face of substantial distribution shift.
+These findings highlight the need for models that are either informed by additional
+physical variables or explicitly account for temporal change. Features such as fault-
+specific information, geodetic signals, or stress evolution proxies may offer the kind of
+conditioning necessary for generalization. Alternatively, dynamically updated models
+or time-aware architectures may help track evolving patterns more effectively. For
+sparse data models, a Markovian model might be as good as it gets.
+The Importance of Negative Results in Seismic ML
+Despite recent enthusiasm for machine learning in earthquake forecasting, the inability
+of our models to generalize meaningfully to the most recent data demonstrates the
+importance of publishing negative results. These findings help avoid overly optimistic
+expectations and support more realistic assessments of model utility in operational
+settings.
+This study also illustrates the value of comprehensive evaluation. By testing mod-
+els across multiple temporal splits, using ensemble strategies, fixed-epoch retraining,
+and event-level decomposition, we exposed shortcomings that could have remained
+hidden under a conventional train-validation-test split. These methods offer a practical
+framework for future work aiming to evaluate ML models under temporal drift.
+Ultimately, documenting failure cases and carefully diagnosing their causes is
+essential to building more reliable models. We encourage future studies to priori-
+tize robustness and transparency, especially when tackling problems as complex and
+consequential as earthquake forecasting.
+27
+
+--- Sayfa 28 ---
+Conclusion
+Summary of Findings
+This study evaluated neural network-based classifiers for earthquake probability fore-
+casting using sparse features derived from past events. While a neural network
+approach was able to outperform the performance of a Markov model during train-
+ing and validation, it consistently failed to generalize to temporally distinct test data.
+Extensive hyperparameter tuning improved validation performance but did not resolve
+this gap. A hybrid model that modified Markov baseline with a learnable prior achieved
+higher validation skill and more stable training, yet similarly failed on the final test
+quintile. These consistent failures across model classes suggest that generalization is
+systematically constrained by temporal non-stationarity in the underlying data, as far
+as this can be determined from the limited timeseries.
+Limitations
+Several limitations should be noted, the first one being the small sample size which
+will affect all statistical models based on this data. The use of sparse input fea-
+tures limited to simple descriptors of past events likely restricts the models’ ability
+to capture complex physical dynamics. The Markov prior, while stabilizing, is static
+and unable to account for possible changes in seismic regimes, even if this change
+is towards a more Markov-consistent state. Furthermore, the results are based on a
+single regional earthquake catalog without additional geophysical or contextual data.
+Finally, only feedforward architectures were considered; models with more explicit
+temporal reasoning were not explored to keep to goal of using sparse input data.
+Future Work
+Future research can build on these results while remaining within the sparse-input
+paradigm. One possible avenue is to refine the use of prior knowledge: dynamic exten-
+sions of the Markov model or hierarchical priors that adapt across segments of the
+catalog may improve robustness to non-stationarity, but the limiting factor will remain
+the availability of sufficiently long time series of large earthquakes.
+Acknowledgements
+This research is supported by the “KI-Nachwuchswissenschaftlerinnen” – grant SAI
+01IS20059 by the Bundesministerium f¨ur Bildung und Forschung – BMBF. The calcu-
+lations were performed on Nvidia A100 Tensor Core GPUs at the Frankfurt Institute
+for Advanced Studies’ GPU cluster, funded by BMBF for the project Seismologie und
+Artifizielle Intelligenz (SAI). This research has made extensive use of PyTorch Paszke
+et al. (2019), numpy Harris et al. (2020), and matplotlib Hunter (2007) libraries.
+References
+Brier, G.W.
+(1950, January).
+Verification of Forecasts Expressed in Terms of
+28
+
+--- Sayfa 29 ---
+Probability.
+Monthly Weather Review, 78(1), 1,
+https://doi.org/10.1175/
+1520-0493(1950)078⟨0001:VOFEIT⟩2.0.CO;2
+Dascher-Cousineau, K., Shchur, O., Brodsky, E.E., G¨unnemann, S.
+(2023).
+Using
+deep
+learning
+for
+flexible
+and
+scalable
+earthquake
+forecast-
+ing.
+Geophysical Research Letters, 50(17), e2023GL103909,
+https://
+doi.org/https://doi.org/10.1029/2023GL103909
+Retrieved
+from
+https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2023GL103909
+(e2023GL103909 2023GL103909) https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023GL103909
+Gutierrez Pe˜na, Q.J., Nava Pichardo, F.A., Glowacka, E., Castro Escamilla, R.R.,
+M´arquez Ram´ırez, V.H.
+(2021, Mar 01).
+Assessing markovian models
+for seismic hazard and forecasting.
+Pure and Applied Geophysics, 178(3),
+847-863,
+https://doi.org/10.1007/s00024-021-02686-2
+Retrieved from
+https://doi.org/10.1007/s00024-021-02686-2
+Harris, C.R., Millman, K.J., van der Walt, S.J., Gommers, R., Virtanen, P., Cour-
+napeau, D., . . . Oliphant, T.E. (2020, September). Array programming with
+NumPy. Nature, 585(7825), 357–362, https://doi.org/10.1038/s41586-020-2649
+-2 Retrieved from https://doi.org/10.1038/s41586-020-2649-2
+Herrera, C., Nava, F.A., Lomnitz, C. (2006, Aug 01). Time-dependent earthquake haz-
+ard evaluation in seismogenic systems using mixed markov chains: An application
+to the japan area. Earth, Planets and Space, 58(8), 973-979,
+https://doi.org/
+10.1186/BF03352602 Retrieved from https://doi.org/10.1186/BF03352602
+Hunter, J.D. (2007). Matplotlib: A 2d graphics environment. Computing in Science
+& Engineering, 9(3), 90–95, https://doi.org/10.1109/MCSE.2007.55
+Jena, R., Pradhan, B., Gite, S., Alamri, A., Park, H.-J.
+(2023).
+A new
+method to promptly evaluate spatial earthquake probability mapping using an
+explainable artificial intelligence (xai) model.
+Gondwana Research, 123, 54-
+67,
+https://doi.org/https://doi.org/10.1016/j.gr.2022.10.003
+Retrieved from
+https://www.sciencedirect.com/science/article/pii/S1342937X22002726
+(Data
+driven models)
+Kagan, Y.Y., & Knopoff, L.
+(1981).
+Stochastic synthesis of earthquake cat-
+alogs.
+Journal of Geophysical Research: Solid Earth, 86(B4), 2853-2862,
+https://doi.org/https://doi.org/10.1029/JB086iB04p02853
+Retrieved from
+https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JB086iB04p02853
+29
+
+--- Sayfa 30 ---
+https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JB086iB04p02853
+Kagan,
+Y.Y.,
+&
+Knopoff,
+L.
+(1987).
+Statistical
+short-term
+earth-
+quake
+prediction.
+Science,
+236,
+1563
+-
+1567,
+Retrieved
+from
+https://api.semanticscholar.org/CorpusID:12946111
+Koehler, J., Li, W., Faber, J., Ruempker, G., Srivastava, N.
+(2023).
+Test-
+ing the potential of deep learning in earthquake forecasting.
+Retrieved from
+https://arxiv.org/abs/2307.01812
+Kubo, H., Naoi, M., Kano, M.
+(2024, Feb 28).
+Recent advances in earth-
+quake
+seismology
+using
+machine
+learning.
+Earth, Planets and Space,
+76(1), 36,
+https://doi.org/10.1186/s40623-024-01982-0
+Retrieved from
+https://doi.org/10.1186/s40623-024-01982-0
+Mignan, A., & Broccardo, M.
+(2020, 05).
+Neural network applications in earth-
+quake prediction (1994–2019): Meta-analytic and statistical insights on their
+limitations. Seismological Research Letters, 91(4), 2330-2342, https://doi.org/
+10.1785/0220200021
+Retrieved from https://doi.org/10.1785/0220200021
+https://pubs.geoscienceworld.org/ssa/srl/article-pdf/91/4/2330/5082147/srl-
+2020021.1.pdf
+Nandan, S., Ouillon, G., Sornette, D., Wiemer, S.
+(2019).
+Forecasting the rates
+of future aftershocks of all generations is essential to develop better earth-
+quake forecast models. Journal of Geophysical Research: Solid Earth, 124(8),
+8404-8425,
+https://doi.org/https://doi.org/10.1029/2018JB016668
+Retrieved
+from
+https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2018JB016668
+https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2018JB016668
+Nava, F.A., & Guti´errez, Q.J.
+(2024, Aug 01).
+The magnitude threshold and
+missing and pseudo links in markov chains.
+Pure and Applied Geophysics,
+181(8), 2495-2517, https://doi.org/10.1007/s00024-024-03534-9 Retrieved from
+https://doi.org/10.1007/s00024-024-03534-9
+Nava, F.A., Herrera, C., Frez, J., Glowacka, E. (2005, Jun 01). Seismic hazard eval-
+uation using markov chains: Application to the japan area. pure and applied
+geophysics, 162(6), 1347-1366,
+https://doi.org/10.1007/s00024-005-2673-z
+Retrieved from https://doi.org/10.1007/s00024-005-2673-z
+Ogata, Y. (1988). Statistical models for earthquake occurrences and residual anal-
+ysis for point processes.
+Journal of the American Statistical Association,
+83(401), 9–27,
+https://doi.org/10.1080/01621459.1988.10478560
+Retrieved
+from
+https://www.tandfonline.com/doi/abs/10.1080/01621459.1988.10478560
+30
+
+--- Sayfa 31 ---
+https://www.tandfonline.com/doi/pdf/10.1080/01621459.1988.10478560
+Ogata, Y.
+(1998).
+Space-time point-process models for earthquake occurrences.
+Annals of the Institute of Statistical Mathematics, 50(2), 379-402, Retrieved
+from https://link.springer.com/article/10.1023/A:1003403601725
+Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., . . . Chintala,
+S. (2019). Pytorch: an imperative style, high-performance deep learning library.
+In Proceedings of the 33rd international conference on neural information
+processing systems. Red Hook, NY, USA: Curran Associates Inc.
+Saad, O.M., Chen, Y., Savvaidis, A., Fomel, S., Jiang, X., Huang, D., . . . Chen,
+Y.
+(2023, 09).
+Earthquake Forecasting Using Big Data and Artificial
+Intelligence: A 30-Week Real-Time Case Study in China.
+Bulletin of the
+Seismological Society of America, 113(6), 2461-2478,
+https://doi.org/
+10.1785/0120230031
+Retrieved from https://doi.org/10.1785/0120230031
+https://pubs.geoscienceworld.org/ssa/bssa/article-
+pdf/113/6/2461/6037436/bssa-2023031.1.pdf
+Stindl,
+T.,
+&
+Chen,
+F.
+(2022,
+07).
+Spatiotemporal
+etas
+model
+with
+a
+renewal
+main-shock
+arrival
+process.
+Journal
+of
+the
+Royal
+Statistical
+Society
+Series
+C:
+Applied
+Statistics,
+71(5),
+1356-
+1380,
+https://doi.org/10.1111/rssc.12579
+Retrieved
+from
+https://doi.org/10.1111/rssc.12579
+https://academic.oup.com/jrsssc/article-
+pdf/71/5/1356/49463819/jrsssc 71 5 1356.pdf
+Stockman,
+S.,
+Lawson,
+D.J.,
+Werner,
+M.J.
+(2023).
+Forecasting
+the
+2016–2017
+central
+apennines
+earthquake
+sequence
+with
+a
+neural
+point
+process.
+Earth’s
+Future,
+11(9),
+e2023EF003777,
+https://
+doi.org/https://doi.org/10.1029/2023EF003777
+Retrieved
+from
+https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2023EF003777
+(e2023EF003777 2023EF003777)
+Sundararajan, M., Taly, A., Yan, Q. (2017). Axiomatic attribution for deep networks.
+Proceedings of the 34th international conference on machine learning - volume
+70 (p. 3319–3328). JMLR.org.
+31

@@ -1,0 +1,428 @@
+
+--- Sayfa 1 ---
+Could planet/sun conjunctions be used to predict large 
+(>=Mw7) earthquake? 
+Pierre Romanet, Earthquake and Tsunami Research Division, NIED, Tsukuba, Ibaraki, Japan  
+Abstract 
+No. 
+Introduction 
+Following the recent Mw 7.8 Kahramanmaraş, Türkiye earthquake sequence on 6 February 2023, 
+the assertion that planet/sun alignments and lunar phases may help to predict earthquake 
+became widespread in some bad quality news and social medias. In the following, we will call this 
+alignment of three celestial bodies a conjunction, although the correct word must be a syzygy.  
+Usually, this assertion is promoted by choosing carefully period of time over which it occurs and 
+showing specific earthquakes at which it occurs. Also they usually do not mention that these 
+events do happen extremely frequently, and that most of the time, these alignments are not 
+followed by significant earthquakes. 
+The only literature available about it put into question fundamental physics without any proof 
+(Omerbashich, 2011; Safronov 2022), or does not show the background rate of conjunctions 
+(Awadh, 2021). 
+The major logical flaw in their analysis is showing only events that are working while not paying 
+attention to the total quantity of conjunctions (see Khalisi, 2021, Zanette 2011). Indeed, if 
+conjunctions are very common, it is easy to associate them with earthquakes.  
+This assertion can be seen as a more evolved version of that the moon phase is changing the 
+earthquake. The moon phase theory, has been debated for a long time by seismologists 
+(Schuster, 1897), and the question is still not completely answered yet (Ide et al., 2016; Hough, 
+2018; Kossobokov and Panza 2020; Zaccagnino et al., 2022). In some regions, slow-earthquakes 
+like tremors (Nakata et al 2008, Rubinstein et al., 2008), or low frequency earthquake (Thomas et 
+al., 2012) are influenced by tides. Depending on the area, the time in the seismic cycle (Tanaka 
+2010, 2012; Peng et al., 2021) and the focal mechanism of the earthquakes (Tsuruoka et al., 
+1995), it may have some influence or not. Overall, it seems to have an influence (Yan et al,. 2023), 
+at least for some regions/period or time, that may be incorporated in long term probabilistic 
+earthquake forecasting (Ide et al., 2016). Rigorous attempt to perform short term prediction with 
+the idea that before a large earthquake, smaller earthquakes would be more tide-sensitive as the 
+crust is approaching critical strength, was proven to be ineffective (Hirose et al., 2022).  
+While for the moon/earth/sun alignements, there exists a physical mechanism by which the 
+stresses are changing in the crust (the gravity), and therefore may weakly influence earthquake 
+occurence (Ide et al., 2016), there is no such mechanism for planets/sun alignements, because 
+the electromagnetic and gravity fields by celestial body other than sun and moon are usually 
+extremely small when they reach the Earth. Therefore, invoking “electrodynamic”, “resonance”, 
+
+--- Sayfa 2 ---
+and “molecule” as if they were keywords to explain the phenomena leading to this assertion only 
+reflects the lack of scientific knowledge of the persons promoting this theory. 
+In this paper, we are testing the planet/sun alignment, together with the moon phase 
+systematically over a 69 years period of time using global catalog of earthquakes. We are 
+systematically comparing the percentage of earthquakes linked with conjunction(s) with the 
+percentage of the time that conjunction(s) are happening. This assertion that planet/sun alignment 
+is promoting earthquakes would be valid only if it is happening more frequently than conjunctions 
+themselves. We also calculated significance of our results, by calculating the p-value, making the 
+null hypothesis that earthquakes follow a binomial distribution during the period with the 
+probability given by the probability of conjunctions. 
+Method 
+We first chose the ISC-GEM catalog (Storchak et al., 2013; 2015; Di Giacomo et al., 2018) and 
+selected earthquakes of Mw>7 over the period 1950/01/01-2018/12/31. The reason of selecting 
+the year 1950, is because the catalog starts to be complete for shallow events (>60km) and for 
+Mw>=7 at years 1918–1939 (Michael, 2014). We chose the 10 years delay as a margin to be sure 
+not to miss Mw 7 earthquakes which may flaw the analysis. 
+To calculate each planet/sun alignment, we took advantage of the Astropy package in python (The 
+astropy collaboration et al., 2018, 2022), that allows to calculate the position of any planets in the 
+solar system, the sun, and the moon at any time. For each day covering the period of the 
+earthquake catalog, we calculated if there was a conjunction or not. We used the NASA JPL 
+ephemeris model “DE430”. We did not take into account leap seconds in the calculation of the 
+day, because the offset is less than a minute for the considered period. 
+The celestial body included are: the Sun, Mercury, Venus, the Earth, Mars, Jupiter, Saturn, Uranus, 
+and Neptune. 
+For each triplet of given three celestial bodies A, B and C in the solar system, we calculated their 
+positions in International Celestial Reference System (ICRS). 
+We then calculated each vector 
+, 
+ and 
+ and the associated norms  
+, 
+ 
+and 
+. The vector that has the longest norm shows the two bodies whose distance is the 
+greatest, hence we can find the body that is in the middle. For example, if 
+ is the greatest 
+distance, we can guess that the celestial body B is in the middle. Finally, we can calculate the 
+angle between 
+ and 
+ as: 
+ in degree 
+When the angle  was smaller than a threshold 
+ we set that there was an alignment of the 
+celestial bodies for the day.  
+For the moon phase, we calculated the projection of the moon on the ecliptic plane (the plane that 
+contains the orbital of the Earth). Then, we try to find if the projection on this plane was in 
+opposition (full Moon) or in conjunction (new Moon) with the sun from the Earth. A threshold of 
+ was used, this threshold is chosen because the average orbital of the moon around the Earth 
+during one day is around 
+. 
+AB BC
+AC
+||AB|| ||BC||
+||AC||
+||AC||
+AB
+BC
+θ = 180
+π
+arccos
+AB ⋅BC
+|AB||BC|
+θ
+θthr
+6.5∘
+12∘
+
+--- Sayfa 3 ---
+Results 
+ 
+The results are presented in the above chart (table 1). The total period consists of 25202 days, 
+among which 19565 days are associated with conjunctions. So that 78% of the time, there is at 
+least one conjunction on the day. For the same period, there are 813 earthquakes, among which 
+640 are associated with conjunctions, so that 79% percent of earthquakes are associated with 
+conjunctions. 
+We did the same study for earthquakes associated with full or new moon, as well as for 
+earthquakes associated with both full or new moon, and at least one conjunction. The percentage 
+of days associated with either full or new moon is 7% (1743/25202), very much the same as the 
+number of earthquakes that happened during full or new moon 7% (58/813). Finally, there are 5% 
+(1349/25202) of days, and 6% (52/813) of earthquakes associated with both full or new moon, 
+and at least one conjunction. 
+We can formulate the null hypothesis that earthquakes follow a binomial law with the probability 
+given by the number of days that are associated with conjunctions: 
+, where  is the probability to observe  earthquakes that are 
+associated with at least one conjunction in the total number of earthquakes . Because  is large 
+in our sample, we can approximate the binomial distribution by a normal law: 
+,  
+finally the single-side p-value will be: 
+Number of days 
+associated with 
+conjunction(s)
+Number of 
+earthquakes 
+associated with 
+conjunction(s)
+Number of days 
+associated with 
+full/new moon
+Number of 
+earthquakes 
+associated with 
+full/new moon
+Number of days 
+associated with 
+both full/new 
+moon and 
+conjunction(s)
+Number of 
+earthquakes 
+associated with 
+both full/new 
+moon and 
+conjunction(s)
+19565/25202 
+(77.63%)
+1743/25202 
+(6.92%)
+1349/25202 
+(5.35%)
+52/813 
+(6.40%) 
+pvalue = 0.09
+640/813 
+(78.72%) 
+pvalue = 0.23
+58/813 
+(7.13%) 
+pvalue = 0.40
+p
+P[k |n|p] = (
+n
+k) pk(1 −p)n
+P
+k
+n
+n
+P[k |n|p] ≃e
+−1
+2(
+k −np
+np(1 −p) )
+2
+2πnp(1 −p)
+Table 1: comparison of the frequency of a particular event (for example a conjunction), and the 
+frequency of an earthquake that can be associated to the event during the period 
+1950/01/01-2018/12/31. The threshold used here to define a conjunction is 
+. The 
+calculated p-value is one-sided, for the null hypothesis that the earthquakes follow a binomial 
+law with the probability given by the frequency calculated with the number of days.
+θthr = 3∘
+
+--- Sayfa 4 ---
+, if 
+ 
+The p-value represents the probability to obtain a value worst or equal than the calculated value. 
+Usually, a value 
+ would mean that we can reject the null hypothesis, meaning that 
+there is only 5% chance that we get such a bad result. 
+We choose a single-side p-value because this will favor the rejection of the null hypothesis (the 
+single side p-value is lower than the two-side p-value), hence it is siding with the hypothesis that 
+conjunctions are linked to earthquakes. Given that the p-value for earthquakes associated with 
+conjunction(s) is 0.23, we cannot reject the null hypothesis, hence the difference between the 
+observed value of earthquake linked with conjunction and the total number of conjunction is not 
+significant. The same analysis can be done for earthquakes associated with full/new moon, or 
+earthquakes that are associated with both full/new moon and at least one conjunction. In these 
+two cases, the p-value is also high enough (
+) so that we cannot reject the null 
+hypothesis.  
+Discussion and Conclusion 
+The frequency of earthquakes associated with conjunction(s) and the frequency of conjunctions 
+are pretty much the same, and the difference is statistically non-significant (all the p-values are 
+larger than 5%). It means that we cannot reject the hypothesis that earthquake are occurring 
+following a binomial law given the time period.  
+The fact that the null hypothesis cannot be rejected does not mean either that this is the true 
+hypothesis. It is known that earthquakes are not completely random, especially because of 
+pvalue = 1
+2 −1
+2
+erf (
+k −np
+2np(1 −p) )
+k > np
+pvalue < 0.05
+pvalue > 0.05
+Figure 1: Comparison of the percentage of days involving at least one conjunction associated 
+with a given planet, and the percentage of earthquakes linked with at least one conjunction 
+associated with a given planet. The threshold angle to define a conjunction is 
+.
+θthr = 3∘
+
+--- Sayfa 5 ---
+aftershocks, and aftershocks have not been removed here. It just means that given this 
+earthquake catalog, we cannot decipher to reject it.  
+Nether-the-less, the assertion that earthquakes are linked with conjunction is unlikely based on 
+our results. For such a strong claim, that earthquakes can be predicted using conjunctions and 
+moon phase, because it would have extremely important societal outcome, it would need very 
+significant results and hence associated with very law p-value. This is far from being the case 
+here.  
+We also tried to find if a planet was more often that others associated with conjunctions (figure 1). 
+It seems not the case because the difference between the percentage of planet/sun involved at 
+least in one conjunction during one day is within 3% the same as the percentage of earthquakes 
+that can be at least associated with a given planet/sun in a conjunction. 
+Finally, we tried to see if a conjunction was more often than others associated with earthquake 
+occurence (figure 2). The results are less clear, because for a given conjunction, the percentage of 
+one particular conjunction during the whole period is small (<2% for the conjunction that is the 
+most frequent), so that the number of earthquakes sampling this conjunction is also very small. 
+This leads to a large variability. However, we can still say that the overall trend is respected, the 
+conjunctions that are the most frequent are most often associated with earthquakes. 
+The change of the threshold for conjunction does not change the results, and the same 
+conclusion can be made. If the threshold angle is too small, we may miss some conjunctions 
+because the orbital plane is not exactly the same for each planet. For example, the results with 
+the threshold of 2% is given in appendix (table 2). Reducing the threshold angle mainly reduces 
+the percentage of time conjunctions are happening and reduces in the same way the percentage 
+of earthquakes that are associated with conjunctions.  
+Persons defending the assertion of planetary/sun conjunctions may continue arguing that I still did 
+not look at a particular association of conjunctions, or association with only full moon. This is true. 
+But given the number of possible associations, it is impossible to test them all. If so, they are very 
+welcomed to indicate these specific associations, so that it can be tested rigorously and 
+scientifically, keeping in mind that normally the person making assertions should be the one 
+proving them. 
+The alignment of three planets/sun is actually something extremely ordinary in the solar system 
+that is happening close to everyday (for the threshold 
+, it happens 78% of the time). Finding a 
+syzygy on the day of an earthquake is therefore normal, moreover if we start looking at some days 
+before and after an earthquake. We showed that the percentage of earthquake associated with at 
+least one conjunction is actually very similar to the percentage of the time where there is at least a 
+conjunction, and that the difference between the two is not statistically significant. Hence, there is 
+no significant effect of planet/sun alignment or moon effect on the occurence of large 
+earthquakes, and it can certainly not be used to provide short term prediction of earthquakes. 
+Finally to plagiarize Khalisi, 2021, “Sooner or later there will be another earthquake close to a 
+conjunction, and the self-proclaimed prophets will have their joy.” 
+3∘
+
+--- Sayfa 6 ---
+Figure 2: Comparison of the percentage of days that a specific conjunction happen, with the percentage of earthquakes that can be linked with 
+the same specific conjunction. The threshold angle to define a conjunction is 
+.
+θthr = 3∘
+
+--- Sayfa 7 ---
+Acknowledgement 
+I would like to thank all the seismologists/geologists/scientists that supported me to write this 
+article. Special thanks to Martijn van den Ende and Sylvain Barbot, because I would have never 
+thought about publishing a paper on this topic. I would also like to thank Susan Hough that 
+allowed me to plagiarize her abstract. 
+Data 
+International Seismological Centre (2018), ISC-GEM Earthquake Catalogue, https://doi.org/
+10.31905/d808b825 
+References 
+Awadh, S. M. (2021), Solar system planetary alignment triggers tides and earthquakes, Journal of 
+Coastal Conservation, 25 (2), 30,  
+doi:10.1007/s11852-021-00822-7.  
+Di Giacomo, D., E. R. Engdahl, and D. A. Storchak (2018), The isc-gem earthquake catalogue 
+(1904–2014): status after the extension project, Earth System Science Data, 10(4), 1877–1899,  
+doi:10.5194/essd-10-1877-2018.  
+Hirose, F., K. Maeda, and O. Kamigaichi (2022), Efficiency of earthquake forecast models based 
+on earth tidal correlation with background seismicity along the Tonga–Kermadec trench, Earth, 
+Planets and Space, 74 (1), 1–11,  
+doi:10.1186/s40623-021-01564-4.  
+Hough, S. E. (2018), Do large (magnitude
+8) global earthquakes occur on preferred days of the 
+calendar year or lunar cycle?, Seismol. Res. Lett., 89(2A), 577–581,  
+doi: 10.1785/0220170154.  
+Ide, S. (2016), Characteristics of slow earthquakes in the very low frequency band: Ap- plication 
+to the cascadia subduction zone, J. Geophys. Res., 121(8), 5942–5952,  
+doi: 10.1002/2016JB013085.  
+Khalisi, E. (2021), On the erroneous correlation between earthquakes and eclipses, arXiv preprint 
+arXiv:2101.08572,  
+doi:10.48550/arXiv.2101.08572.  
+Kossobokov, V. G., and G. F. Panza (2020), A myth of preferred days of strong earth- quakes?, 
+Seismol. Res. Lett., 91 (2A), 948–955,  
+doi:10.1785/0220190157.  
+Michael, A. J. (2014), How complete is the isc-gem global earthquake catalog?, Bull. Seism. Soc. 
+Am., 104(4), 1829–1837,  
+doi:10.1785/0120130227.  
+Nakata, R., N. Suda, and H. Tsuruoka (2008), Non-volcanic tremor resulting from the combined 
+effect of earth tides and slow slip events, Nature Geoscience, 1(10), 676–678,  
+doi:10.1038/ngeo288.  
+Omerbashich, M. (2011), Astronomical alignments as the cause of m6+ seismicity, arXiv preprint 
+arXiv:1104.2036,  
+≥
+
+--- Sayfa 8 ---
+doi:10.48550/arXiv.1104.2036.  
+Peng, G., X. Lei, G. Wang, and F. Jiang (2021), Precursory tidal triggering and b value variation 
+before the 2011 mw 5.1 and 5.0 tengchong, china earthquakes, Earth Planet. Sc. Lett., 574, 
+117,167,  
+doi:10.1016/j.epsl.2021.117167.  
+Price-Whelan, A. M., B. Sipo ̋cz, H. Gu ̈nther, P. Lim, S. Crawford, S. Conseil, D. Shupe, M. Craig, 
+N. Dencheva, A. Ginsburg, et al. (2018), The astropy project: building an open-science project and 
+status of the v2. 0 core package, The Astronomical Journal, 156(3), 123,  
+doi:10.3847/1538-3881/aabc4f.  
+Price-Whelan, A. M., P. L. Lim, N. Earl, N. Starkman, L. Bradley, D. L. Shupe, A. A. Patil, L. 
+Corrales, C. Brasseur, M. No ̈the, et al. (2022), The astropy project: sustaining and growing a 
+community-oriented open-source project and the latest major release (v5. 0) of the core package, 
+The Astrophysical Journal, 935(2), 167,  
+doi:10.3847/1538- 4357/ac7c74.  
+Rubinstein, J. L., M. La Rocca, J. E. Vidale, K. C. Creager, and A. G. Wech (2008), Tidal 
+modulation of nonvolcanic tremor, Science, 319(5860), 186–189,  
+doi: 10.1126/science.1150558.  
+Safronov, A. N. (2022), Astronomical triggers as a cause of strong earthquakes, Interna- tional 
+Journal of Geosciences, 13 (9), 793–829,  
+doi:10.4236/ijg.2022.139040.  
+Schuster, A. (1897), On lunar and solar periodicities of earthquakes, Proceedings of the Royal 
+Society of London, 61(369-377), 455–465.  
+Storchak, D. A., D. Di Giacomo, I. Bondar, E. R. Engdahl, J. Harris, W. H. Lee, A. Villasenor, and P. 
+Bormann (2013), Public release of the isc–gem global instrumental earth- quake catalogue (1900–
+2009), Seismol. Res. Lett., 84 (5), 810–815.  
+Storchak, D. A., D. Di Giacomo, E. Engdahl, J. Harris, I. Bonda ́r, W. H. Lee, P. Bormann, and A. 
+Villasenor (2015), The isc-gem global instrumental earthquake catalogue (1900– 2009): 
+introduction, Physics of the Earth and Planetary Interiors, 239, 48–63,  
+doi: 10.1016/j.pepi.2014.06.009.  
+Tanaka, S. (2010), Tidal triggering of earthquakes precursory to the recent sumatra megathrust 
+earthquakes of 26 december 2004 (mw 9.0), 28 march 2005 (mw 8.6), and 12 september 2007 
+(mw 8.5), Geophys. Res. Lett., 37(2),  
+doi:10.1029/2009GL041581.  
+Tanaka, S. (2012), Tidal triggering of earthquakes prior to the 2011 tohoku-oki earthquake (mw 
+9.1), Geophys. Res. Lett., 39 (7),  
+doi:10.1029/2012GL051179.  
+Thomas, A., R. Burgmann, D. R. Shelly, N. M. Beeler, and M. Rudolph (2012), Tidal triggering of 
+low frequency earthquakes near parkfield, california: Implications for fault mechanics within the 
+brittle-ductile transition, J. Geophys. Res., 117(B5), 
+ doi: 10.1029/2011JB009036.  
+Tsuruoka, H., M. Ohtake, and H. Sato (1995), Statistical test of the tidal triggering of earthquakes: 
+contribution of the ocean tide loading effect, Geophys. J. Int., 122(1), 183–194.  
+Yan, R., X. Chen, H. Sun, J. Xu, and J. Zhou (2023), A review of tidal triggering of global 
+earthquakes, Geodesy and Geodynamics, 14(1), 35–42, doi:10.1016/j.geog.2022.06.005, 
+contemporary research in Geodynamics and Earth Tides.  
+
+--- Sayfa 9 ---
+Zaccagnino, D., L. Telesca, and C. Doglioni (2022), Correlation between seismic activity and tidal 
+stress perturbations highlights growing instability within the brittle crust, Scientific Reports, 12(1), 
+7109,  
+doi:10.1038/s41598-022-11328-z.  
+Zanette, D. H. (2011), Comment on ”astronomical alignments as the cause of m6+ seismicity”, 
+arXiv preprint arXiv:1109.1240,  
+doi:10.48550/arXiv.1109.1240.  
+Appendix 
+ 
+Table 2: comparison of the frequency of a particular event (for example a conjunction), and the 
+frequency of an earthquake that can be associated to the event during the period 
+1950/01/01-2018/12/31. The threshold used here to define a conjunction is 
+. The 
+calculated p-value is one-sided, for the null hypothesis that the earthquakes follow a binomial 
+law with the probability given by the frequency calculated with the number of days.
+θthr = 2∘
+Number of days 
+associated with 
+conjunction(s)
+Number of 
+earthquakes 
+associated with 
+conjunction(s)
+Number of 
+earthquakes 
+associated with 
+full/new moon
+Number of 
+earthquakes 
+associated with 
+full/new moon
+Number of days 
+associated with 
+both full/new 
+moon and 
+conjunction(s)
+Number of 
+earthquakes 
+associated with 
+both full/new 
+moon and 
+conjunction(s)
+13908/25202 
+(55.19%)
+1743/25202 
+(6.92%)
+976/25202 
+(3.87%)
+463/813 
+(56.95%) 
+pvalue = 0.16
+34/813 
+(4.18%) 
+pvalue = 0.32
+58/813 
+(7.13%) 
+pvalue = 0.40

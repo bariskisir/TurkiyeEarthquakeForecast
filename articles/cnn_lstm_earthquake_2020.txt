@@ -1,0 +1,638 @@
+
+--- Sayfa 1 ---
+1
+Recurrent Convolutional Neural Networks help to
+predict location of Earthquakes
+Roman Kail, IITP RAS,
+Alexey Zaytsev, Evgeny Burnaev, Skoltech
+Abstract—We examine the applicability of modern neural
+network architectures to the midterm prediction of earthquakes.
+Our data-based classiﬁcation model aims to predict if an earth-
+quake with the magnitude above a threshold takes place at a
+given area of size 10 × 10 kilometers in 10-60 days from a
+given moment. Our deep neural network model has a recurrent
+part (LSTM) that accounts for time dependencies between
+earthquakes and a convolutional part that accounts for spatial
+dependencies. Obtained results show that neural networks-based
+models beat baseline feature-based models that also account
+for spatio-temporal dependencies between different earthquakes.
+For historical data on Japan earthquakes our model predicts
+occurrence of an earthquake in 10 to 60 days from a given
+moment with magnitude Mc > 5 with quality metrics ROC
+AUC 0.975 and PR AUC 0.0890, making 1.18 · 103 correct
+predictions, while missing 2.09 · 103 earthquakes and making
+192 · 103 false alarms. The baseline approach has similar ROC
+AUC 0.992, number of correct predictions 1.19·103, and missing
+2.07 · 103 earthquakes, but signiﬁcantly worse PR AUC 0.00911,
+and number of false alarms 1004 · 103.
+I. INTRODUCTION
+The earthquake prediction is a substantial but challenging
+problem [9]. The goal is to predict the time and location of
+a future earthquake. The two common ways to solve this
+problem are physical modeling and machine learning based
+on data on past observations.
+While physical modeling is a well-established approach, it
+covers only part of the full picture due to high uncertain-
+ties in data and complex nonlinear behavior of seismicity.
+An alternative is to construct a data-based machine learning
+model to replace expensive and sometimes imprecise physical
+modeling. The machine learning modeling appears to work
+in various areas including drilling [18], high energy physics
+engineering [6], and earthquake signal detection [23]. The
+machine learning serves as an alternative or a complement
+to physical modeling in earthquake prediction too [21, 22].
+A typical machine learning model takes past information as
+input and outputs a future earthquake probability [24, 4, 3,
+14, 13]. Different models use different available data sources
+as inputs such as soil radon data [30] or history of past
+earthquakes itself.
+Classic workﬂow of machine learning algorithm includes
+generation of precursors or another meaningful features from
+available information as model input. In
+[4] authors used
+eight seismic indicators based on seismic characteristics. The
+authors of [5] proceed similarly but identify that the set of
+useful seismic features for different regions can be different.
+Other physics-inspired inputs are RTL features that aggregates
+Fig. 1: Workﬂow of our machine learning model: for each
+region we put a mark with an indication of an earthquake
+magnitude that occurs in this region; we get these indicators
+for the last 150 days; the model outputs probability of an
+earthquake with the magnitude greater or equal to a threshold
+(e.g. 5). Probabilities are indicated by color intensity in the
+right image.
+the past seismic activity into a single index [29]. To use RTL
+features it is crucial to select good values of hyperparame-
+ters [26].
+More recent idea in machine learning community is to learn
+the right input features from data using representation learning
+based on Neural networks (NN). For earthquake prediction
+usage of NN dates back to at least 1994 [2]. Another work [1]
+uses different class of NN Radial Basic Functions and in the
+authors conclude that Radial Basis Functions Neural Networks
+are also useful for large earthquakes prediction and adopt
+speciﬁc methods for training of neural networks to handle class
+imbalance in earthquake prediction problem.
+Convolutional neural networks (CNN) also serve as ma-
+chine learning models for earthquake prediction [25]. An
+approach [16] uses CNNs to predict earthquakes. The model
+predicts the probability of an earthquake with a magnitude
+larger than 6 happening in Taiwan in the next 30 days. The
+authors create a binary map of earthquakes of size 256 × 256
+with each pixel is an indicator of the occurrence of an
+earthquake in the given region. These maps serve as inputs to
+a CNN model. Another recent application of Recurrent Neural
+Networks (RNN) is in [27]. The authors predict earthquakes
+taking into account temporal and spatial correlations among
+earthquakes. They predict earthquakes in 9 sub-regions of
+China and use fully-connected NN block inside RNN solving
+arXiv:2004.09140v3  [cs.LG]  3 Jun 2020
+
+--- Sayfa 2 ---
+2
+the problem at a global level.
+According to our knowledge nobody considers local pre-
+dictions of earthquakes at small areas. Also there is a limited
+usage of modern Neural Networks for earthquake prediction.
+In this paper we try to cover these gaps with the following
+problem statement. We divide the whole target area into sub-
+areas of size ∼10×10 km and predict earthquake occurrence
+in the next 10 −50 days in each sub-area separately: our pre-
+diction is local compared to the previous works. Inputs to our
+machine learning model are past observations of earthquakes
+on the same grid, so we have a signiﬁcant number of inputs and
+outputs. To reduce the number of parameters, we use CNNs
+that able to generate useful data representations in computer
+vision [15] and remote sensing [17] and learn well spatial
+correlations. On top of them, we use RNNs that keep track
+of the past events, enabling long term memory in our model.
+The general scheme for our approach is in Figure 1. To train
+and test our model, we use a large data sample of earthquakes
+in Japan region.
+Our main contributions are the following:
+• We consider middle-time-range local earthquake predic-
+tion using only information about past earthquakes.
+• To solve this problem, we use neural networks that can
+handle spatial and temporal dependencies between earth-
+quakes. Our architecture is a recurrent neural network
+with convolutional layers at each time step. The inclusion
+of both types of dependencies improves the model.
+• Our model works at a local scale and predicts the
+probability of earthquakes at locations of 100 squared
+kilometers size.
+• Our model incorporates prior information on the fre-
+quency of earthquakes at a particular location within
+Neural network pipeline.
+II. PROBLEM STATEMENT
+We consider earthquakes records over 26 years. Each
+earthquake has four parameters: location (x, y), time t and
+magnitude M. We split the whole map into the grid of size
+200 × 250 with each cell is ∼10 km long and ∼10 km wide
+and predict earthquakes at each cell. Thus, if we identify an
+earthquake in a cell, the location is precise enough for most
+applications.
+Our goal is to construct a model that predicts if there is
+an earthquake in the time cylinder [T + Tmin, T + Tmax]
+for each cell using earthquake historical information up to
+time T. We consider middle time range earthquake prediction
+with Tmin = 10 and Tmax = 50 days. To identify limits of
+applicability of our model we consider different thresholds
+Mc = 3.5 and Mc = 5 for the earthquake magnitude: our
+target is to predict earthquakes with M ≥Mc. While smaller
+thresholds Mc are better from the machine learning point of
+view, as the class imbalance is less severe, higher values of
+Mc are more interesting from a practical point of view.
+We have pairs (xi, yi), where yi is the indicator of an
+earthquake with a magnitude M ≥Mc, and xi is the vector
+of features that represents times and speciﬁc locations of past
+earthquakes. All these pairs form a sample D = {(xi, yi)}n
+i=1.
+2.5
+3.0
+3.5
+4.0
+4.5
+5.0
+5.5
+6.0
+Magnitude
+0
+5000
+10000
+15000
+20000
+25000
+Number of earthquakes
+Fig. 2: Histogram of magnitudes: the total sample size is about
+250000. Only earthquakes with magnitude smaller or equal
+to 6 are presented. There are only 350 earthquakes with a
+magnitude greater or equal to 6 and only 2387 earthquakes
+with magnitude greater or equal to 5. Also we see a local
+maximum at 3, as our grid of observational stations are not
+dense enough, and we miss some earthquakes with smaller
+magnitudes.
+Our goal is to create a model ˆy(x) that is as close as possible to
+the true value y(x). Thus, the considered problem is a machine
+learning classiﬁcation problem.
+A. Data
+In our work we consider a dataset from a typical seismic-
+active region - Japan. The dataset consists of data about
+247204 earthquakes that occurred in 1990 −2016. Figure 2
+demonstrates the histogram of the number of earthquakes with
+respect to the magnitude.
+The sample is unbalanced. Most of classiﬁers and their
+accuracy metrics are tailored to balanced samples. In our
+case we should tune a classiﬁer to make it more sensitive
+to the target class. Also the sample is non-homogeneous as
+the network of seismic stations changes over time and is
+nonuniform. So we should take these into account during
+feature generation.
+III. METHODS
+A. Naive baseline
+A rather strong baseline for prediction of an earthquake
+probability at a given location is usage of a historical mean
+occurrence value at this subarea.
+B. RTL features
+Another approach for the midterm prediction of earthquakes
+is usage of RTL features (Region-Time-Length) to identify the
+probability of an earthquake in a given region [29]. RTL is
+composed of weighted quantities associated with three param-
+eters: time, location and magnitude of earthquakes and depend
+on past earthquakes in space-time cylinder. So, the model
+based on RTL features as inputs is an adequate baseline as
+
+--- Sayfa 3 ---
+3
+it takes into account these spatial and temporal dependencies
+between earthquake events.
+C. Ensembles of decision trees
+Typical nonlinear baseline in classiﬁcation problems is an
+Ensemble of basic decision trees classiﬁers. The advantages
+of this approach include a decent performance with default
+settings [10], fast model construction, almost no over-ﬁtting
+and handling of various problems in data including missing
+values and outliers.
+Among various approaches for construction of Ensembles
+of Decision Trees, the most used nowadays is Gradient
+Boosting [11]. Modern implementations serve as baseline
+in many practical problems [8] and suitable for imbalanced
+classiﬁcation problems [19].
+As inputs to Gradient Boosting classiﬁers we use either
+RTL features with a set of hyperparameters r0, t0 equal to the
+optimal ones from [26] or binary indicators of earthquakes for
+previous days.
+D. Neural networks
+1) RNNs: We adopt recurrent neural networks (RNNS) to
+capture temporal dependencies. In particular, we use LSTM,
+a type of RNN which uses additional state cell to enable
+long-term memory [12]. In our case, we use two-dimensional
+feature maps as hidden states compared to one-dimensional
+hidden states in common LSTM, as we need some map-to-
+map transformations.
+2) CNNs: We process a distribution of earthquakes on the
+map of 200 × 250 cells. To beneﬁt from spatial dependencies
+between earthquakes we use convolution neural networks [20],
+which efﬁciently work with images or other two-dimensional
+signals like remote-sensing data.
+Our approach combines RNN and CNN architectures, as we
+pass information through RNN in a form of a feature map,
+obtained using CNN, see paragraph III-F.
+E. Residuals normalization for neural networks
+The naive classiﬁer III-A performs quite well. To take
+advantage of it we adjust predicted earthquake probabilities
+with naive classiﬁer outputs as priors at the last neural network
+layer. We make an inverse softmax transformation of prior
+predictions at each cell. Then we add the neural network
+output and combine NN and prior output, applying common
+softmax transformation in the end. The following procedure
+for classes i ∈{1, 2} is used:
+• An output of our model is δoi. The naive prediction
+before softmax equals oi = log pi + c, where pi is the
+earthquake prior probability at a given location, c is a
+hyperparameter that scales the power of this prior.
+• We calculate oi + δoi.
+• The probability of an earthquake as the prediction of the
+neural network is ˆyi = softmax(oi + δoi).
+• We use a threshold (e.g. t = 0.5): if ˆy2 > t, the model
+reports an earthquake.
+During training we use the cross-entropy loss function for pairs
+of predicted probabilities ˆyi and true labels yi.
+F. Full pipeline
+Fig. 3: Proposed CNN-LSTM model. Green blocks represent
+series of convolutions, orange blocks represent convolution
+layers, circles — multiplications and additions, and σ and
+tanh — sigmoid and hyperbolic tangent activation functions
+correspondingly.
+Our main architecture depicted in Figure 3 follows the
+pipeline:
+1) We represent data as a sequence of heat maps: for each
+cell we specify a magnitude of an earthquake on this
+day; we set it to zero if no earthquake happened. The
+input heat map at each time moment has size 200×250.
+2) We pass the input heat map through a convolutional
+network to create an embedding of size 200 × 250
+with 16 channels. As an output of LSTM at each time
+moment we have a hidden representation (short term
+memory) of size 32×200×250, cell (long term memory)
+representation of a similar size, and the output of size
+32 × 200 × 250.
+3) We transform to the output to the size 2 × 200 × 250
+using a series of convolutions.
+4) We follow the procedure described in paragraph III-E to
+modify our prediction according to the prior probabili-
+ties of earthquakes at given locations.
+We also tried U-net architecture [28], often used for image
+segmentation, instead of the convolutional architecture, but
+results were worse.
+IV. RESULTS
+In this section we provide results of computation exper-
+iments. After necessary deﬁnitions we observe selection of
+hyperparameters for our algorithms in subsection IV-C and
+then we compare all approaches in subsection IV-D. The code
+for the conducted experiments is available at github 1.
+1https://github.com/romakail/Earthquake prediction DNN
+
+--- Sayfa 4 ---
+4
+Weight
+Mc = 3.5
+Mc = 5
+ROC AUC
+PR AUC
+ROC AUC
+PR AUC
+1
+0.643
+0.0323
+0.517
+0.00044
+10
+0.909
+0.0345
+0.493
+0.00050
+103
+0.952
+0.0806
+0.890
+0.00096
+105
+0.948
+0.0761
+0.935
+0.00133
+107
+0.961
+0.0797
+0.911
+0.00117
+TABLE I: Dependence of CNN+LSTM model quality on the
+weights of the minor class objects during training. Optimal
+weights are signiﬁcantly better than 1, while the usage of too
+large weights for Mc = 5 leads to performance degradation.
+Method
+Mc = 3.5
+Mc = 5
+ROC AUC
+PR AUC
+ROC AUC
+PR AUC
+Baseline
+0.901
+0.052
+0.674
+0.00198
+GradBoost, indicator
+0.578
+0.0573
+0.549
+0.00021
+GradBoost, RTL
+0.754
+0.0139
+0.820
+0.00088
+CNN
+0.950
+0.0179
+0.808
+0.00044
+CNN+LSTM
+0.952
+0.0806
+0.937
+0.00152
+CNN, resid.
+0.966
+0.0166
+0.994
+0.00776
+CNN+LSTM, resid.
+0.975
+0.0890
+0.992
+0.00911
+TABLE II: Dependence of the earthquake model quality on
+the used method. Our method outperforms other options; also
+usage of both CNN and LSTM along with residuals training
+provides further improvement. At the same time Gradient
+Boosting performs worse than the baseline.
+A. Quality metrics
+Accuracy metric is unrepresentative due to class imbalance:
+a constant prediction “no-earthquake” has a very high accu-
+racy. Instead we calculate two types of errors: number of
+False Negatives (FN) — objects of the ﬁrst class attributed
+by the classiﬁcation to the second class, number of False
+Positives (FP) — objects of the second class attributed by
+the classiﬁcation to the ﬁrst class.
+We also use standard in machine learning community
+metrics ROC AUC and PR AUC. Both these metrics lie
+in the interval [0, 1] and their higher values correspond to
+better models. PR AUC suits better for measuring quality in
+imbalanced classiﬁcation problems [7, 19].
+B. Compared algorithms
+We compare the methods from Section III:
+• Baseline — outputs mean earthquake probability at a
+given location obtained from historical data.
+• Grad. boosting, indicator — Gradient boosting with earth-
+quake indicator input features.
+• Grad. boosting, RTL — Gradient boosting with earth-
+quake RTL input features, see paragraph III-B.
+• CNN — series of stacked one by one convolution layers,
+trained on given amount of previous days.
+• CNN+LSTM — Recurrent neural network, which passes
+data as a feature map, obtained by CNN.
+• CNN, resid. (residuals) — same as CNN, but it predicts
+a residual to oi, see paragraph III-E.
+• CNN+LSTM, resid. (residuals) — same as CNN+LSTM,
+but it predicts a residual to oi, see paragraph III-E.
+Our approach (CNN+LSTM, resid.)
+Baseline
+Threshold
+FN
+FP
+Threshold
+FN
+FP
+Mc = 3.5
+0.0001
+6.4
+4400
+0.0001
+10.85
+6971
+0.1
+16.2
+2120
+0.1
+36.55
+1006
+0.99
+78.8
+80
+0.99
+77.20
+21.85
+Mc = 5
+0.0001
+0.81
+502
+0.0001
+2.07
+1004
+0.1
+2.09
+192
+0.3
+2.51
+164.2
+0.99
+2.74
+92
+0.9
+3.05
+29.79
+TABLE III: Values in thousands of True positive (TP, detected
+events), False Negative (FN, undetected events), False Positive
+(False Alarms about future earthquakes), True Negative (TN,
+correct no alarm about future earthquakes) for different values
+of probability threshold t for the best method CNN + LSTM,
+Mc = 3.5 and Mc = 5.
+C. Fighting class imbalance
+To deal with the class imbalance we use an oversampling
+technique increasing weights for the less populated minor class
+objects during training, while keeping weights for the major
+class objects equal to 1. The dependence of model quality on
+the weight of the minor class objects is in Table I. In other
+experiments we use weight 1000 providing performance close
+to optimal.
+D. Comparison of proposed models
+In Table II we compare our methods based on neural
+networks with general Gradient boosting approach and Naive
+baseline. Both PR AUC and ROC AUC scores suggest that
+the performance of our models is better. Moreover, taking
+into account residuals during the prediction further improves
+the model. The improvement is signiﬁcant for both magnitude
+thresholds Mc = 3.5 and Mc = 5.
+Number of errors of different kind for our best classiﬁer for
+a varying threshold is in Table III. We see, that we can select
+a trade-off between the number of False alarms (FP) and the
+number of missed earthquakes given by our model.
+V. CONCLUSIONS
+Modern neural network architectures are good for the
+midterm prediction of earthquakes. Our machine learning
+model predicts if an earthquake with a magnitude above a
+given threshold takes place at a given location in a time range
+of 10-60 days from a selected moment.
+Recurrent and Deep Convolutional Neural Networks ac-
+count for time and spatial dependencies correspondingly. A
+machine learning model based on these architectures provides
+a decent quality. Thus, we replace hand-crafted features by
+features automatically extracted by neural networks, avoiding
+manual feature generation.
+For historical data on Japan earthquakes, our model has
+ROC AUC 0.975 and PR AUC 0.0890 compared to lower
+values 0.992 and 0.00911 for the baseline approach. More
+intuitive quality metrics are amount of undetected events of
+occurence of earthquakes with magnitude Mc > 5 in the next
+10 −50 days (2.09 · 103 vs 2.07 · 103) and corresponding
+number of false alarms (192·103 vs 1004·103) with the same
+
+--- Sayfa 5 ---
+5
+amount of properly detected earthquakes on the test dataset.
+The proposed model signiﬁcantly decreases number of false
+alarms and increases PR AUC.
+VI. ACKNOWLEDGMENTS
+We thank Polina Proscura, Valery Gitis and Alexander
+Derendyaev for useful discussions and interesting suggestions
+during the preparation of this work.
+REFERENCES
+[1]
+A. Alexandridis, E. Chondrodima, E. Efthimiou, et al.
+“Large earthquake occurrence estimation based on ra-
+dial basis function neural networks”. In: IEEE Transac-
+tions on Geoscience and Remote Sensing 52.9 (2013).
+[2]
+F. Aminzadeh, S. Katz, and K. Aki. “Adaptive neural
+nets for generation of artiﬁcial earthquake precursors”.
+In: IEEE transactions on geoscience and remote sensing
+32.6 (1994).
+[3]
+G. Asencio-Cort´es et al. “A sensitivity study of seis-
+micity indicators in supervised learning to improve
+earthquake prediction”. In: Knowledge-Based Systems
+101 (2016).
+[4]
+K.M. Asim et al. “Earthquake magnitude prediction in
+Hindukush region using machine learning techniques”.
+In: Natural Hazards 85.1 (2017).
+[5]
+K. Asim et al. “Seismic activity prediction using com-
+putational intelligence techniques in northern Pakistan”.
+In: Acta Geophysica 65.5 (2017).
+[6]
+A. Baranov, E. Burnaev, A. Ustyuzhanin, et al. “IOP:
+Optimising the active muon shield for the SHiP experi-
+ment at CERN”. In: J. Phys.: Conf. Ser. Vol. 934. 2017.
+[7]
+E. Burnaev, P. Erofeev, and A. Papanov. “Inﬂuence of
+resampling on accuracy of imbalanced classiﬁcation”.
+In: ICMV. Vol. 9875. 2015.
+[8]
+T. Chen, T. He, M. Benesty, et al. “Xgboost: extreme
+gradient boosting”. In: R package version 0.4-2 (2015).
+[9]
+S. Cheong, T. Tan, Ch. Chen, et al. “Short-term forecast-
+ing of Taiwanese earthquakes using a universal model of
+fusion-ﬁssion processes”. In: Scientiﬁc reports 4 (2014).
+[10]
+M. Fern´andez-Delgado et al. “Do we need hundreds of
+classiﬁers to solve real world classiﬁcation problems?”
+In: JMLR 15.1 (2014).
+[11]
+J.H. Friedman. “Greedy function approximation: a gra-
+dient boosting machine”. In: Annals of statistics (2001).
+[12]
+F.A. Gers, J. Schmidhuber, and F. Cummins. “Learning
+to Forget: Continual Prediction with LSTM”. In: Neural
+Computation 12.10 (2000).
+[13]
+V. Gitis and A. Derendyaev. “An approach to the auto-
+matic prediction of earthquakes”. In: Journal of Com-
+munications Technology and Electronics 61.12 (2016).
+[14]
+V. Gitis, A. Derendyaev, S. Pirogov, et al. “Adaptive
+estimation of seismic parameter ﬁelds from earthquake
+catalogs”. In: Journal of Communications Technology
+and Electronics 60.12 (2015).
+[15]
+I. Goodfellow, Y. Bengio, and A. Courville. Deep
+learning. MIT press, 2016.
+[16]
+Zhao Y. Huang J. Wang X. “Large earthquake magni-
+tude prediction in Taiwan based on deep learning neural
+network”. In: Neural Network World 2 (2018).
+[17]
+V. Ignatiev et al. “Targeted change detection in remote
+sensing images”. In: ICMV. Vol. 11041. 2019.
+[18]
+N. Klyuchnikov, A. Zaytsev, A. Gruzdev, et al. “Data-
+driven model for the identiﬁcation of the rock type at
+a drilling bit”. In: Journal of Petroleum science and
+Engineering 178 (2019).
+[19]
+N. Kozlovskaia and A. Zaytsev. “Deep ensembles for
+imbalanced classiﬁcation”. In: IEEE ICMLA. IEEE.
+2017.
+[20]
+Y. LeCun et al. “Gradient-based learning applied to
+document recognition”. In: Proceedings of the IEEE
+86.11 (1998).
+[21]
+A. Mignan and M. Broccardo. “A Deeper Look into
+‘Deep Learning of Aftershock Patterns Following Large
+Earthquakes’: Illustrating First Principles in Neural
+Network Physical Interpretability”. In: Conference on
+Artiﬁcial Neural Networks. Springer. 2019.
+[22]
+A. Mignan and M. Broccardo. “One neuron is more in-
+formative than a deep neural network for aftershock pat-
+tern forecasting”. In: arXiv:1904.01983 preprint (2019).
+[23]
+S.M. Mousavi et al. “CRED: A deep residual network of
+convolutional and recurrent units for earthquake signal
+detection”. In: Scientiﬁc reports 9.1 (2019).
+[24]
+A. Panakkat and H. Adeli. “Neural network models for
+earthquake magnitude prediction using multiple seis-
+micity indicators”. In: International journal of neural
+systems 17.01 (2007).
+[25]
+Th. Perol, M. Gharbi, and M. Denolle. “Convolutional
+neural network for earthquake detection and location”.
+In: Science Advances 4.2 (2018).
+[26]
+P. Proskura et al. “Usage of Multiple RTL Features
+for Earthquakes Prediction”. In: Computational Science
+and Its Applications – ICCSA 2019. Cham: Springer,
+2019. ISBN: 978-3-030-24289-3.
+[27]
+Pan L. Qianlong W. Yifan G. Lixing Y. “Earthquake
+Prediction based on Spatio-Temporal Data Mining: An
+LSTM Network Approach”. In: IEEE Transactions on
+Emerging Topics in Computing (2017).
+[28]
+O. Ronneberger, Ph. Fischer, and Th. Brox. “U-net:
+Convolutional networks for biomedical image segmen-
+tation”. In: Medical image computing and computer-
+assisted intervention. Springer. 2015.
+[29]
+G.A. Sobolev and Y.S. Tyupkin. “Low-seismicity pre-
+cursors of large earthquakes in Kamchatka”. In: Vol-
+canol. Seismol. 18 (1997).
+[30]
+B. Zmazek, L. Todorovski, S. Dˇzeroski, et al. “Applica-
+tion of decision trees to the analysis of soil radon data
+for earthquake prediction”. In: Applied Radiation and
+Isotopes 58.6 (2003).
