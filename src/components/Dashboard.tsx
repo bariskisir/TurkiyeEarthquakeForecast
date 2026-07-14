@@ -68,7 +68,7 @@ export default function Dashboard() {
         <ForecastWorkspace data={data} forecasts={selectedForecasts} loading={loading} locale={locale} methodUsesMagnitude={methodUsesMagnitude} onOpenMethodology={openMethodology} selectedLocations={selectedLocations} theme={theme} />
         <RecentEarthquakes allSelected={allRecentSelected} dispatch={dispatch} earthquakes={recentEarthquakes} locale={locale} selection={selection} />
       </section>
-      <footer><span>{t.footerResearch}</span><nav aria-label={t.footerLinks}><button type="button" className="footer-link" onClick={openPrivacy}>{t.privacyPolicy}</button><a className="footer-link" href="https://github.com/bariskisir/TurkiyeEarthquakePrediction" target="_blank" rel="noreferrer">{t.source}</a></nav></footer>
+      <footer><span>{t.footerResearch}</span><nav aria-label={t.footerLinks}><button type="button" className="footer-link" onClick={openPrivacy}>{t.privacyPolicy}</button><a className="footer-link" href="https://github.com/bariskisir/TurkiyeEarthquakeForecast" target="_blank" rel="noreferrer">{t.source}</a></nav></footer>
       {showMethodology && <MethodologyModal locale={locale} onClose={closeMethodology} />}
       {showPrivacy && <PrivacyModal locale={locale} onClose={closePrivacy} />}
     </main>
