@@ -4,8 +4,7 @@
 "use client";
 
 import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap, ZoomControl } from "react-leaflet";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { Popup as LeafletPopup } from "leaflet";
+import { useEffect, useRef } from "react";
 import { readStoredJson, writeStoredJson } from "@/lib/browser-storage";
 import type { ForecastPoint, RecentEarthquake, Theme } from "@/lib/types";
 import { copy, localeSettings, type Locale } from "@/lib/i18n";
@@ -24,27 +23,6 @@ function validMapView(value: unknown): value is MapView {
   if (!value || typeof value !== "object") return false;
   const view = value as Partial<MapView>;
   return Number.isFinite(view.lat) && Number.isFinite(view.lng) && Number.isFinite(view.zoom);
-}
-
-/**
- * Renders the popup reset React component as part of the forecast map dashboard UI module, using typed inputs and localized accessible output.
- *
- * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
- */
-function PopupReset({ onChange }: { onChange: () => void }) {
-  const map = useMap();
-  useEffect(() => {
-    /**
-     * Forwards a Leaflet popup lifecycle event to the stable callback owned by the map composition.
-     *
-     * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
-     */
-    const handler = () => onChange();
-    map.on("popupopen", handler);
-    map.on("popupclose", handler);
-    return () => { map.off("popupopen", handler); map.off("popupclose", handler); };
-  }, [map, onChange]);
-  return null;
 }
 
 /**
@@ -91,51 +69,12 @@ function color(score: number): string {
 }
 
 /**
- * Renders the expandable React component as part of the forecast map dashboard UI module, using typed inputs and localized accessible output.
- *
- * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
- */
-function Expandable({ moreLabel, lessLabel, onResize, children }: { moreLabel: string; lessLabel: string; onResize: () => void; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  /**
-   * Performs the toggle operation for the forecast map dashboard UI module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
-   *
-   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
-   */
-  const toggle = useCallback((e: React.MouseEvent, next: boolean) => {
-    e.stopPropagation();
-    setOpen(next);
-    window.requestAnimationFrame(onResize);
-  }, [onResize]);
-  if (!open) {
-    return (
-      <div className="popup-more">
-        <button type="button" className="popup-more-toggle" onClick={(e) => toggle(e, true)}>{moreLabel}</button>
-      </div>
-    );
-  }
-  return (
-    <div className="popup-more">
-      <div className="popup-more-body">{children}</div>
-      <button type="button" className="popup-more-toggle" onClick={(e) => toggle(e, false)}>{lessLabel}</button>
-    </div>
-  );
-}
-
-/**
  * Renders the forecast marker React component as part of the forecast map dashboard UI module, using typed inputs and localized accessible output.
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-function ForecastMarker({ item, locale, popupKey, showMagnitude }: { item: ForecastPoint; locale: Locale; popupKey: number; showMagnitude: boolean }) {
+function ForecastMarker({ item, locale, showMagnitude }: { item: ForecastPoint; locale: Locale; showMagnitude: boolean }) {
   const t = copy[locale];
-  const popup = useRef<LeafletPopup | null>(null);
-  /**
-   * Performs the update popup operation for the forecast map dashboard UI module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
-   *
-   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
-   */
-  const updatePopup = useCallback(() => popup.current?.update(), []);
   const markerColor = color(item.relativeScore);
   return (
     <CircleMarker
@@ -144,8 +83,8 @@ function ForecastMarker({ item, locale, popupKey, showMagnitude }: { item: Forec
       pathOptions={{ color: markerColor, fillColor: markerColor, fillOpacity: 0.68, weight: 1.5 }}
     >
       <Tooltip permanent direction="center" className="forecast-year-label" opacity={1}>{item.relativeScore.toFixed(0)}</Tooltip>
-      <Popup ref={popup} minWidth={260}>
-        <div className="popup" key={`${item.threshold}-${item.rank}-${popupKey}`}>
+      <Popup minWidth={260}>
+        <div className="popup">
           <div className="popup-rank">{t.forecastRegion} #{item.rank}</div>
           <strong>{showMagnitude && `M${item.threshold}+ `}{t.regionalSignal}</strong>
           <div className="popup-score">{item.relativeScore.toFixed(1)} <span>{t.relativeScore}</span></div>
@@ -155,21 +94,19 @@ function ForecastMarker({ item, locale, popupKey, showMagnitude }: { item: Forec
             <div><dt>{t.bValue}</dt><dd>{item.indicators.bValue.toFixed(2)}</dd></div>
             {item.indicators.recurrenceProbability30Years !== null && <div><dt>{t.recurrence30Year}</dt><dd>{(item.indicators.recurrenceProbability30Years * 100).toFixed(1)}%</dd></div>}
           </dl>
-          <Expandable moreLabel={t.moreDetails} lessLabel={t.lessDetails} onResize={updatePopup}>
-            <dl>
-              <div><dt>{t.center}</dt><dd>{item.latitude.toFixed(2)}, {item.longitude.toFixed(2)}</dd></div>
-              <div><dt>{t.radius}</dt><dd>~{item.radiusKm} km</dd></div>
-              <div><dt>{t.triggeredRate}</dt><dd>{item.indicators.triggeredRateAnnual.toFixed(4)}</dd></div>
-              <div><dt>{t.backgroundRate}</dt><dd>{item.indicators.backgroundRateAnnual.toFixed(4)}</dd></div>
-              <div><dt>{t.completeness}</dt><dd>{item.indicators.completenessMagnitude.toFixed(2)}</dd></div>
-              <div><dt>{t.nearby}</dt><dd>{item.indicators.nearbyEventCount.toFixed(2)}</dd></div>
-              {item.indicators.meanRecurrenceYears !== null && <div><dt>{t.meanRecurrence}</dt><dd>~{item.indicators.meanRecurrenceYears.toFixed(1)} {t.yearUnit}</dd></div>}
-              {item.indicators.yearsSinceLastLargeEvent !== null && <div><dt>{t.yearsSinceLargeEvent}</dt><dd>{item.indicators.yearsSinceLastLargeEvent.toFixed(1)} {t.yearUnit}</dd></div>}
-              {item.indicators.historicalLargeEventCount > 0 && <div><dt>{t.historicalLargeEvents}</dt><dd>{item.indicators.historicalLargeEventCount}</dd></div>}
-              {item.indicators.recurrenceProbability30Years !== null && <div><dt>{t.recurrenceConfidence}</dt><dd>{(item.indicators.recurrenceConfidence * 100).toFixed(0)}%</dd></div>}
-            </dl>
-            {item.indicators.recurrenceProbability30Years !== null && <p>{t.recurrenceEstimateDisclaimer}</p>}
-          </Expandable>
+          <dl>
+            <div><dt>{t.center}</dt><dd>{item.latitude.toFixed(2)}, {item.longitude.toFixed(2)}</dd></div>
+            <div><dt>{t.radius}</dt><dd>~{item.radiusKm} km</dd></div>
+            <div><dt>{t.triggeredRate}</dt><dd>{item.indicators.triggeredRateAnnual.toFixed(4)}</dd></div>
+            <div><dt>{t.backgroundRate}</dt><dd>{item.indicators.backgroundRateAnnual.toFixed(4)}</dd></div>
+            <div><dt>{t.completeness}</dt><dd>{item.indicators.completenessMagnitude.toFixed(2)}</dd></div>
+            <div><dt>{t.nearby}</dt><dd>{item.indicators.nearbyEventCount.toFixed(2)}</dd></div>
+            {item.indicators.meanRecurrenceYears !== null && <div><dt>{t.meanRecurrence}</dt><dd>~{item.indicators.meanRecurrenceYears.toFixed(1)} {t.yearUnit}</dd></div>}
+            {item.indicators.yearsSinceLastLargeEvent !== null && <div><dt>{t.yearsSinceLargeEvent}</dt><dd>{item.indicators.yearsSinceLastLargeEvent.toFixed(1)} {t.yearUnit}</dd></div>}
+            {item.indicators.historicalLargeEventCount > 0 && <div><dt>{t.historicalLargeEvents}</dt><dd>{item.indicators.historicalLargeEventCount}</dd></div>}
+            {item.indicators.recurrenceProbability30Years !== null && <div><dt>{t.recurrenceConfidence}</dt><dd>{(item.indicators.recurrenceConfidence * 100).toFixed(0)}%</dd></div>}
+          </dl>
+          {item.indicators.recurrenceProbability30Years !== null && <p>{t.recurrenceEstimateDisclaimer}</p>}
           <p>{t.scoreDisclaimer}</p>
         </div>
       </Popup>
@@ -250,18 +187,11 @@ function SelectedEarthquakeView({ events }: { events: RecentEarthquake[] }) {
  */
 export default function ForecastMap({ forecasts, locale, theme, selectedLocations = [], showMagnitude = true }: { forecasts: ForecastPoint[]; locale: Locale; theme: Theme; selectedLocations?: RecentEarthquake[]; showMagnitude?: boolean }) {
   const t = copy[locale];
-  const [popupKey, setPopupKey] = useState(0);
-  /**
-   * Performs the reset popups operation for the forecast map dashboard UI module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
-   *
-   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
-   */
-  const resetPopups = useCallback(() => setPopupKey((k) => k + 1), []);
   return (
     <div className="map-shell" role="region" aria-label={t.mapRegion}>
-      <MapContainer bounds={TURKIYE_BOUNDS} boundsOptions={{ padding: [24, 24] }} minZoom={4} maxZoom={11} zoomSnap={0.5} zoomDelta={0.5} zoomControl={false} preferCanvas className="map">
+      {/* SVG limits pointer targeting to painted marker paths; a translated canvas can capture input outside its visible map area. */}
+      <MapContainer key="svg-renderer" bounds={TURKIYE_BOUNDS} boundsOptions={{ padding: [24, 24] }} minZoom={4} maxZoom={11} zoomSnap={0.5} zoomDelta={0.5} zoomControl={false} className="map">
         <PersistentView />
-        <PopupReset onChange={resetPopups} />
         <ZoomControl position="bottomright" />
         <SelectedEarthquakeView events={selectedLocations} />
         {theme === "dark" ? (
@@ -277,7 +207,7 @@ export default function ForecastMap({ forecasts, locale, theme, selectedLocation
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
         )}
-        {forecasts.map((item) => <ForecastMarker key={`${item.threshold}-${item.rank}`} item={item} locale={locale} popupKey={popupKey} showMagnitude={showMagnitude} />)}
+        {forecasts.map((item) => <ForecastMarker key={`${item.threshold}-${item.rank}`} item={item} locale={locale} showMagnitude={showMagnitude} />)}
         {selectedLocations.map((event) => <RecentMarker key={event.id} event={event} locale={locale} />)}
       </MapContainer>
     </div>

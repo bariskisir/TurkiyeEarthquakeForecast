@@ -1,4 +1,4 @@
-/* Adapts the dashboard grid, modal, toolbar, recent-event cards, and footer for tablet and narrow mobile viewports. */
+/* Adapts the dashboard grid, modal, map popup, toolbar, recent-event cards, and footer for tablet and narrow mobile viewports. */
 @media (max-width: 991px) {
   .workspace-layout { grid-template-columns: 1fr; }
   .recent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -24,6 +24,8 @@
   .status-block { margin-left: 0; flex: 1; }
   .quick-toggles { margin-left: auto; }
   .workspace { padding: 0 14px 30px; }
+  .leaflet-popup-content-wrapper { max-height: min(62dvh, 294px); }
+  .leaflet-popup-content { max-height: min(52dvh, 250px); }
   .recent-grid { grid-template-columns: 1fr; }
   .recent-heading { align-items: flex-start; flex-direction: column; }
   .recent-controls { width: 100%; flex-wrap: wrap; }
