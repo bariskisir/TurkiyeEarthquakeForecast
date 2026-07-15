@@ -7,7 +7,7 @@ import { cellIndex, columnToLongitude, haversineDistanceKm, indexToRowCol, latit
 import { clamp, linearRegression, logSumExp, meanAndStandardDeviation, normalCDF } from "@/lib/forecast/numeric";
 import { bptConditionalOccurrenceProbability, poissonMedianWaitingYears, poissonOccurrenceProbability } from "@/lib/forecast/recurrence";
 import { scoreToSignalLevel } from "@/lib/forecast/scoring";
-import { parseCatalogUtc, secondsToIso, secondsUntilNextUtcHour, utcHour } from "@/lib/time";
+import { parseCatalogUtc, secondsToIso, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 
 describe("forecast numeric primitives", () => {
   test("handles bounded arithmetic and stable aggregation", () => {
@@ -40,10 +40,11 @@ describe("forecast numeric primitives", () => {
     expect(scoreToSignalLevel(64.9)).toBe("elevated");
   });
 
-  test("normalizes catalog timestamps and UTC hour boundaries", () => {
+  test("normalizes catalog timestamps and Türkiye day boundaries", () => {
     const timestamp = parseCatalogUtc("2026-07-14 09:30:00");
     expect(secondsToIso(timestamp)).toBe("2026-07-14T09:30:00.000Z");
-    expect(utcHour(new Date("2026-07-14T09:30:00.000Z"))).toBe("2026-07-14T09");
-    expect(secondsUntilNextUtcHour(new Date("2026-07-14T09:30:00.000Z"))).toBe(1_800);
+    expect(turkiyeDay(new Date("2026-07-14T20:59:59.000Z"))).toBe("2026-07-14");
+    expect(turkiyeDay(new Date("2026-07-14T21:00:00.000Z"))).toBe("2026-07-15");
+    expect(secondsUntilNextTurkiyeDay(new Date("2026-07-14T20:30:00.000Z"))).toBe(1_800);
   });
 });

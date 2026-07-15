@@ -5,6 +5,7 @@ export const SECONDS_PER_DAY = 86_400;
 export const DAYS_PER_YEAR = 365.2425;
 export const SECONDS_PER_YEAR = DAYS_PER_YEAR * SECONDS_PER_DAY;
 export const MILLISECONDS_PER_DAY = SECONDS_PER_DAY * 1_000;
+export const TURKIYE_UTC_OFFSET_HOURS = 3;
 
 /**
  * Parses catalog utc for the time application service module, including the validation and edge cases encoded by its typed contract.
@@ -18,24 +19,23 @@ export function parseCatalogUtc(value: string): number {
 }
 
 /**
- * Performs the utc hour operation for the time application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
+ * Returns the calendar day in Türkiye's fixed UTC+3 time zone for daily cache partitioning.
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export function utcHour(date = new Date()): string {
-  return date.toISOString().slice(0, 13);
+export function turkiyeDay(date = new Date()): string {
+  return new Date(date.getTime() + TURKIYE_UTC_OFFSET_HOURS * 60 * 60 * 1_000).toISOString().slice(0, 10);
 }
 
 /**
- * Performs the seconds until next utc hour operation for the time application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
+ * Returns the whole seconds remaining until the next midnight in Türkiye (UTC+3).
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export function secondsUntilNextUtcHour(from = new Date()): number {
-  const nextHour = new Date(from);
-  nextHour.setUTCMinutes(0, 0, 0);
-  nextHour.setUTCHours(nextHour.getUTCHours() + 1);
-  return Math.max(1, Math.floor((nextHour.getTime() - from.getTime()) / 1000));
+export function secondsUntilNextTurkiyeDay(from = new Date()): number {
+  const shifted = new Date(from.getTime() + TURKIYE_UTC_OFFSET_HOURS * 60 * 60 * 1_000);
+  const nextMidnightUtc = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate() + 1) - TURKIYE_UTC_OFFSET_HOURS * 60 * 60 * 1_000;
+  return Math.max(1, Math.floor((nextMidnightUtc - from.getTime()) / 1_000));
 }
 
 /**

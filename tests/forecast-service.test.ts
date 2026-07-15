@@ -12,7 +12,7 @@ import type { calculateForecastMatrix } from "@/lib/forecast";
 const currentDate = new Date("2026-07-14T10:30:00.000Z");
 
 /**
- * Returns the fixed UTC instant shared by service tests so cache-hour decisions never depend on the machine clock.
+ * Returns the fixed UTC instant shared by service tests so cache-day decisions never depend on the machine clock.
  *
  * The same Date instance is treated as immutable by the service and keeps every assertion deterministic.
  */
@@ -52,7 +52,7 @@ function catalog(): CatalogResult {
   return {
     events: [{ id: 1, eventId: "one", occurredAt: "2026-07-14 09:00:00", latitude: 39, longitude: 35, magnitude: 4, sourceCount: 1, magnitudeSpread: null, isPrimary: true }],
     recentEarthquakes: recent(),
-    metadata: { checkedHour: "2026-07-14T10", dataUpdatedAtUtc: currentDate.toISOString(), providerStatus: "current", providerMessage: "current" },
+    metadata: { checkedDayTrt: "2026-07-14", dataUpdatedAtUtc: currentDate.toISOString(), providerStatus: "current", providerMessage: "current" },
     source: "bundle",
   };
 }
@@ -65,7 +65,7 @@ function catalog(): CatalogResult {
 function staleBundle(): ForecastBundle {
   return {
     model: FORECAST_MODEL,
-    hour: "2026-07-14T09",
+    dayTrt: "2026-07-13",
     generatedAtUtc: "2026-07-14T09:00:00.000Z",
     forecasts: matrix(),
     recentEarthquakes: recent(),
@@ -88,9 +88,9 @@ function staleBundle(): ForecastBundle {
 function inMemoryStore(stale: ForecastBundle | null = null): ForecastBundleStore & { current: ForecastBundle | null } {
   const store = {
     current: null as ForecastBundle | null,
-    read: vi.fn(async (hour: string) => store.current?.hour === hour ? store.current : null),
+    read: vi.fn(async (dayTrt: string) => store.current?.dayTrt === dayTrt ? store.current : null),
     findLatest: vi.fn(async () => stale),
-    runExclusive: vi.fn(async (_hour: string, task: () => Promise<ForecastBundle>) => task()),
+    runExclusive: vi.fn(async (_dayTrt: string, task: () => Promise<ForecastBundle>) => task()),
     write: vi.fn(async (bundle: ForecastBundle) => { store.current = bundle; }),
   };
   return store;
@@ -132,16 +132,16 @@ describe("forecast service", () => {
     });
     const stale = await service.getForecast();
     expect(stale.metadata.forecastStatus).toBe("refreshing");
-    expect(stale.metadata.forecastHourUtc).toBe("2026-07-14T09");
+    expect(stale.metadata.forecastDayTrt).toBe("2026-07-13");
     await deferred[0]();
     const refreshed = await service.getForecast();
     expect(refreshed.metadata.forecastStatus).toBe("ready");
-    expect(refreshed.metadata.forecastHourUtc).toBe("2026-07-14T10");
+    expect(refreshed.metadata.forecastDayTrt).toBe("2026-07-14");
   });
 
   test("returns a current stored bundle without recalculation", async () => {
     const store = inMemoryStore();
-    store.current = { ...staleBundle(), hour: "2026-07-14T10" };
+    store.current = { ...staleBundle(), dayTrt: "2026-07-14" };
     const calculate = vi.fn(() => matrix()) as unknown as typeof calculateForecastMatrix;
     const response = await createForecastService({ store, calculateMatrix: calculate, now: currentNow }).getForecast();
     expect(response.metadata.cache).toBe("tmp");

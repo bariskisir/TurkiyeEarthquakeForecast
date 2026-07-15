@@ -40,7 +40,7 @@ export function createForecastResponse(overrides: Partial<ForecastResponse["meta
       providerStatus: "current",
       providerMessage: "current",
       cache: "memory",
-      forecastHourUtc: new Date().toISOString().slice(0, 13),
+      forecastDayTrt: new Date(Date.now() + 3 * 60 * 60 * 1_000).toISOString().slice(0, 10),
       forecastStatus: "ready",
       ...overrides,
     },

@@ -40,8 +40,8 @@ function dependencies(incoming: RawCatalogEarthquake[] = [], metadata: CacheMeta
 }
 
 describe("catalog service", () => {
-  test("reuses metadata already checked in the current UTC hour", async () => {
-    const metadata: CacheMetadata = { checkedHour: "2026-07-14T10", dataUpdatedAtUtc: now.toISOString(), providerStatus: "current", providerMessage: "current" };
+  test("reuses metadata already checked on the current Türkiye day", async () => {
+    const metadata: CacheMetadata = { checkedDayTrt: "2026-07-14", dataUpdatedAtUtc: now.toISOString(), providerStatus: "current", providerMessage: "current" };
     const deps = dependencies([], metadata);
     const result = await createCatalogService(deps).getCatalog();
     expect(result.metadata).toEqual(metadata);

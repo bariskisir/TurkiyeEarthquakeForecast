@@ -1,6 +1,7 @@
 /**
  * @fileoverview Defines the catalog application service module and makes its contracts, integration responsibilities, side effects, and fallback behavior explicit to maintainers.
  */
+import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -77,8 +78,8 @@ async function readMetadata(): Promise<CacheMetadata | null> {
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-async function appendUpdate(events: RawCatalogEarthquake[], hour: string): Promise<void> {
-  const name = `sismik-${hour.replaceAll(":", "-")}.json`;
+async function appendUpdate(events: RawCatalogEarthquake[], dayTrt: string): Promise<void> {
+  const name = `sismik-daily-${dayTrt}-${randomUUID()}.json`;
   await writeCachedFile(path.join(temporaryUpdateDirectory, name), `${updatePrefix}/${name}`, JSON.stringify(events));
 }
 

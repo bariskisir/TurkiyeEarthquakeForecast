@@ -4,7 +4,7 @@
 
 Türkiye Earthquake Forecast — an experimental Next.js dashboard that ranks regional
 seismic activity across Türkiye and nearby areas. It merges a bundled Sismik Harita catalog
-with hourly append-only updates, computes M5+ through M7+ regional signals, and renders them on a
+with daily UTC+3 append-only updates, computes M5+ through M7+ regional signals, and renders them on a
 Leaflet map. Scores are **relative regional rankings, not occurrence probabilities**.
 
 ## Commands
@@ -29,9 +29,9 @@ Always run `npm run lint`, `npm run typecheck`, and `npm test` after changes.
 
 - `src/app/page.tsx` — renders `Dashboard`
 - `src/app/api/forecast/route.ts` — `GET /api/forecast`; Node runtime, `force-dynamic`,
-  hourly bundle cached in memory + tmp file with a lock; sets CDN cache TTL until next UTC hour
-- `src/lib/catalog-domain.ts`, `catalog-service.ts`, `sismik-client.ts`, `catalog.ts` — pure catalogue rules, hourly orchestration, provider client, and persistence adapter
-- `src/lib/forecast-service.ts`, `forecast-cache.ts`, `forecast-bundle.ts` — hourly forecast orchestration, memory/tmp/B2 cache, runtime validation
+  daily bundle cached in memory + tmp file with a lock; sets CDN cache TTL until next UTC+3 day
+- `src/lib/catalog-domain.ts`, `catalog-service.ts`, `sismik-client.ts`, `catalog.ts` — pure catalogue rules, daily orchestration, provider client, and persistence adapter
+- `src/lib/forecast-service.ts`, `forecast-cache.ts`, `forecast-bundle.ts` — daily forecast orchestration, memory/tmp/B2 cache, runtime validation
 - `src/lib/forecast/` — modular ETAS forecast engine (config, geometry, numeric, catalog-prep,
   completeness, gutenberg-richter, declustering, etas-kernels, background-intensity,
   triggered-intensity, energy, seismicity-indicators, nowcasting, recurrence, scoring,
@@ -46,7 +46,7 @@ Always run `npm run lint`, `npm run typecheck`, and `npm test` after changes.
 
 1. `getCatalog()` reads all `data/*.json` bundles plus tmp update shards, dedups by
    `eventKey`, and sorts newest-first.
-2. Once per UTC hour it fetches new or revised events from the Sismik Harita earthquake
+2. Once per UTC+3 calendar day it fetches new or revised events from the Sismik Harita earthquake
    list API with a 48h overlap, splits stale ranges into at most 28-day windows, and appends
    a new tmp shard. Failures degrade gracefully.
 3. `calculateForecasts(events, threshold, now)` bins events into 0.5° cells (lat 34–43,

@@ -8,9 +8,9 @@ import { ensureCachedFile, listCacheKeys, pruneCachePrefixToLatest, writeCachedF
 import { FORECAST_CACHE_PREFIX, FORECAST_FILE_PREFIX, validForecastBundle, type ForecastBundle } from "./forecast-bundle";
 
 export interface ForecastBundleStore {
-  read: (hour: string) => Promise<ForecastBundle | null>;
-  findLatest: (beforeHour: string) => Promise<ForecastBundle | null>;
-  runExclusive: (hour: string, task: () => Promise<ForecastBundle>) => Promise<ForecastBundle>;
+  read: (dayTrt: string) => Promise<ForecastBundle | null>;
+  findLatest: (beforeDayTrt: string) => Promise<ForecastBundle | null>;
+  runExclusive: (dayTrt: string, task: () => Promise<ForecastBundle>) => Promise<ForecastBundle>;
   write: (bundle: ForecastBundle) => Promise<void>;
 }
 
@@ -46,29 +46,29 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const filePath = (hour: string) => path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-${hour.replaceAll(":", "-")}.json`);
+  const filePath = (dayTrt: string) => path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-${dayTrt}.json`);
   /**
    * Performs the lock path operation for the forecast cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const lockPath = (hour: string) => `${filePath(hour)}.lock`;
+  const lockPath = (dayTrt: string) => `${filePath(dayTrt)}.lock`;
   /**
    * Performs the remote key operation for the forecast cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const remoteKey = (hour: string) => `${FORECAST_CACHE_PREFIX}/${path.basename(filePath(hour))}`;
+  const remoteKey = (dayTrt: string) => `${FORECAST_CACHE_PREFIX}/${path.basename(filePath(dayTrt))}`;
 
   /**
    * Reads path for the forecast cache application service module, including the validation and edge cases encoded by its typed contract.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function readPath(localPath: string, expectedHour?: string): Promise<ForecastBundle | null> {
+  async function readPath(localPath: string, expectedDayTrt?: string): Promise<ForecastBundle | null> {
     try {
       const parsed = JSON.parse(await fs.readFile(localPath, "utf8")) as unknown;
-      return validForecastBundle(parsed, expectedHour) ? parsed : null;
+      return validForecastBundle(parsed, expectedDayTrt) ? parsed : null;
     } catch {
       return null;
     }
@@ -79,9 +79,9 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function read(hour: string): Promise<ForecastBundle | null> {
-    await ensureFile(filePath(hour), remoteKey(hour));
-    return readPath(filePath(hour), hour);
+  async function read(dayTrt: string): Promise<ForecastBundle | null> {
+    await ensureFile(filePath(dayTrt), remoteKey(dayTrt));
+    return readPath(filePath(dayTrt), dayTrt);
   }
 
   /**
@@ -89,7 +89,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function findLatest(beforeHour: string): Promise<ForecastBundle | null> {
+  async function findLatest(beforeDayTrt: string): Promise<ForecastBundle | null> {
     try {
       const prefix = `${FORECAST_FILE_PREFIX}-`;
       const localNames = (await fs.readdir(temporaryDirectory)).filter((name) => name.startsWith(prefix) && name.endsWith(".json"));
@@ -98,7 +98,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
         const localPath = path.join(temporaryDirectory, name);
         await ensureFile(localPath, `${FORECAST_CACHE_PREFIX}/${name}`);
         const bundle = await readPath(localPath);
-        if (bundle && bundle.hour < beforeHour) return bundle;
+        if (bundle && bundle.dayTrt < beforeDayTrt) return bundle;
       }
     } catch {
       return null;
@@ -111,15 +111,15 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function waitFor(hour: string): Promise<ForecastBundle | null> {
+  async function waitFor(dayTrt: string): Promise<ForecastBundle | null> {
     const started = Date.now();
     while (Date.now() - started < waitMilliseconds) {
-      const stored = await read(hour);
+      const stored = await read(dayTrt);
       if (stored) return stored;
       try {
-        const lock = await fs.stat(lockPath(hour));
+        const lock = await fs.stat(lockPath(dayTrt));
         if (Date.now() - lock.mtimeMs > staleLockMilliseconds) {
-          await fs.unlink(lockPath(hour)).catch(() => undefined);
+          await fs.unlink(lockPath(dayTrt)).catch(() => undefined);
           return null;
         }
       } catch {
@@ -127,7 +127,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
       }
       await sleep(pollMilliseconds);
     }
-    throw new Error("The hourly forecast is still being generated. Please retry shortly.");
+    throw new Error("The daily forecast is still being generated. Please retry shortly.");
   }
 
   /**
@@ -135,24 +135,24 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function runExclusive(hour: string, task: () => Promise<ForecastBundle>): Promise<ForecastBundle> {
+  async function runExclusive(dayTrt: string, task: () => Promise<ForecastBundle>): Promise<ForecastBundle> {
     let lockHandle: Awaited<ReturnType<typeof fs.open>> | null = null;
     try {
       try {
-        lockHandle = await fs.open(lockPath(hour), "wx");
+        lockHandle = await fs.open(lockPath(dayTrt), "wx");
         await lockHandle.writeFile(JSON.stringify({ pid: process.pid, createdAtUtc: new Date().toISOString() }));
       } catch (error) {
         const code = error instanceof Error && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
         if (code !== "EEXIST") throw error;
-        const completed = await waitFor(hour);
+        const completed = await waitFor(dayTrt);
         if (completed) return completed;
-        lockHandle = await fs.open(lockPath(hour), "wx");
+        lockHandle = await fs.open(lockPath(dayTrt), "wx");
       }
-      const existing = await read(hour);
+      const existing = await read(dayTrt);
       return existing ?? await task();
     } finally {
       await lockHandle?.close().catch(() => undefined);
-      if (lockHandle) await fs.unlink(lockPath(hour)).catch(() => undefined);
+      if (lockHandle) await fs.unlink(lockPath(dayTrt)).catch(() => undefined);
     }
   }
 
@@ -162,7 +162,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function write(bundle: ForecastBundle): Promise<void> {
-    const storedRemotely = await writeFile(filePath(bundle.hour), remoteKey(bundle.hour), JSON.stringify(bundle));
+    const storedRemotely = await writeFile(filePath(bundle.dayTrt), remoteKey(bundle.dayTrt), JSON.stringify(bundle));
     const prefix = `${FORECAST_FILE_PREFIX}-`;
     const names = (await fs.readdir(temporaryDirectory)).filter((name) => name.startsWith(prefix) && name.endsWith(".json")).sort();
     await Promise.all(names.slice(0, -1).map((name) => fs.unlink(path.join(temporaryDirectory, name)).catch(() => undefined)));

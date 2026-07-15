@@ -5,7 +5,7 @@ import { getCatalog, type CatalogResult } from "./catalog";
 import { calculateForecastMatrix } from "./forecast";
 import { createForecastBundleStore, type ForecastBundleStore } from "./forecast-cache";
 import { FORECAST_MODEL, type ForecastBundle } from "./forecast-bundle";
-import { parseCatalogUtc, secondsToIso, utcHour } from "./time";
+import { parseCatalogUtc, secondsToIso, turkiyeDay } from "./time";
 import { FORECAST_METHODS, MAGNITUDE_THRESHOLDS, SIGNAL_COUNTS, type ForecastResponse } from "./types";
 
 export interface ForecastServiceDependencies {
@@ -29,14 +29,14 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
   const now = dependencies.now ?? (() => new Date());
   const defer = dependencies.defer ?? ((task: () => Promise<void>) => { void task(); });
   let memoryBundle: ForecastBundle | null = null;
-  let calculation: { hour: string; promise: Promise<ForecastBundle> } | null = null;
+  let calculation: { dayTrt: string; promise: Promise<ForecastBundle> } | null = null;
 
   /**
    * Builds bundle for the forecast service application service module, including the validation and edge cases encoded by its typed contract.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function buildBundle(hour: string): Promise<ForecastBundle> {
+  async function buildBundle(dayTrt: string): Promise<ForecastBundle> {
     const started = Date.now();
     const snapshot = await catalog.getCatalog();
     const referenceDate = now();
@@ -51,7 +51,7 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
     const oldest = snapshot.events.at(-1) ?? newest;
     const bundle: ForecastBundle = {
       model: FORECAST_MODEL,
-      hour,
+      dayTrt,
       generatedAtUtc: referenceDate.toISOString(),
       forecasts,
       recentEarthquakes: snapshot.recentEarthquakes,
@@ -65,7 +65,7 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
       },
     };
     await store.write(bundle);
-    dependencies.log?.({ event: "forecast_generated", hour, eventCount: snapshot.events.length, durationMs: Date.now() - started });
+    dependencies.log?.({ event: "forecast_generated", dayTrt, eventCount: snapshot.events.length, durationMs: Date.now() - started });
     return bundle;
   }
 
@@ -74,15 +74,15 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  function calculateBundle(hour: string): Promise<ForecastBundle> {
-    if (calculation?.hour === hour) return calculation.promise;
-    const promise = store.runExclusive(hour, () => buildBundle(hour)).then((bundle) => {
+  function calculateBundle(dayTrt: string): Promise<ForecastBundle> {
+    if (calculation?.dayTrt === dayTrt) return calculation.promise;
+    const promise = store.runExclusive(dayTrt, () => buildBundle(dayTrt)).then((bundle) => {
       memoryBundle = bundle;
       return bundle;
     }).finally(() => {
-      if (calculation?.hour === hour) calculation = null;
+      if (calculation?.dayTrt === dayTrt) calculation = null;
     });
-    calculation = { hour, promise };
+    calculation = { dayTrt, promise };
     return promise;
   }
 
@@ -92,19 +92,19 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function getBundle(): Promise<{ bundle: ForecastBundle; cache: ForecastResponse["metadata"]["cache"]; refreshing: boolean }> {
-    const hour = utcHour(now());
-    if (memoryBundle?.hour === hour) return { bundle: memoryBundle, cache: "memory", refreshing: false };
-    const stored = await store.read(hour);
+    const dayTrt = turkiyeDay(now());
+    if (memoryBundle?.dayTrt === dayTrt) return { bundle: memoryBundle, cache: "memory", refreshing: false };
+    const stored = await store.read(dayTrt);
     if (stored) {
       memoryBundle = stored;
       return { bundle: stored, cache: "tmp", refreshing: false };
     }
-    const stale = memoryBundle && memoryBundle.hour < hour ? memoryBundle : await store.findLatest(hour);
+    const stale = memoryBundle && memoryBundle.dayTrt < dayTrt ? memoryBundle : await store.findLatest(dayTrt);
     if (stale) {
-      defer(async () => { await calculateBundle(hour).then(() => undefined).catch(() => undefined); });
+      defer(async () => { await calculateBundle(dayTrt).then(() => undefined).catch(() => undefined); });
       return { bundle: stale, cache: "tmp", refreshing: true };
     }
-    return { bundle: await calculateBundle(hour), cache: "memory", refreshing: false };
+    return { bundle: await calculateBundle(dayTrt), cache: "memory", refreshing: false };
   }
 
   /**
@@ -121,7 +121,7 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
         generatedAtUtc: bundle.generatedAtUtc,
         ...bundle.catalogMetadata,
         cache,
-        forecastHourUtc: bundle.hour,
+        forecastDayTrt: bundle.dayTrt,
         forecastStatus: refreshing ? "refreshing" : "ready",
       },
     };

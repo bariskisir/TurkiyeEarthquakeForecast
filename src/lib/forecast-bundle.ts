@@ -16,12 +16,12 @@ import {
 } from "./types";
 
 export const FORECAST_MODEL = "multi-method-relative-v3.8";
-export const FORECAST_CACHE_PREFIX = "forecasts/v3.8";
-export const FORECAST_FILE_PREFIX = "turkiye-earthquake-forecasts-v3.8";
+export const FORECAST_CACHE_PREFIX = "forecasts/daily-v3.8";
+export const FORECAST_FILE_PREFIX = "turkiye-earthquake-forecasts-daily-v3.8";
 
 export interface ForecastBundle {
   model: string;
-  hour: string;
+  dayTrt: string;
   generatedAtUtc: string;
   forecasts: ForecastMatrix;
   recentEarthquakes: Record<RecentThreshold, RecentEarthquake[]>;
@@ -107,13 +107,13 @@ function validRecentEarthquake(value: unknown): value is RecentEarthquake {
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export function validForecastBundle(value: unknown, expectedHour?: string): value is ForecastBundle {
+export function validForecastBundle(value: unknown, expectedDayTrt?: string): value is ForecastBundle {
   const bundle = record(value);
   const metadata = record(bundle?.catalogMetadata);
   const forecasts = record(bundle?.forecasts);
   const recent = record(bundle?.recentEarthquakes);
   if (!bundle || !metadata || !forecasts || !recent) return false;
-  if (bundle.model !== FORECAST_MODEL || typeof bundle.hour !== "string" || expectedHour && bundle.hour !== expectedHour || typeof bundle.generatedAtUtc !== "string") return false;
+  if (bundle.model !== FORECAST_MODEL || typeof bundle.dayTrt !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(bundle.dayTrt) || expectedDayTrt && bundle.dayTrt !== expectedDayTrt || typeof bundle.generatedAtUtc !== "string") return false;
   if (typeof metadata.dataUpdatedAtUtc !== "string"
     || typeof metadata.newestEventAtUtc !== "string"
     || typeof metadata.oldestEventAtUtc !== "string"
@@ -142,7 +142,7 @@ export function validForecastResponse(value: unknown): value is ForecastResponse
   if (!["memory", "tmp", "bundle"].includes(String(metadata.cache)) || !["ready", "refreshing"].includes(String(metadata.forecastStatus))) return false;
   return validForecastBundle({
     model: FORECAST_MODEL,
-    hour: metadata.forecastHourUtc,
+    dayTrt: metadata.forecastDayTrt,
     generatedAtUtc: metadata.generatedAtUtc,
     forecasts: response.forecasts,
     recentEarthquakes: response.recentEarthquakes,

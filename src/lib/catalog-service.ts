@@ -2,11 +2,11 @@
  * @fileoverview Defines the catalog service application service module and makes its contracts, integration responsibilities, side effects, and fallback behavior explicit to maintainers.
  */
 import { changedRawEvents, finalizeCatalog, mergeRawEvents, type CatalogAccumulator, type CatalogData, type RawCatalogEarthquake } from "./catalog-domain";
-import { parseCatalogUtc, utcHour } from "./time";
+import { parseCatalogUtc, turkiyeDay } from "./time";
 import type { CatalogEarthquake, RecentEarthquake, RecentThreshold } from "./types";
 
 export interface CacheMetadata {
-  checkedHour: string;
+  checkedDayTrt: string;
   dataUpdatedAtUtc: string;
   providerStatus: "updated" | "current" | "degraded";
   providerMessage: string;
@@ -28,7 +28,7 @@ export interface CatalogServiceDependencies {
   loadCatalog: () => Promise<LoadedCatalog>;
   readMetadata: () => Promise<CacheMetadata | null>;
   fetchLatestEvents: (startTimestamp: number) => Promise<RawCatalogEarthquake[]>;
-  appendUpdate: (events: RawCatalogEarthquake[], hour: string) => Promise<void>;
+  appendUpdate: (events: RawCatalogEarthquake[], dayTrt: string) => Promise<void>;
   writeMetadata: (metadata: CacheMetadata) => Promise<void>;
   now?: () => Date;
 }
@@ -43,7 +43,8 @@ const overlapSeconds = 48 * 60 * 60;
 export function validCacheMetadata(value: unknown): value is CacheMetadata {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const metadata = value as Record<string, unknown>;
-  return typeof metadata.checkedHour === "string"
+  return typeof metadata.checkedDayTrt === "string"
+    && /^\d{4}-\d{2}-\d{2}$/.test(metadata.checkedDayTrt)
     && typeof metadata.dataUpdatedAtUtc === "string"
     && ["updated", "current", "degraded"].includes(String(metadata.providerStatus))
     && typeof metadata.providerMessage === "string";
@@ -69,8 +70,8 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
     const storedMetadata = await dependencies.readMetadata();
     const previousMetadata = validCacheMetadata(storedMetadata) ? storedMetadata : null;
     const currentDate = now();
-    const hour = utcHour(currentDate);
-    if (previousMetadata?.checkedHour === hour) {
+    const dayTrt = turkiyeDay(currentDate);
+    if (previousMetadata?.checkedDayTrt === dayTrt) {
       return { events: loaded.data.events, recentEarthquakes: loaded.data.recentEarthquakes, metadata: previousMetadata, source: loaded.data.hasUpdates ? "tmp" : "bundle" };
     }
     const newest = parseCatalogUtc(loaded.data.events[0].occurredAt);
@@ -78,13 +79,13 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
       const incoming = await dependencies.fetchLatestEvents(newest - overlapSeconds);
       const changed = changedRawEvents(loaded.accumulator, incoming);
       if (changed.length) {
-        await dependencies.appendUpdate(changed, hour);
+        await dependencies.appendUpdate(changed, dayTrt);
         mergeRawEvents(loaded.accumulator, changed, true);
       }
       const merged = changed.length ? finalizeCatalog(loaded.accumulator) : loaded.data;
       const added = merged.events.length - loaded.data.events.length;
       const metadata: CacheMetadata = {
-        checkedHour: hour,
+        checkedDayTrt: dayTrt,
         dataUpdatedAtUtc: currentDate.toISOString(),
         providerStatus: changed.length ? "updated" : "current",
         providerMessage: changed.length
@@ -95,7 +96,7 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
       return { events: merged.events, recentEarthquakes: merged.recentEarthquakes, metadata, source: merged.hasUpdates ? "tmp" : "bundle" };
     } catch (error) {
       const metadata: CacheMetadata = {
-        checkedHour: hour,
+        checkedDayTrt: dayTrt,
         dataUpdatedAtUtc: previousMetadata?.dataUpdatedAtUtc ?? currentDate.toISOString(),
         providerStatus: "degraded",
         providerMessage: `Sismik Harita update failed; serving the latest available catalog. ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -112,7 +113,7 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
    */
   async function getCatalog(options?: { allowStale?: boolean }): Promise<CatalogResult> {
     if (options?.allowStale && memoryCatalog) return { ...memoryCatalog, source: "memory" };
-    if (memoryCatalog && memoryCatalog.metadata.checkedHour === utcHour(now())) return { ...memoryCatalog, source: "memory" };
+    if (memoryCatalog && memoryCatalog.metadata.checkedDayTrt === turkiyeDay(now())) return { ...memoryCatalog, source: "memory" };
     if (!refreshPromise) refreshPromise = refreshCatalog().finally(() => { refreshPromise = null; });
     memoryCatalog = await refreshPromise;
     return memoryCatalog;

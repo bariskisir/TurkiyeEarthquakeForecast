@@ -25,7 +25,7 @@ function response(status: "ready" | "refreshing" = "ready"): ForecastResponse {
       providerStatus: "current",
       providerMessage: "current",
       cache: "memory",
-      forecastHourUtc: "2026-07-14T10",
+      forecastDayTrt: "2026-07-14",
       forecastStatus: status,
     },
   };
@@ -46,11 +46,11 @@ describe("forecast route", () => {
     const result = await GET(request());
     expect(result.status).toBe(200);
     expect(result.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
-    expect(result.headers.get("CDN-Cache-Control")).toBe("max-age=1800, stale-while-revalidate=300");
+    expect(result.headers.get("CDN-Cache-Control")).toBe("max-age=37800, stale-while-revalidate=300");
     expect(await result.json()).toEqual(response());
   });
 
-  test("disables CDN freshness while a new hour is refreshing", async () => {
+  test("disables CDN freshness while a new day is refreshing", async () => {
     const GET = createForecastHandler({ getForecast: vi.fn(async () => response("refreshing")) });
     const result = await GET(request());
     expect(result.headers.get("Vercel-CDN-Cache-Control")).toBe("max-age=0, stale-while-revalidate=300");

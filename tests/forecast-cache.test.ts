@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createForecastBundleStore } from "@/lib/forecast-cache";
-import { FORECAST_FILE_PREFIX, FORECAST_MODEL, type ForecastBundle } from "@/lib/forecast-bundle";
+import { FORECAST_CACHE_PREFIX, FORECAST_FILE_PREFIX, FORECAST_MODEL, type ForecastBundle } from "@/lib/forecast-bundle";
 import { FORECAST_METHODS, MAGNITUDE_THRESHOLDS, RECENT_THRESHOLDS, SIGNAL_COUNTS, type ForecastMatrix, type RecentEarthquake, type RecentThreshold } from "@/lib/types";
 
 const directories: string[] = [];
@@ -25,15 +25,15 @@ function emptyMatrix(): ForecastMatrix {
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-function bundle(hour: string): ForecastBundle {
+function bundle(dayTrt: string): ForecastBundle {
   return {
     model: FORECAST_MODEL,
-    hour,
-    generatedAtUtc: `${hour}:00:00.000Z`,
+    dayTrt,
+    generatedAtUtc: `${dayTrt}T00:00:00.000Z`,
     forecasts: emptyMatrix(),
     recentEarthquakes: Object.fromEntries(RECENT_THRESHOLDS.map((threshold) => [threshold, []])) as unknown as Record<RecentThreshold, RecentEarthquake[]>,
     catalogMetadata: {
-      dataUpdatedAtUtc: `${hour}:00:00.000Z`,
+      dataUpdatedAtUtc: `${dayTrt}T00:00:00.000Z`,
       newestEventAtUtc: "2026-07-14T09:00:00.000Z",
       oldestEventAtUtc: "1900-01-01T00:00:00.000Z",
       eventCount: 1,
@@ -59,33 +59,48 @@ afterEach(async () => {
 });
 
 describe("forecast bundle store", () => {
-  test("round-trips valid bundles and selects the latest stale hour", async () => {
+  test("round-trips valid bundles and selects the latest stale day", async () => {
     const temporaryDirectory = await directory();
     const store = createForecastBundleStore({ temporaryDirectory });
-    await store.write(bundle("2026-07-14T08"));
-    await store.write(bundle("2026-07-14T09"));
-    expect((await store.read("2026-07-14T09"))?.hour).toBe("2026-07-14T09");
-    expect((await store.findLatest("2026-07-14T10"))?.hour).toBe("2026-07-14T09");
+    await store.write(bundle("2026-07-13"));
+    await store.write(bundle("2026-07-14"));
+    expect((await store.read("2026-07-14"))?.dayTrt).toBe("2026-07-14");
+    expect((await store.findLatest("2026-07-15"))?.dayTrt).toBe("2026-07-14");
   });
 
   test("coalesces work through the local lock", async () => {
     const temporaryDirectory = await directory();
     const store = createForecastBundleStore({ temporaryDirectory, pollMilliseconds: 2, waitMilliseconds: 1_000 });
     const task = vi.fn(async () => {
-      const value = bundle("2026-07-14T10");
+      const value = bundle("2026-07-14");
       await new Promise((resolve) => setTimeout(resolve, 20));
       await store.write(value);
       return value;
     });
-    const [left, right] = await Promise.all([store.runExclusive("2026-07-14T10", task), store.runExclusive("2026-07-14T10", task)]);
-    expect(left.hour).toBe(right.hour);
+    const [left, right] = await Promise.all([store.runExclusive("2026-07-14", task), store.runExclusive("2026-07-14", task)]);
+    expect(left.dayTrt).toBe(right.dayTrt);
     expect(task).toHaveBeenCalledTimes(1);
   });
 
   test("rejects malformed cached JSON", async () => {
     const temporaryDirectory = await directory();
     const store = createForecastBundleStore({ temporaryDirectory });
-    await fs.writeFile(path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14T10.json`), "{}");
-    expect(await store.read("2026-07-14T10")).toBeNull();
+    await fs.writeFile(path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14.json`), "{}");
+    expect(await store.read("2026-07-14")).toBeNull();
+  });
+
+  test("writes daily B2 keys under a prefix isolated from legacy hourly bundles", async () => {
+    const temporaryDirectory = await directory();
+    const writeFile = vi.fn(async () => true);
+    const pruneRemote = vi.fn(async () => undefined);
+    const store = createForecastBundleStore({ temporaryDirectory, writeFile, pruneRemote });
+    await store.write(bundle("2026-07-14"));
+    expect(writeFile).toHaveBeenCalledWith(
+      path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14.json`),
+      `${FORECAST_CACHE_PREFIX}/${FORECAST_FILE_PREFIX}-2026-07-14.json`,
+      expect.any(String),
+    );
+    expect(FORECAST_CACHE_PREFIX).toBe("forecasts/daily-v3.8");
+    expect(pruneRemote).toHaveBeenCalledWith(FORECAST_CACHE_PREFIX);
   });
 });

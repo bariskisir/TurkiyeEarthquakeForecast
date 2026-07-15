@@ -1,6 +1,6 @@
 # Türkiye Earthquake Forecast
 
-An experimental, open-source regional seismic signal dashboard for Türkiye and nearby areas. The application combines a bundled multi-source Sismik Harita catalog with hourly append-only updates, calculates separate M5+ through M7+ regional rankings, and displays forward-looking regional signals on an interactive Leaflet map.
+An experimental, open-source regional seismic signal dashboard for Türkiye and nearby areas. The application combines a bundled multi-source Sismik Harita catalog with daily append-only updates, calculates separate M5+ through M7+ regional rankings, and displays forward-looking regional signals on an interactive Leaflet map.
 
 **Live Demo:** [turkiye-earthquake-forecast.vercel.app](https://turkiye-earthquake-forecast.vercel.app/)
 
@@ -28,11 +28,11 @@ The request path is split into explicit, testable boundaries:
 
 - `catalog-domain.ts` validates, normalises, deduplicates, and projects recent events without filesystem or network access.
 - `sismik-client.ts` owns provider pagination, retry timing, and bounded 28-day refresh windows.
-- `catalog-service.ts` coalesces hourly refreshes and merges append-only updates through injected persistence adapters.
-- `forecast/` builds one immutable base field per catalogue hour and derives the full method/threshold/count matrix without shared mutable state.
+- `catalog-service.ts` coalesces daily UTC+3 refreshes and merges append-only updates through injected persistence adapters.
+- `forecast/` builds one immutable base field per Türkiye calendar day and derives the full method/threshold/count matrix without shared mutable state.
 - `forecast-cache.ts` coordinates memory, local temporary files, B2 bundles, stale fallback, locking, and pruning.
 - `forecast-service.ts` assembles API responses while `app/api/forecast/route.ts` remains a thin HTTP adapter.
-- Dashboard hooks own preferences, validated fetching, UTC-hour refresh scheduling, and reducer-driven selection state; presentation is split into controls, workspace, map, modal, and recent-event components.
+- Dashboard hooks own preferences, validated fetching, Türkiye-midnight refresh scheduling, and reducer-driven selection state; presentation is split into controls, workspace, map, modal, and recent-event components.
 
 Vitest covers numerical primitives, catalogue parsing and orchestration, provider behavior, cache locking/fallback, API responses, dashboard interactions, and a deterministic golden forecast matrix. The bundled `data/*.json` files are never modified by tests.
 
@@ -53,9 +53,9 @@ Vitest covers numerical primitives, catalogue parsing and orchestration, provide
 
 **Earthquake data source:** [Sismik Harita API](https://sismikharita.com/api). Catalogue requests are made server-side; visitors' browsers do not connect directly to Sismik Harita.
 
-The immutable base catalogue is stored in the repository as JSON shards under `data/` and is bundled with every deployment. New and revised events are never written back into those source files. In production, append-only update shards are persisted in Backblaze B2 under `catalog/updates/`, while `catalog/meta.json` records the latest hourly provider check. Hourly forecast bundles are also cached in B2 under `forecasts/`. Each Vercel instance hydrates its ephemeral `/tmp` working cache from B2 and keeps a short-lived in-memory copy for repeated requests.
+The immutable base catalogue is stored in the repository as JSON shards under `data/` and is bundled with every deployment. New and revised events are never written back into those source files. In production, append-only update shards are persisted in Backblaze B2 under `catalog/updates/`, while `catalog/meta.json` records the latest daily provider check. Daily forecast bundles are cached in B2 under `forecasts/daily-v3.8/`; legacy hourly bundles under `forecasts/v3.8/` are not read or pruned by the daily store. Each Vercel instance hydrates its ephemeral `/tmp` working cache from B2 and keeps an in-memory copy for repeated requests during the day.
 
-Once per UTC hour, the server requests the Sismik Harita earthquake-list API starting 48 hours before the newest stored event. The overlap captures both late arrivals and revisions to recent earthquakes. Stale ranges are split into windows of at most 28 days; incoming records are normalised, deduplicated by stable event identity, and compared with the stored event signature. Only new or changed records are written to a new append-only update shard. The application then merges the bundled shards with all B2 update shards, keeps the latest revision of each event, and sorts the result newest-first. If the provider or B2 is temporarily unavailable, the latest locally available catalogue is served instead.
+Once per Türkiye calendar day (UTC+3, at the first request after midnight), the server requests the Sismik Harita earthquake-list API starting 48 hours before the newest stored event. The overlap captures both late arrivals and revisions to recent earthquakes. Stale ranges are split into windows of at most 28 days; incoming records are normalised, deduplicated by stable event identity, and compared with the stored event signature. Only new or changed records are written to a new append-only update shard. The application then merges the bundled shards with all B2 update shards, keeps the latest revision of each event, and sorts the result newest-first. The CDN freshness lifetime ends at the next Türkiye midnight. B2 is used when configured and available; otherwise remote cache operations are skipped and the application continues from its ephemeral `/tmp` and bundled catalogue without exposing a B2 error to visitors.
 
 ## Forecast Method
 

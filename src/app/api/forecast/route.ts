@@ -3,7 +3,7 @@
  */
 import { after, NextResponse } from "next/server";
 import { createForecastService } from "@/lib/forecast-service";
-import { secondsUntilNextUtcHour } from "@/lib/time";
+import { secondsUntilNextTurkiyeDay } from "@/lib/time";
 import type { ForecastErrorResponse, ForecastResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -45,7 +45,7 @@ const service = createForecastService({
  */
 export function createForecastHandler(reader: { getForecast: () => Promise<ForecastResponse> }, now: () => Date = () => new Date()) {
   /**
-   * Executes one forecast request, derives an hour-aligned CDN lifetime, and converts internal failures into the stable public error contract.
+   * Executes one forecast request, derives a Türkiye-midnight-aligned CDN lifetime, and converts internal failures into the stable public error contract.
    *
    * The nested handler closes over injected service and clock dependencies so route behavior remains deterministic in integration tests.
    */
@@ -58,7 +58,7 @@ export function createForecastHandler(reader: { getForecast: () => Promise<Forec
     }
     try {
       const response = await reader.getForecast();
-      const ttl = response.metadata.forecastStatus === "refreshing" ? 0 : secondsUntilNextUtcHour(now());
+      const ttl = response.metadata.forecastStatus === "refreshing" ? 0 : secondsUntilNextTurkiyeDay(now());
       return NextResponse.json(response, {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

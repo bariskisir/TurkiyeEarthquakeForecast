@@ -73,4 +73,28 @@ describe("cached file store", () => {
     expect(await fs.readFile(file, "utf8")).toBe("local");
     expect(await store.ensureCachedFile(path.join(directory, "missing.json"), "missing")).toBe(false);
   });
+
+  test("uses tmp without surfacing B2 initialization or request failures", async () => {
+    const directory = await temporaryDirectory();
+    const invalidConfiguration = createCachedFileStore(() => { throw new Error("invalid B2 configuration"); });
+    const localPath = path.join(directory, "configuration-fallback.json");
+    expect(await invalidConfiguration.writeCachedFile(localPath, "cache/configuration-fallback.json", "local")).toBe(false);
+    expect(await fs.readFile(localPath, "utf8")).toBe("local");
+    expect(await invalidConfiguration.listCacheKeys("cache")).toEqual([]);
+
+    const unavailableB2 = createCachedFileStore(() => ({
+      get: async () => { throw new Error("B2 unavailable"); },
+      list: async () => { throw new Error("B2 unavailable"); },
+      put: async () => { throw new Error("B2 unavailable"); },
+      delete: async () => { throw new Error("B2 unavailable"); },
+    }));
+    const fallbackPath = path.join(directory, "request-fallback.json");
+    expect(await unavailableB2.ensureCachedFile(fallbackPath, "cache/missing.json")).toBe(false);
+    expect(await unavailableB2.writeCachedFile(fallbackPath, "cache/request-fallback.json", "fallback")).toBe(false);
+    expect(await fs.readFile(fallbackPath, "utf8")).toBe("fallback");
+    expect(await unavailableB2.listCacheKeys("cache")).toEqual([]);
+    await expect(unavailableB2.hydrateCacheDirectory(path.join(directory, "hydrated"), "cache")).resolves.toBeUndefined();
+    await expect(unavailableB2.pruneCachePrefixToLatest("cache")).resolves.toBeUndefined();
+  });
+
 });

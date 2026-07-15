@@ -132,6 +132,19 @@ async function writeLocal(filePath: string, body: Uint8Array | string): Promise<
  */
 export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | null = getRemoteStore) {
   /**
+   * Resolves optional B2 storage while treating missing or invalid deployment configuration as a local-cache-only mode.
+   *
+   * This boundary prevents remote cache initialization failures from escaping into forecast requests.
+   */
+  function optionalRemote(): RemoteObjectStore | null {
+    try {
+      return remoteProvider();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Performs the ensure cached file operation for the b2 cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
@@ -141,7 +154,7 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
       await fs.access(filePath);
       return true;
     } catch {
-      const remote = remoteProvider();
+      const remote = optionalRemote();
       if (!remote) return false;
       try {
         const body = await remote.get(key);
@@ -160,7 +173,13 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function listCacheKeys(prefix: string): Promise<string[]> {
-    return remoteProvider()?.list(prefix) ?? [];
+    const remote = optionalRemote();
+    if (!remote) return [];
+    try {
+      return await remote.list(prefix);
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -169,10 +188,14 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function pruneCachePrefixToLatest(prefix: string): Promise<void> {
-    const remote = remoteProvider();
+    const remote = optionalRemote();
     if (!remote) return;
-    const keys = (await remote.list(prefix)).filter((key) => key.endsWith(".json")).sort();
-    await Promise.all(keys.slice(0, -1).map((key) => remote.delete(key)));
+    try {
+      const keys = (await remote.list(prefix)).filter((key) => key.endsWith(".json")).sort();
+      await Promise.allSettled(keys.slice(0, -1).map((key) => remote.delete(key)));
+    } catch {
+      return;
+    }
   }
 
   /**
@@ -193,7 +216,7 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
    */
   async function writeCachedFile(filePath: string, key: string, body: string): Promise<boolean> {
     await writeLocal(filePath, body);
-    const remote = remoteProvider();
+    const remote = optionalRemote();
     if (!remote) return false;
     try {
       await remote.put(key, body);

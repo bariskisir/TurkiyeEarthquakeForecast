@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { readStoredValue, writeStoredValue } from "@/lib/browser-storage";
 import { validForecastResponse } from "@/lib/forecast-bundle";
 import { resolveLocale, type Locale } from "@/lib/i18n";
-import { secondsUntilNextUtcHour } from "@/lib/time";
+import { secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 import { forecastMethodUsesMagnitude, MAGNITUDE_THRESHOLDS, type ForecastResponse, type Theme } from "@/lib/types";
 import { dashboardSelectionReducer, initialDashboardSelection } from "./dashboard-state";
 
@@ -80,7 +80,7 @@ export function useForecastData() {
   const [data, setData] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"FORECAST_UNAVAILABLE" | null>(null);
-  const [currentHourUtc, setCurrentHourUtc] = useState(() => new Date().toISOString().slice(0, 13));
+  const [currentDayTrt, setCurrentDayTrt] = useState(() => turkiyeDay());
   const controller = useRef<AbortController | null>(null);
 
   /**
@@ -116,11 +116,11 @@ export function useForecastData() {
   }, [load]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCurrentHourUtc(new Date().toISOString().slice(0, 13)), secondsUntilNextUtcHour() * 1_000 + 100);
+    const timer = window.setTimeout(() => setCurrentDayTrt(turkiyeDay()), secondsUntilNextTurkiyeDay() * 1_000 + 100);
     return () => window.clearTimeout(timer);
-  }, [currentHourUtc]);
+  }, [currentDayTrt]);
 
-  const refreshing = Boolean(data && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastHourUtc !== currentHourUtc));
+  const refreshing = Boolean(data && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastDayTrt !== currentDayTrt));
 
   useEffect(() => {
     if (!refreshing) return;

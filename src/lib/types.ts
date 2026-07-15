@@ -114,7 +114,7 @@ export interface ForecastResponse {
     providerStatus: "updated" | "current" | "degraded";
     providerMessage: string;
     cache: "memory" | "tmp" | "bundle";
-    forecastHourUtc: string;
+    forecastDayTrt: string;
     forecastStatus: "ready" | "refreshing";
   };
 }
