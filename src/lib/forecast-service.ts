@@ -39,6 +39,7 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
   async function buildBundle(dayTrt: string): Promise<ForecastBundle> {
     const started = Date.now();
     const snapshot = await catalog.getCatalog();
+    if (snapshot.metadata.providerStatus === "degraded") throw new Error(snapshot.metadata.providerMessage);
     const referenceDate = now();
     const referenceTimestamp = Math.floor(referenceDate.getTime() / 1_000);
     const forecasts = calculateMatrix(snapshot.events, {
@@ -64,9 +65,9 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
         providerMessage: snapshot.metadata.providerMessage,
       },
     };
-    await store.write(bundle);
-    dependencies.log?.({ event: "forecast_generated", dayTrt, eventCount: snapshot.events.length, durationMs: Date.now() - started });
-    return bundle;
+    const stored = await store.write(bundle);
+    dependencies.log?.({ event: "forecast_generated", dayTrt, eventCount: stored.catalogMetadata.eventCount, durationMs: Date.now() - started });
+    return stored;
   }
 
   /**

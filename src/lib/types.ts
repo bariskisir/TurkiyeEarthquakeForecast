@@ -18,7 +18,7 @@ export function forecastMethodUsesMagnitude(method: ForecastMethod): boolean {
   return !MAGNITUDE_INDEPENDENT_FORECAST_METHODS.some((candidate) => candidate === method);
 }
 
-export const RECENT_THRESHOLDS = [3, 4, 5, 6, 7, 8] as const;
+export const RECENT_THRESHOLDS = [5, 6, 7, 8] as const;
 export type RecentThreshold = (typeof RECENT_THRESHOLDS)[number];
 
 export const SIGNAL_COUNTS = [0, 50] as const;

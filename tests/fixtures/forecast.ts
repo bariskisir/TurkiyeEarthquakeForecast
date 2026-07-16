@@ -23,7 +23,7 @@ export function createForecastResponse(overrides: Partial<ForecastResponse["meta
     occurredAtUtc: "2026-07-14T09:10:00.000Z",
     longitude: 29.1,
     latitude: 40.8,
-    magnitude: 4.2,
+    magnitude: 5.2,
     depthKm: 8.4,
     location: "Marmara Sea",
     source: "afad",

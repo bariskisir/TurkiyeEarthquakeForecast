@@ -22,15 +22,19 @@ export interface CatalogResult {
 export interface LoadedCatalog {
   accumulator: CatalogAccumulator;
   data: CatalogData;
+  metadata: CacheMetadata | null;
 }
 
 export interface CatalogServiceDependencies {
   loadCatalog: () => Promise<LoadedCatalog>;
-  readMetadata: () => Promise<CacheMetadata | null>;
   fetchLatestEvents: (startTimestamp: number) => Promise<RawCatalogEarthquake[]>;
-  appendUpdate: (events: RawCatalogEarthquake[], dayTrt: string) => Promise<void>;
-  writeMetadata: (metadata: CacheMetadata) => Promise<void>;
+  persistDailySnapshot: (events: RawCatalogEarthquake[], metadata: CacheMetadata) => Promise<void>;
   now?: () => Date;
+}
+
+export interface DailyCatalogSnapshot {
+  metadata: CacheMetadata;
+  events: RawCatalogEarthquake[];
 }
 
 const overlapSeconds = 48 * 60 * 60;
@@ -51,6 +55,17 @@ export function validCacheMetadata(value: unknown): value is CacheMetadata {
 }
 
 /**
+ * Validates the atomic daily catalogue object that binds refresh metadata to the exact provider records made durable by that refresh.
+ *
+ * Keeping metadata and events in one runtime-validated object prevents another serverless instance from observing a completed-day marker without its corresponding update shard.
+ */
+export function validDailyCatalogSnapshot(value: unknown): value is DailyCatalogSnapshot {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const snapshot = value as Record<string, unknown>;
+  return validCacheMetadata(snapshot.metadata) && Array.isArray(snapshot.events);
+}
+
+/**
  * Creates catalog service for the catalog service application service module, including the validation and edge cases encoded by its typed contract.
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
@@ -67,8 +82,7 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
    */
   async function refreshCatalog(): Promise<CatalogResult> {
     const loaded = await dependencies.loadCatalog();
-    const storedMetadata = await dependencies.readMetadata();
-    const previousMetadata = validCacheMetadata(storedMetadata) ? storedMetadata : null;
+    const previousMetadata = validCacheMetadata(loaded.metadata) ? loaded.metadata : null;
     const currentDate = now();
     const dayTrt = turkiyeDay(currentDate);
     if (previousMetadata?.checkedDayTrt === dayTrt) {
@@ -78,10 +92,7 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
     try {
       const incoming = await dependencies.fetchLatestEvents(newest - overlapSeconds);
       const changed = changedRawEvents(loaded.accumulator, incoming);
-      if (changed.length) {
-        await dependencies.appendUpdate(changed, dayTrt);
-        mergeRawEvents(loaded.accumulator, changed, true);
-      }
+      if (changed.length) mergeRawEvents(loaded.accumulator, changed, true);
       const merged = changed.length ? finalizeCatalog(loaded.accumulator) : loaded.data;
       const added = merged.events.length - loaded.data.events.length;
       const metadata: CacheMetadata = {
@@ -92,16 +103,15 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
           ? `Stored ${added.toLocaleString("en-US")} new and ${(changed.length - added).toLocaleString("en-US")} revised Sismik Harita events.`
           : "Sismik Harita was checked; no new or revised events were found.",
       };
-      await dependencies.writeMetadata(metadata);
+      await dependencies.persistDailySnapshot(changed, metadata);
       return { events: merged.events, recentEarthquakes: merged.recentEarthquakes, metadata, source: merged.hasUpdates ? "tmp" : "bundle" };
     } catch (error) {
       const metadata: CacheMetadata = {
-        checkedDayTrt: dayTrt,
+        checkedDayTrt: previousMetadata?.checkedDayTrt ?? "1970-01-01",
         dataUpdatedAtUtc: previousMetadata?.dataUpdatedAtUtc ?? currentDate.toISOString(),
         providerStatus: "degraded",
         providerMessage: `Sismik Harita update failed; serving the latest available catalog. ${error instanceof Error ? error.message : "Unknown error"}`,
       };
-      await dependencies.writeMetadata(metadata).catch(() => undefined);
       return { events: loaded.data.events, recentEarthquakes: loaded.data.recentEarthquakes, metadata, source: loaded.data.hasUpdates ? "tmp" : "bundle" };
     }
   }
@@ -113,7 +123,7 @@ export function createCatalogService(dependencies: CatalogServiceDependencies) {
    */
   async function getCatalog(options?: { allowStale?: boolean }): Promise<CatalogResult> {
     if (options?.allowStale && memoryCatalog) return { ...memoryCatalog, source: "memory" };
-    if (memoryCatalog && memoryCatalog.metadata.checkedDayTrt === turkiyeDay(now())) return { ...memoryCatalog, source: "memory" };
+    if (memoryCatalog && memoryCatalog.metadata.providerStatus !== "degraded" && memoryCatalog.metadata.checkedDayTrt === turkiyeDay(now())) return { ...memoryCatalog, source: "memory" };
     if (!refreshPromise) refreshPromise = refreshCatalog().finally(() => { refreshPromise = null; });
     memoryCatalog = await refreshPromise;
     return memoryCatalog;

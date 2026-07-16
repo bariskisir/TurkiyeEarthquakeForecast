@@ -91,7 +91,7 @@ function inMemoryStore(stale: ForecastBundle | null = null): ForecastBundleStore
     read: vi.fn(async (dayTrt: string) => store.current?.dayTrt === dayTrt ? store.current : null),
     findLatest: vi.fn(async () => stale),
     runExclusive: vi.fn(async (_dayTrt: string, task: () => Promise<ForecastBundle>) => task()),
-    write: vi.fn(async (bundle: ForecastBundle) => { store.current = bundle; }),
+    write: vi.fn(async (bundle: ForecastBundle) => { store.current = bundle; return bundle; }),
   };
   return store;
 }

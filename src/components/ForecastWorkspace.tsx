@@ -58,6 +58,7 @@ export default function ForecastWorkspace({ data, forecasts, loading, locale, me
           <div className="health-row"><span>{t.catalogEvents}</span><strong>{data?.metadata.eventCount.toLocaleString(numberLocale) ?? "—"}</strong></div>
           <div className="health-row"><span>{t.newestObservation}</span><strong>{formatDateTime(data?.metadata.newestEventAtUtc, locale, true)}</strong></div>
           <div className="health-row"><span>{t.generated}</span><strong>{formatDateTime(data?.metadata.generatedAtUtc, locale, true)}</strong></div>
+          <div className="health-row"><span>{t.calculationFrequency}</span><strong>{t.dailyCalculation}</strong></div>
           <p className="health-note">{healthMessage}</p>
         </div>
         <div className="summary-card methodology">

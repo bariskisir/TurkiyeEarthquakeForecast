@@ -3,7 +3,7 @@
  */
 import { describe, expect, test, vi } from "vitest";
 import { createCatalogAccumulator, finalizeCatalog, mergeRawEvents, type RawCatalogEarthquake } from "@/lib/catalog-domain";
-import { createCatalogService, type CacheMetadata, type CatalogServiceDependencies } from "@/lib/catalog-service";
+import { createCatalogService, validDailyCatalogSnapshot, type CacheMetadata, type CatalogServiceDependencies } from "@/lib/catalog-service";
 
 const now = new Date("2026-07-14T10:30:00.000Z");
 
@@ -25,11 +25,9 @@ function dependencies(incoming: RawCatalogEarthquake[] = [], metadata: CacheMeta
   const accumulator = createCatalogAccumulator();
   mergeRawEvents(accumulator, [raw(1)], false);
   return {
-    loadCatalog: vi.fn(async () => ({ accumulator, data: finalizeCatalog(accumulator) })),
-    readMetadata: vi.fn(async () => metadata),
+    loadCatalog: vi.fn(async () => ({ accumulator, data: finalizeCatalog(accumulator), metadata })),
     fetchLatestEvents: vi.fn(async () => incoming),
-    appendUpdate: vi.fn(async () => undefined),
-    writeMetadata: vi.fn(async () => undefined),
+    persistDailySnapshot: vi.fn(async () => undefined),
     /**
      * Performs the now operation for the catalog service.test Vitest specification, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
      *
@@ -55,7 +53,10 @@ describe("catalog service", () => {
     expect(result.events.map((event) => event.magnitude)).toEqual([4.8, 5.2]);
     expect(result.metadata.providerStatus).toBe("updated");
     expect(deps.loadCatalog).toHaveBeenCalledTimes(1);
-    expect(deps.appendUpdate).toHaveBeenCalledTimes(1);
+    expect(deps.persistDailySnapshot).toHaveBeenCalledWith(
+      [raw(1, 5.2), raw(2, 4.8)],
+      expect.objectContaining({ checkedDayTrt: "2026-07-14", providerStatus: "updated" }),
+    );
     await service.getCatalog();
     expect(deps.loadCatalog).toHaveBeenCalledTimes(1);
   });
@@ -67,5 +68,23 @@ describe("catalog service", () => {
     expect(result.events).toHaveLength(1);
     expect(result.metadata.providerStatus).toBe("degraded");
     expect(result.metadata.providerMessage).toContain("offline");
+  });
+
+  test("retries after atomic persistence fails instead of marking the day complete", async () => {
+    const deps = dependencies([raw(2)]);
+    deps.persistDailySnapshot = vi.fn(async () => { throw new Error("B2 unavailable"); });
+    const service = createCatalogService(deps);
+    const first = await service.getCatalog();
+    const second = await service.getCatalog();
+    expect(first.metadata.providerStatus).toBe("degraded");
+    expect(second.metadata.providerStatus).toBe("degraded");
+    expect(deps.fetchLatestEvents).toHaveBeenCalledTimes(2);
+    expect(deps.persistDailySnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  test("validates atomic daily snapshots containing metadata and provider events", () => {
+    const metadata: CacheMetadata = { checkedDayTrt: "2026-07-14", dataUpdatedAtUtc: now.toISOString(), providerStatus: "updated", providerMessage: "updated" };
+    expect(validDailyCatalogSnapshot({ metadata, events: [raw(2)] })).toBe(true);
+    expect(validDailyCatalogSnapshot({ metadata, events: null })).toBe(false);
   });
 });

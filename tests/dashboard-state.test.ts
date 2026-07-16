@@ -5,6 +5,10 @@ import { describe, expect, test } from "vitest";
 import { dashboardSelectionReducer, initialDashboardSelection } from "@/components/dashboard-state";
 
 describe("dashboard selection reducer", () => {
+  test("defaults latest earthquakes to M5+ after removing M3+ and M4+", () => {
+    expect(initialDashboardSelection.recentThreshold).toBe(5);
+  });
+
   test("keeps recurrence unavailable for M5 without mutating prior state", () => {
     const recurrence = dashboardSelectionReducer(initialDashboardSelection, { type: "method", value: "recurrence" });
     const next = dashboardSelectionReducer(recurrence, { type: "threshold", value: 5 });

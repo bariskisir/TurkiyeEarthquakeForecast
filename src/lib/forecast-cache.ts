@@ -1,17 +1,18 @@
 /**
  * @fileoverview Defines the forecast cache application service module and makes its contracts, integration responsibilities, side effects, and fallback behavior explicit to maintainers.
  */
+import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ensureCachedFile, listCacheKeys, pruneCachePrefixToLatest, writeCachedFile } from "./b2-cache";
+import { ensureCachedFile, listCacheKeys, writeCachedFile } from "./b2-cache";
 import { FORECAST_CACHE_PREFIX, FORECAST_FILE_PREFIX, validForecastBundle, type ForecastBundle } from "./forecast-bundle";
 
 export interface ForecastBundleStore {
   read: (dayTrt: string) => Promise<ForecastBundle | null>;
   findLatest: (beforeDayTrt: string) => Promise<ForecastBundle | null>;
   runExclusive: (dayTrt: string, task: () => Promise<ForecastBundle>) => Promise<ForecastBundle>;
-  write: (bundle: ForecastBundle) => Promise<void>;
+  write: (bundle: ForecastBundle) => Promise<ForecastBundle>;
 }
 
 export interface ForecastBundleStoreOptions {
@@ -22,7 +23,6 @@ export interface ForecastBundleStoreOptions {
   sleep?: (milliseconds: number) => Promise<void>;
   ensureFile?: typeof ensureCachedFile;
   listKeys?: typeof listCacheKeys;
-  pruneRemote?: typeof pruneCachePrefixToLatest;
   writeFile?: typeof writeCachedFile;
 }
 
@@ -39,7 +39,6 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
   const sleep = options.sleep ?? ((milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)));
   const ensureFile = options.ensureFile ?? ensureCachedFile;
   const listKeys = options.listKeys ?? listCacheKeys;
-  const pruneRemote = options.pruneRemote ?? pruneCachePrefixToLatest;
   const writeFile = options.writeFile ?? writeCachedFile;
   /**
    * Performs the file path operation for the forecast cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
@@ -58,7 +57,19 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const remoteKey = (dayTrt: string) => `${FORECAST_CACHE_PREFIX}/${path.basename(filePath(dayTrt))}`;
+  const remoteKey = (name: string) => `${FORECAST_CACHE_PREFIX}/${name}`;
+
+  /**
+   * Orders same-day candidates by monotonic catalogue coverage before using timestamps as deterministic tie breakers.
+   *
+   * Immutable candidate objects prevent a slower serverless instance with fewer events from overwriting a more complete daily forecast produced concurrently.
+   */
+  function compareFreshness(left: ForecastBundle, right: ForecastBundle): number {
+    return left.catalogMetadata.eventCount - right.catalogMetadata.eventCount
+      || Date.parse(left.catalogMetadata.newestEventAtUtc) - Date.parse(right.catalogMetadata.newestEventAtUtc)
+      || Date.parse(left.catalogMetadata.dataUpdatedAtUtc) - Date.parse(right.catalogMetadata.dataUpdatedAtUtc)
+      || Date.parse(left.generatedAtUtc) - Date.parse(right.generatedAtUtc);
+  }
 
   /**
    * Reads path for the forecast cache application service module, including the validation and edge cases encoded by its typed contract.
@@ -80,8 +91,17 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function read(dayTrt: string): Promise<ForecastBundle | null> {
-    await ensureFile(filePath(dayTrt), remoteKey(dayTrt));
-    return readPath(filePath(dayTrt), dayTrt);
+    const namePrefix = `${FORECAST_FILE_PREFIX}-${dayTrt}-`;
+    const localNames = (await fs.readdir(temporaryDirectory).catch(() => [])).filter((name) => name.startsWith(namePrefix) && name.endsWith(".json"));
+    const remoteNames = (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter((name) => name.startsWith(namePrefix) && name.endsWith(".json"));
+    const candidates: ForecastBundle[] = [];
+    for (const name of new Set([...localNames, ...remoteNames])) {
+      const localPath = path.join(temporaryDirectory, name);
+      await ensureFile(localPath, remoteKey(name));
+      const candidate = await readPath(localPath, dayTrt);
+      if (candidate) candidates.push(candidate);
+    }
+    return candidates.sort((left, right) => compareFreshness(right, left))[0] ?? null;
   }
 
   /**
@@ -94,12 +114,14 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
       const prefix = `${FORECAST_FILE_PREFIX}-`;
       const localNames = (await fs.readdir(temporaryDirectory)).filter((name) => name.startsWith(prefix) && name.endsWith(".json"));
       const remoteNames = (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter((name) => name.startsWith(prefix) && name.endsWith(".json"));
+      const candidates: ForecastBundle[] = [];
       for (const name of [...new Set([...localNames, ...remoteNames])].sort().reverse()) {
         const localPath = path.join(temporaryDirectory, name);
-        await ensureFile(localPath, `${FORECAST_CACHE_PREFIX}/${name}`);
+        await ensureFile(localPath, remoteKey(name));
         const bundle = await readPath(localPath);
-        if (bundle && bundle.dayTrt < beforeDayTrt) return bundle;
+        if (bundle && bundle.dayTrt < beforeDayTrt) candidates.push(bundle);
       }
+      return candidates.sort((left, right) => right.dayTrt.localeCompare(left.dayTrt) || compareFreshness(right, left))[0] ?? null;
     } catch {
       return null;
     }
@@ -161,12 +183,15 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function write(bundle: ForecastBundle): Promise<void> {
-    const storedRemotely = await writeFile(filePath(bundle.dayTrt), remoteKey(bundle.dayTrt), JSON.stringify(bundle));
-    const prefix = `${FORECAST_FILE_PREFIX}-`;
-    const names = (await fs.readdir(temporaryDirectory)).filter((name) => name.startsWith(prefix) && name.endsWith(".json")).sort();
-    await Promise.all(names.slice(0, -1).map((name) => fs.unlink(path.join(temporaryDirectory, name)).catch(() => undefined)));
-    if (storedRemotely) await pruneRemote(FORECAST_CACHE_PREFIX).catch(() => undefined);
+  async function write(bundle: ForecastBundle): Promise<ForecastBundle> {
+    const name = `${FORECAST_FILE_PREFIX}-${bundle.dayTrt}-${randomUUID()}.json`;
+    const localPath = path.join(temporaryDirectory, name);
+    const storedRemotely = await writeFile(localPath, remoteKey(name), JSON.stringify(bundle));
+    if (process.env.VERCEL && !storedRemotely) {
+      await fs.unlink(localPath).catch(() => undefined);
+      throw new Error("The daily forecast candidate could not be persisted to B2.");
+    }
+    return await read(bundle.dayTrt) ?? bundle;
   }
 
   return { read, findLatest, runExclusive, write };

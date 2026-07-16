@@ -15,9 +15,9 @@ import {
   type ForecastResponse,
 } from "./types";
 
-export const FORECAST_MODEL = "multi-method-relative-v3.8";
-export const FORECAST_CACHE_PREFIX = "forecasts/daily-v3.8";
-export const FORECAST_FILE_PREFIX = "turkiye-earthquake-forecasts-daily-v3.8";
+export const FORECAST_MODEL = "multi-method-relative-v3.9";
+export const FORECAST_CACHE_PREFIX = "forecasts/daily-v3.9";
+export const FORECAST_FILE_PREFIX = "turkiye-earthquake-forecasts-daily-v3.9";
 
 export interface ForecastBundle {
   model: string;

@@ -85,22 +85,28 @@ describe("forecast bundle store", () => {
   test("rejects malformed cached JSON", async () => {
     const temporaryDirectory = await directory();
     const store = createForecastBundleStore({ temporaryDirectory });
-    await fs.writeFile(path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14.json`), "{}");
+    await fs.writeFile(path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14-malformed.json`), "{}");
     expect(await store.read("2026-07-14")).toBeNull();
   });
 
-  test("writes daily B2 keys under a prefix isolated from legacy hourly bundles", async () => {
+  test("writes immutable daily B2 candidates under a versioned prefix", async () => {
     const temporaryDirectory = await directory();
-    const writeFile = vi.fn(async () => true);
-    const pruneRemote = vi.fn(async () => undefined);
-    const store = createForecastBundleStore({ temporaryDirectory, writeFile, pruneRemote });
+    const writeFile = vi.fn(async (_filePath: string, _key: string, _body: string) => true);
+    const store = createForecastBundleStore({ temporaryDirectory, writeFile });
     await store.write(bundle("2026-07-14"));
-    expect(writeFile).toHaveBeenCalledWith(
-      path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14.json`),
-      `${FORECAST_CACHE_PREFIX}/${FORECAST_FILE_PREFIX}-2026-07-14.json`,
-      expect.any(String),
-    );
-    expect(FORECAST_CACHE_PREFIX).toBe("forecasts/daily-v3.8");
-    expect(pruneRemote).toHaveBeenCalledWith(FORECAST_CACHE_PREFIX);
+    const [localPath, key] = writeFile.mock.calls[0];
+    expect(path.basename(localPath)).toMatch(new RegExp(`^${FORECAST_FILE_PREFIX}-2026-07-14-[0-9a-f-]+\\.json$`));
+    expect(key).toBe(`${FORECAST_CACHE_PREFIX}/${path.basename(localPath)}`);
+    expect(FORECAST_CACHE_PREFIX).toBe("forecasts/daily-v3.9");
+  });
+
+  test("selects the candidate with greater catalogue coverage regardless of write order", async () => {
+    const temporaryDirectory = await directory();
+    const store = createForecastBundleStore({ temporaryDirectory });
+    const complete = bundle("2026-07-14");
+    complete.catalogMetadata.eventCount = 2;
+    await store.write(complete);
+    await store.write(bundle("2026-07-14"));
+    expect((await store.read("2026-07-14"))?.catalogMetadata.eventCount).toBe(2);
   });
 });

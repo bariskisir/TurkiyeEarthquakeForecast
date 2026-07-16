@@ -25,7 +25,7 @@ export const initialDashboardSelection: DashboardSelectionState = {
   threshold: 7,
   forecastMethod: "combined",
   signalCount: 50,
-  recentThreshold: 3,
+  recentThreshold: 5,
   recentCount: 10,
   selectedRecentIds: new Set(),
 };
