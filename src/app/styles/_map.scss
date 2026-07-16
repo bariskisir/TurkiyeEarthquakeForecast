@@ -1,5 +1,5 @@
 /* Integrates Leaflet sizing and theme overrides with forecast markers, observed-event labels, public controls, and expandable popup diagnostics. */
-.map-shell, .map-loading { flex: 1 1 auto; min-height: 430px; width: 100%; background: var(--map-bg); }
+.map-shell, .map-loading { min-height: 0; width: 100%; flex: 1 1 auto; background: var(--map-bg); }
 .map-shell { position: relative; overflow: clip; isolation: isolate; contain: paint; }
 .map-shell .map, .map { height: 100%; width: 100%; }
 .map-loading { display: grid; place-items: center; color: var(--muted); }
