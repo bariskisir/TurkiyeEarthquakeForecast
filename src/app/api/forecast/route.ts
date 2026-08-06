@@ -3,7 +3,7 @@
  */
 import { after, NextResponse } from "next/server";
 import { createForecastService } from "@/lib/forecast-service";
-import { secondsUntilNextTurkiyeDay } from "@/lib/time";
+import { calculationDateKey, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 import type { ForecastErrorResponse, ForecastResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -11,16 +11,30 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const privateNoStoreHeaders = { "Cache-Control": "private, no-store, max-age=0" };
+const historicalCacheSeconds = 30 * 24 * 60 * 60;
 
 /**
  * Rejects request modifiers that bypass shared CDN caching even though the public forecast representation does not vary by them.
  *
- * Keeping this check ahead of catalogue and forecast access ensures cache-busting requests remain constant-cost and cannot trigger B2 reads or model generation.
+ * Only the `date` query parameter selects a different immutable forecast snapshot; every other modifier must remain constant-cost.
  */
 function unsupportedRequest(request: Request): boolean {
-  return new URL(request.url).search.length > 0
-    || request.headers.has("authorization")
+  const url = new URL(request.url);
+  const parameters = [...url.searchParams.entries()];
+  if (parameters.length > 1) return true;
+  if (parameters.length === 1 && parameters[0][0] !== "date") return true;
+  if (parameters.length === 1 && !parameters[0][1]) return true;
+  return request.headers.has("authorization")
     || request.headers.has("range");
+}
+
+/**
+ * Accepts only in-range historical calculation dates: a year no older than the bundled minimum, a current-year month, or a calendar date no newer than today.
+ *
+ * Delegating to the shared calendar-key resolver keeps route validation and service normalization identical.
+ */
+function validRequestDate(value: string, today: string): boolean {
+  return calculationDateKey(value, today) !== null;
 }
 
 const service = createForecastService({
@@ -43,7 +57,7 @@ const service = createForecastService({
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export function createForecastHandler(reader: { getForecast: () => Promise<ForecastResponse> }, now: () => Date = () => new Date()) {
+export function createForecastHandler(reader: { getForecast: (date?: string) => Promise<ForecastResponse> }, now: () => Date = () => new Date()) {
   /**
    * Executes one forecast request, derives a Türkiye-midnight-aligned CDN lifetime, and converts internal failures into the stable public error contract.
    *
@@ -56,9 +70,18 @@ export function createForecastHandler(reader: { getForecast: () => Promise<Forec
         { status: 400, headers: privateNoStoreHeaders },
       );
     }
+    const today = turkiyeDay(now());
+    const date = new URL(request.url).searchParams.get("date") ?? today;
+    if (!validRequestDate(date, today)) {
+      return NextResponse.json(
+        { error: "Unsupported calculation date.", code: "INVALID_REQUEST" },
+        { status: 400, headers: privateNoStoreHeaders },
+      );
+    }
     try {
-      const response = await reader.getForecast();
-      const ttl = response.metadata.forecastStatus === "refreshing" ? 0 : secondsUntilNextTurkiyeDay(now());
+      const response = await reader.getForecast(date);
+      const latest = date === today;
+      const ttl = latest && response.metadata.forecastStatus === "refreshing" ? 0 : latest ? secondsUntilNextTurkiyeDay(now()) : historicalCacheSeconds;
       return NextResponse.json(response, {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

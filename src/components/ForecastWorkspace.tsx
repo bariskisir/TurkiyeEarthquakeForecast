@@ -25,11 +25,14 @@ function MapLoading() { return <div className="map-loading" />; }
 const ForecastMap = dynamic(loadForecastMap, { ssr: false, loading: MapLoading });
 
 interface ForecastWorkspaceProps {
+  calculationDate: string;
+  calculationDates: string[];
   data: ForecastResponse | null;
   forecasts: ForecastPoint[];
   loading: boolean;
   locale: Locale;
   methodUsesMagnitude: boolean;
+  onCalculationDateChange: (value: string) => void;
   onOpenMethodology: () => void;
   selectedLocations: RecentEarthquake[];
   theme: Theme;
@@ -40,7 +43,7 @@ interface ForecastWorkspaceProps {
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export default function ForecastWorkspace({ data, forecasts, loading, locale, methodUsesMagnitude, onOpenMethodology, selectedLocations, theme }: ForecastWorkspaceProps) {
+export default function ForecastWorkspace({ calculationDate, calculationDates, data, forecasts, loading, locale, methodUsesMagnitude, onCalculationDateChange, onOpenMethodology, selectedLocations, theme }: ForecastWorkspaceProps) {
   const t = copy[locale];
   const numberLocale = localeSettings[locale].numberLocale;
   const providerStatus = data?.metadata.providerStatus;
@@ -59,6 +62,12 @@ export default function ForecastWorkspace({ data, forecasts, loading, locale, me
           <div className="health-row"><span>{t.newestObservation}</span><strong>{formatDateTime(data?.metadata.newestEventAtUtc, locale, true)}</strong></div>
           <div className="health-row"><span>{t.generated}</span><strong>{formatDateTime(data?.metadata.generatedAtUtc, locale, true)}</strong></div>
           <div className="health-row"><span>{t.calculationFrequency}</span><strong>{t.dailyCalculation}</strong></div>
+          <div className="health-row">
+            <span>{t.calculationDate}</span>
+            <select id="calculation-date" className="method-select" value={calculationDate} onChange={(event) => onCalculationDateChange(event.target.value)}>
+              {calculationDates.map((option) => <option key={option} value={option}>{/^\d{4}-\d{2}-\d{2}$/.test(option) ? t.today : option}</option>)}
+            </select>
+          </div>
           <p className="health-note">{healthMessage}</p>
         </div>
         <div className="summary-card methodology">

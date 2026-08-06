@@ -19,7 +19,7 @@ import { useDashboardPreferences, useDashboardSelection, useForecastData } from 
  */
 export default function Dashboard() {
   const { locale, theme, showDisclaimer, changeLocale, changeTheme, dismissDisclaimer } = useDashboardPreferences();
-  const { data, loading, error, refreshing } = useForecastData();
+  const { data, loading, error, refreshing, calculationDate, calculationDates, changeCalculationDate } = useForecastData();
   const { selection, dispatch, methodUsesMagnitude, selectedForecasts, recentEarthquakes, selectedLocations, allRecentSelected } = useDashboardSelection(data);
   const [showMethodology, setShowMethodology] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -44,6 +44,7 @@ export default function Dashboard() {
    */
   const closePrivacy = useCallback(() => setShowPrivacy(false), []);
   const t = copy[locale];
+  const isTodaySnapshot = /^\d{4}-\d{2}-\d{2}$/.test(calculationDate);
   return (
     <main>
       {showDisclaimer && (
@@ -65,8 +66,8 @@ export default function Dashboard() {
       <DashboardControls data={data} dispatch={dispatch} locale={locale} methodUsesMagnitude={methodUsesMagnitude} onLocaleChange={changeLocale} onThemeChange={changeTheme} selection={selection} theme={theme} />
       {error && <div className="error" role="alert"><strong>{t.loadError}</strong> {t.serviceUnavailable}</div>}
       <section className="workspace">
-        <ForecastWorkspace data={data} forecasts={selectedForecasts} loading={loading} locale={locale} methodUsesMagnitude={methodUsesMagnitude} onOpenMethodology={openMethodology} selectedLocations={selectedLocations} theme={theme} />
-        <RecentEarthquakes allSelected={allRecentSelected} dispatch={dispatch} earthquakes={recentEarthquakes} locale={locale} selection={selection} />
+        <ForecastWorkspace calculationDate={calculationDate} calculationDates={calculationDates} data={data} forecasts={selectedForecasts} loading={loading} locale={locale} methodUsesMagnitude={methodUsesMagnitude} onCalculationDateChange={changeCalculationDate} onOpenMethodology={openMethodology} selectedLocations={isTodaySnapshot ? selectedLocations : []} theme={theme} />
+        {isTodaySnapshot && <RecentEarthquakes allSelected={allRecentSelected} dispatch={dispatch} earthquakes={recentEarthquakes} locale={locale} selection={selection} />}
       </section>
       <footer><span>{t.footerResearch}</span><nav aria-label={t.footerLinks}><button type="button" className="footer-link" onClick={openPrivacy}>{t.privacyPolicy}</button><a className="footer-link" href="https://github.com/bariskisir/TurkiyeEarthquakeForecast" target="_blank" rel="noreferrer">{t.source}</a></nav></footer>
       {showMethodology && <MethodologyModal locale={locale} onClose={closeMethodology} />}

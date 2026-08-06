@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { readStoredValue, writeStoredValue } from "@/lib/browser-storage";
 import { validForecastResponse } from "@/lib/forecast-bundle";
 import { resolveLocale, type Locale } from "@/lib/i18n";
-import { secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
+import { calculationDateOptions, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 import { forecastMethodUsesMagnitude, MAGNITUDE_THRESHOLDS, type ForecastResponse, type Theme } from "@/lib/types";
 import { dashboardSelectionReducer, initialDashboardSelection } from "./dashboard-state";
 
@@ -81,21 +81,23 @@ export function useForecastData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"FORECAST_UNAVAILABLE" | null>(null);
   const [currentDayTrt, setCurrentDayTrt] = useState(() => turkiyeDay());
+  const [calculationDate, setCalculationDate] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
+  const effectiveCalculationDate = calculationDate ?? currentDayTrt;
 
   /**
    * Loads load for the use dashboard dashboard UI module, including the validation and edge cases encoded by its typed contract.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const load = useCallback(async () => {
+  const load = useCallback(async (date: string) => {
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/forecast", { cache: "no-store", signal: request.signal });
+      const response = await fetch(`/api/forecast?date=${encodeURIComponent(date)}`, { cache: "no-store", signal: request.signal });
       const body = await response.json() as unknown;
       if (!response.ok || !validForecastResponse(body)) throw new Error("FORECAST_UNAVAILABLE");
       setData(body);
@@ -111,25 +113,47 @@ export function useForecastData() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(effectiveCalculationDate);
     return () => controller.current?.abort();
-  }, [load]);
+  }, [effectiveCalculationDate, load]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCurrentDayTrt(turkiyeDay()), secondsUntilNextTurkiyeDay() * 1_000 + 100);
+    const timer = window.setTimeout(() => {
+      const nextDayTrt = turkiyeDay();
+      setCurrentDayTrt(nextDayTrt);
+      setCalculationDate((current) => current === currentDayTrt ? null : current);
+    }, secondsUntilNextTurkiyeDay() * 1_000 + 100);
     return () => window.clearTimeout(timer);
   }, [currentDayTrt]);
 
-  const refreshing = Boolean(data && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastDayTrt !== currentDayTrt));
+  const latest = effectiveCalculationDate === currentDayTrt;
+  const refreshing = Boolean(data && latest && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastDayTrt !== currentDayTrt));
 
   useEffect(() => {
     if (!refreshing) return;
-    void load();
-    const timer = window.setInterval(() => { void load(); }, FORECAST_REFRESH_POLL_MILLISECONDS);
+    void load(effectiveCalculationDate);
+    const timer = window.setInterval(() => { void load(effectiveCalculationDate); }, FORECAST_REFRESH_POLL_MILLISECONDS);
     return () => window.clearInterval(timer);
-  }, [load, refreshing]);
+  }, [effectiveCalculationDate, load, refreshing]);
 
-  return { data, loading, error, refreshing, reload: load };
+  const calculationDates = useMemo(() => {
+    const year = Number(currentDayTrt.slice(0, 4));
+    const month = Number(currentDayTrt.slice(5, 7));
+    const years = calculationDateOptions(currentDayTrt);
+    const months = Array.from({ length: month }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
+    return [...years, ...months, currentDayTrt];
+  }, [currentDayTrt]);
+
+  return {
+    data,
+    loading,
+    error,
+    refreshing,
+    reload: load,
+    calculationDate: effectiveCalculationDate,
+    calculationDates,
+    changeCalculationDate: setCalculationDate,
+  };
 }
 
 /**

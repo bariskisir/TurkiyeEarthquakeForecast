@@ -31,7 +31,8 @@ Always run `npm run lint`, `npm run typecheck`, and `npm test` after changes.
 - `src/app/api/forecast/route.ts` — `GET /api/forecast`; Node runtime, `force-dynamic`,
   daily bundle cached in memory + tmp file with a lock; sets CDN cache TTL until next UTC+3 day
 - `src/lib/catalog-domain.ts`, `catalog-service.ts`, `sismik-client.ts`, `catalog.ts` — pure catalogue rules, daily orchestration, provider client, and persistence adapter
-- `src/lib/forecast-service.ts`, `forecast-cache.ts`, `forecast-bundle.ts` — daily forecast orchestration, memory/tmp/B2 cache, runtime validation
+- `src/lib/forecast-service.ts`, `forecast-cache.ts`, `forecast-bundle.ts` — daily forecast orchestration, memory/tmp/B2/bundled cache, runtime validation
+- `src/lib/time.ts` — UTC+3 day math, `calculationDateKey`, `calculationCutoffSeconds`, snapshot milestone years
 - `src/lib/forecast/` — modular ETAS forecast engine (config, geometry, numeric, catalog-prep,
   completeness, gutenberg-richter, declustering, etas-kernels, background-intensity,
   triggered-intensity, energy, seismicity-indicators, nowcasting, recurrence, scoring,
@@ -41,6 +42,10 @@ Always run `npm run lint`, `npm run typecheck`, and `npm test` after changes.
 - `src/components/Dashboard.tsx`, `useDashboard.ts`, `dashboard-state.ts` — client composition, preferences/fetch hooks, and selection reducer
 - `src/components/ForecastMap.tsx` — Leaflet map (`ssr: false`)
 - `data/*.json` — bundled Sismik Harita shards (immutable source of truth)
+- `data/snapshots/*.json` — pre-computed immutable forecast snapshots for every dropdown
+  option through the current year (milestones, `2000..YYYY` years, `YYYY` months), served as
+  `cache: "bundle"` on first read so they are never recomputed; regenerate locally when
+  `FORECAST_MODEL` bumps
 
 ## Data Flow
 
@@ -56,13 +61,19 @@ Always run `npm run lint`, `npm run typecheck`, and `npm test` after changes.
     rate-change z), blends them into a threshold-dependent composite hazard score, filters
     by observed maximum magnitude, selects candidates via greedy spatial de-duplication,
     and returns the top signals as `ForecastPoint`s. Default count is 50.
-4. The API assembles `ForecastResponse` with metadata and cache/status info.
+4. `getForecast(date?)` serves the dropdown selection from the bundled `data/snapshots/*.json`
+    files when available (never recomputed), otherwise computes it once and caches in tmp/B2;
+    the daily snapshot for the current UTC+3 day is always recomputed, and the first request
+    of a day warms every not-yet-bundled selector option in the background.
+5. The API assembles `ForecastResponse` with metadata and cache/status info.
 
 ## Conventions
 
 - Add an English file-level explanation to code files and detailed English JSDoc above named functions and components.
 - Use the `@/` import alias for `src` (see `tsconfig.json`).
-- Bundled `data/*.json` files are immutable; new/revised events go into tmp append shards.
+- Bundled `data/*.json` and `data/snapshots/*.json` files are immutable; new/revised
+  events go into tmp append shards, and new dropdown snapshots are computed at runtime
+  (regenerate `data/snapshots` locally only when `FORECAST_MODEL` bumps).
 - Keep code concise and match the existing dense functional style.
 - All user-facing strings must be added to both `en` and `tr` in `src/lib/i18n.ts`.
 - Times are handled and displayed in UTC.

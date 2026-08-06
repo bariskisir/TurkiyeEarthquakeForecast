@@ -22,6 +22,7 @@ export const FORECAST_FILE_PREFIX = "turkiye-earthquake-forecasts-daily-v3.9";
 export interface ForecastBundle {
   model: string;
   dayTrt: string;
+  cutoffSeconds?: number | null;
   generatedAtUtc: string;
   forecasts: ForecastMatrix;
   recentEarthquakes: Record<RecentThreshold, RecentEarthquake[]>;
@@ -114,6 +115,7 @@ export function validForecastBundle(value: unknown, expectedDayTrt?: string): va
   const recent = record(bundle?.recentEarthquakes);
   if (!bundle || !metadata || !forecasts || !recent) return false;
   if (bundle.model !== FORECAST_MODEL || typeof bundle.dayTrt !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(bundle.dayTrt) || expectedDayTrt && bundle.dayTrt !== expectedDayTrt || typeof bundle.generatedAtUtc !== "string") return false;
+  if (bundle.cutoffSeconds !== undefined && !nullableFinite(bundle.cutoffSeconds)) return false;
   if (typeof metadata.dataUpdatedAtUtc !== "string"
     || typeof metadata.newestEventAtUtc !== "string"
     || typeof metadata.oldestEventAtUtc !== "string"
