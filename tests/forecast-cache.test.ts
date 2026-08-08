@@ -58,19 +58,53 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map((value) => fs.rm(value, { recursive: true, force: true })));
 });
 
+/**
+ * Builds a store whose bundled snapshot directory is an isolated non-existent path, so cache tests never read the real data/snapshots files.
+ *
+ * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
+ */
+function cacheStore(temporaryDirectory: string, options: Parameters<typeof createForecastBundleStore>[0] = {}): ReturnType<typeof createForecastBundleStore> {
+  return createForecastBundleStore({ temporaryDirectory, bundledDirectory: path.join(temporaryDirectory, "bundled"), ...options });
+}
+
 describe("forecast bundle store", () => {
   test("round-trips valid bundles and selects the latest stale day", async () => {
     const temporaryDirectory = await directory();
-    const store = createForecastBundleStore({ temporaryDirectory });
+    const store = cacheStore(temporaryDirectory);
     await store.write(bundle("2026-07-13"));
     await store.write(bundle("2026-07-14"));
-    expect((await store.read("2026-07-14"))?.dayTrt).toBe("2026-07-14");
-    expect((await store.findLatest("2026-07-15"))?.dayTrt).toBe("2026-07-14");
+    expect((await store.read("2026-07-14"))?.bundle.dayTrt).toBe("2026-07-14");
+    expect((await store.read("2026-07-14"))?.cache).toBe("tmp");
+    expect((await store.findLatest("2026-07-15"))?.bundle.dayTrt).toBe("2026-07-14");
+  });
+
+  test("skips cutoff snapshots when finding the latest daily bundle", async () => {
+    const temporaryDirectory = await directory();
+    const store = cacheStore(temporaryDirectory);
+    const snapshot = bundle("2026-07-10");
+    snapshot.cutoffSeconds = Math.floor(Date.parse("2026-07-01T00:00:00.000Z") / 1_000);
+    await store.write(snapshot);
+    expect((await store.findLatest("2026-07-15"))?.bundle.dayTrt).toBeUndefined();
+    await store.write(bundle("2026-07-14"));
+    expect((await store.findLatest("2026-07-15"))?.bundle.dayTrt).toBe("2026-07-14");
+  });
+
+  test("serves bundled snapshots from data/snapshots without computation", async () => {
+    const temporaryDirectory = await directory();
+    const bundledDirectory = await directory();
+    const store = createForecastBundleStore({ temporaryDirectory, bundledDirectory });
+    const snapshot = bundle("2026-07-01");
+    snapshot.cutoffSeconds = Math.floor(Date.parse("2026-07-01T00:00:00.000Z") / 1_000);
+    await fs.writeFile(path.join(bundledDirectory, `${FORECAST_FILE_PREFIX}-2026-07-01.json`), JSON.stringify(snapshot));
+    const stored = await store.read("2026-07-01");
+    expect(stored?.cache).toBe("bundle");
+    expect(stored?.bundle.dayTrt).toBe("2026-07-01");
+    expect(await store.findLatest("2026-07-15")).toBeNull();
   });
 
   test("coalesces work through the local lock", async () => {
     const temporaryDirectory = await directory();
-    const store = createForecastBundleStore({ temporaryDirectory, pollMilliseconds: 2, waitMilliseconds: 1_000 });
+    const store = cacheStore(temporaryDirectory, { pollMilliseconds: 2, waitMilliseconds: 1_000 });
     const task = vi.fn(async () => {
       const value = bundle("2026-07-14");
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -84,7 +118,7 @@ describe("forecast bundle store", () => {
 
   test("rejects malformed cached JSON", async () => {
     const temporaryDirectory = await directory();
-    const store = createForecastBundleStore({ temporaryDirectory });
+    const store = cacheStore(temporaryDirectory);
     await fs.writeFile(path.join(temporaryDirectory, `${FORECAST_FILE_PREFIX}-2026-07-14-malformed.json`), "{}");
     expect(await store.read("2026-07-14")).toBeNull();
   });
@@ -92,7 +126,7 @@ describe("forecast bundle store", () => {
   test("writes immutable daily B2 candidates under a versioned prefix", async () => {
     const temporaryDirectory = await directory();
     const writeFile = vi.fn(async (_filePath: string, _key: string, _body: string) => true);
-    const store = createForecastBundleStore({ temporaryDirectory, writeFile });
+    const store = cacheStore(temporaryDirectory, { writeFile });
     await store.write(bundle("2026-07-14"));
     const [localPath, key] = writeFile.mock.calls[0];
     expect(path.basename(localPath)).toMatch(new RegExp(`^${FORECAST_FILE_PREFIX}-2026-07-14-[0-9a-f-]+\\.json$`));
@@ -102,11 +136,11 @@ describe("forecast bundle store", () => {
 
   test("selects the candidate with greater catalogue coverage regardless of write order", async () => {
     const temporaryDirectory = await directory();
-    const store = createForecastBundleStore({ temporaryDirectory });
+    const store = cacheStore(temporaryDirectory);
     const complete = bundle("2026-07-14");
     complete.catalogMetadata.eventCount = 2;
     await store.write(complete);
     await store.write(bundle("2026-07-14"));
-    expect((await store.read("2026-07-14"))?.catalogMetadata.eventCount).toBe(2);
+    expect((await store.read("2026-07-14"))?.bundle.catalogMetadata.eventCount).toBe(2);
   });
 });

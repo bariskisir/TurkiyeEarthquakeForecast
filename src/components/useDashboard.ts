@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { readStoredValue, writeStoredValue } from "@/lib/browser-storage";
 import { validForecastResponse } from "@/lib/forecast-bundle";
 import { resolveLocale, type Locale } from "@/lib/i18n";
-import { secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
+import { calculationDateOptions, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 import { forecastMethodUsesMagnitude, MAGNITUDE_THRESHOLDS, type ForecastResponse, type Theme } from "@/lib/types";
 import { dashboardSelectionReducer, initialDashboardSelection } from "./dashboard-state";
 
@@ -81,24 +81,34 @@ export function useForecastData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"FORECAST_UNAVAILABLE" | null>(null);
   const [currentDayTrt, setCurrentDayTrt] = useState(() => turkiyeDay());
+  const [calculationDate, setCalculationDate] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
+  const effectiveCalculationDate = calculationDate ?? currentDayTrt;
+  const loadingDate = calculationDate ?? null;
 
   /**
    * Loads load for the use dashboard dashboard UI module, including the validation and edge cases encoded by its typed contract.
    *
+   * A null date requests the default forecast without a query parameter so the browser clock can never cause a rejected "today";
+   * the server replies with its authoritative day, which replaces the client-computed one once the response is ready.
+   *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  const load = useCallback(async () => {
+  const load = useCallback(async (date: string | null) => {
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/forecast", { cache: "no-store", signal: request.signal });
+      const query = date ? `?date=${encodeURIComponent(date)}` : "";
+      const response = await fetch(`/api/forecast${query}`, { cache: "no-store", signal: request.signal });
       const body = await response.json() as unknown;
       if (!response.ok || !validForecastResponse(body)) throw new Error("FORECAST_UNAVAILABLE");
       setData(body);
+      if (date === null && body.metadata.forecastStatus === "ready") {
+        setCurrentDayTrt(body.metadata.forecastDayTrt);
+      }
     } catch (reason) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError("FORECAST_UNAVAILABLE");
@@ -111,25 +121,59 @@ export function useForecastData() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(loadingDate);
     return () => controller.current?.abort();
-  }, [load]);
+  }, [loadingDate, load]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCurrentDayTrt(turkiyeDay()), secondsUntilNextTurkiyeDay() * 1_000 + 100);
+    const timer = window.setTimeout(() => {
+      const nextDayTrt = turkiyeDay();
+      setCurrentDayTrt(nextDayTrt);
+      setCalculationDate((current) => current === currentDayTrt ? null : current);
+    }, secondsUntilNextTurkiyeDay() * 1_000 + 100);
     return () => window.clearTimeout(timer);
   }, [currentDayTrt]);
 
-  const refreshing = Boolean(data && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastDayTrt !== currentDayTrt));
+  const latest = effectiveCalculationDate === currentDayTrt;
+  const refreshing = Boolean(data && latest && (data.metadata.forecastStatus === "refreshing" || data.metadata.forecastDayTrt !== currentDayTrt));
 
   useEffect(() => {
     if (!refreshing) return;
-    void load();
-    const timer = window.setInterval(() => { void load(); }, FORECAST_REFRESH_POLL_MILLISECONDS);
+    void load(loadingDate);
+    const timer = window.setInterval(() => { void load(loadingDate); }, FORECAST_REFRESH_POLL_MILLISECONDS);
     return () => window.clearInterval(timer);
-  }, [load, refreshing]);
+  }, [loadingDate, load, refreshing]);
 
-  return { data, loading, error, refreshing, reload: load };
+  /**
+   * Changes the selected calculation date, mapping the "today" option back to the default so it is always requested without a date query.
+   *
+   * The only day-format option is "today"; a stale server-rendered value (for example a previous calendar day) therefore also maps to the
+   * default instead of sending a date the API would reject.
+   *
+   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
+   */
+  const changeCalculationDate = useCallback((value: string) => {
+    setCalculationDate(/^\d{4}-\d{2}-\d{2}$/.test(value) ? null : value);
+  }, []);
+
+  const calculationDates = useMemo(() => {
+    const year = Number(currentDayTrt.slice(0, 4));
+    const month = Number(currentDayTrt.slice(5, 7));
+    const years = calculationDateOptions(currentDayTrt);
+    const months = Array.from({ length: month }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
+    return [...years, ...months, currentDayTrt];
+  }, [currentDayTrt]);
+
+  return {
+    data,
+    loading,
+    error,
+    refreshing,
+    reload: load,
+    calculationDate: effectiveCalculationDate,
+    calculationDates,
+    changeCalculationDate,
+  };
 }
 
 /**

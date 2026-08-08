@@ -5,8 +5,8 @@ import { getCatalog, type CatalogResult } from "./catalog";
 import { calculateForecastMatrix } from "./forecast";
 import { createForecastBundleStore, type ForecastBundleStore } from "./forecast-cache";
 import { FORECAST_MODEL, type ForecastBundle } from "./forecast-bundle";
-import { parseCatalogUtc, secondsToIso, turkiyeDay } from "./time";
-import { FORECAST_METHODS, MAGNITUDE_THRESHOLDS, SIGNAL_COUNTS, type ForecastResponse } from "./types";
+import { calculationCutoffSeconds, calculationDateKey, calculationDateOptions, parseCatalogUtc, secondsToIso, turkiyeDay } from "./time";
+import { FORECAST_METHODS, MAGNITUDE_THRESHOLDS, RECENT_THRESHOLDS, SIGNAL_COUNTS, type ForecastResponse, type RecentEarthquake, type RecentThreshold } from "./types";
 
 export interface ForecastServiceDependencies {
   catalog?: { getCatalog: () => Promise<CatalogResult> };
@@ -36,37 +36,46 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function buildBundle(dayTrt: string): Promise<ForecastBundle> {
+  async function buildBundle(dayKey: string, cutoffSeconds: number | null): Promise<ForecastBundle> {
     const started = Date.now();
     const snapshot = await catalog.getCatalog();
     if (snapshot.metadata.providerStatus === "degraded") throw new Error(snapshot.metadata.providerMessage);
     const referenceDate = now();
-    const referenceTimestamp = Math.floor(referenceDate.getTime() / 1_000);
-    const forecasts = calculateMatrix(snapshot.events, {
+    const events = cutoffSeconds === null
+      ? snapshot.events
+      : snapshot.events.filter((event) => parseCatalogUtc(event.occurredAt) < cutoffSeconds);
+    const referenceTimestamp = cutoffSeconds === null
+      ? Math.floor(referenceDate.getTime() / 1_000)
+      : events.length > 0 ? parseCatalogUtc(events[0].occurredAt) : cutoffSeconds;
+    const forecasts = calculateMatrix(events, {
       referenceTimestamp,
       methods: FORECAST_METHODS,
       thresholds: MAGNITUDE_THRESHOLDS,
       counts: SIGNAL_COUNTS,
     });
-    const newest = snapshot.events[0];
-    const oldest = snapshot.events.at(-1) ?? newest;
+    const recentEarthquakes = cutoffSeconds === null
+      ? snapshot.recentEarthquakes
+      : Object.fromEntries(RECENT_THRESHOLDS.map((threshold: RecentThreshold) => [threshold, snapshot.recentEarthquakes[threshold].filter((event: RecentEarthquake) => Date.parse(event.occurredAtUtc) < cutoffSeconds * 1_000)])) as Record<RecentThreshold, RecentEarthquake[]>;
+    const newest = events[0] ?? snapshot.events[0];
+    const oldest = events.at(-1) ?? newest;
     const bundle: ForecastBundle = {
       model: FORECAST_MODEL,
-      dayTrt,
+      dayTrt: dayKey,
+      cutoffSeconds: cutoffSeconds ?? null,
       generatedAtUtc: referenceDate.toISOString(),
       forecasts,
-      recentEarthquakes: snapshot.recentEarthquakes,
+      recentEarthquakes,
       catalogMetadata: {
         dataUpdatedAtUtc: snapshot.metadata.dataUpdatedAtUtc,
         newestEventAtUtc: secondsToIso(parseCatalogUtc(newest.occurredAt)),
         oldestEventAtUtc: secondsToIso(parseCatalogUtc(oldest.occurredAt)),
-        eventCount: snapshot.events.length,
+        eventCount: events.length,
         providerStatus: snapshot.metadata.providerStatus,
         providerMessage: snapshot.metadata.providerMessage,
       },
     };
     const stored = await store.write(bundle);
-    dependencies.log?.({ event: "forecast_generated", dayTrt, eventCount: stored.catalogMetadata.eventCount, durationMs: Date.now() - started });
+    dependencies.log?.({ event: "forecast_generated", dayTrt: dayKey, eventCount: stored.catalogMetadata.eventCount, durationMs: Date.now() - started });
     return stored;
   }
 
@@ -75,16 +84,39 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  function calculateBundle(dayTrt: string): Promise<ForecastBundle> {
-    if (calculation?.dayTrt === dayTrt) return calculation.promise;
-    const promise = store.runExclusive(dayTrt, () => buildBundle(dayTrt)).then((bundle) => {
-      memoryBundle = bundle;
+  function calculateBundle(dayKey: string, remember: boolean, latest: boolean): Promise<ForecastBundle> {
+    if (calculation?.dayTrt === dayKey) return calculation.promise;
+    const cutoffSeconds = latest ? null : calculationCutoffSeconds(dayKey);
+    const promise = store.runExclusive(dayKey, () => buildBundle(dayKey, cutoffSeconds)).then((bundle) => {
+      if (remember || memoryBundle === null || bundle.dayTrt > memoryBundle.dayTrt) memoryBundle = bundle;
       return bundle;
     }).finally(() => {
-      if (calculation?.dayTrt === dayTrt) calculation = null;
+      if (calculation?.dayTrt === dayKey) calculation = null;
     });
-    calculation = { dayTrt, promise };
+    calculation = { dayTrt: dayKey, promise };
     return promise;
+  }
+
+  /**
+   * Defers the daily calculation and the full snapshot fill for the forecast service application service module.
+   *
+   * The first request of a day warms every selector option (milestone years, 2000..current-year range, current-year months,
+   * and the daily snapshot) so switching the dropdown never blocks. Every bundle is idempotently cached in tmp and B2, so
+   * later days only compute the genuinely new daily snapshot while confirming the existing historical ones.
+   */
+  function deferRefresh(dayTrt: string): void {
+    defer(async () => {
+      await calculateBundle(dayTrt, true, true).then(() => undefined).catch(() => undefined);
+      const year = Number(dayTrt.slice(0, 4));
+      const month = Number(dayTrt.slice(5, 7));
+      const yearKeys = calculationDateOptions(dayTrt)
+        .map((option) => calculationDateKey(option, dayTrt))
+        .filter((key): key is string => key !== null);
+      const monthKeys = Array.from({ length: month }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}-01`);
+      for (const key of new Set([...yearKeys, ...monthKeys])) {
+        await calculateBundle(key, false, false).then(() => undefined).catch(() => undefined);
+      }
+    });
   }
 
   /**
@@ -92,20 +124,26 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function getBundle(): Promise<{ bundle: ForecastBundle; cache: ForecastResponse["metadata"]["cache"]; refreshing: boolean }> {
-    const dayTrt = turkiyeDay(now());
-    if (memoryBundle?.dayTrt === dayTrt) return { bundle: memoryBundle, cache: "memory", refreshing: false };
-    const stored = await store.read(dayTrt);
+  async function getBundle(dayKey: string, latest: boolean): Promise<{ bundle: ForecastBundle; cache: ForecastResponse["metadata"]["cache"]; refreshing: boolean }> {
+    const expectedCutoff = latest ? null : calculationCutoffSeconds(dayKey);
+    const matches = (candidate: ForecastBundle | null): candidate is ForecastBundle => candidate !== null && (candidate.cutoffSeconds ?? null) === expectedCutoff;
+    if (matches(memoryBundle) && memoryBundle.dayTrt === dayKey) return { bundle: memoryBundle, cache: "memory", refreshing: false };
+    const stored = await store.read(dayKey);
     if (stored) {
-      memoryBundle = stored;
-      return { bundle: stored, cache: "tmp", refreshing: false };
+      memoryBundle = stored.bundle;
+      return { bundle: stored.bundle, cache: stored.cache, refreshing: false };
     }
-    const stale = memoryBundle && memoryBundle.dayTrt < dayTrt ? memoryBundle : await store.findLatest(dayTrt);
-    if (stale) {
-      defer(async () => { await calculateBundle(dayTrt).then(() => undefined).catch(() => undefined); });
-      return { bundle: stale, cache: "tmp", refreshing: true };
+    if (latest) {
+      const stale = matches(memoryBundle) && memoryBundle.dayTrt < dayKey ? memoryBundle : (await store.findLatest(dayKey))?.bundle ?? null;
+      if (matches(stale)) {
+        deferRefresh(dayKey);
+        return { bundle: stale, cache: "tmp", refreshing: true };
+      }
+      const bundle = await calculateBundle(dayKey, true, true);
+      deferRefresh(dayKey);
+      return { bundle, cache: "memory", refreshing: false };
     }
-    return { bundle: await calculateBundle(dayTrt), cache: "memory", refreshing: false };
+    return { bundle: await calculateBundle(dayKey, false, false), cache: "memory", refreshing: false };
   }
 
   /**
@@ -113,8 +151,13 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function getForecast(): Promise<ForecastResponse> {
-    const { bundle, cache, refreshing } = await getBundle();
+  async function getForecast(date?: string): Promise<ForecastResponse> {
+    const today = turkiyeDay(now());
+    const option = date && date.length ? date : today;
+    const dayKey = calculationDateKey(option, today);
+    if (!dayKey) throw new Error(`Unsupported calculation date: ${option}`);
+    const latest = dayKey === today;
+    const { bundle, cache, refreshing } = await getBundle(dayKey, latest);
     return {
       forecasts: bundle.forecasts,
       recentEarthquakes: bundle.recentEarthquakes,

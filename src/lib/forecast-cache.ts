@@ -8,15 +8,21 @@ import path from "node:path";
 import { ensureCachedFile, listCacheKeys, writeCachedFile } from "./b2-cache";
 import { FORECAST_CACHE_PREFIX, FORECAST_FILE_PREFIX, validForecastBundle, type ForecastBundle } from "./forecast-bundle";
 
+export interface StoredBundle {
+  bundle: ForecastBundle;
+  cache: "tmp" | "bundle";
+}
+
 export interface ForecastBundleStore {
-  read: (dayTrt: string) => Promise<ForecastBundle | null>;
-  findLatest: (beforeDayTrt: string) => Promise<ForecastBundle | null>;
+  read: (dayTrt: string) => Promise<StoredBundle | null>;
+  findLatest: (beforeDayTrt: string) => Promise<StoredBundle | null>;
   runExclusive: (dayTrt: string, task: () => Promise<ForecastBundle>) => Promise<ForecastBundle>;
   write: (bundle: ForecastBundle) => Promise<ForecastBundle>;
 }
 
 export interface ForecastBundleStoreOptions {
   temporaryDirectory?: string;
+  bundledDirectory?: string;
   staleLockMilliseconds?: number;
   waitMilliseconds?: number;
   pollMilliseconds?: number;
@@ -33,6 +39,7 @@ export interface ForecastBundleStoreOptions {
  */
 export function createForecastBundleStore(options: ForecastBundleStoreOptions = {}): ForecastBundleStore {
   const temporaryDirectory = options.temporaryDirectory ?? os.tmpdir();
+  const bundledDirectory = options.bundledDirectory ?? path.join(process.cwd(), "data", "snapshots");
   const staleLockMilliseconds = options.staleLockMilliseconds ?? 5 * 60 * 1_000;
   const waitMilliseconds = options.waitMilliseconds ?? 4 * 60 * 1_000;
   const pollMilliseconds = options.pollMilliseconds ?? 500;
@@ -88,40 +95,58 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
   /**
    * Reads read for the forecast cache application service module, including the validation and edge cases encoded by its typed contract.
    *
-   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
+   * Bundled immutable snapshots in data/snapshots are checked first and win whenever present, so deployed historical dates never recompute.
+   * The remote scan is skipped when a bundled candidate already matched, because bundled snapshots are always the freshest possible copy
+   * and a same-key daily is caught by the local scan before the freshness comparison.
    */
-  async function read(dayTrt: string): Promise<ForecastBundle | null> {
-    const namePrefix = `${FORECAST_FILE_PREFIX}-${dayTrt}-`;
-    const localNames = (await fs.readdir(temporaryDirectory).catch(() => [])).filter((name) => name.startsWith(namePrefix) && name.endsWith(".json"));
-    const remoteNames = (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter((name) => name.startsWith(namePrefix) && name.endsWith(".json"));
-    const candidates: ForecastBundle[] = [];
-    for (const name of new Set([...localNames, ...remoteNames])) {
-      const localPath = path.join(temporaryDirectory, name);
-      await ensureFile(localPath, remoteKey(name));
-      const candidate = await readPath(localPath, dayTrt);
-      if (candidate) candidates.push(candidate);
+  async function read(dayTrt: string): Promise<StoredBundle | null> {
+    const namePrefix = `${FORECAST_FILE_PREFIX}-${dayTrt}`;
+    const matchesName = (name: string) => name.startsWith(namePrefix) && name.endsWith(".json");
+    const candidates: StoredBundle[] = [];
+    for (const name of (await fs.readdir(bundledDirectory).catch(() => [])).filter(matchesName)) {
+      const bundle = await readPath(path.join(bundledDirectory, name), dayTrt);
+      if (bundle) candidates.push({ bundle, cache: "bundle" });
     }
-    return candidates.sort((left, right) => compareFreshness(right, left))[0] ?? null;
+    const bundledMatched = candidates.length > 0;
+    for (const name of (await fs.readdir(temporaryDirectory).catch(() => [])).filter(matchesName)) {
+      const bundle = await readPath(path.join(temporaryDirectory, name), dayTrt);
+      if (bundle) candidates.push({ bundle, cache: "tmp" });
+    }
+    if (!bundledMatched) {
+      for (const name of (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter(matchesName)) {
+        const localPath = path.join(temporaryDirectory, name);
+        await ensureFile(localPath, remoteKey(name));
+        const bundle = await readPath(localPath, dayTrt);
+        if (bundle) candidates.push({ bundle, cache: "tmp" });
+      }
+    }
+    return candidates.sort((left, right) => compareFreshness(right.bundle, left.bundle))[0] ?? null;
   }
 
   /**
    * Finds latest for the forecast cache application service module, including the validation and edge cases encoded by its typed contract.
    *
-   * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
+   * Only unfiltered daily bundles (no cutoff) are candidates: historical snapshots, bundled or not, must never be served as the stale
+   * fallback for the current day.
    */
-  async function findLatest(beforeDayTrt: string): Promise<ForecastBundle | null> {
+  async function findLatest(beforeDayTrt: string): Promise<StoredBundle | null> {
     try {
       const prefix = `${FORECAST_FILE_PREFIX}-`;
-      const localNames = (await fs.readdir(temporaryDirectory)).filter((name) => name.startsWith(prefix) && name.endsWith(".json"));
-      const remoteNames = (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter((name) => name.startsWith(prefix) && name.endsWith(".json"));
-      const candidates: ForecastBundle[] = [];
-      for (const name of [...new Set([...localNames, ...remoteNames])].sort().reverse()) {
-        const localPath = path.join(temporaryDirectory, name);
-        await ensureFile(localPath, remoteKey(name));
-        const bundle = await readPath(localPath);
-        if (bundle && bundle.dayTrt < beforeDayTrt) candidates.push(bundle);
+      const matchesName = (name: string) => name.startsWith(prefix) && name.endsWith(".json");
+      const sources = [
+        ...(await fs.readdir(bundledDirectory).catch(() => [])).filter(matchesName).map((name) => ({ name, localPath: path.join(bundledDirectory, name), cache: "bundle" as const, remote: false })),
+        ...(await fs.readdir(temporaryDirectory).catch(() => [])).filter(matchesName).map((name) => ({ name, localPath: path.join(temporaryDirectory, name), cache: "tmp" as const, remote: false })),
+        ...(await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter(matchesName).map((name) => ({ name, localPath: path.join(temporaryDirectory, name), cache: "tmp" as const, remote: true })),
+      ];
+      const candidates: StoredBundle[] = [];
+      for (const source of [...new Set(sources.map((entry) => entry.name))].sort().reverse()) {
+        const entry = sources.find((candidate) => candidate.name === source);
+        if (!entry) continue;
+        if (entry.remote) await ensureFile(entry.localPath, remoteKey(entry.name));
+        const bundle = await readPath(entry.localPath);
+        if (bundle && bundle.dayTrt < beforeDayTrt && (bundle.cutoffSeconds ?? null) === null) candidates.push({ bundle, cache: entry.cache });
       }
-      return candidates.sort((left, right) => right.dayTrt.localeCompare(left.dayTrt) || compareFreshness(right, left))[0] ?? null;
+      return candidates.sort((left, right) => right.bundle.dayTrt.localeCompare(left.bundle.dayTrt) || compareFreshness(right.bundle, left.bundle))[0] ?? null;
     } catch {
       return null;
     }
@@ -137,7 +162,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
     const started = Date.now();
     while (Date.now() - started < waitMilliseconds) {
       const stored = await read(dayTrt);
-      if (stored) return stored;
+      if (stored) return stored.bundle;
       try {
         const lock = await fs.stat(lockPath(dayTrt));
         if (Date.now() - lock.mtimeMs > staleLockMilliseconds) {
@@ -171,7 +196,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
         lockHandle = await fs.open(lockPath(dayTrt), "wx");
       }
       const existing = await read(dayTrt);
-      return existing ?? await task();
+      return existing?.bundle ?? await task();
     } finally {
       await lockHandle?.close().catch(() => undefined);
       if (lockHandle) await fs.unlink(lockPath(dayTrt)).catch(() => undefined);
@@ -191,7 +216,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
       await fs.unlink(localPath).catch(() => undefined);
       throw new Error("The daily forecast candidate could not be persisted to B2.");
     }
-    return await read(bundle.dayTrt) ?? bundle;
+    return (await read(bundle.dayTrt))?.bundle ?? bundle;
   }
 
   return { read, findLatest, runExclusive, write };

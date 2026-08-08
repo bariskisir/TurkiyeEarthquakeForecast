@@ -23,8 +23,21 @@ vi.mock("next/dynamic", () => {
   return { default: dynamicStub };
 });
 
+const browserDay = vi.hoisted(() => ({ value: "2026-08-08" }));
+
+vi.mock("@/lib/time", async (importOriginal) => {
+  /**
+   * Keeps the real calendar-key helpers but pins the client clock so tests can simulate a browser whose day differs from the server's.
+   *
+   * The hoisted mutable holder lets each test select the simulated browser day before rendering.
+   */
+  const actual = await importOriginal<typeof import("@/lib/time")>();
+  return { ...actual, turkiyeDay: () => browserDay.value };
+});
+
 describe("dashboard", () => {
   beforeEach(() => {
+    browserDay.value = "2026-08-08";
     window.localStorage.clear();
     window.localStorage.setItem("locale", "en");
     /**
@@ -104,5 +117,35 @@ describe("dashboard", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: readMalformedForecast }));
     render(<Dashboard />);
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Forecast service is unavailable."));
+  });
+
+  test("adopts the server's authoritative day when the browser clock lags", async () => {
+    browserDay.value = "2026-08-06";
+    const serverDay = "2026-08-08";
+    /**
+     * Rejects any request carrying the stale browser-computed day and serves the server's authoritative day for bare requests.
+     *
+     * This mirrors the deployed failure where the app opened with a wrong "today" that the API rejected with a 400.
+     */
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes(`date=${browserDay.value}`)) {
+        return { ok: false, status: 400, json: async () => ({ error: "Unsupported calculation date.", code: "INVALID_REQUEST" }) };
+      }
+      return { ok: true, json: async () => createForecastResponse({ forecastDayTrt: serverDay }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Dashboard />);
+    const select = await screen.findByLabelText("Snapshot");
+    await waitFor(() => expect(select).toHaveValue(serverDay));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(await screen.findByText("Marmara Sea")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.every((call) => !String(call[0]).includes(`date=${browserDay.value}`))).toBe(true);
+    await user.selectOptions(select, "2000");
+    await waitFor(() => expect(fetchMock.mock.calls.some((call) => String(call[0]).includes("date=2000"))).toBe(true));
+    await user.selectOptions(select, serverDay);
+    await waitFor(() => expect(fetchMock.mock.calls.slice(-1)[0] ? !String(fetchMock.mock.calls.slice(-1)[0][0]).includes("date=") : false).toBe(true));
+    expect(select).toHaveValue(serverDay);
   });
 });

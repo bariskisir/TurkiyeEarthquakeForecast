@@ -7,7 +7,7 @@ import { cellIndex, columnToLongitude, haversineDistanceKm, indexToRowCol, latit
 import { clamp, linearRegression, logSumExp, meanAndStandardDeviation, normalCDF } from "@/lib/forecast/numeric";
 import { bptConditionalOccurrenceProbability, poissonMedianWaitingYears, poissonOccurrenceProbability } from "@/lib/forecast/recurrence";
 import { scoreToSignalLevel } from "@/lib/forecast/scoring";
-import { parseCatalogUtc, secondsToIso, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
+import { parseCatalogUtc, calculationDateKey, calculationDateOptions, secondsToIso, secondsUntilNextTurkiyeDay, turkiyeDay } from "@/lib/time";
 
 describe("forecast numeric primitives", () => {
   test("handles bounded arithmetic and stable aggregation", () => {
@@ -46,5 +46,37 @@ describe("forecast numeric primitives", () => {
     expect(turkiyeDay(new Date("2026-07-14T20:59:59.000Z"))).toBe("2026-07-14");
     expect(turkiyeDay(new Date("2026-07-14T21:00:00.000Z"))).toBe("2026-07-15");
     expect(secondsUntilNextTurkiyeDay(new Date("2026-07-14T20:30:00.000Z"))).toBe(1_800);
+  });
+
+  test("merges identical-result pre-1900 ranges into single options covering every year", () => {
+    const today = "2026-08-08";
+    expect(calculationDateKey("0-1", today)).toBe("0000-01-01");
+    expect(calculationDateKey("2-17", today)).toBe("0002-01-01");
+    expect(calculationDateKey("7-17", today)).toBeNull();
+    expect(calculationDateKey("243-330", today)).toBe("0243-01-01");
+    expect(calculationDateKey("243-244", today)).toBeNull();
+    expect(calculationDateKey("327-330", today)).toBeNull();
+    expect(calculationDateKey("500-521", today)).toBe("0500-01-01");
+    expect(calculationDateKey("500-501", today)).toBeNull();
+    expect(calculationDateKey("511-521", today)).toBeNull();
+    expect(calculationDateKey("1897-1899", today)).toBe("1897-01-01");
+    expect(calculationDateKey("1900-1899", today)).toBeNull();
+    const options = calculationDateOptions(today);
+    expect(options).toContain("0-1");
+    expect(options).toContain("2-17");
+    expect(options).toContain("243-330");
+    expect(options).toContain("1897-1899");
+    expect(options).not.toContain("7-17");
+    expect(options).not.toContain("243-244");
+    expect(options).not.toContain("327-330");
+    const covered = new Set<number>();
+    for (const option of options) {
+      const match = option.match(/^(\d{1,4})(?:-(\d{1,4}))?$/);
+      if (!match) continue;
+      const start = Number(match[1]);
+      const end = match[2] ? Number(match[2]) : start;
+      if (start < 1900) for (let year = start; year <= end; year++) covered.add(year);
+    }
+    for (let year = 0; year <= 1899; year++) expect(covered.has(year)).toBe(true);
   });
 });
