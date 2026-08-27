@@ -12,7 +12,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.basemaps.cartocdn.com",
   "font-src 'self' data:",
-  `connect-src 'self'${development ? " ws: wss:" : ""}`,
+  `connect-src 'self'${development ? " ws: wss:" : ""} https://*.in.applicationinsights.azure.com https://*.monitor.azure.com`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

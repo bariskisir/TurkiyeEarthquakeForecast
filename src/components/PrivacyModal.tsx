@@ -63,7 +63,7 @@ export default function PrivacyModal({ locale, onClose }: { locale: Locale; onCl
           <h3>{t.collectedTitle}</h3><h4>{t.localDataTitle}</h4><p>{t.localDataBody}</p><h4>{t.technicalDataTitle}</h4><p>{t.technicalDataBody}</p>
           <h3>{t.purposesTitle}</h3><p>{t.purposesBody}</p>
           <h3>{t.legalBasisTitle}</h3><p>{t.legalBasisBody}</p>
-          <h3>{t.sharingTitle}</h3><p>{t.sharingBody}</p><ul><li><a href="https://sismikharita.com/api" target="_blank" rel="noreferrer">{t.sismikLabel}</a></li><li><a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">{t.vercelLabel}</a></li><li><a href="https://carto.com/privacy/" target="_blank" rel="noreferrer">{t.cartoLabel}</a></li></ul>
+          <h3>{t.sharingTitle}</h3><p>{t.sharingBody}</p><ul><li><a href="https://sismikharita.com/api" target="_blank" rel="noreferrer">{t.sismikLabel}</a></li><li><a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">{t.vercelLabel}</a></li><li><a href="https://carto.com/privacy/" target="_blank" rel="noreferrer">{t.cartoLabel}</a></li><li><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/app/data-retention-privacy" target="_blank" rel="noreferrer">{t.appInsightsLabel}</a></li></ul>
           <h3>{t.transfersTitle}</h3><p>{t.transfersBody}</p>
           <h3>{t.retentionTitle}</h3><p>{t.retentionBody}</p>
           <h3>{t.cookiesTitle}</h3><p>{t.cookiesBody}</p>

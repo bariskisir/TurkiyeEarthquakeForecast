@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "leaflet/dist/leaflet.css";
 import "./globals.scss";
+import TelemetryTracker from "@/components/TelemetryTracker";
 
 export const metadata: Metadata = {
   title: "Türkiye Earthquake Forecast",
@@ -19,7 +20,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-theme="dark" data-bs-theme="dark">
-      <body>{children}</body>
+      <body>
+        <TelemetryTracker />
+        {children}
+      </body>
     </html>
   );
 }
