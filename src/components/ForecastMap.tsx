@@ -12,6 +12,7 @@ import { formatDateTime } from "@/lib/format";
 
 const TURKIYE_BOUNDS: [[number, number], [number, number]] = [[34, 24], [43, 46]];
 const MAP_VIEW_KEY = "map-view";
+const CARTO_API_KEY = "cb1_2a37_1_fb5b15a9e0d35ff717f00a83";
 interface MapView { lat: number; lng: number; zoom: number }
 
 /**
@@ -198,13 +199,13 @@ export default function ForecastMap({ forecasts, locale, theme, selectedLocation
           <TileLayer
             key="dark-map"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}&key=${CARTO_API_KEY}`}
           />
         ) : (
           <TileLayer
             key="light-map"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            url={`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}&key=${CARTO_API_KEY}`}
           />
         )}
         {forecasts.map((item) => <ForecastMarker key={`${item.threshold}-${item.rank}`} item={item} locale={locale} showMagnitude={showMagnitude} />)}
