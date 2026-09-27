@@ -7,7 +7,7 @@ import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectC
 
 export interface RemoteObjectStore {
   get: (key: string) => Promise<Uint8Array | null>;
-  list: (prefix: string) => Promise<string[]>;
+  list: (prefix: string, namePrefix?: string) => Promise<string[]>;
   put: (key: string, body: string) => Promise<void>;
   delete: (key: string) => Promise<void>;
 }
@@ -50,7 +50,7 @@ function getConfiguration(): B2Configuration | null {
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-function createRemoteStore(config: B2Configuration): RemoteObjectStore {
+export function createRemoteStore(config: B2Configuration): RemoteObjectStore {
   /**
    * Performs the object key operation for the b2 cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
    *
@@ -68,12 +68,12 @@ function createRemoteStore(config: B2Configuration): RemoteObjectStore {
       return response.Body ? response.Body.transformToByteArray() : null;
     },
     /**
-     * Collects every remote object under a logical prefix by following all provider continuation tokens.
+     * Collects remote objects under a logical directory, optionally limiting filenames at the provider before following continuation tokens.
      *
      * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
      */
-    async list(prefix) {
-      const remotePrefix = `${objectKey(prefix).replace(/\/+$/, "")}/`;
+    async list(prefix, namePrefix = "") {
+      const remotePrefix = `${objectKey(prefix).replace(/\/+$/, "")}/${namePrefix}`;
       const keys: string[] = [];
       let continuationToken: string | undefined;
       do {
@@ -130,7 +130,7 @@ async function writeLocal(filePath: string, body: Uint8Array | string): Promise<
  *
  * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
  */
-export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | null = getRemoteStore) {
+export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | null = getRemoteStore, log?: (entry: Record<string, unknown>) => void) {
   /**
    * Resolves optional B2 storage while treating missing or invalid deployment configuration as a local-cache-only mode.
    *
@@ -156,28 +156,35 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
     } catch {
       const remote = optionalRemote();
       if (!remote) return false;
+      const started = Date.now();
       try {
         const body = await remote.get(key);
+        log?.({ event: "b2_cache_get", namespace: key.split("/")[0], durationMs: Date.now() - started, bytes: body?.byteLength ?? 0, outcome: body ? "hit" : "miss" });
         if (!body) return false;
         await writeLocal(filePath, body);
         return true;
       } catch {
+        log?.({ event: "b2_cache_get", namespace: key.split("/")[0], durationMs: Date.now() - started, outcome: "error" });
         return false;
       }
     }
   }
 
   /**
-   * Performs the list cache keys operation for the b2 cache application service module, centralizing the calculation, state transition, side effects, and fallback semantics used by callers.
+   * Lists remote cache keys with an optional filename prefix, recording duration and outcome without exposing storage credentials or object contents.
    *
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
-  async function listCacheKeys(prefix: string): Promise<string[]> {
+  async function listCacheKeys(prefix: string, namePrefix = ""): Promise<string[]> {
     const remote = optionalRemote();
     if (!remote) return [];
+    const started = Date.now();
     try {
-      return await remote.list(prefix);
+      const keys = await remote.list(prefix, namePrefix);
+      log?.({ event: "b2_cache_list", namespace: prefix.split("/")[0], durationMs: Date.now() - started, count: keys.length, scoped: namePrefix.length > 0, outcome: "ok" });
+      return keys;
     } catch {
+      log?.({ event: "b2_cache_list", namespace: prefix.split("/")[0], durationMs: Date.now() - started, scoped: namePrefix.length > 0, outcome: "error" });
       return [];
     }
   }
@@ -229,7 +236,7 @@ export function createCachedFileStore(remoteProvider: () => RemoteObjectStore | 
   return { ensureCachedFile, listCacheKeys, pruneCachePrefixToLatest, hydrateCacheDirectory, writeCachedFile };
 }
 
-const defaultStore = createCachedFileStore();
+const defaultStore = createCachedFileStore(getRemoteStore, process.env.VERCEL ? (entry) => console.info(JSON.stringify(entry)) : undefined);
 
 export const ensureCachedFile = defaultStore.ensureCachedFile;
 export const listCacheKeys = defaultStore.listCacheKeys;

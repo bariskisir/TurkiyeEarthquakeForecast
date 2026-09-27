@@ -152,12 +152,14 @@ export function createForecastService(dependencies: ForecastServiceDependencies 
    * Keeping this behavior in a named unit makes its inputs, outputs, side effects, and fallback semantics independently reviewable and testable.
    */
   async function getForecast(date?: string): Promise<ForecastResponse> {
+    const started = Date.now();
     const today = turkiyeDay(now());
     const option = date && date.length ? date : today;
     const dayKey = calculationDateKey(option, today);
     if (!dayKey) throw new Error(`Unsupported calculation date: ${option}`);
     const latest = dayKey === today;
     const { bundle, cache, refreshing } = await getBundle(dayKey, latest);
+    dependencies.log?.({ event: "forecast_served", dayTrt: dayKey, servedDayTrt: bundle.dayTrt, cache, refreshing, durationMs: Date.now() - started });
     return {
       forecasts: bundle.forecasts,
       recentEarthquakes: bundle.recentEarthquakes,

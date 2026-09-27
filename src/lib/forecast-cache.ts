@@ -98,6 +98,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    * Bundled immutable snapshots in data/snapshots are checked first and win whenever present, so deployed historical dates never recompute.
    * The remote scan is skipped when a bundled candidate already matched, because bundled snapshots are always the freshest possible copy
    * and a same-key daily is caught by the local scan before the freshness comparison.
+   * Remote listing is restricted to the requested day, and up to four immutable candidates are downloaded concurrently before freshness selection.
    */
   async function read(dayTrt: string): Promise<StoredBundle | null> {
     const namePrefix = `${FORECAST_FILE_PREFIX}-${dayTrt}`;
@@ -113,11 +114,14 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
       if (bundle) candidates.push({ bundle, cache: "tmp" });
     }
     if (!bundledMatched) {
-      for (const name of (await listKeys(FORECAST_CACHE_PREFIX).catch(() => [])).map((key) => path.basename(key)).filter(matchesName)) {
-        const localPath = path.join(temporaryDirectory, name);
-        await ensureFile(localPath, remoteKey(name));
-        const bundle = await readPath(localPath, dayTrt);
-        if (bundle) candidates.push({ bundle, cache: "tmp" });
+      const names = [...new Set((await listKeys(FORECAST_CACHE_PREFIX, namePrefix).catch(() => [])).map((key) => path.basename(key)).filter(matchesName))];
+      for (let index = 0; index < names.length; index += 4) {
+        await Promise.all(names.slice(index, index + 4).map(async (name) => {
+          const localPath = path.join(temporaryDirectory, name);
+          await ensureFile(localPath, remoteKey(name));
+          const bundle = await readPath(localPath, dayTrt);
+          if (bundle) candidates.push({ bundle, cache: "tmp" });
+        }));
       }
     }
     return candidates.sort((left, right) => compareFreshness(right.bundle, left.bundle))[0] ?? null;
@@ -128,6 +132,7 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
    *
    * Only unfiltered daily bundles (no cutoff) are candidates: historical snapshots, bundled or not, must never be served as the stale
    * fallback for the current day.
+   * Candidates are visited newest-first; after finding a daily bundle, only its same-day peers need reading to preserve freshness selection.
    */
   async function findLatest(beforeDayTrt: string): Promise<StoredBundle | null> {
     try {
@@ -140,6 +145,11 @@ export function createForecastBundleStore(options: ForecastBundleStoreOptions = 
       ];
       const candidates: StoredBundle[] = [];
       for (const source of [...new Set(sources.map((entry) => entry.name))].sort().reverse()) {
+        const sourceDay = source.slice(prefix.length, prefix.length + 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(sourceDay)) {
+          if (sourceDay >= beforeDayTrt) continue;
+          if (candidates.length > 0 && sourceDay < candidates[0].bundle.dayTrt) break;
+        }
         const entry = sources.find((candidate) => candidate.name === source);
         if (!entry) continue;
         if (entry.remote) await ensureFile(entry.localPath, remoteKey(entry.name));

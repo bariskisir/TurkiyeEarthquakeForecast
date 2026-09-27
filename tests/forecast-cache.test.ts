@@ -68,6 +68,65 @@ function cacheStore(temporaryDirectory: string, options: Parameters<typeof creat
 }
 
 describe("forecast bundle store", () => {
+  test("reads a cold daily cache with bounded parallel downloads and preserves the most complete candidate", async () => {
+    const temporaryDirectory = await directory();
+    const namePrefix = `${FORECAST_FILE_PREFIX}-2026-07-14`;
+    const listKeys = vi.fn(async () => Array.from({ length: 6 }, (_, index) => `${FORECAST_CACHE_PREFIX}/${namePrefix}-${index}.json`));
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let active = 0;
+    let peak = 0;
+    const ensureFile = vi.fn(async (localPath: string, key: string) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await gate;
+      const value = bundle("2026-07-14");
+      value.catalogMetadata.eventCount = key.endsWith("-5.json") ? 10 : 1;
+      await fs.writeFile(localPath, JSON.stringify(value));
+      active -= 1;
+      return true;
+    });
+    const pending = cacheStore(temporaryDirectory, { listKeys, ensureFile }).read("2026-07-14");
+    try {
+      await vi.waitFor(() => expect(active).toBe(4));
+    } finally {
+      release();
+      await pending;
+    }
+    expect((await pending)?.bundle.catalogMetadata.eventCount).toBe(10);
+    expect(listKeys).toHaveBeenCalledWith(FORECAST_CACHE_PREFIX, namePrefix);
+    expect(ensureFile).toHaveBeenCalledTimes(6);
+    expect(peak).toBe(4);
+  });
+
+  test("downloads only the newest usable stale day and compares all its candidates", async () => {
+    const temporaryDirectory = await directory();
+    const complete = bundle("2026-07-14");
+    complete.catalogMetadata.eventCount = 2;
+    const historical = { ...bundle("2026-07-15"), cutoffSeconds: 1 };
+    const objects = new Map([
+      [`${FORECAST_FILE_PREFIX}-2026-07-16-current.json`, bundle("2026-07-16")],
+      [`${FORECAST_FILE_PREFIX}-2026-07-15-snapshot.json`, historical],
+      [`${FORECAST_FILE_PREFIX}-2026-07-14-z.json`, bundle("2026-07-14")],
+      [`${FORECAST_FILE_PREFIX}-2026-07-14-a.json`, complete],
+      [`${FORECAST_FILE_PREFIX}-2026-07-13-old.json`, bundle("2026-07-13")],
+    ]);
+    const ensureFile = vi.fn(async (localPath: string, key: string) => {
+      await fs.writeFile(localPath, JSON.stringify(objects.get(path.basename(key))));
+      return true;
+    });
+    const store = cacheStore(temporaryDirectory, {
+      listKeys: async () => [...objects.keys()].map((name) => `${FORECAST_CACHE_PREFIX}/${name}`),
+      ensureFile,
+    });
+    expect((await store.findLatest("2026-07-16"))?.bundle).toEqual(complete);
+    expect(ensureFile.mock.calls.map(([, key]) => path.basename(key))).toEqual([
+      `${FORECAST_FILE_PREFIX}-2026-07-15-snapshot.json`,
+      `${FORECAST_FILE_PREFIX}-2026-07-14-z.json`,
+      `${FORECAST_FILE_PREFIX}-2026-07-14-a.json`,
+    ]);
+  });
+
   test("round-trips valid bundles and selects the latest stale day", async () => {
     const temporaryDirectory = await directory();
     const store = cacheStore(temporaryDirectory);

@@ -53,6 +53,7 @@ export default function ForecastWorkspace({ calculationDate, calculationDates, d
     <div className="workspace-layout">
       <div className="map-card">
         {loading && !data ? <div className="map-loading" role="status">{t.preparingMap}</div> : <ForecastMap forecasts={forecasts} locale={locale} theme={theme} selectedLocations={selectedLocations} showMagnitude={methodUsesMagnitude} />}
+        {loading && data && <div className="map-loading-notice" role="status"><span className="refresh-spinner" aria-hidden="true" />{t.preparingMap}</div>}
       </div>
       <aside>
         <div className="summary-card">

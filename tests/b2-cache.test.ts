@@ -4,8 +4,9 @@
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, test } from "vitest";
-import { createCachedFileStore, type RemoteObjectStore } from "@/lib/b2-cache";
+import { S3Client } from "@aws-sdk/client-s3";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { createCachedFileStore, createRemoteStore, type RemoteObjectStore } from "@/lib/b2-cache";
 
 const directories: string[] = [];
 
@@ -25,6 +26,23 @@ afterEach(async () => {
 });
 
 describe("cached file store", () => {
+  test("filters filenames in the S3 request across all listing pages", async () => {
+    const client = new S3Client({ region: "us-east-1" });
+    const replies = [
+      { Contents: [{ Key: "cache/v1/forecasts/day-a.json" }], IsTruncated: true, NextContinuationToken: "next-page" },
+      { Contents: [{ Key: "cache/v1/forecasts/day-b.json" }] },
+      { Contents: [] },
+    ];
+    const send = vi.spyOn(client, "send").mockImplementation(async () => replies.shift());
+    const store = createCachedFileStore(() => createRemoteStore({ client, bucket: "fixture", prefix: "cache/v1" }));
+    expect(await store.listCacheKeys("forecasts", "day-")).toEqual(["forecasts/day-a.json", "forecasts/day-b.json"]);
+    expect(send.mock.calls[0][0].input).toMatchObject({ Prefix: "cache/v1/forecasts/day-" });
+    expect(send.mock.calls[1][0].input).toMatchObject({ Prefix: "cache/v1/forecasts/day-", ContinuationToken: "next-page" });
+    await store.listCacheKeys("catalog/updates");
+    expect(send.mock.calls[2][0].input).toMatchObject({ Prefix: "cache/v1/catalog/updates/" });
+    client.destroy();
+  });
+
   test("hydrates, writes, lists and prunes remote objects", async () => {
     const objects = new Map<string, string>([["catalog/updates/old.json", "old"], ["catalog/updates/latest.json", "latest"]]);
     const remote: RemoteObjectStore = {
