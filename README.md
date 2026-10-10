@@ -8,6 +8,10 @@ An experimental, open-source regional seismic signal dashboard for Türkiye and 
 
 ![Türkiye Earthquake Forecast interface](images/interface.png)
 
+<a href="https://raw.githubusercontent.com/bariskisir/TurkiyeEarthquakeForecast/master/latex/article.pdf"><img src="https://raw.githubusercontent.com/bariskisir/TurkiyeEarthquakeForecast/master/images/manuscript-preview.png" alt="Forecasting engine manuscript, first page" width="451"></a>
+
+[Download article (PDF)](https://raw.githubusercontent.com/bariskisir/TurkiyeEarthquakeForecast/master/latex/article.pdf)
+
 ## Development
 
 ```bash
