@@ -2,7 +2,7 @@
 
 An experimental, open-source regional seismic signal dashboard for Türkiye and nearby areas. The application combines a bundled multi-source Sismik Harita catalog with daily append-only updates, calculates separate M5+ through M7+ regional rankings, and displays forward-looking regional signals on an interactive Leaflet map.
 
-**Live Demo:** [turkiye-earthquake-forecast.vercel.app](https://turkiye-earthquake-forecast.vercel.app/)
+**Live Demo:** [turkiyeearthquakeforecast.bariskisir.com](https://turkiyeearthquakeforecast.bariskisir.com)
 
 > **Important:** This project does not predict the exact time, location, or magnitude of earthquakes. Scores are relative regional activity rankings, not occurrence probabilities. Do not use the site as an emergency warning system or as the sole basis for safety decisions. Follow official authorities.
 
