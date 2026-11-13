@@ -6,6 +6,8 @@ An experimental, open-source regional seismic signal dashboard for Türkiye and 
 
 > **Important:** This project does not predict the exact time, location, or magnitude of earthquakes. Scores are relative regional activity rankings, not occurrence probabilities. Do not use the site as an emergency warning system or as the sole basis for safety decisions. Follow official authorities.
 
+https://github.com/user-attachments/assets/a36b05b5-87bc-45ca-81a8-4c2101e09fd2
+
 ![Türkiye Earthquake Forecast interface](images/interface.png)
 
 <a href="https://raw.githubusercontent.com/bariskisir/TurkiyeEarthquakeForecast/master/latex/article.pdf"><img src="https://raw.githubusercontent.com/bariskisir/TurkiyeEarthquakeForecast/master/images/manuscript-preview.png" alt="Forecasting engine manuscript, first page" width="451"></a>
